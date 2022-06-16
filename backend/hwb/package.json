@@ -7,10 +7,11 @@
   "private": true,
   "dependencies": {
     "@sap/cds": "^5",
+    "@sap/cds-odata-v2-adapter-proxy": "^1.8.20",
     "express": "^4"
   },
   "devDependencies": {
-    "sqlite3": "^5.0.2"
+    "sqlite3": "^5.0.8"
   },
   "scripts": {
     "start": "cds run"

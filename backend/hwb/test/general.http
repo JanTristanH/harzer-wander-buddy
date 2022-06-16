@@ -1,0 +1,21 @@
+GET http://localhost:4004/api/Stampboxes
+
+###
+POST http://localhost:4004/api/Stampboxes
+Accept: application/json
+content-type: application/json
+
+{
+"validFrom": "1970-01-01T00:00:01.0+00:00",
+"validTo": "2037-12-31T23:00:01.000Z",
+"longitude": "11.033540000",
+"latitude": "55.58708",
+"name": "Stelle X",
+"description": "Beschreibung X",
+"number": "Sonder XX",
+"isKidFriendly": true,
+"isElderlyFriendly": true,
+"isStrollerFriendly": true,
+"hasToilet": true,
+"hasFood": true
+}
