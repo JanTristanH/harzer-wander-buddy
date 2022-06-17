@@ -16,6 +16,12 @@
       "target": "/v2/$1",
       "destination": "api",
       "authenticationType": "none"
+    },
+    {
+      "source": "^/ar/openui5-googlemaps/(.*)$",
+      "target": "/jasper07/openui5-googlemaps/master/src/$1",
+      "destination": "github",
+      "authenticationType": "none"
     }
   ]
 }
