@@ -13,6 +13,19 @@
     "sourceTemplate": {
       "id": "@sap-ux/fiori-freestyle-writer:basic",
       "version": "0.11.15"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/v2/api/",
+        "type": "OData",
+        "settings": {
+            "odataVersion": "2.0"
+        }
+    },
+      "mapConfig": {
+        "type": "JSON",
+        "uri": "./map/config.json"
+    }
     }
   },
   "sap.ui": {
@@ -37,7 +50,8 @@
       "minUI5Version": "1.60.0",
       "libs": {
         "sap.m": {},
-        "sap.ui.core": {}
+        "sap.ui.core": {},
+        "sap.ui.vbm": {}
       }
     },
     "contentDensities": {
@@ -45,12 +59,27 @@
       "cozy": true
     },
     "models": {
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+            "defaultBindingMode": "TwoWay",
+            "defaultCountMode": "Inline",
+            "refreshAfterChange": false,
+            "metadataUrlParams": {
+                "sap-value-list": "none"
+            }
+        }
+    },
       "i18n": {
         "type": "sap.ui.model.resource.ResourceModel",
         "settings": {
           "bundleName": "hwb.harzerWanderBuddy.i18n.i18n"
         }
-      }
+      },
+      "mapConfig": {
+        "dataSource": "mapConfig"
+    }
     },
     "resources": {
       "css": [

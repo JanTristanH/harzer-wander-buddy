@@ -4,7 +4,7 @@
     "namespaceUI5": "hwb",
     "platform": "Application Router @ Cloud Foundry",
     "viewtype": "XML",
-    "ui5libs": "Content delivery network (OpenUI5)",
+    "ui5libs": "Content delivery network (SAPUI5)",
     "newdir": false,
     "codeassist": true,
     "namespaceURI": "hwb",
