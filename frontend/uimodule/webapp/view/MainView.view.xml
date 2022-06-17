@@ -6,7 +6,7 @@
     <Page id="page" title="{i18n>title}">
         <Label text="Enable Hyphenation" />
         <VBox>
-            <gmaps:Map id="gmap" ready="onMapReady" class="googleMap" fitToMarkers="true" markers="{/Stampboxes}" height="500px" zoom="12" lat="53.5704400" lng="9.964820000">
+            <gmaps:Map id="gmap" ready="onMapReady" class="googleMap" fitToMarkers="true" markers="{/Stampboxes}" height="500px" zoom="12">
 
                 <gmaps:Marker lat="{latitude}" lng="{longitude}" info="{number} - {name}"></gmaps:Marker>
             </gmaps:Map>
