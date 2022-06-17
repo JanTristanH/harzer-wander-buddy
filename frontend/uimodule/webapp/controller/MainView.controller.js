@@ -13,7 +13,7 @@ sap.ui.define(
       },
 
       onMapReady: function (oEvent) {
-        var that = this;
+        // open all info dialogs
         if (this.init) {
           this.oMap.getMarkers().forEach(function (oMarker) {
             oMarker.infoWindowOpen();
