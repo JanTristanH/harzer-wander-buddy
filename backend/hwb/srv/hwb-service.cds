@@ -7,9 +7,10 @@ service api @(requires : 'authenticated-user') {
 
     entity Stampings @(restrict : [
         {
-        grant : 'READ',
-        where : 'createdBy = $user'
-    },
-    {grant: 'WRITE'}])               as projection on db.Stampings;
+            grant : 'READ',
+            where : 'createdBy = $user'
+        },
+        {grant : 'WRITE'}
+    ])                as projection on db.Stampings;
 
 }
