@@ -1,6 +1,6 @@
 {
   "destinations": [{
     "name": "api",
-    "url": "http://localhost:4004"
+    "url": "https://port4004-workspaces-ws-mfhnb.us10.trial.applicationstudio.cloud.sap"
   }]
 }
