@@ -6,7 +6,8 @@
         <Label text="Enable Hyphenation" />
         <VBox>
             <vbm:GeoMap width="100%"
-                xmlns:l="sap.ui.layout" height="600px" initialZoom="12" class="sapUiMediumMarginTop" mapConfiguration="{mapConfig>/}">
+                xmlns:l="sap.ui.layout" height="600px" initialZoom="12" class="sapUiMediumMarginTop" mapConfiguration="{mapConfig>/}"
+                initialPosition="10.033540000;53.58708">
                 <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
                 <vbm:vos>
                     <vbm:Routes>
