@@ -11,6 +11,8 @@ This app is intended to help plan your route and collect all 222 stamps.
 2. run npm i
 3. run cds watch
 
+> Information on the `@sap/cap-cds` license here https://answers.sap.com/questions/13018451/cap-runtime-license.html
+
 ## Start frontend
 
 1. move to frontend/approuter
