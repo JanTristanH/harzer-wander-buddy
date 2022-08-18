@@ -28,6 +28,9 @@
                                 "dummy"
                             ]
                         },
+                        "Alice": {
+                            "password": "password"
+                        },
                         "*": false
                     }
                 }

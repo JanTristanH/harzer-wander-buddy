@@ -2,6 +2,34 @@
 GET http://localhost:4004/api/Stampboxes
 Authorization: Basic Kevin password
 
+### Get all stampings done by Kevin
+GET http://localhost:4004/api/Stampings
+Authorization: Basic Kevin password
+
+### Post new Stamp for Kevin
+POST http://localhost:4004/api/Stampings
+Accept: application/json
+content-type: application/json
+Authorization: Basic Kevin password
+
+{
+    "stamp": { "ID": "38bdea78-045d-420d-b589-aacb19447a7e"}
+}
+
+### Get all stampings done by Alice
+GET http://localhost:4004/api/Stampings
+Authorization: Basic Alice password
+
+### Post new Stamp for Alice
+POST http://localhost:4004/api/Stampings
+Accept: application/json
+content-type: application/json
+Authorization: Basic Alice password
+
+{
+    "stamp": { "ID": "e960062e-7707-46c1-8638-a6d82216dd8a"}
+}
+
 ### Add a Stamp box
 POST http://localhost:4004/api/Stampboxes
 Accept: application/json
