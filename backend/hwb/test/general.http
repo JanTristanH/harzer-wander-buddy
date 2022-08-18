@@ -1,9 +1,12 @@
+### Get all boxes
 GET http://localhost:4004/api/Stampboxes
+Authorization: Basic Kevin password
 
-###
+### Add a Stamp box
 POST http://localhost:4004/api/Stampboxes
 Accept: application/json
 content-type: application/json
+Authorization: Basic Kevin password
 
 {
 "validFrom": "1970-01-01T00:00:01.0+00:00",
