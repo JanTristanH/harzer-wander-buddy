@@ -27,14 +27,14 @@ entity Stampboxes : cuid, temporal, PointOfInterest {
     hasFood                : Boolean;
     parkingSpot            : Composition of many ParkingSpots
                                  on parkingSpot.target = $self;
-    myAdjacentStamp        : Composition of many adjacentStamps
+    myAdjacentStamp        : Composition of many AdjacentStamps
                                  on myAdjacentStamp.first = $self;
-    targetForAdjacentStamp : Composition of many adjacentStamps
+    targetForAdjacentStamp : Composition of many AdjacentStamps
                                  on targetForAdjacentStamp.second = $self;
 }
 
 @assert.integrity : false
-entity adjacentStamps {
+entity AdjacentStamps {
     key first  : Association to Stampboxes;
     key second : Association to Stampboxes;
 }
@@ -53,7 +53,7 @@ entity ParkingSpots : PointOfInterest {
 }
 
 @assert.integrity : false
-entity travelTimes : cuid {
+entity TravelTimes : cuid {
     //Todo also include from parking to stamp
     fromPoi : UUID;
     toPoi   : UUID;
@@ -62,8 +62,8 @@ entity travelTimes : cuid {
 }
 
 @assert.integrity : false
-entity stamped {
-    stampNumber : UUID;
+entity Stampings {
+    stampNumber : Association to Stampboxes;
     createdAt   : Timestamp @cds.on.insert : $now;
     createdBy   : User      @cds.on.insert : $user;
 }
