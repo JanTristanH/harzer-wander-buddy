@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+    <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+        <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+    </edmx:Reference>
+    <edmx:DataServices m:DataServiceVersion="2.0">
+        <Schema Namespace="api" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+            <EntityContainer Name="EntityContainer" m:IsDefaultEntityContainer="true">
+                <EntitySet Name="Stampboxes" EntityType="api.Stampboxes"/>
+                <EntitySet Name="Stampings" EntityType="api.Stampings"/>
+                <EntitySet Name="ParkingSpots" EntityType="api.ParkingSpots"/>
+                <EntitySet Name="AdjacentStamps" EntityType="api.AdjacentStamps"/>
+                <AssociationSet Name="Stampings_stamp" Association="api.Stampings_stamp">
+                    <End Role="Stampings" EntitySet="Stampings"/>
+                    <End Role="Stampboxes" EntitySet="Stampboxes"/>
+                </AssociationSet>
+                <AssociationSet Name="ParkingSpots_target" Association="api.ParkingSpots_target">
+                    <End Role="ParkingSpots" EntitySet="ParkingSpots"/>
+                    <End Role="Stampboxes" EntitySet="Stampboxes"/>
+                </AssociationSet>
+                <AssociationSet Name="AdjacentStamps_first" Association="api.AdjacentStamps_first">
+                    <End Role="AdjacentStamps" EntitySet="AdjacentStamps"/>
+                    <End Role="Stampboxes" EntitySet="Stampboxes"/>
+                </AssociationSet>
+                <AssociationSet Name="AdjacentStamps_second" Association="api.AdjacentStamps_second">
+                    <End Role="AdjacentStamps" EntitySet="AdjacentStamps"/>
+                    <End Role="Stampboxes" EntitySet="Stampboxes"/>
+                </AssociationSet>
+            </EntityContainer>
+            <EntityType Name="Stampboxes" m:HasStream="true">
+                <Key>
+                    <PropertyRef Name="ID"/>
+                </Key>
+                <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+                <Property Name="validFrom" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="validTo" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="longitude" Type="Edm.String" MaxLength="40"/>
+                <Property Name="latitude" Type="Edm.String" MaxLength="40"/>
+                <Property Name="name" Type="Edm.String" MaxLength="40"/>
+                <Property Name="description" Type="Edm.String" MaxLength="2048"/>
+                <Property Name="number" Type="Edm.String" MaxLength="40"/>
+                <Property Name="isKidFriendly" Type="Edm.Boolean"/>
+                <Property Name="isElderlyFriendly" Type="Edm.Boolean"/>
+                <Property Name="isStrollerFriendly" Type="Edm.Boolean"/>
+                <Property Name="hasToilet" Type="Edm.Boolean"/>
+                <Property Name="hasFood" Type="Edm.Boolean"/>
+                <NavigationProperty Name="parkingSpot" Relationship="api.ParkingSpots_target" FromRole="Stampboxes" ToRole="ParkingSpots"/>
+                <NavigationProperty Name="myAdjacentStamp" Relationship="api.AdjacentStamps_first" FromRole="Stampboxes" ToRole="AdjacentStamps"/>
+                <NavigationProperty Name="targetForAdjacentStamp" Relationship="api.AdjacentStamps_second" FromRole="Stampboxes" ToRole="AdjacentStamps"/>
+            </EntityType>
+            <EntityType Name="Stampings">
+                <NavigationProperty Name="stamp" Relationship="api.Stampings_stamp" FromRole="Stampings" ToRole="Stampboxes"/>
+                <Property Name="stamp_ID" Type="Edm.Guid"/>
+                <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+                <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+            </EntityType>
+            <EntityType Name="ParkingSpots" m:HasStream="true">
+                <Property Name="longitude" Type="Edm.String" MaxLength="40"/>
+                <Property Name="latitude" Type="Edm.String" MaxLength="40"/>
+                <Property Name="name" Type="Edm.String" MaxLength="40"/>
+                <Property Name="description" Type="Edm.String" MaxLength="2048"/>
+                <NavigationProperty Name="target" Relationship="api.ParkingSpots_target" FromRole="ParkingSpots" ToRole="Stampboxes"/>
+                <Property Name="target_ID" Type="Edm.Guid"/>
+                <Property Name="hikingTime" Type="Collection(api.ParkingSpots_hikingTime)" Nullable="false"/>
+            </EntityType>
+            <EntityType Name="AdjacentStamps">
+                <Key>
+                    <PropertyRef Name="first_ID"/>
+                    <PropertyRef Name="second_ID"/>
+                </Key>
+                <NavigationProperty Name="first" Relationship="api.AdjacentStamps_first" FromRole="AdjacentStamps" ToRole="Stampboxes"/>
+                <Property Name="first_ID" Type="Edm.Guid" Nullable="false"/>
+                <NavigationProperty Name="second" Relationship="api.AdjacentStamps_second" FromRole="AdjacentStamps" ToRole="Stampboxes"/>
+                <Property Name="second_ID" Type="Edm.Guid" Nullable="false"/>
+            </EntityType>
+            <ComplexType Name="ParkingSpots_hikingTime">
+                <Property Name="to" Type="Edm.String" MaxLength="40"/>
+                <Property Name="seconds" Type="Edm.Int32"/>
+                <Property Name="fitnessScore" Type="Edm.Int32"/>
+                <Property Name="DistanceMeters" Type="Edm.Int32"/>
+                <Property Name="Elevation" Type="Edm.Int32"/>
+            </ComplexType>
+            <Association Name="Stampings_stamp">
+                <End Role="Stampings" Type="api.Stampings" Multiplicity="*"/>
+                <End Role="Stampboxes" Type="api.Stampboxes" Multiplicity="0..1"/>
+                <ReferentialConstraint>
+                    <Principal Role="Stampboxes">
+                        <PropertyRef Name="ID"/>
+                    </Principal>
+                    <Dependent Role="Stampings">
+                        <PropertyRef Name="stamp_ID"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Association Name="ParkingSpots_target">
+                <End Role="ParkingSpots" Type="api.ParkingSpots" Multiplicity="*"/>
+                <End Role="Stampboxes" Type="api.Stampboxes" Multiplicity="0..1">
+                    <OnDelete Action="Cascade"/>
+                </End>
+                <ReferentialConstraint>
+                    <Principal Role="Stampboxes">
+                        <PropertyRef Name="ID"/>
+                    </Principal>
+                    <Dependent Role="ParkingSpots">
+                        <PropertyRef Name="target_ID"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Association Name="AdjacentStamps_first">
+                <End Role="AdjacentStamps" Type="api.AdjacentStamps" Multiplicity="*"/>
+                <End Role="Stampboxes" Type="api.Stampboxes" Multiplicity="0..1">
+                    <OnDelete Action="Cascade"/>
+                </End>
+                <ReferentialConstraint>
+                    <Principal Role="Stampboxes">
+                        <PropertyRef Name="ID"/>
+                    </Principal>
+                    <Dependent Role="AdjacentStamps">
+                        <PropertyRef Name="first_ID"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Association Name="AdjacentStamps_second">
+                <End Role="AdjacentStamps" Type="api.AdjacentStamps" Multiplicity="*"/>
+                <End Role="Stampboxes" Type="api.Stampboxes" Multiplicity="0..1">
+                    <OnDelete Action="Cascade"/>
+                </End>
+                <ReferentialConstraint>
+                    <Principal Role="Stampboxes">
+                        <PropertyRef Name="ID"/>
+                    </Principal>
+                    <Dependent Role="AdjacentStamps">
+                        <PropertyRef Name="second_ID"/>
+                    </Dependent>
+                </ReferentialConstraint>
+            </Association>
+            <Annotations Target="api.Stampboxes" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.MediaType" String="image/png"/>
+            </Annotations>
+            <Annotations Target="api.Stampings/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="api.Stampings/createdBy" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.Computed" Bool="true"/>
+            </Annotations>
+            <Annotations Target="api.ParkingSpots" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Core.MediaType" String="image/png"/>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

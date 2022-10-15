@@ -3,11 +3,11 @@ GET http://localhost:4004/api/Stampboxes
 Authorization: Basic Kevin password
 
 ### Get all stampings done by Kevin
-GET http://localhost:4004/api/Stampings
+GET http://localhost:4004/v2/api/Stampings
 Authorization: Basic Kevin password
 
 ### Post new Stamp for Kevin
-POST http://localhost:4004/api/Stampings
+POST http://localhost:4004/v2/api/Stampings
 Accept: application/json
 content-type: application/json
 Authorization: Basic Kevin password

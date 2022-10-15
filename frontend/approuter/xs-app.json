@@ -1,11 +1,10 @@
 {
   "welcomeFile": "uimodule/index.html",
-  "authenticationMethod": "none",
+  "authenticationMethod": "route",
   "logout": {
     "logoutEndpoint": "/do/logout"
   },
-  "routes": [
-    {
+  "routes": [{
       "source": "^/uimodule/(.*)$",
       "target": "$1",
       "authenticationType": "none",
@@ -15,7 +14,8 @@
       "source": "^/v2/(.*)$",
       "target": "/v2/$1",
       "destination": "api",
-      "authenticationType": "none"
+      "authenticationType": "basic",
+      "csrfProtection": false
     }
   ]
 }

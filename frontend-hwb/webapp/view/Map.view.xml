@@ -1,0 +1,23 @@
+<mvc:View controllerName="hwb.frontendhwb.controller.Map"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns="sap.m"
+    xmlns:vbm="sap.ui.vbm">
+    <Panel headerText="{i18n>helloPanelTitle}" class="sapUiResponsiveMargin" width="auto">
+        <content>
+            <HBox>
+                <vbm:GeoMap id="map"
+                    xmlns:mvc="sap.ui.core.mvc"
+                    xmlns:vbm="sap.ui.vbm"
+                    xmlns="sap.m" width="100%" height="100%" enableAnimation="false" mapConfiguration="{mapConfig>/}">
+                    <vbm:clusters>
+                        <vbm:ClusterTree id="clusterTree" textProperty="text" areaAlwaysVisible="false" areaColor="rgba(255,255,255,0)" areaColorBorder="rgba(255,255,255,0)">
+                            <vbm:vizTemplate>
+                                <vbm:Cluster id="vizTemplate" type="Warning" icon="sap-icon://wrench" />
+                            </vbm:vizTemplate>
+                        </vbm:ClusterTree>
+                    </vbm:clusters>
+                </vbm:GeoMap>
+            </HBox>
+        </content>
+    </Panel>
+</mvc:View>

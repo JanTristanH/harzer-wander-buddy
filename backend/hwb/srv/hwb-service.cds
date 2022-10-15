@@ -13,6 +13,6 @@ service api @(requires : 'authenticated-user') {
         {grant : 'WRITE'}
     ])                as projection on db.Stampings;
 
-    //action route (statingStampID:Integer, targetNumberOfStamps: Integer) returns Integer;
+//action route (statingStampID:Integer, targetNumberOfStamps: Integer) returns Integer;
 
 }
