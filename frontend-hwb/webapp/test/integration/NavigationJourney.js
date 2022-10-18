@@ -3,7 +3,7 @@
 sap.ui.define([
 	"sap/ui/test/opaQunit",
 	"./pages/App",
-	"./pages/View1"
+	"./pages/Main"
 ], function (opaTest) {
 	"use strict";
 
@@ -15,7 +15,7 @@ sap.ui.define([
 
 		// Assertions
 		Then.onTheAppPage.iShouldSeeTheApp();
-      	Then.onTheViewPage.iShouldSeeThePageView();
+		Then.onTheViewPage.iShouldSeeThePageView();
 
 		//Cleanup
 		Then.iTeardownMyApp();

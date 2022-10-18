@@ -1,4 +1,4 @@
-<mvc:View controllerName="hwb.frontendhwb.controller.View1"
+<mvc:View controllerName="hwb.frontendhwb.controller.Main"
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
     xmlns="sap.m">
     <Page id="page" title="{i18n>title}">
@@ -7,11 +7,11 @@
                 <IconTabBar id="idIconTabBarNoIcons" expanded="{device>/isNoPhone}" class="sapUiResponsiveContentPadding">
                     <items>
                         <IconTabFilter text="List" key="list">
-                            <Text text="Info content goes here ..." />
+                            <Text text="List Tab ..." />
                             <mvc:XMLView viewName="hwb.frontendhwb.view.List"/>
                         </IconTabFilter>
                         <IconTabFilter text="Map" key="map">
-                            <Text text="Info content goes here ..." />
+                            <Text text="Map goes here ..." />
                             <mvc:XMLView viewName="hwb.frontendhwb.view.Map"/>
                         </IconTabFilter>
                         <IconTabFilter text="Notes" key="notes">

@@ -4,45 +4,41 @@
     xmlns:u="sap.ui.unified"
     xmlns:c="sap.ui.core"
     xmlns="sap.m">
-    <Panel headerText="{i18n>helloPanelTitle}" class="sapUiResponsiveMargin" width="auto">
-        <content>
-            <HBox>
-                <Table id="idBooksTable" inset="false" items="{
+    <HBox>
+        <Table id="StampingsTable" inset="false" mode="MultiSelect" items="{
                         path: '/Stampings',
                         sorter: {
                           path: 'createdBy'
                         }
                       }">
-                    <headerToolbar>
-                        <OverflowToolbar>
-                            <content>
-                                <Title text="Stamps" level="H2"/>
-                                <ToolbarSpacer />
-                            </content>
-                        </OverflowToolbar>
-                    </headerToolbar>
-                    <columns>
-                        <Column width="12em">
-                            <Text text="ID" />
-                        </Column>
-                        <Column>
-                            <Text text="createdAt" />
-                        </Column>
-                        <Column minScreenWidth="25rem" demandPopin="true">
-                            <Text text="createdBy" />
-                        </Column>
-                    </columns>
-                    <items>
-                        <ColumnListItem vAlign="Middle">
-                            <cells>
-                                <ObjectIdentifier title="{stamp_ID}"/>
-                                <Text text="{createdAt}" />
-                                <Text text="{createdBy}" />
-                            </cells>
-                        </ColumnListItem>
-                    </items>
-                </Table>
-            </HBox>
-        </content>
-    </Panel>
+            <headerToolbar>
+                <OverflowToolbar>
+                    <content>
+                        <Title text="Stamps" level="H2"/>
+                        <ToolbarSpacer />
+                    </content>
+                </OverflowToolbar>
+            </headerToolbar>
+            <columns>
+                <Column width="12em">
+                    <Text text="ID" />
+                </Column>
+                <Column>
+                    <Text text="createdAt" />
+                </Column>
+                <Column minScreenWidth="25rem" demandPopin="true">
+                    <Text text="createdBy" />
+                </Column>
+            </columns>
+            <items>
+                <ColumnListItem vAlign="Middle">
+                    <cells>
+                        <ObjectIdentifier title="{stamp_ID}"/>
+                        <Text text="{createdAt}" />
+                        <Text text="{createdBy}" />
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
+    </HBox>
 </mvc:View>
