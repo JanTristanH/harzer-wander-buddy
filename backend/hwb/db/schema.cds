@@ -31,6 +31,8 @@ entity Stampboxes : cuid, temporal, PointOfInterest {
                                  on myAdjacentStamp.first = $self;
     targetForAdjacentStamp : Composition of many AdjacentStamps
                                  on targetForAdjacentStamp.second = $self;
+    Stampings              : Composition of many Stampings
+                                 on Stampings.stamp = $self;
 }
 
 @assert.integrity : false
