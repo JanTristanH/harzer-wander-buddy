@@ -2,6 +2,10 @@
 GET http://localhost:4004/api/Stampboxes
 Authorization: Basic Kevin password
 
+### Get count of boxes
+GET http://localhost:4004/api/Stampboxes/$count
+Authorization: Basic Kevin password
+
 ### Get all stampings done by Kevin
 GET http://localhost:4004/v2/api/Stampings
 Authorization: Basic Kevin password
