@@ -5,10 +5,14 @@
     xmlns:c="sap.ui.core"
     xmlns="sap.m">
     <HBox>
-        <Table id="StampingsTable" inset="false" mode="MultiSelect" items="{
-                        path: '/Stampings',
+        <Table id="StampingsTable" inset="false" growing="true" mode="MultiSelect" items="{
+                        path: '/Stampboxes',
                         sorter: {
-                          path: 'createdBy'
+                          path: 'name'
+
+                        },
+                        parameters: {
+                            expand: 'Stampings'
                         }
                       }">
             <headerToolbar>
@@ -21,21 +25,21 @@
             </headerToolbar>
             <columns>
                 <Column width="12em">
-                    <Text text="ID" />
+                    <Text text="Number" />
                 </Column>
                 <Column>
-                    <Text text="createdAt" />
+                    <Text text="Title" />
                 </Column>
-                <Column minScreenWidth="25rem" demandPopin="true">
-                    <Text text="createdBy" />
+                <Column>
+                    <Text text="Created By" />
                 </Column>
             </columns>
             <items>
                 <ColumnListItem vAlign="Middle">
                     <cells>
-                        <ObjectIdentifier title="{stamp_ID}"/>
-                        <Text text="{createdAt}" />
-                        <Text text="{createdBy}" />
+                        <ObjectIdentifier title="{number}"/>
+                        <Text text="{name}" />
+                        <Text text="{Stampings/results/0/stamp_ID}"/>
                     </cells>
                 </ColumnListItem>
             </items>
