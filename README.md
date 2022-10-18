@@ -1,4 +1,5 @@
 # harzer-wander-buddy
+
 Harzer Wander Buddy for stamp collecting
 
 ## Purpose
@@ -11,13 +12,21 @@ This app is intended to help plan your route and collect all 222 stamps.
 2. run npm i
 3. run cds watch
 
-> Information on the `@sap/cap-cds` license here https://answers.sap.com/questions/13018451/cap-runtime-license.html
+> Information on the `@sap/cap-cds` license [here](https://answers.sap.com/questions/13018451/cap-runtime-license.html)
 
-## Start frontend
+## Start frontend with ui5 cli
+
+1. move to frontend-hwb
+2. optionally adjust the backend url if working from BAS
+3. run `npm start-local`
+
+## Start frontend with approuter
 
 1. move to frontend/approuter
 2. run npm i
-3. create a file called default-env.json with the following content
+3. create a file called default-env.json with the content below
+4. run npm start
+
 ```json
 {
   "destinations": [{
@@ -27,7 +36,4 @@ This app is intended to help plan your route and collect all 222 stamps.
 }
 ```
 
-4. run npm start
-
 > this starts the ui5 app served via an approuter
-
