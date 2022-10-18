@@ -11,7 +11,8 @@
         "express": "^4"
     },
     "devDependencies": {
-        "sqlite3": "^5.0.8"
+        "sqlite3": "^5.0.8",
+        "uuid": "^9.0.0"
     },
     "scripts": {
         "start": "cds run"
