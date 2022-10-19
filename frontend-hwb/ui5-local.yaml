@@ -15,6 +15,7 @@ framework:
     - name: sap.ui.comp
     - name: sap.ui.generic.app
     - name: sap.ui.table
+    - name: sap.ui.vbm
     - name: sap.ushell
     - name: themelib_sap_horizon
 server:
