@@ -23,6 +23,20 @@ sap.ui.define([
                 };
                 let oTable = this.getView().byId("StampingsTable");
                 oTable.addEventDelegate(this._myDelegate, oTable);
+            },
+            onStampingsUpdateFinished: function (event) {
+                this.selectWhere(context => context.getProperty("Stampings").length > 0);
+            },
+
+            selectWhere: function (keysAreMatching) {
+                const table = this.byId("StampingsTable");
+
+                table.getItems().forEach(element => {
+                    if (keysAreMatching(element.getBindingContext())) {
+                        table.setSelectedItemById(element.getId())
+                    }
+                });
+                return table
             }
         });
     });

@@ -5,7 +5,8 @@
     xmlns:c="sap.ui.core"
     xmlns="sap.m">
     <HBox>
-        <Table id="StampingsTable" inset="false" growing="true" mode="MultiSelect" items="{
+        <Table id="StampingsTable" inset="false" growing="true" mode="MultiSelect" updateFinished=".onStampingsUpdateFinished" items="{
+
                         path: '/Stampboxes',
                         sorter: {
                           path: 'name'
@@ -39,10 +40,12 @@
                     <cells>
                         <ObjectIdentifier title="{number}"/>
                         <Text text="{name}" />
-                        <Text text="{Stampings/results/0/stamp_ID}"/>
+                        <Text text="{name}" />
+                        <!-- <Text text="{:={$Stampings}.length}>0}"/> -->
                     </cells>
                 </ColumnListItem>
             </items>
         </Table>
+        <Button press='.onPress'></Button>
     </HBox>
 </mvc:View>
