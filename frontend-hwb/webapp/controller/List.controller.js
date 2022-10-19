@@ -33,7 +33,7 @@ sap.ui.define([
                     var obj = oSelectedItem.getBindingContext().getObject();
                     let oModel = this.getView().getModel();
                     let mParameters = {
-                        success: () => MessageToast.show("Saved Stamping"),
+                        success: () => MessageToast.show("Saved Stamping") || oModel.refresh(),
                         // give message and reset ui to keep it consistent with backend
                         error: () => MessageToast.show("An Error Occured") || oSelectedItem.setSelected(false)
                     }
