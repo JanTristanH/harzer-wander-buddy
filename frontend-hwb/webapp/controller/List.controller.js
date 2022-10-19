@@ -24,6 +24,30 @@ sap.ui.define([
                 let oTable = this.getView().byId("StampingsTable");
                 oTable.addEventDelegate(this._myDelegate, oTable);
             },
+
+            onSelectionChange: function (oEvent) {
+                if (oEvent.getParameter("selected")) {
+                    // ListItem set to true
+                    var oSelectedItem = oEvent.getParameter("listItem");
+                    var obj = oSelectedItem.getBindingContext().getObject();
+                    let oModel = this.getView().getModel();
+                    let mParameters = {
+                        success: () => alert("good"),
+                        error: () => alert("bad")
+                    }
+                    let ID = obj.ID;
+                    oModel.create("/Stampings", {
+                        "stamp": {
+                            ID
+                        }
+                    }, mParameters);
+                    
+                } else {
+                // ListItem set to false
+                alert(JSON.stringify("Not implemented yet"));
+                }
+            },
+
             onStampingsUpdateFinished: function (event) {
                 this.selectWhere(context => context.getProperty("Stampings").length > 0);
             },

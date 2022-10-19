@@ -5,8 +5,7 @@
     xmlns:c="sap.ui.core"
     xmlns="sap.m">
     <HBox>
-        <Table id="StampingsTable" inset="false" growing="true" mode="MultiSelect" updateFinished=".onStampingsUpdateFinished" items="{
-
+        <Table id="StampingsTable" inset="false" growing="true" mode="MultiSelect" selectionChange="onSelectionChange" updateFinished=".onStampingsUpdateFinished" items="{
                         path: '/Stampboxes',
                         sorter: {
                           path: 'name'
