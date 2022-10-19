@@ -11,8 +11,8 @@
                         <vbm:Routes>
                         </vbm:Routes>
 
-                        <vbm:Spots items="{/Stampboxes}">
-                            <vbm:Spot position="{longitude};{latitude}" tooltip="{number}" labelType="Default" labelText="{number} -  {name}" labelPos="5"  />
+                        <vbm:Spots items="{/PersonalizedStampboxes}">
+                            <vbm:Spot position="{longitude};{latitude}" tooltip="{number}" labelType="Default" labelText="{number} -  {name}" labelPos="5" type="{= !${hasVisited} ? 'Error' : 'Success' }" />
                         </vbm:Spots>
 
                     </vbm:vos>
