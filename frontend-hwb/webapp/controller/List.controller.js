@@ -1,10 +1,11 @@
 sap.ui.define([
-        "sap/ui/core/mvc/Controller"
+        "sap/ui/core/mvc/Controller",
+        'sap/m/MessageToast'
     ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller) {
+    function (Controller, MessageToast) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.List", {
@@ -26,14 +27,15 @@ sap.ui.define([
             },
 
             onSelectionChange: function (oEvent) {
+                var oSelectedItem = oEvent.getParameter("listItem");
                 if (oEvent.getParameter("selected")) {
                     // ListItem set to true
-                    var oSelectedItem = oEvent.getParameter("listItem");
                     var obj = oSelectedItem.getBindingContext().getObject();
                     let oModel = this.getView().getModel();
                     let mParameters = {
-                        success: () => alert("good"),
-                        error: () => alert("bad")
+                        success: () => MessageToast.show("Saved Stamping"),
+                        // give message and reset ui to keep it consistent with backend
+                        error: () => MessageToast.show("An Error Occured") || oSelectedItem.setSelected(false)
                     }
                     let ID = obj.ID;
                     oModel.create("/Stampings", {
@@ -41,10 +43,10 @@ sap.ui.define([
                             ID
                         }
                     }, mParameters);
-                    
                 } else {
-                // ListItem set to false
-                alert(JSON.stringify("Not implemented yet"));
+                    // ListItem set to false
+                    MessageToast.show("Removing Stamps is not implemented yet");
+                    oSelectedItem.setSelected(true);
                 }
             },
 
