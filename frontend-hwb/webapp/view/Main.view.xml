@@ -7,11 +7,9 @@
                 <IconTabBar id="idIconTabBarNoIcons" expanded="{device>/isNoPhone}" class="sapUiResponsiveContentPadding">
                     <items>
                         <IconTabFilter text="List" key="list">
-                            <Text text="List Tab ..." />
                             <mvc:XMLView viewName="hwb.frontendhwb.view.List"/>
                         </IconTabFilter>
                         <IconTabFilter text="Map" key="map">
-                            <Text text="Map goes here ..." />
                             <mvc:XMLView viewName="hwb.frontendhwb.view.Map"/>
                         </IconTabFilter>
                         <IconTabFilter text="Notes" key="notes">
