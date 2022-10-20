@@ -20,7 +20,14 @@ sap.ui.define([
             onToggleStampedSpots: function () {
                 let spots = this.getView().byId("spots")
                 spots.getItems()
-                    .filter(e => e.getProperty("type") == !unstampedType)
+                    .filter(e => e.getProperty("type") !== unstampedType)
+                    .map(e => spots.removeItem(e))
+                //TODO reset items from global model
+            },
+            onShowGreens: function () {
+                let spots = this.getView().byId("spots")
+                spots.getItems()
+                    .filter(e => e.getProperty("type") === unstampedType)
                     .map(e => spots.removeItem(e))
                 //TODO reset items from global model
             }
