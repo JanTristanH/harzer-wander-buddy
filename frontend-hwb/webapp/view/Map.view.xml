@@ -5,8 +5,9 @@
     <Panel headerText="{i18n>helloPanelTitle}" class="sapUiResponsiveMargin" width="auto">
         <content>
             <Button press='.onToggleLables' text="Toggle Label"/>
-            <Button press='.onToggleStampedSpots' text="Toggle Stamped"/>
+            <Button press='.onToggleStampedSpots' text="Show Unstamped"/>
             <Button press='.onShowGreens' text="Show only Stamped ones"/>
+            <Button press='.onShowAll' text="Show All"/>
             <HBox>
                 <vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.033540000;53.58708" initialZoom="12">
                     <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
