@@ -37,3 +37,15 @@ This app is intended to help plan your route and collect all 222 stamps.
 ```
 
 > this starts the ui5 app served via an approuter
+
+### Feature Backlog
+
+1. Filtering on Map view -> Goethe weg usw.
+2. Object Page
+3. Parking Spot integration
+4. Navigation to maps
+5. Tour creation: have a mask and enpoint to calculate tours based on parameters
+6. Admin Master data app -> new Stamps & moving
+7. Deal with legacy Stamps & check for deveation on HWN site
+8. History view
+9. Routen speichern
