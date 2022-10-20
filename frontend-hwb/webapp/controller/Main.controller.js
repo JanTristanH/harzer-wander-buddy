@@ -8,8 +8,9 @@ sap.ui.define([
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.Main", {
-            onInit: function () {
-
+            onInit: function () {},
+            onAfterRendering: function () {
+                this.getView().getModel().setSizeLimit(500);
             }
         });
     });
