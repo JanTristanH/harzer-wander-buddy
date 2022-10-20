@@ -51,7 +51,7 @@ sap.ui.define([
             },
 
             onStampingsUpdateFinished: function (event) {
-                this.selectWhere(context => context.getProperty("Stampings").length > 0);
+                this.selectWhere(context => context.getProperty("hasVisited"));
             },
 
             selectWhere: function (keysAreMatching) {

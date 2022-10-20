@@ -6,13 +6,9 @@
     xmlns="sap.m">
     <HBox>
         <Table id="StampingsTable" inset="false" growing="true" growingThreshold ="250" mode="MultiSelect" selectionChange="onSelectionChange" updateFinished=".onStampingsUpdateFinished" items="{
-                        path: '/Stampboxes',
+                        path: '/PersonalizedStampboxes',
                         sorter: {
                           path: 'name'
-
-                        },
-                        parameters: {
-                            expand: 'Stampings'
                         }
                       }">
             <headerToolbar>
