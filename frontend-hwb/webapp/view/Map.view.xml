@@ -12,7 +12,7 @@
                         </vbm:Routes>
 
                         <vbm:Spots items="{/PersonalizedStampboxes}">
-                            <vbm:Spot position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" labelPos="5" type="{= !${hasVisited} ? 'Error' : 'Success' }" />
+                            <vbm:Spot position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" type="{= !${hasVisited} ? 'Error' : 'Success' }" />
                         </vbm:Spots>
 
                     </vbm:vos>
