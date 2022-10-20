@@ -33,6 +33,9 @@
                 <Column>
                     <Text text="Created By" />
                 </Column>
+                <Column>
+                    <Text text="technical key (removed later)" />
+                </Column>
             </columns>
             <items>
                 <ColumnListItem vAlign="Middle">
@@ -40,6 +43,7 @@
                         <ObjectIdentifier title="{number}"/>
                         <Text text="{name}" />
                         <Text text="{name}" />
+                        <Text text="{ID}" />
                         <!-- <Text text="{:={$Stampings}.length}>0}"/> -->
                     </cells>
                 </ColumnListItem>
