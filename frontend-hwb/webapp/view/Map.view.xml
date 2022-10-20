@@ -5,7 +5,7 @@
     <Panel headerText="{i18n>helloPanelTitle}" class="sapUiResponsiveMargin" width="auto">
         <content>
             <HBox>
-                <vbm:GeoMap mapConfiguration="{mapConfig>/}" initialPosition="10.033540000;53.58708" initialZoom="12">
+                <vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.033540000;53.58708" initialZoom="12">
                     <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
                     <vbm:vos>
                         <vbm:Routes>
