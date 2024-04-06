@@ -2,6 +2,8 @@ using {hwb.db as db} from '../db/schema';
 
 service api @(requires : 'authenticated-user') {
 
+    function calculateNNearestNeighbors(n: Integer) returns Integer;
+
     @cds.redirection.target
     entity Stampboxes             as projection on db.Stampboxes;
     
@@ -44,4 +46,21 @@ service api @(requires : 'authenticated-user') {
 
 //action route (statingStampID:Integer, targetNumberOfStamps: Integer) returns Integer;
 
+    // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
+    // TODO set up read restrictions from external  
+    entity Neighbors as 
+        select from db.Stampboxes as Stampboxes
+             join db.Stampboxes as NeighborsBox 
+                on Stampboxes.ID != NeighborsBox.ID {
+        Stampboxes.ID,
+        NeighborsBox.ID as NeighborsID,
+        Stampboxes.number,
+        NeighborsBox.number as NeighborsNumber,
+        Stampboxes.latitude,
+        Stampboxes.longitude,
+        SQRT( POW(111.2 * (NeighborsBox.latitude - Stampboxes.latitude), 2) +
+              POW(111.2 * (Stampboxes.longitude - NeighborsBox.longitude) * COS(NeighborsBox.latitude / 57.3), 2)) as distanceKm:Double
+
+    } where Stampboxes.ID = 'bebf5cd4-e427-4297-a490-0730968690c2'
+    order by distanceKm asc;
 }

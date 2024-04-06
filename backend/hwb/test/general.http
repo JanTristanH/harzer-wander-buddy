@@ -58,3 +58,7 @@ Authorization: Basic Kevin password
 ### Get count of parking spaces
 GET http://localhost:4004/v2/odata/v4/api/ParkingSpots/$count
 Authorization: Basic Kevin password
+
+### Get inital Neighbors
+GET http://localhost:4004/v2/odata/v4/api/Neighbors
+Authorization: Basic Kevin password
