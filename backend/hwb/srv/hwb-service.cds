@@ -4,7 +4,8 @@ service api @(requires : 'authenticated-user') {
 
     @cds.redirection.target
     entity Stampboxes             as projection on db.Stampboxes;
-    //entity ParkingSpots as projection on db.ParkingSpots;
+    
+    entity ParkingSpots as projection on db.ParkingSpots;
 
     entity Stampings @(restrict : [
         {

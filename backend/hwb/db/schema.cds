@@ -42,7 +42,7 @@ entity AdjacentStamps {
 }
 
 @assert.integrity : false
-entity ParkingSpots : PointOfInterest {
+entity ParkingSpots : cuid, PointOfInterest {
     target             : Association to Stampboxes;
     hikingTime         : many {
         to             : String(40);
