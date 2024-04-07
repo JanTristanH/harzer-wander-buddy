@@ -15,7 +15,7 @@ aspect PointOfInterest {
     image       : String(2048); //LargeBinary @Core.MediaType : 'image/png';
 }
 
-@assert.integrity : false
+@assert.integrity: false
 entity Stampboxes : cuid, temporal, PointOfInterest {
 
     number                 : String(40); // to allow Sonderstempel
@@ -35,39 +35,43 @@ entity Stampboxes : cuid, temporal, PointOfInterest {
                                  on Stampings.stamp = $self;
 }
 
-@assert.integrity : false
+@assert.integrity: false
 entity AdjacentStamps {
     key first  : Association to Stampboxes;
     key second : Association to Stampboxes;
 }
 
-@assert.integrity : false
+@assert.integrity: false
 entity ParkingSpots : cuid, PointOfInterest {
     // target             : Association to Stampboxes;
-    // hikingTime         : many {
-    //     to             : String(40);
-    //     seconds        : Integer;
-    //     fitnessScore   : Integer;
-    //     DistanceMeters : Integer;
-    //     Elevation      : Integer; //TODO choose fitting type
-    // //Waypoints gpx isch -> route zeigen
-    //}
+// hikingTime         : many {
+//     to             : String(40);
+//     seconds        : Integer;
+//     fitnessScore   : Integer;
+//     DistanceMeters : Integer;
+//     Elevation      : Integer; //TODO choose fitting type
+// //Waypoints gpx isch -> route zeigen
+//}
 }
 
-@assert.integrity : false
+@assert.integrity: false
 entity TravelTimes : cuid {
     //Todo also include from parking to stamp
-    fromPoi : UUID;
-    toPoi   : UUID;
-    Seconds : Integer;
+    fromPoi         : UUID;
+    toPoi           : UUID;
+    durationSeconds : Integer64;
+    distanceMeters  : Integer64;
+    travelMode      : String(128);
+    encodedPolyLine : String(4096);
+
 //Waypoint Route
 }
 
-@assert.integrity : false
+@assert.integrity: false
 entity Stampings {
-    stamp : Association to Stampboxes;
-    createdAt   : Timestamp @cds.on.insert : $now;
-    createdBy   : User      @cds.on.insert : $user;
+    stamp     : Association to Stampboxes;
+    createdAt : Timestamp @cds.on.insert: $now;
+    createdBy : User      @cds.on.insert: $user;
 }
 
 // Todo save commen stamps as suggested routed

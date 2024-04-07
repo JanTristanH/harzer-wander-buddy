@@ -15,7 +15,8 @@
         "uuid": "^9.0.0"
     },
     "scripts": {
-        "start": "cds run"
+        "start": "cds run",
+        "watch": "cds watch"
     },
     "cds": {
         "requires": {

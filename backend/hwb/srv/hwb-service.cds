@@ -8,7 +8,7 @@ service api @(requires: 'authenticated-user') {
     entity Stampboxes             as projection on db.Stampboxes;
 
     entity ParkingSpots           as projection on db.ParkingSpots;
-
+    entity TravelTimes as projection on db.TravelTimes;
     entity Stampings @(restrict: [
         {
             grant: 'READ',
@@ -50,7 +50,7 @@ service api @(requires: 'authenticated-user') {
 
     // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
     // TODO set up read restrictions from external
-    entity Neighbors              as
+    entity NeighborsStampStamp              as
         select from db.Stampboxes as Stampboxes
         join db.Stampboxes as NeighborsBox
             on Stampboxes.ID != NeighborsBox.ID
@@ -76,8 +76,36 @@ service api @(requires: 'authenticated-user') {
             )                   as distanceKm : Double
 
         }
-        where
-            Stampboxes.ID = 'bebf5cd4-e427-4297-a490-0730968690c2'
+        // where
+        //     Stampboxes.ID = 'bebf5cd4-e427-4297-a490-0730968690c2'
+        order by
+            distanceKm asc;
+
+ entity NeighborsStampParking              as
+        select from db.Stampboxes as Stampboxes
+        join db.ParkingSpots as Neighbors
+            on Stampboxes.ID != Neighbors.ID
+        {
+            Stampboxes.ID,
+            Neighbors.ID     as NeighborsID,
+            Stampboxes.number,
+            Stampboxes.latitude,
+            Stampboxes.longitude,
+            SQRT(
+                POW(
+                    111.2 * (
+                        Neighbors.latitude - Stampboxes.latitude
+                    ), 2
+                )+POW(
+                    111.2 * (
+                        Stampboxes.longitude - Neighbors.longitude
+                    ) * COS(
+                        Neighbors.latitude / 57.3
+                    ), 2
+                )
+            )                   as distanceKm : Double
+
+        }
         order by
             distanceKm asc;
 
