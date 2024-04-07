@@ -62,3 +62,7 @@ Authorization: Basic Kevin pass
 ### Get inital Neighbors
 GET http://localhost:4004/odata/v2/api/Neighbors
 Authorization: Basic Kevin pass
+
+### Start calculate for travelTimes
+GET http://localhost:4004/odata/v2/api/calculateTravelTimesNNearestNeighbors?n=5
+Authorization: Basic Kevin pass

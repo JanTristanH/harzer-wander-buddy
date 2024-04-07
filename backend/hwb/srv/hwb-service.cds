@@ -2,7 +2,7 @@ using {hwb.db as db} from '../db/schema';
 
 service api @(requires : 'authenticated-user') {
 
-    function calculateNNearestNeighbors(n: Integer) returns Integer;
+    function calculateTravelTimesNNearestNeighbors(n: Integer) returns Integer;
 
     @cds.redirection.target
     entity Stampboxes             as projection on db.Stampboxes;
