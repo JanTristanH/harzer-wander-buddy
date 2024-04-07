@@ -12,7 +12,7 @@ aspect PointOfInterest {
     latitude    : String(40);
     name        : String(40);
     description : String(2048);
-    image       : LargeBinary @Core.MediaType : 'image/png';
+    image       : String(2048); //LargeBinary @Core.MediaType : 'image/png';
 }
 
 @assert.integrity : false
@@ -25,8 +25,8 @@ entity Stampboxes : cuid, temporal, PointOfInterest {
     isStrollerFriendly     : Boolean;
     hasToilet              : Boolean;
     hasFood                : Boolean;
-    parkingSpot            : Composition of many ParkingSpots
-                                 on parkingSpot.target = $self;
+    // parkingSpot            : Composition of many ParkingSpots
+    //                              on parkingSpot.target = $self;
     myAdjacentStamp        : Composition of many AdjacentStamps
                                  on myAdjacentStamp.first = $self;
     targetForAdjacentStamp : Composition of many AdjacentStamps
@@ -43,15 +43,15 @@ entity AdjacentStamps {
 
 @assert.integrity : false
 entity ParkingSpots : cuid, PointOfInterest {
-    target             : Association to Stampboxes;
-    hikingTime         : many {
-        to             : String(40);
-        seconds        : Integer;
-        fitnessScore   : Integer;
-        DistanceMeters : Integer;
-        Elevation      : Integer; //TODO choose fitting type
-    //Waypoints gpx isch -> route zeigen
-    }
+    // target             : Association to Stampboxes;
+    // hikingTime         : many {
+    //     to             : String(40);
+    //     seconds        : Integer;
+    //     fitnessScore   : Integer;
+    //     DistanceMeters : Integer;
+    //     Elevation      : Integer; //TODO choose fitting type
+    // //Waypoints gpx isch -> route zeigen
+    //}
 }
 
 @assert.integrity : false

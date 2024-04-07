@@ -2,7 +2,6 @@ const cds = require('@sap/cds/lib')
 
 module.exports = class api extends cds.ApplicationService { init(){
   this.on ('calculateTravelTimesNNearestNeighbors', calculateTravelTimesNNearestNeighbors)
-  this.before ('*', console.log)
   return super.init()
 }}
 
