@@ -4,15 +4,17 @@
 
 - implement api call to maps to get times (by travel type)
 - implement DFS to suggest routes
-- UI für suggested routes
-- Ui5 project into cap
-- cute mascot
+- UI für suggested routes -> General route planning & viewing
 - dev deploy on domain
+- Mobile optimization & UI overhaul                          --> do this sooner? 
+- shareability for routes
+- cute mascot
+- backup for user stamps
 
 ## MVP 2
 
 - Friends feature (plan route together & notification)
-- Mobile optimization & UI overhaul 
+- Ui5 project into cap
 
 Welcome to your new project.
 
