@@ -1,44 +1,44 @@
 ### Get all boxes
-GET http://localhost:4004/v2/odata/v4/api/Stampboxes
-Authorization: Basic Kevin password
+GET http://localhost:4004/odata/v2/api/Stampboxes
+Authorization: Basic Kevin pass
 
 ### Get count of boxes
-GET http://localhost:4004/v2/odata/v4/api/Stampboxes/$count
-Authorization: Basic Kevin password
+GET http://localhost:4004/odata/v2/api/Stampboxes/$count
+Authorization: Basic Kevin pass
 
 ### Get all stampings done by Kevin
-GET http://localhost:4004/v2/v2/odata/v4/api/Stampings
-Authorization: Basic Kevin password
+GET http://localhost:4004/v2/odata/v2/api/Stampings
+Authorization: Basic Kevin pass
 
 ### Post new Stamp for Kevin
-POST http://localhost:4004/v2/v2/odata/v4/api/Stampings
+POST http://localhost:4004/v2/odata/v2/api/Stampings
 Accept: application/json
 content-type: application/json
-Authorization: Basic Kevin password
+Authorization: Basic Kevin pass
 
 {
     "stamp": { "ID": "38bdea78-045d-420d-b589-aacb19447a7e"}
 }
 
 ### Get all stampings done by Alice
-GET http://localhost:4004/v2/odata/v4/api/Stampings
-Authorization: Basic Alice password
+GET http://localhost:4004/odata/v2/api/Stampings
+Authorization: Basic Alice pass
 
 ### Post new Stamp for Alice
-POST http://localhost:4004/v2/odata/v4/api/Stampings
+POST http://localhost:4004/odata/v2/api/Stampings
 Accept: application/json
 content-type: application/json
-Authorization: Basic Alice password
+Authorization: Basic Alice pass
 
 {
     "stamp": { "ID": "38bdea78-045d-420d-b589-aacb19447a7e"}
 }
 
 ### Add a Stamp box
-POST http://localhost:4004/v2/odata/v4/api/Stampboxes
+POST http://localhost:4004/odata/v2/api/Stampboxes
 Accept: application/json
 content-type: application/json
-Authorization: Basic Kevin password
+Authorization: Basic Kevin pass
 
 {
 "validFrom": "1970-01-01T00:00:01.0+00:00",
@@ -56,9 +56,9 @@ Authorization: Basic Kevin password
 }
 
 ### Get count of parking spaces
-GET http://localhost:4004/v2/odata/v4/api/ParkingSpots/$count
-Authorization: Basic Kevin password
+GET http://localhost:4004/odata/v2/api/ParkingSpots/$count
+Authorization: Basic Kevin pass
 
 ### Get inital Neighbors
-GET http://localhost:4004/v2/odata/v4/api/Neighbors
-Authorization: Basic Kevin password
+GET http://localhost:4004/odata/v2/api/Neighbors
+Authorization: Basic Kevin pass

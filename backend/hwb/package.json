@@ -6,8 +6,8 @@
     "license": "UNLICENSED",
     "private": true,
     "dependencies": {
+        "@cap-js-community/odata-v2-adapter": "^1.12.8",
         "@sap/cds": "^7",
-        "@sap/cds-odata-v2-adapter-proxy": "^1.8.20",
         "express": "^4"
     },
     "devDependencies": {
@@ -24,13 +24,13 @@
                     "kind": "basic-auth",
                     "users": {
                         "Kevin": {
-                            "password": "password",
+                            "pass": "pass",
                             "roles": [
                                 "dummy"
                             ]
                         },
                         "Alice": {
-                            "password": "password"
+                            "pass": "pass"
                         },
                         "*": false
                     }
