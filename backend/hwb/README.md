@@ -1,5 +1,19 @@
 # Getting Started
 
+## Todo
+
+- implement api call to maps to get times (by travel type)
+- implement DFS to suggest routes
+- UI für suggested routes
+- Ui5 project into cap
+- cute mascot
+- dev deploy on domain
+
+## MVP 2
+
+- Friends feature (plan route together & notification)
+- Mobile optimization & UI overhaul 
+
 Welcome to your new project.
 
 It contains these folders and files, following our recommended project layout:
