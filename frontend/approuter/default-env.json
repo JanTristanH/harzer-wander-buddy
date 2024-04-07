@@ -1,6 +1,0 @@
-{
-  "destinations": [{
-    "name": "api",
-    "url": "http://localhost:4004/"
-  }]
-}

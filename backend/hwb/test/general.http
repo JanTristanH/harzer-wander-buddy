@@ -7,11 +7,11 @@ GET http://localhost:4004/odata/v2/api/Stampboxes/$count
 Authorization: Basic Kevin pass
 
 ### Get all stampings done by Kevin
-GET http://localhost:4004/v2/odata/v2/api/Stampings
+GET http://localhost:4004/odata/v2/api/Stampings
 Authorization: Basic Kevin pass
 
 ### Post new Stamp for Kevin
-POST http://localhost:4004/v2/odata/v2/api/Stampings
+POST http://localhost:4004/odata/v2/api/Stampings
 Accept: application/json
 content-type: application/json
 Authorization: Basic Kevin pass

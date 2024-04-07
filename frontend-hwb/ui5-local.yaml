@@ -31,7 +31,7 @@ server:
       configuration:
         ignoreCertError: false # If set to true, certificate errors will be ignored. E.g. self-signed certificates will be accepted
         backend:
-          - path: /v2
+          - path: /odata/v2/api
             url: http://localhost:4004
     - name: fiori-tools-preview
       afterMiddleware: fiori-tools-appreload
