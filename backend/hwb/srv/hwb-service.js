@@ -21,7 +21,7 @@ module.exports = class api extends cds.ApplicationService {
 async function calculateTravelTimesNNearestNeighbors(req) {
   const { n } = req.data
   const { Stampboxes, TravelTimes, ParkingSpots } = this.entities('hwb.db')
-  const { NeighborsStampStamp, NeighborsStampParking, NeighborsParkingStamp, NeighborsParkingParking  } = this.api.entities
+  const { NeighborsStampStamp, NeighborsStampParking, NeighborsParkingStamp, NeighborsParkingParking } = this.api.entities
 
   // p -> p via car
   // p -> s via foot (later bike)
@@ -30,7 +30,6 @@ async function calculateTravelTimesNNearestNeighbors(req) {
   // fetch all stamps and iterate
   let aStampBoxes = await SELECT
     .from(Stampboxes);
-  aStampBoxes = [{ ID: "bebf5cd4-e427-4297-a490-0730968690c2", longitude: 10.615779999999972, latitude: 51.80054 }]; // for testing
 
   for (let i = 0; i < aStampBoxes.length; i++) {
     const box = aStampBoxes[i];
@@ -57,10 +56,8 @@ async function calculateTravelTimesNNearestNeighbors(req) {
   //repeat same for parking spaces
 
   // fetch all parking spaces and iterate
-  let aParkingSpots =  SELECT
+  let aParkingSpots = SELECT
     .from(ParkingSpots);
-
-    aParkingSpots = [{ ID: "07d7006d-1ab8-4b43-9722-d8710d148492", longitude: 10.55049, latitude: 51.784652 }]; // for testing
 
   for (let i = 0; i < aParkingSpots.length; i++) {
     const spot = aParkingSpots[i];
@@ -74,7 +71,7 @@ async function calculateTravelTimesNNearestNeighbors(req) {
     // calculate travel time by foot via maps api
     let aTravelTimesWalk = await getTravelTimes(spot, adjacentStamps, 'walk');
 
-      // get n nearest parking spaces
+    // get n nearest parking spaces
     let adjacentParkingSpots = await SELECT
       .from(NeighborsParkingParking)
       .where({ ID: spot.ID })
