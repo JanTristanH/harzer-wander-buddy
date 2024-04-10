@@ -62,7 +62,7 @@ entity TravelTimes : cuid {
     durationSeconds : Integer64;
     distanceMeters  : Integer64;
     travelMode      : String(128);
-    encodedPolyLine : String(4096);
+    positionString : LargeString;
 
 //Waypoint Route
 }

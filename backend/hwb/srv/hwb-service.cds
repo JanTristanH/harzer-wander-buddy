@@ -59,8 +59,8 @@ service api @(requires: 'authenticated-user') {
             NeighborsBox.ID     as NeighborsID,
             Stampboxes.number,
             NeighborsBox.number as NeighborsNumber,
-            Stampboxes.latitude,
-            Stampboxes.longitude,
+            NeighborsBox.latitude,
+            NeighborsBox.longitude,
             SQRT(
                 POW(
                     111.2 * (
@@ -89,8 +89,8 @@ service api @(requires: 'authenticated-user') {
             Stampboxes.ID,
             Neighbors.ID     as NeighborsID,
             Stampboxes.number,
-            Stampboxes.latitude,
-            Stampboxes.longitude,
+            Neighbors.latitude,
+            Neighbors.longitude,
             SQRT(
                 POW(
                     111.2 * (
