@@ -109,7 +109,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
         result.push({
           ID: uuidv4(),
           fromPoi: box.ID,
-          toPoi: neighbor.ID,
+          toPoi: neighbor.NeighborsID,
           durationSeconds: oRoute.routes[0].duration.split('s')[0],
           distanceMeters: oRoute.routes[0].distanceMeters,
           travelMode,
