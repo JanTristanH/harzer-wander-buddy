@@ -82,3 +82,8 @@ Authorization: Basic Kevin pass
 ### Get Tree for location
 GET http://localhost:4004/odata/v2/api/treeFilter?$filter=rootPoiID eq guid'd52206d8-5aed-4324-8b85-f3e7cb16bff0'
 Authorization: Basic Kevin pass
+
+
+### Get Hiking Route
+GET http://localhost:4004/odata/v2/api/calculateHikingRoute?maxDepth=15&maxDuration=18000&maxDistance=10000&latitudeStart='51.780277'&longitudeStart='11.002212'
+Authorization: Basic Kevin pass

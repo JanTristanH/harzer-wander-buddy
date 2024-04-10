@@ -4,6 +4,19 @@ service api @(requires: 'authenticated-user') {
 
     function calculateTravelTimesNNearestNeighbors(n : Integer) returns Integer;
 
+    entity HikingRoute {
+        Points         : Composition of many TravelTimes;
+        totalDistance  : Integer;
+        totalDuration  : Integer;
+        totalNewStamps : Integer;
+    }
+
+    function   calculateHikingRoute(maxDepth : Integer,
+                                  maxDuration : Integer,
+                                  maxDistance : Integer,
+                                  latitudeStart : String,
+                                  longitudeStart : String)  returns String;
+
     @cds.redirection.target
     entity Stampboxes              as projection on db.Stampboxes;
 
@@ -186,7 +199,7 @@ service api @(requires: 'authenticated-user') {
                 '' as rootPoiID
 
             };
-    
-    entity treeFilter as projection on api.tree;
-    
+
+    entity treeFilter              as projection on api.tree;
+
 }

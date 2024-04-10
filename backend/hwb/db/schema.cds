@@ -56,15 +56,12 @@ entity ParkingSpots : cuid, PointOfInterest {
 
 @assert.integrity: false
 entity TravelTimes : cuid {
-    //Todo also include from parking to stamp
     fromPoi         : UUID;
     toPoi           : UUID;
     durationSeconds : Integer64;
     distanceMeters  : Integer64;
     travelMode      : String(128);
     positionString : LargeString;
-
-//Waypoint Route
 }
 
 @assert.integrity: false

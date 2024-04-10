@@ -5,10 +5,12 @@ const {
 
 const fetch = require('node-fetch');
 require("dotenv").config();
+const routingManager = require('./routingManager')
 
 // 40.000 free 
-// 06.700 used
+// 06.715 used
 let count = 0;
+let aTravelTimesGlobal = [];
 
 module.exports = class api extends cds.ApplicationService {
   init() {
@@ -17,7 +19,39 @@ module.exports = class api extends cds.ApplicationService {
     const full = this.entities('hwb.db')
 
     this.on('calculateTravelTimesNNearestNeighbors', calculateTravelTimesNNearestNeighbors)
+
+    this.on('calculateHikingRoute', calculateHikingRoute)
+
     return super.init()
+  }
+}
+
+async function calculateHikingRoute(req) {
+  req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
+  console.log(req.data);
+  if (aTravelTimesGlobal.length == 0){
+    const { TravelTimes } = this.entities('hwb.db')
+    aTravelTimesGlobal = await SELECT
+      .columns('fromPoi', 'toPoi', 'durationSeconds', 'distanceMeters', 'travelMode')
+      .from(TravelTimes);
+
+  }
+  let result = await routingManager.calculateHikingRoutes(req.data,aTravelTimesGlobal)
+  return result
+
+  return {
+    Points: [{
+      "ID": "00012d90-308f-427b-a80d-1a4b6f287fa6",
+      "fromPoi": "5810c033-235d-4836-b09d-f7829929e2fe",
+      "toPoi": "5810c033-235d-4836-b09d-f7829929e2fe",
+      "durationSeconds": "2397",
+      "distanceMeters": "2484",
+      "travelMode": "walk",
+      "positionString": "10.8015411;51.8247587;0;10.8015486;51.8247947;0;"
+    }],
+    totalDistance: 1,
+    totalDuration: 2,
+    totalNewStamps: 3
   }
 }
 
