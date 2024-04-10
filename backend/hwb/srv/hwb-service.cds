@@ -5,10 +5,10 @@ service api @(requires: 'authenticated-user') {
     function calculateTravelTimesNNearestNeighbors(n : Integer) returns Integer;
 
     @cds.redirection.target
-    entity Stampboxes             as projection on db.Stampboxes;
+    entity Stampboxes              as projection on db.Stampboxes;
 
-    entity ParkingSpots           as projection on db.ParkingSpots;
-    entity TravelTimes            as projection on db.TravelTimes;
+    entity ParkingSpots            as projection on db.ParkingSpots;
+    entity TravelTimes             as projection on db.TravelTimes;
 
     entity Stampings @(restrict: [
         {
@@ -16,10 +16,10 @@ service api @(requires: 'authenticated-user') {
             where: 'createdBy = $user'
         },
         {grant: 'WRITE'}
-    ])                            as projection on db.Stampings;
+    ])                             as projection on db.Stampings;
 
     @readonly
-    entity PersonalizedStampboxes as
+    entity PersonalizedStampboxes  as
         select from db.Stampboxes as Stampboxes distinct {
             key ID,
                 number,
@@ -51,7 +51,7 @@ service api @(requires: 'authenticated-user') {
 
     // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
     // TODO set up read restrictions from external
-    entity NeighborsStampStamp    as
+    entity NeighborsStampStamp     as
         select from db.Stampboxes as Stampboxes
         join db.Stampboxes as NeighborsBox
             on Stampboxes.ID != NeighborsBox.ID
@@ -82,7 +82,7 @@ service api @(requires: 'authenticated-user') {
         order by
             distanceKm asc;
 
-    entity NeighborsStampParking  as
+    entity NeighborsStampParking   as
         select from db.Stampboxes as Stampboxes
         join db.ParkingSpots as Neighbors
             on Stampboxes.ID != Neighbors.ID
@@ -168,7 +168,7 @@ service api @(requires: 'authenticated-user') {
             distanceKm asc;
 
 
-    entity tree                   as
+    entity tree                    as
             select from db.TravelTimes as TravelTimes {
                 fromPoi,
                 toPoi,

@@ -1,6 +1,4 @@
-ID;validFrom;validTo;longitude;latitude;name;description;number;image;isKidFriendly;isElderlyFriendly;;isStrollerFriendly;hasToilet;hasFood
-38bdea78-045d-420d-b589-aacb19447a7e;1970-01-01T00:00:01.0+00:00;2037-12-31T23:00:01.000Z;9.964820000;53.5704400;_Stelle 2;Beschreibung 2;Dummy 2;;;;;;;
-e960062e-7707-46c1-8638-a6d82216dd8a;1970-01-01T00:00:01.0+00:00;2037-12-31T23:00:01.000Z;10.033540000;53.58708;_Stelle 1;Beschreibung 1;Dummy 1;;;;;;;
+ID;validFrom;validTo;longitude;latitude;name;description;number;
 d52206d8-5aed-4324-8b85-f3e7cb16bff0;1970-01-01T00:00:01.0+00:00;2037-12-31T23:00:01.000Z;10.467539999999985;51.78544;Stempelstelle 134 / Gustav-Baumann-Weg (NPH);Stempelstelle 134 / Gustav-Baumann-Weg (NPH) ~ this will come later: make a get request;134;
 29d1d742-fd93-4ad2-b23b-7ee46daa8de9;1970-01-01T00:00:01.0+00:00;2037-12-31T23:00:01.000Z;10.579979999999978;51.84165;Stempelstelle 1 / Eckertalsperre - Staumauer;Stempelstelle 1 / Eckertalsperre - Staumauer ~ this will come later: make a get request;1;
 c25ffe97-6f98-4f5a-97d7-5fb29952316e;1970-01-01T00:00:01.0+00:00;2037-12-31T23:00:01.000Z;10.618600000000015;51.86213;Stempelstelle 4 / Taubenklippe;Stempelstelle 4 / Taubenklippe ~ this will come later: make a get request;4;

@@ -6,6 +6,10 @@ const {
 const fetch = require('node-fetch');
 require("dotenv").config();
 
+// 40.000 free 
+// 02.515 used
+let count = 0;
+
 module.exports = class api extends cds.ApplicationService {
   init() {
 
@@ -29,7 +33,8 @@ async function calculateTravelTimesNNearestNeighbors(req) {
 
   // fetch all stamps and iterate
   let aStampBoxes = await SELECT
-    .from(Stampboxes);
+    .from(Stampboxes)
+    .limit(1);
 
   for (let i = 0; i < aStampBoxes.length; i++) {
     const box = aStampBoxes[i];
@@ -56,8 +61,9 @@ async function calculateTravelTimesNNearestNeighbors(req) {
   //repeat same for parking spaces
 
   // fetch all parking spaces and iterate
-  let aParkingSpots = SELECT
-    .from(ParkingSpots);
+  let aParkingSpots = await SELECT
+    .from(ParkingSpots)
+    .limit(1);
 
   for (let i = 0; i < aParkingSpots.length; i++) {
     const spot = aParkingSpots[i];
@@ -101,17 +107,22 @@ function getTravelTimes(box, neighborPois, travelMode) {
 
       let oRoute = await calculateRoute(box, neighbor, travelMode);
 
-      result.push({
-        ID: uuidv4(),
-        fromPoi: box.ID,
-        toPoi: neighbor.ID,
-        durationSeconds: oRoute.routes[0].duration.split('s')[0],
-        distanceMeters: oRoute.routes[0].distanceMeters,
-        travelMode,
-        positionString: mapPolyLineToPositionString(oRoute.routes[0].polyline.geoJsonLinestring.coordinates)
-
-        //Waypoint Route
-      })
+      if ( oRoute && oRoute.routes && oRoute.routes[0]){
+        result.push({
+          ID: uuidv4(),
+          fromPoi: box.ID,
+          toPoi: neighbor.ID,
+          durationSeconds: oRoute.routes[0].duration.split('s')[0],
+          distanceMeters: oRoute.routes[0].distanceMeters,
+          travelMode,
+          positionString: mapPolyLineToPositionString(oRoute.routes[0].polyline.geoJsonLinestring.coordinates)
+          
+          //Waypoint Route
+        })
+      } else {
+        let a = 5;
+        console.log(JSON.stringify(oRoute));
+      }
 
     }
     resolve(result)
@@ -160,6 +171,8 @@ function calculateRoute(pointA, pointB, travelMode) {
   }
 
   return new Promise((resolve, reject) => {
+    count ++;
+    console.log(count);
     fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
       "headers": {
         "accept": "*/*",

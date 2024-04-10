@@ -2,7 +2,8 @@
 
 ## Todo
 
-- implement api call to maps to get times (by travel type)
+- implement api call to maps to get times (by travel type) ✔️
+- berechnete Travel Times extern persistieren
 - implement DFS to suggest routes
 - UI für suggested routes -> General route planning & viewing
 - dev deploy on domain
