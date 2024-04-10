@@ -18,10 +18,15 @@
     },
     "scripts": {
         "start": "cds run",
-        "watch": "cds watch"
+        "watch": "cds watch",
+        "deploy": "cds deploy"
     },
     "cds": {
         "requires": {
+            "db": {
+                "kind": "sqlite",
+                "credentials": { "url": "db.sqlite" } 
+             },
             "auth": {
                 "[development]": {
                     "kind": "basic-auth",

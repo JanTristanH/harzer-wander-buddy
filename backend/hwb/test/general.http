@@ -68,7 +68,7 @@ GET http://localhost:4004/odata/v2/api/calculateTravelTimesNNearestNeighbors?n=5
 Authorization: Basic Kevin pass
 
 ### Get calculatd travelTimes
-GET http://localhost:4004/odata/v2/api/TravelTimes?$skip=0&$top=2220
+GET http://localhost:4004/odata/v2/api/TravelTimes
 Authorization: Basic Kevin pass
 
 ### Get calculatd travelTimes

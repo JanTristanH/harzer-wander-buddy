@@ -7,7 +7,7 @@ const fetch = require('node-fetch');
 require("dotenv").config();
 
 // 40.000 free 
-// 02.545 used
+// 06.700 used
 let count = 0;
 
 module.exports = class api extends cds.ApplicationService {
@@ -33,8 +33,7 @@ async function calculateTravelTimesNNearestNeighbors(req) {
 
   // fetch all stamps and iterate
   let aStampBoxes = await SELECT
-    .from(Stampboxes)
-    .limit(1);
+    .from(Stampboxes);
 
   for (let i = 0; i < aStampBoxes.length; i++) {
     const box = aStampBoxes[i];
@@ -62,8 +61,7 @@ async function calculateTravelTimesNNearestNeighbors(req) {
 
   // fetch all parking spaces and iterate
   let aParkingSpots = await SELECT
-    .from(ParkingSpots)
-    .limit(1);
+    .from(ParkingSpots);
 
   for (let i = 0; i < aParkingSpots.length; i++) {
     const spot = aParkingSpots[i];
@@ -107,7 +105,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
 
       let oRoute = await calculateRoute(box, neighbor, travelMode);
 
-      if ( oRoute && oRoute.routes && oRoute.routes[0]){
+      if (oRoute && oRoute.routes && oRoute.routes[0]) {
         result.push({
           ID: uuidv4(),
           fromPoi: box.ID,
@@ -116,7 +114,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
           distanceMeters: oRoute.routes[0].distanceMeters,
           travelMode,
           positionString: mapPolyLineToPositionString(oRoute.routes[0].polyline.geoJsonLinestring.coordinates)
-          
+
           //Waypoint Route
         })
       } else {
@@ -136,6 +134,18 @@ function mapPolyLineToPositionString(aCoordinates) {
 }
 
 function calculateRoute(pointA, pointB, travelMode) {
+  count++;
+  console.log(count);
+  // return {
+  //   "routes": [
+  //     {
+  //       "duration": "5",
+  //       "distanceMeters": "5",
+  //       polyline: {
+  //         geoJsonLinestring: { coordinates: [["10.467539999999985;51.78544" ]]}
+  //       }
+  //     }]
+  // };
 
   let body = {
     "origin": {
@@ -171,8 +181,6 @@ function calculateRoute(pointA, pointB, travelMode) {
   }
 
   return new Promise((resolve, reject) => {
-    count ++;
-    console.log(count);
     fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
       "headers": {
         "accept": "*/*",

@@ -8,7 +8,18 @@ let data = JSON.parse(fs.readFileSync('./2024_04_06_manuell_Park4Night.json', {
     flag: 'r'
 }));
 
-data = data.map(poi => {
+keptParkingType = [
+    1, //Surrounded by nature
+    2, //Parking lot day/night
+    3, //Rest area
+    4, //Picnic area
+    5, //Free motorhome area
+    12, //Daily parking only
+    16 //Parking MH without service
+]
+data = data
+ .filter(poi => keptParkingType.includes(poi.type.id))   
+.map(poi => {
     let name = poi.title_short.split(") ")[1];
     return {
         ID: uuidv4(),
