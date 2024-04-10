@@ -21,7 +21,7 @@ module.exports = class api extends cds.ApplicationService {
 async function calculateTravelTimesNNearestNeighbors(req) {
   const { n } = req.data
   const { Stampboxes, TravelTimes, ParkingSpots } = this.entities('hwb.db')
-  const { NeighborsStampStamp, NeighborsStampParking } = this.api.entities
+  const { NeighborsStampStamp, NeighborsStampParking, NeighborsParkingStamp, NeighborsParkingParking  } = this.api.entities
 
   // p -> p via car
   // p -> s via foot (later bike)
@@ -45,7 +45,7 @@ async function calculateTravelTimesNNearestNeighbors(req) {
     let adjacentParkingSpots = await SELECT
       .from(NeighborsStampParking)
       .where({ ID: box.ID })
-      .limit(n - 2);
+      .limit(n);
 
     let neighborPois = adjacentStamps.concat(adjacentParkingSpots);
     // calculate travel time by foot via maps api
@@ -54,39 +54,39 @@ async function calculateTravelTimesNNearestNeighbors(req) {
     await UPSERT(aTravelTimes).into(TravelTimes)
   }
 
-  // repeat same for parking spaces
+  //repeat same for parking spaces
 
-  //TODO wip test later
-  // // fetch all parking spaces and iterate
-  // let aParkingSpots =  SELECT
-  //   `ID`
-  //   .from(ParkingSpots);
+  // fetch all parking spaces and iterate
+  let aParkingSpots =  SELECT
+    .from(ParkingSpots);
 
-  // for (let i = 0; i < aParkingSpots.length; i++) {
-  //   const spot = aParkingSpots[i];
+    aParkingSpots = [{ ID: "07d7006d-1ab8-4b43-9722-d8710d148492", longitude: 10.55049, latitude: 51.784652 }]; // for testing
 
-  //   // get n nearest stamp neighbors
-  //   let adjacentStamps = await SELECT
-  //     .from(NeighborsStampStamp)
-  //     .where({ ID: spot.ID })
-  //     .limit(n);
+  for (let i = 0; i < aParkingSpots.length; i++) {
+    const spot = aParkingSpots[i];
 
-  //   // calculate travel time by foot via maps api
-  //   let aTravelTimesWalk = await getTravelTimes(box, adjacentStamps, 'walk');
+    // get n nearest stamp neighbors
+    let adjacentStamps = await SELECT
+      .from(NeighborsParkingStamp)
+      .where({ ID: spot.ID })
+      .limit(n);
 
-  //     // get n nearest parking spaces
-  //   let adjacentParkingSpots = await SELECT
-  //     .from(NeighborsStampParking)
-  //     .where({ ID: spot.ID })
-  //     .limit(n - 2);
+    // calculate travel time by foot via maps api
+    let aTravelTimesWalk = await getTravelTimes(spot, adjacentStamps, 'walk');
 
-  //   // calculate travel time by car via maps api
-  //   let aTravelTimesDrive = await getTravelTimes(box, adjacentParkingSpots, 'drive');
+      // get n nearest parking spaces
+    let adjacentParkingSpots = await SELECT
+      .from(NeighborsParkingParking)
+      .where({ ID: spot.ID })
+      .limit(n - 5);
 
-  //   let aTravelTimes = aTravelTimesWalk.concat(aTravelTimesDrive);
-  //   // save to table
-  //   await UPSERT(aTravelTimes).into(TravelTimes)
-  // }
+    // calculate travel time by car via maps api
+    let aTravelTimesDrive = await getTravelTimes(spot, adjacentParkingSpots, 'drive');
+
+    let aTravelTimes = aTravelTimesWalk.concat(aTravelTimesDrive);
+    // save to table
+    await UPSERT(aTravelTimes).into(TravelTimes)
+  }
 
   return { n }
 }

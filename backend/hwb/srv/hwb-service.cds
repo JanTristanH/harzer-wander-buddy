@@ -8,7 +8,8 @@ service api @(requires: 'authenticated-user') {
     entity Stampboxes             as projection on db.Stampboxes;
 
     entity ParkingSpots           as projection on db.ParkingSpots;
-    entity TravelTimes as projection on db.TravelTimes;
+    entity TravelTimes            as projection on db.TravelTimes;
+
     entity Stampings @(restrict: [
         {
             grant: 'READ',
@@ -50,7 +51,7 @@ service api @(requires: 'authenticated-user') {
 
     // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
     // TODO set up read restrictions from external
-    entity NeighborsStampStamp              as
+    entity NeighborsStampStamp    as
         select from db.Stampboxes as Stampboxes
         join db.Stampboxes as NeighborsBox
             on Stampboxes.ID != NeighborsBox.ID
@@ -81,13 +82,13 @@ service api @(requires: 'authenticated-user') {
         order by
             distanceKm asc;
 
- entity NeighborsStampParking              as
+    entity NeighborsStampParking  as
         select from db.Stampboxes as Stampboxes
         join db.ParkingSpots as Neighbors
             on Stampboxes.ID != Neighbors.ID
         {
             Stampboxes.ID,
-            Neighbors.ID     as NeighborsID,
+            Neighbors.ID as NeighborsID,
             Stampboxes.number,
             Neighbors.latitude,
             Neighbors.longitude,
@@ -103,30 +104,89 @@ service api @(requires: 'authenticated-user') {
                         Neighbors.latitude / 57.3
                     ), 2
                 )
+            )            as distanceKm : Double
+
+        }
+        order by
+            distanceKm asc;
+
+    entity NeighborsParkingStamp   as
+        select from db.ParkingSpots as Parking
+        join db.Stampboxes as NeighborsBox
+            on Parking.ID != NeighborsBox.ID
+        {
+            Parking.ID,
+            NeighborsBox.ID     as NeighborsID,
+            NeighborsBox.number as NeighborsNumber,
+            NeighborsBox.latitude,
+            NeighborsBox.longitude,
+            SQRT(
+                POW(
+                    111.2 * (
+                        NeighborsBox.latitude - Parking.latitude
+                    ), 2
+                )+POW(
+                    111.2 * (
+                        Parking.longitude - NeighborsBox.longitude
+                    ) * COS(
+                        NeighborsBox.latitude / 57.3
+                    ), 2
+                )
             )                   as distanceKm : Double
+
+        }
+        // where
+        //     Stampboxes.ID = 'bebf5cd4-e427-4297-a490-0730968690c2'
+        order by
+            distanceKm asc;
+
+    entity NeighborsParkingParking as
+        select from db.ParkingSpots as Parking
+        join db.ParkingSpots as Neighbors
+            on Parking.ID != Neighbors.ID
+        {
+            Parking.ID,
+            Neighbors.ID as NeighborsID,
+            Neighbors.latitude,
+            Neighbors.longitude,
+            SQRT(
+                POW(
+                    111.2 * (
+                        Neighbors.latitude - Parking.latitude
+                    ), 2
+                )+POW(
+                    111.2 * (
+                        Parking.longitude - Neighbors.longitude
+                    ) * COS(
+                        Neighbors.latitude / 57.3
+                    ), 2
+                )
+            )            as distanceKm : Double
 
         }
         order by
             distanceKm asc;
 
 
-    entity tree                    as
-        select from db.TravelTimes as TravelTimes
-        {
-            fromPoi,
-            toPoi,
-            ID,
-            fromPoi as rootPoiID
-        } where TravelTimes.fromPoi = 'bebf5cd4-e427-4297-a490-0730968690c2'
+    entity tree                   as
+            select from db.TravelTimes as TravelTimes {
+                fromPoi,
+                toPoi,
+                ID,
+                fromPoi as rootPoiID
+            }
+            where
+                TravelTimes.fromPoi = 'bebf5cd4-e427-4297-a490-0730968690c2'
 
-        union all select from db.TravelTimes as TravelTimes
+        union all
+            select from db.TravelTimes as TravelTimes
             inner join db.TravelTimes as tree
                 on TravelTimes.toPoi = tree.fromPoi
-        {
-            tree.fromPoi,
-            tree.toPoi,
-            tree.ID,
-            '' as rootPoiID
+            {
+                tree.fromPoi,
+                tree.toPoi,
+                tree.ID,
+                '' as rootPoiID
 
-         };
+            };
 }
