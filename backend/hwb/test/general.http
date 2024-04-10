@@ -78,3 +78,7 @@ Authorization: Basic Kevin pass
 ### Get Tree for location
 GET http://localhost:4004/odata/v2/api/tree
 Authorization: Basic Kevin pass
+
+### Get Tree for location
+GET http://localhost:4004/odata/v2/api/treeFilter?$filter=rootPoiID eq guid'd52206d8-5aed-4324-8b85-f3e7cb16bff0'
+Authorization: Basic Kevin pass

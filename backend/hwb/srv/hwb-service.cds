@@ -175,9 +175,6 @@ service api @(requires: 'authenticated-user') {
                 ID,
                 fromPoi as rootPoiID
             }
-            where
-                TravelTimes.fromPoi = 'bebf5cd4-e427-4297-a490-0730968690c2'
-
         union all
             select from db.TravelTimes as TravelTimes
             inner join db.TravelTimes as tree
@@ -189,4 +186,7 @@ service api @(requires: 'authenticated-user') {
                 '' as rootPoiID
 
             };
+    
+    entity treeFilter as projection on api.tree;
+    
 }

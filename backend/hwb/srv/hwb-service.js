@@ -7,7 +7,7 @@ const fetch = require('node-fetch');
 require("dotenv").config();
 
 // 40.000 free 
-// 02.515 used
+// 02.545 used
 let count = 0;
 
 module.exports = class api extends cds.ApplicationService {
