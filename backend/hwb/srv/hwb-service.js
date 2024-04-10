@@ -8,7 +8,7 @@ require("dotenv").config();
 const routingManager = require('./routingManager')
 
 // 40.000 free 
-// 06.715 used
+// 10.815 used
 let count = 0;
 let aTravelTimesGlobal = [];
 
