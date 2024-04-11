@@ -85,5 +85,5 @@ Authorization: Basic Kevin pass
 
 
 ### Get Hiking Route
-GET http://localhost:4004/odata/v2/api/calculateHikingRoute?maxDepth=15&maxDuration=18000&maxDistance=10000&latitudeStart='51.780277'&longitudeStart='11.002212'
+GET http://localhost:4004/odata/v2/api/calculateHikingRoute?maxDepth=5&maxDuration=18000&maxDistance=6000&latitudeStart='51.780277'&longitudeStart='11.002212'
 Authorization: Basic Kevin pass

@@ -46,17 +46,13 @@ async function loadSubTree(ID) {
 }
 
 async function calculateHikingRoutes(calculationParams, aTravelTimes) {
-    // Convert aTravelTimes to an adjacency list
+    // Create an adjacency list where each edge is directional
     const adjacencyList = new Map();
     aTravelTimes.forEach(edge => {
         if (!adjacencyList.has(edge.fromPoi)) {
             adjacencyList.set(edge.fromPoi, []);
         }
-        if (!adjacencyList.has(edge.toPoi)) {
-            adjacencyList.set(edge.toPoi, []);
-        }
         adjacencyList.get(edge.fromPoi).push(edge);
-        adjacencyList.get(edge.toPoi).push({...edge, fromPoi: edge.fromPoi, toPoi: edge.toPoi});
     });
 
     const routes = [];
