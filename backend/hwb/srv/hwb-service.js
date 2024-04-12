@@ -40,7 +40,7 @@ async function calculateHikingRoute(req) {
   if (aTravelTimesGlobal.length == 0){
     const { typedTravelTimes } = this.api.entities
     aTravelTimesGlobal = await SELECT
-      .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode')
+      .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
       .from(typedTravelTimes);
 
   }
@@ -124,7 +124,7 @@ async function calculateTravelTimesNNearestNeighbors(req) {
       .limit(n - 5);
 
     // calculate travel time by car via maps api
-    let aTravelTimesDrive = await getTravelTimes(spot, adjacentParkingSpots, 'drive');
+    let aTravelTimesDrive = await getTravelTimes(spot, adjacentParkingSpots, 'drive'); //TODO did this work?
 
     let aTravelTimes = aTravelTimesWalk.concat(aTravelTimesDrive);
     // save to table

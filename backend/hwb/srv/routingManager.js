@@ -57,7 +57,6 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
 
     const routes = [];
     const visited = new Set();
-    const uniqueStamps = new Set();
 
     const dfs = (poi, poiType, path, duration, distance, depth, stampCount) => {
         if (duration > calculationParams.maxDuration || distance > calculationParams.maxDistance || depth > calculationParams.maxDepth) {
@@ -71,7 +70,7 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
         visited.add(poi);
         const neighbors = adjacencyList.get(poi);
         neighbors.forEach(neighbor => {
-            if (!visited.has(neighbor.toPoi) || neighbor.toPoi === calculationParams.startId) {
+            if (!path.map(p => p.poi).includes(neighbor.toPoi) || neighbor.toPoi === calculationParams.startId) {
                 let newDistance = distance;
                 let newStampCount = stampCount;
 
@@ -81,26 +80,34 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
                 }
 
                 // Increment stamp count if poi is of type 'stamp'
-                if (neighbor.toPoiType === 'stamp' && !uniqueStamps.has(neighbor.toPoi)) {
+                if (neighbor.toPoiType === 'stamp' && !path.map(p => p.poi).includes(neighbor.toPoi)) {
                     newStampCount++;
-                    uniqueStamps.add(neighbor.toPoi);
                 }
 
-                dfs(neighbor.toPoi, neighbor.toPoiType, path.concat({ poi: neighbor.toPoi, id: neighbor.ID }), duration + parseInt(neighbor.durationSeconds), newDistance, depth + 1, newStampCount);
+                dfs(neighbor.toPoi, neighbor.toPoiType, path.concat({ poi: neighbor.toPoi, id: neighbor.ID, name: neighbor.name }), duration + parseInt(neighbor.durationSeconds), newDistance, depth + 1, newStampCount);
             }
         });
 
         if (poi !== calculationParams.startId) {
             visited.delete(poi);
             if (poiType === 'stamp') {
-                uniqueStamps.delete(poi);
             }
         }
     };
 
-    dfs(calculationParams.startId, "start", [{ poi: calculationParams.startId, id: null }], 0, 0, 0, 0);
+    dfs(calculationParams.startId, "start", [{ poi: calculationParams.startId, id: null, name: "Sart" }], 0, 0, 0, 0);
 
-    return routes.filter(route => route.stampCount > 0);
+    return routes.filter(route => route.stampCount > 0)
+        .sort((a, b) => {
+            if (b.stampCount - a.stampCount === 0) {  // If stampCounts are equal, use secondary sort
+                const valueA = a.stampCount / (a.distance + a.duration);
+                const valueB = b.stampCount / (b.distance + b.duration);
+                return valueB - valueA;
+            }
+            return b.stampCount - a.stampCount;  // Primary sort by stampCount
+        })
+        //Only return top 5
+        .slice(0, 5);
 }
 
 

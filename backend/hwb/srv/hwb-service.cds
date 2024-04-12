@@ -231,6 +231,7 @@ entity typedTravelTimes
            TravelTimes.durationSeconds,
            TravelTimes.distanceMeters,
            TravelTimes.travelMode,
+           ParkingSpots.name,
            'parking' as toPoiType: String
        }
        union all
@@ -243,6 +244,7 @@ entity typedTravelTimes
            TravelTimes.durationSeconds,
            TravelTimes.distanceMeters,
            TravelTimes.travelMode,
+           Stampboxes.name,
            'stamp' as toPoiType: String
        };
     //    union all
