@@ -84,7 +84,7 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
                     newStampCount++;
                 }
 
-                dfs(neighbor.toPoi, neighbor.toPoiType, path.concat({ poi: neighbor.toPoi, id: neighbor.ID, name: neighbor.name }), duration + parseInt(neighbor.durationSeconds), newDistance, depth + 1, newStampCount);
+                dfs(neighbor.toPoi, neighbor.toPoiType, path.concat({ poi: neighbor.toPoi, id: neighbor.ID, name: neighbor.name, toPoiType: neighbor.toPoiType }), duration + parseInt(neighbor.durationSeconds), newDistance, depth + 1, newStampCount);
             }
         });
 
@@ -97,7 +97,7 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
 
     dfs(calculationParams.startId, "start", [{ poi: calculationParams.startId, id: null, name: "Sart" }], 0, 0, 0, 0);
 
-    return routes.filter(route => route.stampCount > 0)
+   let sortedRoutes =  routes.filter(route => route.stampCount > 0)
         .sort((a, b) => {
             if (b.stampCount - a.stampCount === 0) {  // If stampCounts are equal, use secondary sort
                 const valueA = a.stampCount / (a.distance + a.duration);
@@ -105,14 +105,36 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
                 return valueB - valueA;
             }
             return b.stampCount - a.stampCount;  // Primary sort by stampCount
-        })
+        });
+
         //Only return top 5
+        return filterUniquePaths(sortedRoutes)
         .slice(0, 5);
 }
 
 
+function filterUniquePaths(paths) {
+    // Object to store unique sets of POIs
+    const uniquePaths = [];
+    const seenPOISets = new Set();
 
+    // Iterate through each path in the data
+    paths.forEach(path => {
+        // Create a set of POIs from the current path to ensure uniqueness and to ignore order
+        const poiSet = new Set(path.path.filter( poi => poi.toPoiType == "stamp").map(poi => poi.poi));
 
+        // Convert the set to a string to use as a unique key (since sets cannot be directly compared)
+        const poiSetKey = Array.from(poiSet).sort().join(',');
+
+        // Check if we have already seen this set of POIs
+        if (!seenPOISets.has(poiSetKey)) {
+            // If not seen, add to the seen sets and to the results
+            seenPOISets.add(poiSetKey);
+            uniquePaths.push(path);
+        }
+    });
+    return uniquePaths
+}
 
 exports.loadSubTree = loadSubTree;
 exports.calculateHikingRoutes = calculateHikingRoutes;
