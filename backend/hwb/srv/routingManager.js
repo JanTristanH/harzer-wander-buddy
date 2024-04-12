@@ -76,8 +76,10 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
 
                 // Increment distance only if travel mode is not 'drive'
                 if (neighbor.travelMode !== 'drive') {
-                    //TODO only allow drive where the car is parked
                     newDistance += parseInt(neighbor.distanceMeters);
+                } else {
+                    //TODO only allow drive where the car is parked
+                    return;
                 }
 
                 // Increment stamp count if poi is of type 'stamp'
