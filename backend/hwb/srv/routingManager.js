@@ -76,6 +76,7 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
 
                 // Increment distance only if travel mode is not 'drive'
                 if (neighbor.travelMode !== 'drive') {
+                    //TODO only allow drive where the car is parked
                     newDistance += parseInt(neighbor.distanceMeters);
                 }
 

@@ -76,28 +76,31 @@ async function calculateTravelTimesNNearestNeighbors(req) {
   // fetch all stamps and iterate
   let aStampBoxes = await SELECT
     .from(Stampboxes);
+  aStampBoxes = []; //disable
 
-  for (let i = 0; i < aStampBoxes.length; i++) {
-    const box = aStampBoxes[i];
+  // for (let i = 0; i < aStampBoxes.length; i++) {
+  //   const box = aStampBoxes[i];
 
-    // get n nearest stamp neighbors
-    let adjacentStamps = await SELECT
-      .from(NeighborsStampStamp)
-      .where({ ID: box.ID })
-      .limit(n);
+  //   // get n nearest stamp neighbors
+  //   let adjacentStamps = await SELECT
+  //     .from(NeighborsStampStamp)
+  //     .where({ ID: box.ID })
+  //     .limit(n);
 
-    // get n nearest parking spaces
-    let adjacentParkingSpots = await SELECT
-      .from(NeighborsStampParking)
-      .where({ ID: box.ID })
-      .limit(n);
+  //   // get n nearest parking spaces
+  //   let adjacentParkingSpots = await SELECT
+  //     .from(NeighborsStampParking)
+  //     .where({ ID: box.ID })
+  //     .limit(n);
 
-    let neighborPois = adjacentStamps.concat(adjacentParkingSpots);
-    // calculate travel time by foot via maps api
-    let aTravelTimes = await getTravelTimes(box, neighborPois, 'walk');
-    // save to table
-    await UPSERT(aTravelTimes).into(TravelTimes)
-  }
+  //   let neighborPois = adjacentStamps.concat(adjacentParkingSpots);
+  //   // calculate travel time by foot via maps api
+  //   let aTravelTimes = await getTravelTimes(box, neighborPois, 'walk');
+  //   // save to table
+  //   if (aTravelTimes){
+  //     await UPSERT(aTravelTimes).into(TravelTimes)
+  //   }    
+  // }
 
   //repeat same for parking spaces
 
@@ -108,27 +111,31 @@ async function calculateTravelTimesNNearestNeighbors(req) {
   for (let i = 0; i < aParkingSpots.length; i++) {
     const spot = aParkingSpots[i];
 
-    // get n nearest stamp neighbors
-    let adjacentStamps = await SELECT
-      .from(NeighborsParkingStamp)
-      .where({ ID: spot.ID })
-      .limit(n);
+    // // get n nearest stamp neighbors
+    // let adjacentStamps = await SELECT
+    //   .from(NeighborsParkingStamp)
+    //   .where({ ID: spot.ID })
+    //   .limit(n);
+    //   adjacentStamps = []; // disable 
 
-    // calculate travel time by foot via maps api
-    let aTravelTimesWalk = await getTravelTimes(spot, adjacentStamps, 'walk');
+    // // calculate travel time by foot via maps api
+    // let aTravelTimesWalk = await getTravelTimes(spot, adjacentStamps, 'walk');
+    let aTravelTimesWalk = [];
 
     // get n nearest parking spaces
     let adjacentParkingSpots = await SELECT
       .from(NeighborsParkingParking)
       .where({ ID: spot.ID })
-      .limit(n - 5);
+      .limit(n);
 
     // calculate travel time by car via maps api
     let aTravelTimesDrive = await getTravelTimes(spot, adjacentParkingSpots, 'drive'); //TODO did this work?
 
     let aTravelTimes = aTravelTimesWalk.concat(aTravelTimesDrive);
     // save to table
-    await UPSERT(aTravelTimes).into(TravelTimes)
+    if (aTravelTimes){
+      await UPSERT(aTravelTimes).into(TravelTimes)
+    }
   }
 
   return { n }
