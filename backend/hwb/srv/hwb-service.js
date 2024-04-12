@@ -22,6 +22,14 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('calculateHikingRoute', calculateHikingRoute)
 
+    
+    this.on('READ', 'TypedTravelTimes', async (req) => {
+      // const db = cds.transaction(req);
+      
+      
+      return typedTravelTimes;
+    });
+    
     return super.init()
   }
 }
@@ -30,14 +38,14 @@ async function calculateHikingRoute(req) {
   req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
   console.log(req.data);
   if (aTravelTimesGlobal.length == 0){
-    const { TravelTimes } = this.entities('hwb.db')
+    const { typedTravelTimes } = this.api.entities
     aTravelTimesGlobal = await SELECT
-      .columns('fromPoi', 'toPoi', 'durationSeconds', 'distanceMeters', 'travelMode')
-      .from(TravelTimes);
+      .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode')
+      .from(typedTravelTimes);
 
   }
-  let result = await routingManager.calculateHikingRoutes(req.data,aTravelTimesGlobal)
-  return result
+  let results = await routingManager.calculateHikingRoutes(req.data,aTravelTimesGlobal)
+  return { results }
 
   return {
     Points: [{

@@ -23,10 +23,6 @@
     },
     "cds": {
         "requires": {
-            "db": {
-                "kind": "sqlite",
-                "credentials": { "url": "db.sqlite" } 
-             },
             "auth": {
                 "[development]": {
                     "kind": "basic-auth",

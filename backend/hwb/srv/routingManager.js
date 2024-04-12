@@ -57,13 +57,14 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
 
     const routes = [];
     const visited = new Set();
+    const uniqueStamps = new Set();
 
-    const dfs = (poi, path, duration, distance, depth) => {
+    const dfs = (poi, poiType, path, duration, distance, depth, stampCount) => {
         if (duration > calculationParams.maxDuration || distance > calculationParams.maxDistance || depth > calculationParams.maxDepth) {
             return;
         }
         if (poi === calculationParams.startId && path.length > 1) {
-            routes.push(path);
+            routes.push({ path: path, stampCount: stampCount, distance, duration });
             return;
         }
 
@@ -71,18 +72,38 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
         const neighbors = adjacencyList.get(poi);
         neighbors.forEach(neighbor => {
             if (!visited.has(neighbor.toPoi) || neighbor.toPoi === calculationParams.startId) {
-                dfs(neighbor.toPoi, path.concat(neighbor.toPoi), duration + parseInt(neighbor.durationSeconds), distance + parseInt(neighbor.distanceMeters), depth + 1);
+                let newDistance = distance;
+                let newStampCount = stampCount;
+
+                // Increment distance only if travel mode is not 'drive'
+                if (neighbor.travelMode !== 'drive') {
+                    newDistance += parseInt(neighbor.distanceMeters);
+                }
+
+                // Increment stamp count if poi is of type 'stamp'
+                if (neighbor.toPoiType === 'stamp' && !uniqueStamps.has(neighbor.toPoi)) {
+                    newStampCount++;
+                    uniqueStamps.add(neighbor.toPoi);
+                }
+
+                dfs(neighbor.toPoi, neighbor.toPoiType, path.concat({ poi: neighbor.toPoi, id: neighbor.ID }), duration + parseInt(neighbor.durationSeconds), newDistance, depth + 1, newStampCount);
             }
         });
+
         if (poi !== calculationParams.startId) {
             visited.delete(poi);
+            if (poiType === 'stamp') {
+                uniqueStamps.delete(poi);
+            }
         }
     };
 
-    dfs(calculationParams.startId, [calculationParams.startId], 0, 0, 0);
+    dfs(calculationParams.startId, "start", [{ poi: calculationParams.startId, id: null }], 0, 0, 0, 0);
 
-    return routes;
+    return routes.filter(route => route.stampCount > 0);
 }
+
+
 
 
 

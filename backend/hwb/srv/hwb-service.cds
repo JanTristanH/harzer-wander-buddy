@@ -11,17 +11,34 @@ service api @(requires: 'authenticated-user') {
         totalNewStamps : Integer;
     }
 
-    function   calculateHikingRoute(maxDepth : Integer,
+    function calculateHikingRoute(maxDepth : Integer,
                                   maxDuration : Integer,
                                   maxDistance : Integer,
                                   latitudeStart : String,
-                                  longitudeStart : String)  returns String;
+                                  longitudeStart : String)      returns String;
 
     @cds.redirection.target
     entity Stampboxes              as projection on db.Stampboxes;
 
     entity ParkingSpots            as projection on db.ParkingSpots;
     entity TravelTimes             as projection on db.TravelTimes;
+
+    @readonly
+    entity AllPointsOfInterest as select from Stampboxes {
+        key ID,
+        longitude,
+        latitude,
+        name,
+        CONCAT( number, ' - ', description) as description: String
+    } union all
+    select from ParkingSpots {
+        key ID,
+        longitude,
+        latitude,
+        name,
+        description
+    };
+
 
     entity Stampings @(restrict: [
         {
@@ -201,5 +218,44 @@ service api @(requires: 'authenticated-user') {
             };
 
     entity treeFilter              as projection on api.tree;
+
+@readonly
+entity typedTravelTimes
+       as select from db.TravelTimes as TravelTimes
+       join api.ParkingSpots as ParkingSpots on TravelTimes.toPoi = ParkingSpots.ID
+    //    where ParkingSpots.ID is not null
+        {
+           key TravelTimes.ID,
+           TravelTimes.fromPoi,
+           TravelTimes.toPoi,
+           TravelTimes.durationSeconds,
+           TravelTimes.distanceMeters,
+           TravelTimes.travelMode,
+           'parking' as toPoiType: String
+       }
+       union all
+       select from db.TravelTimes as TravelTimes
+       join api.Stampboxes as Stampboxes on TravelTimes.toPoi = Stampboxes.ID
+        {
+           key TravelTimes.ID,
+           TravelTimes.fromPoi,
+           TravelTimes.toPoi,
+           TravelTimes.durationSeconds,
+           TravelTimes.distanceMeters,
+           TravelTimes.travelMode,
+           'stamp' as toPoiType: String
+       };
+    //    union all
+    //    select from db.TravelTimes as TravelTimes
+    //    where not exists (select from api.ParkingSpots as p where p.ID = TravelTimes.toPoi)
+    //    and not exists (select from api.Stampboxes as s where s.ID = TravelTimes.toPoi) {
+    //        key TravelTimes.ID,
+    //        TravelTimes.fromPoi,
+    //        TravelTimes.toPoi,
+    //        TravelTimes.durationSeconds,
+    //        TravelTimes.distanceMeters,
+    //        TravelTimes.travelMode,
+    //        'unknown' as toPoiType: String
+    //    };
 
 }

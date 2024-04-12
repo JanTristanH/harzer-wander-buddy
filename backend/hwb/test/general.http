@@ -71,6 +71,10 @@ Authorization: Basic Kevin pass
 GET http://localhost:4004/odata/v2/api/TravelTimes
 Authorization: Basic Kevin pass
 
+### Get Tree for location
+GET http://localhost:4004/odata/v2/api/TravelTimes?$filter=fromPoi eq guid'5810c033-235d-4836-b09d-f7829929e2fe' and travelMode eq 'walk'
+Authorization: Basic Kevin pass
+
 ### Get calculatd travelTimes
 GET http://localhost:4004/odata/v2/api/TravelTimes/$count
 Authorization: Basic Kevin pass
@@ -86,4 +90,25 @@ Authorization: Basic Kevin pass
 
 ### Get Hiking Route
 GET http://localhost:4004/odata/v2/api/calculateHikingRoute?maxDepth=5&maxDuration=18000&maxDistance=6000&latitudeStart='51.780277'&longitudeStart='11.002212'
+Authorization: Basic Kevin pass
+
+### Get Typed Travel times
+GET http://localhost:4004/odata/v2/api/blubbi
+Authorization: Basic Kevin pass
+
+### Get Typed Travel times
+GET http://localhost:4004/odata/v2/api/typedTravelTimes
+Authorization: Basic Kevin pass
+
+### Get Typed Travel times
+GET http://localhost:4004/odata/v2/api/typedTravelTimes/$count
+Authorization: Basic Kevin pass
+
+### Get Typed Travel times that is type parking
+GET http://localhost:4004/odata/v2/api/typedTravelTimes(guid'0f2e4ad6-a2f6-41a0-8b95-7b35e6f15459')
+Authorization: Basic Kevin pass
+
+
+### Get Typed Travel times that is type parking
+GET http://localhost:4004/odata/v2/api/AllPointsOfInterest(guid'5810c033-235d-4836-b09d-f7829929e2fe')
 Authorization: Basic Kevin pass
