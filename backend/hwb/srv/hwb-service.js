@@ -44,7 +44,7 @@ async function calculateHikingRoute(req) {
       .from(typedTravelTimes);
 
   }
-  let results = await routingManager.calculateHikingRoutes(req.data,aTravelTimesGlobal)
+  let results = await routingManager.calculateHikingRoutes(req.data, aTravelTimesGlobal);
   return { results }
 
   return {
