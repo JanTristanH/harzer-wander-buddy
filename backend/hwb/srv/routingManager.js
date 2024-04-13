@@ -46,6 +46,7 @@ async function loadSubTree(ID) {
 }
 
 async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStampsDoneByUser) {
+    return new Promise(async (resolve, reject) => {
     // Create an adjacency list where each edge is directional
     const adjacencyList = new Map();
     aTravelTimes.forEach(edge => {
@@ -60,13 +61,13 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
 
     const dfs = (poi, poiType, path, duration, distance, depth, stampCount, canDrive, calculationParamsInner) => {
         if (duration > calculationParamsInner.maxDuration ||
-            distance > calculationParamsInner.maxDistance || 
+            distance > calculationParamsInner.maxDistance ||
             depth > calculationParamsInner.maxDepth) {
             return;
         }
         if (poi === calculationParamsInner.startId && calculationParamsInner.pathLengthSinceCar > 1) {
             routes.push({ path: path, stampCount: stampCount, distance, duration });
-            if (!calculationParamsInner.allowDriveInRoute){
+            if (!calculationParamsInner.allowDriveInRoute) {
                 return;
             }
             canDrive = true; //we are again at out parking spot and can drive again
@@ -96,7 +97,7 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
                 calculationParamsInnerClone.pathLengthSinceCar++;
 
                 // Increment stamp count if poi is of type 'stamp'
-                if (neighbor.toPoiType === 'stamp' 
+                if (neighbor.toPoiType === 'stamp'
                     && !path.map(p => p.poi).includes(neighbor.toPoi)
                     && !aStampsDoneByUser.includes(neighbor.toPoi)) {
                     newStampCount++;
@@ -136,8 +137,40 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
 
     //Only return top 5
     // return sortedRoutes;
-    return filterUniquePaths(sortedRoutes)
-         .slice(0, 5);
+    sortedRoutes = filterUniquePaths(sortedRoutes)
+        .slice(0, 5);
+    sortedRoutes = await addPositionStrings(sortedRoutes);
+    resolve(sortedRoutes);
+    });
+}
+
+function addPositionStrings(aRoutes) {
+    return new Promise(async (resolve, reject) => {
+        
+        let uniqueIds = new Set();
+        
+        aRoutes.forEach(route => {
+            route.path.forEach(item => {
+                if (item.id) {
+                    uniqueIds.add(item.id);
+                }
+            });
+        });
+        
+        // Convert Set to Array
+        uniqueIds = Array.from(uniqueIds);
+        
+        // Read required positionStrings
+        const aTravelTimesWithPositionString = await cds.run(SELECT.from('hwb_db_TravelTimes').where(`ID in (${uniqueIds})`));
+        
+
+        aRoutes.forEach(route => {
+            route.path.forEach(item => {
+                item.positionString = aTravelTimesWithPositionString[item.id];
+            });
+        });
+        resolve(aRoutes);
+    })
 }
 
 
