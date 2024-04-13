@@ -6,7 +6,7 @@
         <Table id="StampingsTable" inset="false" growing="true" growingThreshold="250" mode="MultiSelect" selectionChange="onSelectionChange" items="{
                     path: '/PersonalizedStampboxes',
                     sorter: {
-                        path: 'name'
+                        path: 'numberInt'
                     }
                 }"  updateFinished=".onStampingsUpdateFinished" >
             <headerToolbar>

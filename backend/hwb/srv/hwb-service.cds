@@ -55,6 +55,7 @@ service api @(requires: 'authenticated-user') {
         select from db.Stampboxes as Stampboxes distinct {
             key ID,
                 number,
+                cast (number as Integer ) as numberInt,
                 isKidFriendly,
                 isElderlyFriendly,
                 isStrollerFriendly,
