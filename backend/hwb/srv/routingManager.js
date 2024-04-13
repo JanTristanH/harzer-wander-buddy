@@ -45,7 +45,7 @@ async function loadSubTree(ID) {
     });
 }
 
-async function calculateHikingRoutes(calculationParams, aTravelTimes) {
+async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes) {
     // Create an adjacency list where each edge is directional
     const adjacencyList = new Map();
     aTravelTimes.forEach(edge => {
@@ -58,27 +58,39 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
     const routes = [];
     const visited = new Set();
 
-    const dfs = (poi, poiType, path, duration, distance, depth, stampCount) => {
-        if (duration > calculationParams.maxDuration || distance > calculationParams.maxDistance || depth > calculationParams.maxDepth) {
+    const dfs = (poi, poiType, path, duration, distance, depth, stampCount, canDrive, calculationParamsInner) => {
+        if (duration > calculationParamsInner.maxDuration ||
+            distance > calculationParamsInner.maxDistance || 
+            depth > calculationParamsInner.maxDepth) {
             return;
         }
-        if (poi === calculationParams.startId && path.length > 1) {
+        if (poi === calculationParamsInner.startId && path.length > 1) {
             routes.push({ path: path, stampCount: stampCount, distance, duration });
-            return;
+            canDrive = true; //we are again at out parking spot and can drive again
+            //return;
         }
 
         visited.add(poi);
         const neighbors = adjacencyList.get(poi);
         neighbors.forEach(neighbor => {
-            if (!path.map(p => p.poi).includes(neighbor.toPoi) || neighbor.toPoi === calculationParams.startId) {
+            if (!path.map(p => p.poi).includes(neighbor.toPoi) || neighbor.toPoi === calculationParamsInner.startId) {
                 let newDistance = distance;
                 let newStampCount = stampCount;
+
+                if (neighbor.ID == "de4b06c2-1028-48c9-ab50-55b82e6b2c25") {
+                    let a = 1;
+                }
 
                 // Increment distance only if travel mode is not 'drive'
                 if (neighbor.travelMode !== 'drive') {
                     newDistance += parseInt(neighbor.distanceMeters);
+                    canDrive = false;
+                } else if (canDrive) {
+                    //update car location to new parking space
+                    calculationParamsInner.startId = neighbor.toPoi;
                 } else {
-                    //TODO only allow drive where the car is parked
+                    // can not drive as car is parked at other space.
+                    // Path invalid and return
                     return;
                 }
 
@@ -87,20 +99,28 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
                     newStampCount++;
                 }
 
-                dfs(neighbor.toPoi, neighbor.toPoiType, path.concat({ poi: neighbor.toPoi, id: neighbor.ID, name: neighbor.name, toPoiType: neighbor.toPoiType }), duration + parseInt(neighbor.durationSeconds), newDistance, depth + 1, newStampCount);
+                dfs(neighbor.toPoi,
+                    neighbor.toPoiType,
+                    path.concat({ poi: neighbor.toPoi, id: neighbor.ID, name: neighbor.name, toPoiType: neighbor.toPoiType, travelMode: neighbor.travelMode }),
+                    duration + parseInt(neighbor.durationSeconds),
+                    newDistance,
+                    depth + 1,
+                    newStampCount,
+                    canDrive,
+                    calculationParamsInner);
             }
         });
 
-        if (poi !== calculationParams.startId) {
+        if (poi !== calculationParamsInner.startId) {
             visited.delete(poi);
             if (poiType === 'stamp') {
             }
         }
     };
 
-    dfs(calculationParams.startId, "start", [{ poi: calculationParams.startId, id: null, name: "Sart" }], 0, 0, 0, 0);
+    dfs(calculationParamsOuter.startId, "Start", [{ poi: calculationParamsOuter.startId, id: null, name: "Start" }], 0, 0, 0, 0, false, calculationParamsOuter);
 
-   let sortedRoutes =  routes.filter(route => route.stampCount > 0)
+    let sortedRoutes = routes.filter(route => route.stampCount > 0)
         .sort((a, b) => {
             if (b.stampCount - a.stampCount === 0) {  // If stampCounts are equal, use secondary sort
                 const valueA = a.stampCount / (a.distance + a.duration);
@@ -110,8 +130,8 @@ async function calculateHikingRoutes(calculationParams, aTravelTimes) {
             return b.stampCount - a.stampCount;  // Primary sort by stampCount
         });
 
-        //Only return top 5
-        return filterUniquePaths(sortedRoutes)
+    //Only return top 5
+    return filterUniquePaths(sortedRoutes)
         .slice(0, 5);
 }
 
@@ -124,7 +144,7 @@ function filterUniquePaths(paths) {
     // Iterate through each path in the data
     paths.forEach(path => {
         // Create a set of POIs from the current path to ensure uniqueness and to ignore order
-        const poiSet = new Set(path.path.filter( poi => poi.toPoiType == "stamp").map(poi => poi.poi));
+        const poiSet = new Set(path.path.filter(poi => poi.toPoiType == "stamp").map(poi => poi.poi));
 
         // Convert the set to a string to use as a unique key (since sets cannot be directly compared)
         const poiSetKey = Array.from(poiSet).sort().join(',');
