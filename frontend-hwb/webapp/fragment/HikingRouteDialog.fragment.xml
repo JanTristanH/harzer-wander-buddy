@@ -2,7 +2,8 @@
     xmlns="sap.m"
     xmlns:core="sap.ui.core"
     xmlns:f="sap.ui.layout.form"
-    xmlns:l="sap.ui.layout">
+    xmlns:l="sap.ui.layout"
+    xmlns:custom="hwb.frontendhwb.controls">
     <Dialog title="Enter Hiking Route Parameters" class="sapUiResponsiveContentPadding">
         <f:Form editable="true">
             <f:layout>
@@ -39,16 +40,25 @@
                                 <Input value="{/maxDistance}" />
                             </f:fields>
                         </f:FormElement>
+
+                        <f:FormElement label="Enter Address">
+                            <f:fields>
+                                <Input id="autocomplete"
+                                    placeholder="Start entering your address..." />
+                                    <Button press='onUseCurrentLocation' text="Aktuellen Standort verwenden 📍"/>
+                                </f:fields>
+                        </f:FormElement>
                         <f:FormElement label="Latitude Start">
                             <f:fields>
-                                <Input value="{/latitudeStart}" />
+                                <Input value="{/latitudeStart}" enabled="false" />
                             </f:fields>
                         </f:FormElement>
                         <f:FormElement label="Longitude Start">
                             <f:fields>
-                                <Input value="{/longitudeStart}" />
+                                <Input value="{/longitudeStart}" enabled="false"/>
                             </f:fields>
                         </f:FormElement>
+
                         <f:FormElement label="Allow Drive in Route">
                             <f:fields>
                                 <Switch state="{/allowDriveInRoute}" />

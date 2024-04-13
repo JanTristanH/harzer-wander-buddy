@@ -1,12 +1,13 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller"
+    "sap/ui/core/mvc/Controller",
+    "sap/ui/model/json/JSONModel"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller) {
+    function (Controller, JSONModel) {
         "use strict";
-        const unstampedType = "Error";
+        var autocomplete; //inspired by https://github.com/costa-satsati/addressautocomplete/
 
         return Controller.extend("hwb.frontendhwb.controller.Map", {
             itemCache: [],
@@ -23,8 +24,11 @@ sap.ui.define([
                         name: "hwb.frontendhwb.fragment.HikingRouteDialog"
                     });
 
+                    
                     this.pDialog.open();
+
                     oView.addDependent(this.pDialog);
+                    this.onAfterRenderingFragment();
                 }
 
                 // Reset model or create new one if needed
@@ -32,14 +36,15 @@ sap.ui.define([
                     maxDepth: 8,
                     maxDuration: 36000,
                     maxDistance: 15000,
-                    latitudeStart: '51.780277',
-                    longitudeStart: '11.002212',
-                    allowDriveInRoute: false,
+                    latitudeStart: '',
+                    longitudeStart: '',
+                    allowDriveInRoute: true,
                     minStampCount: 1
                 });
                 this.pDialog.setModel(oModel);
 
                 this.pDialog.open();
+                this.onAfterRenderingFragment();
             },
 
             onCancel: function () {
@@ -103,6 +108,58 @@ sap.ui.define([
             onToggleList: function(){
                 let bVisible = this.getView().byId("idRouteList").getVisible();
                 this.getView().byId("idRouteList").setVisible(!bVisible);
+            },
+
+            onUseCurrentLocation: function(){
+                this._geolocate();
+            },
+
+            onAfterRenderingFragment: function () {
+                autocomplete = new google.maps.places.Autocomplete(
+                    (this.byId('autocomplete').getDomRef('inner')), {
+                        types: ['geocode']
+                    });
+                autocomplete.addListener('place_changed', function () {
+                    // Get the place details from the autocomplete object.
+                    var place = autocomplete.getPlace();
+                    this.pDialog.getModel().setProperty("/latitudeStart", place.geometry.location.lat() );
+                    this.pDialog.getModel().setProperty("/longitudeStart", place.geometry.location.lng() ); 
+                    
+                    // // Get each component of the address from the place details
+                    // // and fill the corresponding field on the form.
+                    // addressModel = this.getView().getModel("addressModel");
+                    // for (var i = 0; i < place.address_components.length; i++) {
+                    //     var addressType = place.address_components[i].types[0];
+                    //     if (addressMapping[addressType]) {
+                    //         var val = place.address_components[i]["short_name"];
+                    //         addressModel.setProperty("/"+addressMapping[addressType],val);
+                    //     }
+                    // }
+                }.bind(this));
+                this._geolocate();
+            },
+    
+            /** 
+             * Private method to prompt for location
+             * @constructor 
+             */
+            _geolocate: function () {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        var geolocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        var circle = new google.maps.Circle({
+                            center: geolocation,
+                            radius: position.coords.accuracy
+                        });
+                        autocomplete.setBounds(circle.getBounds());
+                        this.pDialog.getModel().setProperty("/latitudeStart",geolocation.lat );
+                        this.pDialog.getModel().setProperty("/longitudeStart",geolocation.lng ); 
+                        this.byId('autocomplete').setValue("Aktueller Standort 📍")
+                    }.bind(this));
+                }
             }
 
 
