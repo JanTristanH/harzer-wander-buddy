@@ -18,7 +18,7 @@
                     counter="{local>stampCount}"
                 -->
         </SelectList>
-        <vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}"
+        <vbm:GeoMap id="idRoutingMap" mapConfiguration="{mapConfig>/}"
             initialPosition="10.30147999999997;51.7462" initialZoom="12">
             <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
             <vbm:vos>

@@ -8,7 +8,7 @@
                     sorter: {
                         path: 'name'
                     }
-                }">
+                }"  updateFinished=".onStampingsUpdateFinished" >
             <headerToolbar>
                 <Toolbar>
                     <Title text="Stamps" level="H2"/>

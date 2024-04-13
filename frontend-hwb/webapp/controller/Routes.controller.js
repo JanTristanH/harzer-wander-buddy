@@ -73,6 +73,12 @@ sap.ui.define([
                         });
                         this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
+                        
+                        this.getView().byId("idRouteList").setSelectedKey(0);
+                        this.getView().byId("idRoutingMap").setInitialPosition(
+                            oData.calculateHikingRoute.results[0].path[1].positionString.split(';0')[0]);
+
+                            oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
                     }.bind(this),
                     error: function (oError) {
                         sap.m.MessageToast.show("Failed to calculate route.");
@@ -83,12 +89,14 @@ sap.ui.define([
             },
 
             onSelectionChange: function (oEvent) {
-                debugger
                 let oLocalModel = this.getView().getModel("local");
                 let selectedRoute = oLocalModel.getProperty("/hikingRoutes")
                     .filter(r => r.id == oEvent.getParameter("selectedItem").getKey())[0];
 
-                oLocalModel.setProperty("/routes", selectedRoute.path)
+                oLocalModel.setProperty("/routes", selectedRoute.path);
+
+                this.getView().byId("idRoutingMap").setInitialPosition(
+                    selectedRoute.path[1].positionString.split(';0')[0]);
 
             },
 
