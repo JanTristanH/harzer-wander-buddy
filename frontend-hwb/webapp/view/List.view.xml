@@ -1,50 +1,45 @@
 <mvc:View controllerName="hwb.frontendhwb.controller.List"
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
-    xmlns:table="sap.ui.table"
-    xmlns:u="sap.ui.unified"
-    xmlns:c="sap.ui.core"
-    xmlns="sap.m">
-    <HBox>
-        <Table id="StampingsTable" inset="false" growing="true" growingThreshold ="250" mode="MultiSelect" selectionChange="onSelectionChange" updateFinished=".onStampingsUpdateFinished" items="{
-                        path: '/PersonalizedStampboxes',
-                        sorter: {
-                          path: 'name'
-                        }
-                      }">
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core">
+    <HBox class="sapUiResponsiveContentPadding">
+        <Table id="StampingsTable" inset="false" growing="true" growingThreshold="250" mode="MultiSelect" selectionChange="onSelectionChange" items="{
+                    path: '/PersonalizedStampboxes',
+                    sorter: {
+                        path: 'name'
+                    }
+                }">
             <headerToolbar>
-                <OverflowToolbar>
-                    <content>
-                        <Title text="Stamps" level="H2"/>
-                        <ToolbarSpacer />
-                    </content>
-                </OverflowToolbar>
+                <Toolbar>
+                    <Title text="Stamps" level="H2"/>
+                    <ToolbarSpacer />
+                </Toolbar>
             </headerToolbar>
             <columns>
-                <Column width="12em">
+                <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline" width="auto">
                     <Text text="Number" />
                 </Column>
-                <Column>
+                <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline" width="auto">
                     <Text text="Title" />
                 </Column>
-                <Column>
+                <Column minScreenWidth="Phone" demandPopin="true" popinDisplay="Inline" width="auto">
                     <Text text="Created By" />
                 </Column>
-                <Column>
-                    <Text text="technical key (removed later)" />
+                <Column minScreenWidth="Desktop" demandPopin="true" popinDisplay="Block" hAlign="Begin">
+                    <Text text="Technical Key" />
                 </Column>
             </columns>
             <items>
-                <ColumnListItem vAlign="Middle">
+                <ColumnListItem type="Active">
                     <cells>
                         <ObjectIdentifier title="{number}"/>
                         <Text text="{name}" />
-                        <Text text="{name}" />
-                        <Text text="{ID}" />
-                        <!-- <Text text="{:={$Stampings}.length}>0}"/> -->
+                        <Text text="{createdBy}" />
+                        <Text text="{technicalKey}" />
                     </cells>
                 </ColumnListItem>
             </items>
         </Table>
-        <Button press='.onPress'></Button>
+        <Button text="Action" press=".onPress" />
     </HBox>
 </mvc:View>

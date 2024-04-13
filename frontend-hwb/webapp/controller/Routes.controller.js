@@ -1,6 +1,6 @@
 sap.ui.define([
-        "sap/ui/core/mvc/Controller"
-    ],
+    "sap/ui/core/mvc/Controller"
+],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
@@ -14,19 +14,19 @@ sap.ui.define([
 
             },
 
-            onOpenRoutingDialog: async function() {
+            onOpenRoutingDialog: async function () {
                 var oView = this.getView();
-            
+
                 // Create dialog lazily
                 if (!this.pDialog) {
                     this.pDialog = await this.loadFragment({
                         name: "hwb.frontendhwb.fragment.HikingRouteDialog"
                     });
-                
+
                     this.pDialog.open();
                     oView.addDependent(this.pDialog);
                 }
-            
+
                 // Reset model or create new one if needed
                 var oModel = new sap.ui.model.json.JSONModel({
                     maxDepth: 8,
@@ -38,15 +38,15 @@ sap.ui.define([
                     minStampCount: 1
                 });
                 this.pDialog.setModel(oModel);
-            
+
                 this.pDialog.open();
             },
 
-            onCancel: function(){
+            onCancel: function () {
                 this.pDialog.close();
             },
 
-            onSubmitRouting: function() {
+            onSubmitRouting: function () {
                 var oModel = this.getView().getModel(); // Get the OData model
                 var oDialogModel = this.pDialog.getModel();
 
@@ -65,24 +65,39 @@ sap.ui.define([
                 oModel.callFunction(sFunctionName, {
                     method: "GET",
                     urlParameters: oParams,
-                    success: function(oData, oResponse) {
+                    success: function (oData, oResponse) {
                         sap.m.MessageToast.show("Route calculated successfully!");
                         // Additional success handling
-                        let oLocalModel = new sap.ui.model.json.JSONModel({   
+                        let oLocalModel = new sap.ui.model.json.JSONModel({
                             hikingRoutes: oData.calculateHikingRoute.results
                         });
                         this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
                     }.bind(this),
-                    error: function(oError) {
+                    error: function (oError) {
                         sap.m.MessageToast.show("Failed to calculate route.");
                         // Additional error handling
                         this.pDialog.close();
                     }
                 });
+            },
+
+            onSelectionChange: function (oEvent) {
+                debugger
+                let oLocalModel = this.getView().getModel("local");
+                let selectedRoute = oLocalModel.getProperty("/hikingRoutes")
+                    .filter(r => r.id == oEvent.getParameter("selectedItem").getKey())[0];
+
+                oLocalModel.setProperty("/routes", selectedRoute.path)
+
+            },
+
+            onToggleList: function(){
+                let bVisible = this.getView().byId("idRouteList").getVisible();
+                this.getView().byId("idRouteList").setVisible(!bVisible);
             }
-            
-            
-            
+
+
+
         });
     });

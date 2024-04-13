@@ -1,22 +1,33 @@
 <mvc:View controllerName="hwb.frontendhwb.controller.Routes"
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
     xmlns="sap.m"
+    xmlns:core="sap.ui.core"
     xmlns:vbm="sap.ui.vbm">
     
     <Button press='onOpenRoutingDialog' text="Routen Berechnen"/>
+    <Button press='onToggleList' text="ListUmschalten"/>
     <HBox>
-        <List headerText="Routen" headerLevel="H2" 		items="{local>/hikingRoutes}" >
-            <StandardListItem
-                title="Distanz: {local>distance}"
-                description="Länge: {local>duration}"
-                counter="{local>stampCount}"
-                type= 'Active' />
-        </List>
+        <SelectList id="idRouteList" headerText="Routen" headerLevel="H2" items="{local>/hikingRoutes}" selectionChange="onSelectionChange" >
+            <core:ListItem
+                key="{local>id}"
+                text="Länge: {local>duration}s - Distanz: {local>distance} - Stempel: {local>stampCount}"
+                />
+                <!-- 
+                    description="Länge: {local>duration}"    
+                    title="Distanz: {local>distance}"
+                    counter="{local>stampCount}"
+                -->
+        </SelectList>
         <vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}"
             initialPosition="10.30147999999997;51.7462" initialZoom="12">
             <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
             <vbm:vos>
-                <vbm:Routes>
+                <vbm:Routes items="{local>/routes}">
+                    <vbm:Route
+						position="{local>positionString}"
+						tooltip="Länge: {local>duration}s - Distanz: {local>distance}" labelText="{local>order}" end="1"
+						start="0" color="rgba(92,186,230,1.0)" colorBorder="rgb(255,255,255)"
+						hotDeltaColor="RHLSA(0,1,1,0.6)" click="onClickRoute" contextMenu="onContextMenuRoute" />
                 </vbm:Routes>
 
                 <vbm:Spots id="spots" items="{/PersonalizedStampboxes}">

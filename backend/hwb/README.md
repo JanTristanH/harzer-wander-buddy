@@ -3,14 +3,17 @@
 ## Todo
 
 - implement api call to maps to get times (by travel type) ✔️
-- berechnete Travel Times extern persistieren
-- implement DFS to suggest routes
-- UI für suggested routes -> General route planning & viewing
+- berechnete Travel Times extern persistieren ✔️
+- implement DFS to suggest routes ✔️
+- UI für suggested routes -> General route planning & viewing ✔️
 - dev deploy on domain
 - Mobile optimization & UI overhaul                          --> do this sooner? 
 - shareability for routes
 - cute mascot
 - backup for user stamps
+- Driving from stamp to stamp does not seem to work properly
+- Too many parking spaces obscure the relevant neighbor travel times. --> Sort some out
+
 
 ## MVP 2
 
