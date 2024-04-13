@@ -5,11 +5,12 @@
     
     <Button press='onOpenRoutingDialog' text="Routen Berechnen"/>
     <HBox>
-        <List headerText="Routen" headerLevel="H2">
+        <List headerText="Routen" headerLevel="H2" 		items="{local>/hikingRoutes}" >
             <StandardListItem
-                title="Distanz: {distance} \n Länge: {duration}"
-                description="test"
-                counter="{stampCount}" />
+                title="Distanz: {local>distance}"
+                description="Länge: {local>duration}"
+                counter="{local>stampCount}"
+                type= 'Active' />
         </List>
         <vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}"
             initialPosition="10.30147999999997;51.7462" initialZoom="12">

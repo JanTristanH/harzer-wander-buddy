@@ -47,28 +47,41 @@ sap.ui.define([
             },
 
             onSubmitRouting: function() {
-                this.pDialog.close();
-                return;
-                var oModel = this.pDialog.getModel();
-                var sUrl = "/odata/v2/api/calculateHikingRoute?";
-                sUrl += "maxDepth=" + oModel.getProperty("/maxDepth");
-                sUrl += "&maxDuration=" + oModel.getProperty("/maxDuration");
-                // Add other parameters similarly
-            
-                // Fetch data
-                jQuery.ajax({
-                    url: sUrl,
-                    success: function(oData) {
-                        var oResultModel = new sap.ui.model.json.JSONModel(oData.d.calculateHikingRoute.results);
-                        this.getView().setModel(oResultModel, "results");
+                var oModel = this.getView().getModel(); // Get the OData model
+                var oDialogModel = this.pDialog.getModel();
+
+                // Define the function import URL and parameters
+                var sFunctionName = "/calculateHikingRoute";
+                var oParams = {
+                    maxDepth: oDialogModel.getProperty("/maxDepth"),
+                    maxDuration: oDialogModel.getProperty("/maxDuration"),
+                    maxDistance: oDialogModel.getProperty("/maxDistance"),
+                    latitudeStart: oDialogModel.getProperty("/latitudeStart"),
+                    longitudeStart: oDialogModel.getProperty("/longitudeStart"),
+                    allowDriveInRoute: oDialogModel.getProperty("/allowDriveInRoute"),
+                    minStampCount: oDialogModel.getProperty("/minStampCount")
+                };
+                // Call the function import
+                oModel.callFunction(sFunctionName, {
+                    method: "GET",
+                    urlParameters: oParams,
+                    success: function(oData, oResponse) {
+                        sap.m.MessageToast.show("Route calculated successfully!");
+                        // Additional success handling
+                        let oLocalModel = new sap.ui.model.json.JSONModel({   
+                            hikingRoutes: oData.calculateHikingRoute.results
+                        });
+                        this.getView().setModel(oLocalModel, "local");
+                        this.pDialog.close();
                     }.bind(this),
-                    error: function() {
-                        sap.m.MessageToast.show("Error fetching route data.");
+                    error: function(oError) {
+                        sap.m.MessageToast.show("Failed to calculate route.");
+                        // Additional error handling
+                        this.pDialog.close();
                     }
                 });
-            
-                this.pDialog.close();
             }
+            
             
             
         });
