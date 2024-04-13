@@ -124,7 +124,7 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
     calculationParamsOuter.pathLengthSinceCar = 1;
     dfs(calculationParamsOuter.startId, "Start", [{ poi: calculationParamsOuter.startId, id: null, name: "Start" }], 0, 0, 0, 0, false, calculationParamsOuter);
 
-    let sortedRoutes = routes.filter(route => route.stampCount > calculationParamsOuter.minStampCount)
+    let sortedRoutes = routes.filter(route => route.stampCount >= calculationParamsOuter.minStampCount)
         .sort((a, b) => {
             if (b.stampCount - a.stampCount === 0) {  // If stampCounts are equal, use secondary sort
                 const valueA = a.stampCount / (a.distance + a.duration);

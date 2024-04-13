@@ -90,7 +90,7 @@ Authorization: Basic Kevin pass
 
 
 ### Get Hiking Route
-GET http://localhost:4004/odata/v2/api/calculateHikingRoute?maxDepth=8&maxDuration=36000&maxDistance=15000&latitudeStart='51.780277'&longitudeStart='11.002212'&allowDriveInRoute=false&minStampCount=0
+GET http://localhost:4004/odata/v2/api/calculateHikingRoute?maxDepth=8&maxDuration=36000&maxDistance=15000&latitudeStart='51.780277'&longitudeStart='11.002212'&allowDriveInRoute=false&minStampCount=1
 Authorization: Basic Kevin pass
 
 ### Get Typed Travel times

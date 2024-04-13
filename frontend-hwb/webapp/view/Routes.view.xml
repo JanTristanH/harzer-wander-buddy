@@ -1,0 +1,31 @@
+<mvc:View controllerName="hwb.frontendhwb.controller.Routes"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns="sap.m"
+    xmlns:vbm="sap.ui.vbm">
+    
+    <Button press='onOpenRoutingDialog' text="Routen Berechnen"/>
+    <HBox>
+        <List headerText="Routen" headerLevel="H2">
+            <StandardListItem
+                title="Distanz: {distance} \n Länge: {duration}"
+                description="test"
+                counter="{stampCount}" />
+        </List>
+        <vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}"
+            initialPosition="10.30147999999997;51.7462" initialZoom="12">
+            <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
+            <vbm:vos>
+                <vbm:Routes>
+                </vbm:Routes>
+
+                <vbm:Spots id="spots" items="{/PersonalizedStampboxes}">
+                    <vbm:Spot visible="{hasVisited}" position="{longitude};{latitude}"
+                        text="{number}" labelType="Default" labelText=""
+                        tooltip="{name}" labelPos="5"
+                        type="{= !${hasVisited} ? 'Error' : 'Success' }" />
+                </vbm:Spots>
+
+            </vbm:vos>
+        </vbm:GeoMap>
+    </HBox>
+</mvc:View>
