@@ -66,8 +66,10 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes) {
         }
         if (poi === calculationParamsInner.startId && calculationParamsInner.pathLengthSinceCar > 1) {
             routes.push({ path: path, stampCount: stampCount, distance, duration });
+            if (!calculationParamsInner.allowDriveInRoute){
+                return;
+            }
             canDrive = true; //we are again at out parking spot and can drive again
-            //return;
         }
 
         visited.add(poi);
@@ -76,11 +78,6 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes) {
             if (!path.map(p => p.poi).includes(neighbor.toPoi) || neighbor.toPoi === calculationParamsInner.startId) {
                 let newDistance = distance;
                 let newStampCount = stampCount;
-
-                if (neighbor.ID == "de4b06c2-1028-48c9-ab50-55b82e6b2c25"
-                    || neighbor.ID ==  "134d29e9-3904-4ce4-888f-ab1b2bc69100") {
-                    let a = 1;
-                }
 
                 let calculationParamsInnerClone = { ...calculationParamsInner };
                 // Increment distance only if travel mode is not 'drive'
@@ -125,7 +122,7 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes) {
     calculationParamsOuter.pathLengthSinceCar = 1;
     dfs(calculationParamsOuter.startId, "Start", [{ poi: calculationParamsOuter.startId, id: null, name: "Start" }], 0, 0, 0, 0, false, calculationParamsOuter);
 
-    let sortedRoutes = routes.filter(route => route.stampCount > 0)
+    let sortedRoutes = routes.filter(route => route.stampCount > calculationParamsOuter.minStampCount)
         .sort((a, b) => {
             if (b.stampCount - a.stampCount === 0) {  // If stampCounts are equal, use secondary sort
                 const valueA = a.stampCount / (a.distance + a.duration);

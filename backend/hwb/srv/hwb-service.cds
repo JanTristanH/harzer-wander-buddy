@@ -14,6 +14,8 @@ service api @(requires: 'authenticated-user') {
     function calculateHikingRoute(maxDepth : Integer,
                                   maxDuration : Integer,
                                   maxDistance : Integer,
+                                  minStampCount : Integer, //TODO implement
+                                  allowDriveInRoute: Boolean,
                                   latitudeStart : String,
                                   longitudeStart : String)      returns String;
 
