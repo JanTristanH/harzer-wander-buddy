@@ -22,14 +22,14 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('calculateHikingRoute', calculateHikingRoute)
 
-    
+
     this.on('READ', 'TypedTravelTimes', async (req) => {
       // const db = cds.transaction(req);
-      
-      
+
+
       return typedTravelTimes;
     });
-    
+
     return super.init()
   }
 }
@@ -37,14 +37,21 @@ module.exports = class api extends cds.ApplicationService {
 async function calculateHikingRoute(req) {
   req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
   console.log(req.data);
-  if (aTravelTimesGlobal.length == 0){
-    const { typedTravelTimes } = this.api.entities
+  const { typedTravelTimes, PersonalizedStampboxes } = this.api.entities
+  if (aTravelTimesGlobal.length == 0) {
     aTravelTimesGlobal = await SELECT
       .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
       .from(typedTravelTimes);
-
   }
-  let results = await routingManager.calculateHikingRoutes(req.data, aTravelTimesGlobal);
+
+  aStampsDoneByUser = await SELECT
+    .columns('ID')
+    .from(PersonalizedStampboxes)
+    .where({hasVisited: true});
+  
+    aStampsDoneByUser = aStampsDoneByUser.map(s => s.ID);
+
+    let results = await routingManager.calculateHikingRoutes(req.data, aTravelTimesGlobal, aStampsDoneByUser);
   return { results }
 
   return {
@@ -133,7 +140,7 @@ async function calculateTravelTimesNNearestNeighbors(req) {
 
     let aTravelTimes = aTravelTimesWalk.concat(aTravelTimesDrive);
     // save to table
-    if (aTravelTimes){
+    if (aTravelTimes) {
       await UPSERT(aTravelTimes).into(TravelTimes)
     }
   }

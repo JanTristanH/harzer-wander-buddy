@@ -45,7 +45,7 @@ async function loadSubTree(ID) {
     });
 }
 
-async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes) {
+async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStampsDoneByUser) {
     // Create an adjacency list where each edge is directional
     const adjacencyList = new Map();
     aTravelTimes.forEach(edge => {
@@ -96,7 +96,9 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes) {
                 calculationParamsInnerClone.pathLengthSinceCar++;
 
                 // Increment stamp count if poi is of type 'stamp'
-                if (neighbor.toPoiType === 'stamp' && !path.map(p => p.poi).includes(neighbor.toPoi)) {
+                if (neighbor.toPoiType === 'stamp' 
+                    && !path.map(p => p.poi).includes(neighbor.toPoi)
+                    && !aStampsDoneByUser.includes(neighbor.toPoi)) {
                     newStampCount++;
                 }
 
