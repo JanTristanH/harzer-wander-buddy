@@ -199,6 +199,33 @@ service api @(requires: 'authenticated-user') {
         order by
             distanceKm asc;
 
+ entity NeighborsCalculationRequestParking as
+        select from db.RouteCalculationRequest as CalculationRequest
+        join db.ParkingSpots as Neighbors
+            on CalculationRequest.ID != Neighbors.ID
+        {
+            CalculationRequest.ID,
+            Neighbors.ID as NeighborsID,
+            Neighbors.latitude,
+            Neighbors.longitude,
+            SQRT(
+                POW(
+                    111.2 * (
+                        Neighbors.latitude - CalculationRequest.latitude
+                    ), 2
+                )+POW(
+                    111.2 * (
+                        CalculationRequest.longitude - Neighbors.longitude
+                    ) * COS(
+                        Neighbors.latitude / 57.3
+                    ), 2
+                )
+            )            as distanceKm : Double
+
+        }
+        order by
+            distanceKm asc;
+
 
     entity tree                    as
             select from db.TravelTimes as TravelTimes {

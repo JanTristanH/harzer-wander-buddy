@@ -35,7 +35,7 @@ module.exports = class api extends cds.ApplicationService {
 }
 
 async function calculateHikingRoute(req) {
-  req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
+  // req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
   console.log(req.data);
   const { typedTravelTimes, PersonalizedStampboxes } = this.api.entities
   if (aTravelTimesGlobal.length == 0) {
@@ -47,11 +47,19 @@ async function calculateHikingRoute(req) {
   aStampsDoneByUser = await SELECT
     .columns('ID')
     .from(PersonalizedStampboxes)
-    .where({hasVisited: true});
-  
-    aStampsDoneByUser = aStampsDoneByUser.map(s => s.ID);
+    .where({ hasVisited: true });
 
-    let results = await routingManager.calculateHikingRoutes(req.data, aTravelTimesGlobal, aStampsDoneByUser);
+  aStampsDoneByUser = aStampsDoneByUser.map(s => s.ID);
+
+  //Determine starting Parking spaces and iterate
+  let aStartingParking = await determineStartingParking.bind(this)(req.data);
+
+  let results = [];
+  for (let i = 0; i < aStartingParking.length; i++) {
+    req.data.startId = aStartingParking[i].NeighborsID;
+    let newRoutes = await routingManager.calculateHikingRoutes(req.data, aTravelTimesGlobal, aStampsDoneByUser);
+    results = results.concat(newRoutes);
+  }
   return { results }
 
   return {
@@ -68,6 +76,26 @@ async function calculateHikingRoute(req) {
     totalDuration: 2,
     totalNewStamps: 3
   }
+}
+
+async function determineStartingParking(params) {
+  return new Promise(async (resolve, reject) => {
+    
+    const { RouteCalculationRequest } = this.entities('hwb.db');
+    let calculationRequest = {
+    ID: uuidv4(),
+    latitude: params.latitudeStart,
+    longitude: params.longitudeStart
+  }
+  await INSERT(calculationRequest).into(RouteCalculationRequest);
+  
+  
+  const { NeighborsCalculationRequestParking } = this.api.entities
+  let parking = await SELECT.from(NeighborsCalculationRequestParking)
+  .where({ID : calculationRequest.ID})
+  .limit(2); 
+  resolve(parking);
+});
 }
 
 /** calculate travel times to neighbors via maps api */

@@ -1,4 +1,7 @@
 const cds = require('@sap/cds/lib')
+const {
+    v4: uuidv4
+  } = require('uuid');
 
 async function loadSubTree(ID) {
     const visited = new Set(); // A set to keep track of visited nodes
@@ -170,6 +173,10 @@ function addPositionStrings(aRoutes) {
 
         // Format UUIDs for SQL query (ensure each UUID is surrounded by single quotes)
         const formattedIds = uniqueIds.map(id => `'${id}'`).join(',');
+        if(formattedIds == ''){
+            resolve([]);
+            return;
+        }
 
         // Read required positionStrings
         const aTravelTimesWithPositionString = await cds.run(SELECT.from('hwb_db_TravelTimes').where(`ID in (${formattedIds})`));
@@ -180,7 +187,7 @@ function addPositionStrings(aRoutes) {
 
         let i = 0;
         aRoutes.forEach(route => {
-            route.id = i;
+            route.id = uuidv4();
             i++;
             let itemOrder = 0;
             route.path.forEach(item => {

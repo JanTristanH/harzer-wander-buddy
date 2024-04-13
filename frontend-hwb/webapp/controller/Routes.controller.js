@@ -78,12 +78,16 @@ sap.ui.define([
                         });
                         this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
+                        if (!!oData.calculateHikingRoute.results.length) {
 
-                        this.getView().byId("idRouteList").setSelectedKey(0);
-                        this.getView().byId("idRoutingMap").setInitialPosition(
-                            oData.calculateHikingRoute.results[0].path[1].positionString.split(';0')[0]);
+                            this.getView().byId("idRouteList").setSelectedKey(oData.calculateHikingRoute.results[0].id);
+                            this.getView().byId("idRoutingMap").setInitialPosition(
+                                oData.calculateHikingRoute.results[0].path[1].positionString.split(';0')[0]);
 
-                        oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
+                            oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
+                        } else {
+                            sap.m.MessageToast.show("No routes found! :(");
+                        }
                     }.bind(this),
                     error: function (oError) {
                         sap.m.MessageToast.show("Failed to calculate route.");

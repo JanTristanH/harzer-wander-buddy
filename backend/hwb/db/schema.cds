@@ -54,6 +54,13 @@ entity ParkingSpots : cuid, PointOfInterest {
 //}
 }
 
+entity RouteCalculationRequest : cuid {
+    longitude   : String(40);
+    latitude    : String(40);
+    createdAt : Timestamp @cds.on.insert: $now;
+    createdBy : User      @cds.on.insert: $user;
+}
+
 @assert.integrity: false
 entity TravelTimes : cuid {
     fromPoi         : UUID;
