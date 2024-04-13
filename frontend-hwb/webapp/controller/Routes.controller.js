@@ -24,7 +24,7 @@ sap.ui.define([
                         name: "hwb.frontendhwb.fragment.HikingRouteDialog"
                     });
 
-                    
+
                     this.pDialog.open();
 
                     oView.addDependent(this.pDialog);
@@ -78,12 +78,12 @@ sap.ui.define([
                         });
                         this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
-                        
+
                         this.getView().byId("idRouteList").setSelectedKey(0);
                         this.getView().byId("idRoutingMap").setInitialPosition(
                             oData.calculateHikingRoute.results[0].path[1].positionString.split(';0')[0]);
 
-                            oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
+                        oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
                     }.bind(this),
                     error: function (oError) {
                         sap.m.MessageToast.show("Failed to calculate route.");
@@ -100,31 +100,35 @@ sap.ui.define([
 
                 oLocalModel.setProperty("/routes", selectedRoute.path);
 
-                this.getView().byId("idRoutingMap").setInitialPosition(
+                this.getView().byId("idRoutingMap").setCenterPosition(
                     selectedRoute.path[1].positionString.split(';0')[0]);
+
+                if (this.getView().getModel("device").getProperty("/system/phone")) {
+                    this.onToggleList();
+                }
 
             },
 
-            onToggleList: function(){
+            onToggleList: function () {
                 let bVisible = this.getView().byId("idRouteList").getVisible();
                 this.getView().byId("idRouteList").setVisible(!bVisible);
             },
 
-            onUseCurrentLocation: function(){
+            onUseCurrentLocation: function () {
                 this._geolocate();
             },
 
             onAfterRenderingFragment: function () {
                 autocomplete = new google.maps.places.Autocomplete(
                     (this.byId('autocomplete').getDomRef('inner')), {
-                        types: ['geocode']
-                    });
+                    types: ['geocode']
+                });
                 autocomplete.addListener('place_changed', function () {
                     // Get the place details from the autocomplete object.
                     var place = autocomplete.getPlace();
-                    this.pDialog.getModel().setProperty("/latitudeStart", place.geometry.location.lat() );
-                    this.pDialog.getModel().setProperty("/longitudeStart", place.geometry.location.lng() ); 
-                    
+                    this.pDialog.getModel().setProperty("/latitudeStart", place.geometry.location.lat());
+                    this.pDialog.getModel().setProperty("/longitudeStart", place.geometry.location.lng());
+
                     // // Get each component of the address from the place details
                     // // and fill the corresponding field on the form.
                     // addressModel = this.getView().getModel("addressModel");
@@ -138,7 +142,7 @@ sap.ui.define([
                 }.bind(this));
                 this._geolocate();
             },
-    
+
             /** 
              * Private method to prompt for location
              * @constructor 
@@ -155,8 +159,8 @@ sap.ui.define([
                             radius: position.coords.accuracy
                         });
                         autocomplete.setBounds(circle.getBounds());
-                        this.pDialog.getModel().setProperty("/latitudeStart",geolocation.lat );
-                        this.pDialog.getModel().setProperty("/longitudeStart",geolocation.lng ); 
+                        this.pDialog.getModel().setProperty("/latitudeStart", geolocation.lat);
+                        this.pDialog.getModel().setProperty("/longitudeStart", geolocation.lng);
                         this.byId('autocomplete').setValue("Aktueller Standort 📍")
                     }.bind(this));
                 }

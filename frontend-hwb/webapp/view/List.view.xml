@@ -17,25 +17,17 @@
             </headerToolbar>
             <columns>
                 <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline" width="auto">
-                    <Text text="Number" />
+                    <Text text="Stempelstelle" />
                 </Column>
                 <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline" width="auto">
-                    <Text text="Title" />
-                </Column>
-                <Column minScreenWidth="Phone" demandPopin="true" popinDisplay="Inline" width="auto">
-                    <Text text="Created By" />
-                </Column>
-                <Column minScreenWidth="Desktop" demandPopin="true" popinDisplay="Block" hAlign="Begin">
-                    <Text text="Technical Key" />
+                    <Text text="Nummer" />
                 </Column>
             </columns>
             <items>
                 <ColumnListItem type="Active">
                     <cells>
-                        <ObjectIdentifier title="{number}"/>
-                        <Text text="{name}" />
-                        <Text text="{createdBy}" />
-                        <Text text="{technicalKey}" />
+                        <ObjectIdentifier title="{name}"/>
+                        <Text text="{number}" />
                     </cells>
                 </ColumnListItem>
             </items>
