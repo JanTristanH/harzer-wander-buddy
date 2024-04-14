@@ -76,8 +76,8 @@ service api @(requires: 'authenticated-user') {
                         true
                     else
                         false
-                end as hasVisited : Boolean
-
+                end as hasVisited : Boolean,
+                Stampboxes.Stampings.ID as StampingId
         };
 
     //action route (statingStampID:Integer, targetNumberOfStamps: Integer) returns Integer;

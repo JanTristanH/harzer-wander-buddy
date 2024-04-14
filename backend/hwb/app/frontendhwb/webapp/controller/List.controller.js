@@ -28,25 +28,29 @@ sap.ui.define([
 
             onSelectionChange: function (oEvent) {
                 var oSelectedItem = oEvent.getParameter("listItem");
+                // ListItem set to true
+                var obj = oSelectedItem.getBindingContext().getObject();
+                let oModel = this.getView().getModel();
                 if (oEvent.getParameter("selected")) {
-                    // ListItem set to true
-                    var obj = oSelectedItem.getBindingContext().getObject();
-                    let oModel = this.getView().getModel();
+                    let ID = obj.ID;
                     let mParameters = {
                         success: () => MessageToast.show("Saved Stamping") || oModel.refresh(),
                         // give message and reset ui to keep it consistent with backend
                         error: () => MessageToast.show("An Error Occured") || oSelectedItem.setSelected(false)
                     }
-                    let ID = obj.ID;
                     oModel.create("/Stampings", {
                         "stamp": {
                             ID
                         }
                     }, mParameters);
                 } else {
-                    // ListItem set to false
-                    MessageToast.show("Removing Stamps is not implemented yet");
-                    oSelectedItem.setSelected(true);
+                    let StampingId = obj.StampingId;
+                    let mParameters = {
+                        success: () => MessageToast.show("Saved Stamping") || oModel.refresh(),
+                        // give message and reset ui to keep it consistent with backend
+                        error: () => MessageToast.show("An Error Occured") || oSelectedItem.setSelected(true)
+                    }
+                    oModel.remove(`/Stampings(${StampingId})`, mParameters);
                 }
             },
 

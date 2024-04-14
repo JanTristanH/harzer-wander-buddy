@@ -7,18 +7,24 @@
 - implement DFS to suggest routes ✔️
 - UI für suggested routes -> General route planning & viewing ✔️
 - dev deploy on domain
-- Mobile optimization & UI overhaul                          --> do this sooner? 
+- Mobile optimization & UI overhaul with mobile optimization                          --> do this sooner? 
 - shareability for routes
 - cute mascot
-- backup for user stamps
-- Driving from stamp to stamp does not seem to work properly
-- Too many parking spaces obscure the relevant neighbor travel times. --> Sort some out
+- backup for user stamps (when using temporary sqlite)
+- Too many parking spaces obscure the relevant neighbor travel times.           --> Sort some out & add
 
 
 ## MVP 2
 
 - Friends feature (plan route together & notification)
 - Ui5 project into cap
+
+## Backlog
+- save some hand picked default routes
+- save high profile for routes
+- link to park for night parking
+- score for completing area
+
 
 Welcome to your new project.
 
