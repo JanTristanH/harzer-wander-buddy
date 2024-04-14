@@ -13,7 +13,7 @@
     "node-fetch": "^2.7.0"
   },
   "devDependencies": {
-    "@sap/ux-specification": "^1.120.8",
+    "@sap/cds-dk": "^7",
     "sqlite3": "^5.0.8",
     "uuid": "^9.0.0"
   },
@@ -35,6 +35,21 @@
         "[development]": {
           "kind": "basic-auth",
           "users": {
+            "1": {
+              "pass": "1"
+            },
+            "2": {
+              "pass": "2"
+            },
+            "3": {
+              "pass": "3"
+            },
+            "4": {
+              "pass": "4"
+            },
+            "5": {
+              "pass": "5"
+            },
             "Kevin": {
               "pass": "pass",
               "roles": [

@@ -26,6 +26,9 @@ service api @(requires: 'authenticated-user') {
     entity TravelTimes             as projection on db.TravelTimes;
 
     @readonly
+    entity RouteCalculationRequest as projection on db.RouteCalculationRequest;
+
+    @readonly
     entity AllPointsOfInterest as select from Stampboxes {
         key ID,
         longitude,
