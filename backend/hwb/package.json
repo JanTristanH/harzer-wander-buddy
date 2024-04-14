@@ -10,15 +10,15 @@
     "@sap/cds": "^7",
     "dotenv": "^16.4.5",
     "express": "^4",
-    "node-fetch": "^2.7.0"
-  },
-  "devDependencies": {
-    "@sap/cds-dk": "^7",
+    "node-fetch": "^2.7.0",
     "sqlite3": "^5.0.8",
     "uuid": "^9.0.0"
   },
+  "devDependencies": {
+    "@sap/cds-dk": "^7"
+  },
   "scripts": {
-    "start": "cds run",
+    "start": "cds-serve",
     "watch": "cds watch",
     "deploy": "cds deploy",
     "watch-frontendhwb": "cds watch --open frontendhwb/webapp/index.html?sap-ui-xx-viewCache=false"
@@ -33,6 +33,36 @@
       },
       "auth": {
         "[development]": {
+          "kind": "basic-auth",
+          "users": {
+            "1": {
+              "pass": "1"
+            },
+            "2": {
+              "pass": "2"
+            },
+            "3": {
+              "pass": "3"
+            },
+            "4": {
+              "pass": "4"
+            },
+            "5": {
+              "pass": "5"
+            },
+            "Kevin": {
+              "pass": "pass",
+              "roles": [
+                "dummy"
+              ]
+            },
+            "Alice": {
+              "pass": "pass"
+            },
+            "*": false
+          }
+        },
+        "[production]": {
           "kind": "basic-auth",
           "users": {
             "1": {

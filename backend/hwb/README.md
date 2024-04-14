@@ -18,6 +18,7 @@
 
 - Friends feature (plan route together & notification)
 - Ui5 project into cap
+- Stempel als Strtpunkt
 
 ## Backlog
 - save some hand picked default routes
