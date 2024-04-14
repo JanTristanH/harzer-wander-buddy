@@ -1,74 +1,78 @@
 {
-    "name": "hwb",
-    "version": "1.0.0",
-    "description": "A simple CAP project.",
-    "repository": "<Add your repository here>",
-    "license": "UNLICENSED",
-    "private": true,
-    "dependencies": {
-        "@cap-js-community/odata-v2-adapter": "^1.12.8",
-        "@sap/cds": "^7",
-        "dotenv": "^16.4.5",
-        "express": "^4",
-        "node-fetch": "^2.7.0"
-    },
-    "devDependencies": {
-        "sqlite3": "^5.0.8",
-        "uuid": "^9.0.0"
-    },
-    "scripts": {
-        "start": "cds run",
-        "watch": "cds watch",
-        "deploy": "cds deploy"
-    },
-    "cds": {
-        "requires": {
-            "db": {
-                "kind": "sqlite",
-                "credentials": { "url": "db.sqlite" } 
-             },
-            "auth": {
-                "[development]": {
-                    "kind": "basic-auth",
-                    "users": {
-                        "Kevin": {
-                            "pass": "pass",
-                            "roles": [
-                                "dummy"
-                            ]
-                        },
-                        "Alice": {
-                            "pass": "pass"
-                        },
-                        "*": false
-                    }
-                }
-            }
+  "name": "hwb",
+  "version": "1.0.0",
+  "description": "A simple CAP project.",
+  "repository": "<Add your repository here>",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@cap-js-community/odata-v2-adapter": "^1.12.8",
+    "@sap/cds": "^7",
+    "dotenv": "^16.4.5",
+    "express": "^4",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@sap/ux-specification": "^1.120.8",
+    "sqlite3": "^5.0.8",
+    "uuid": "^9.0.0"
+  },
+  "scripts": {
+    "start": "cds run",
+    "watch": "cds watch",
+    "deploy": "cds deploy",
+    "watch-frontendhwb": "cds watch --open frontendhwb/webapp/index.html?sap-ui-xx-viewCache=false"
+  },
+  "cds": {
+    "requires": {
+      "db": {
+        "kind": "sqlite",
+        "credentials": {
+          "url": "db.sqlite"
         }
-    },
-    "eslintConfig": {
-        "extends": "eslint:recommended",
-        "env": {
-            "es2020": true,
-            "node": true,
-            "jest": true,
-            "mocha": true
-        },
-        "globals": {
-            "SELECT": true,
-            "INSERT": true,
-            "UPDATE": true,
-            "DELETE": true,
-            "CREATE": true,
-            "DROP": true,
-            "CDL": true,
-            "CQL": true,
-            "CXL": true,
-            "cds": true
-        },
-        "rules": {
-            "no-console": "off",
-            "require-atomic-updates": "off"
+      },
+      "auth": {
+        "[development]": {
+          "kind": "basic-auth",
+          "users": {
+            "Kevin": {
+              "pass": "pass",
+              "roles": [
+                "dummy"
+              ]
+            },
+            "Alice": {
+              "pass": "pass"
+            },
+            "*": false
+          }
         }
+      }
     }
+  },
+  "eslintConfig": {
+    "extends": "eslint:recommended",
+    "env": {
+      "es2020": true,
+      "node": true,
+      "jest": true,
+      "mocha": true
+    },
+    "globals": {
+      "SELECT": true,
+      "INSERT": true,
+      "UPDATE": true,
+      "DELETE": true,
+      "CREATE": true,
+      "DROP": true,
+      "CDL": true,
+      "CQL": true,
+      "CXL": true,
+      "cds": true
+    },
+    "rules": {
+      "no-console": "off",
+      "require-atomic-updates": "off"
+    }
+  }
 }

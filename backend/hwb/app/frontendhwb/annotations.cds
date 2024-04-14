@@ -1,0 +1,1 @@
+using api as service from '../../srv/hwb-service';
