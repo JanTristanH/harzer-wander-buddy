@@ -9,12 +9,13 @@
                         path: 'numberInt'
                     }
                 }"  updateFinished=".onStampingsUpdateFinished" >
-            <headerToolbar>
-                <Toolbar>
-                    <Title text="Stamps" level="H2"/>
-                    <ToolbarSpacer />
-                </Toolbar>
-            </headerToolbar>
+                <headerToolbar>
+                    <Toolbar>
+                        <Title text="Stamps" level="H2"/>
+                        <ToolbarSpacer />
+                        <Label id="selectedCount" text="Selected: 0"/> <!-- Added Label for showing the count -->
+                    </Toolbar>
+                </headerToolbar>                
             <columns>
                 <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline" width="auto">
                     <Text text="Stempelstelle" />

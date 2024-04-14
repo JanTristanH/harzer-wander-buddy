@@ -24,6 +24,7 @@
 - save high profile for routes
 - link to park for night parking
 - score for completing area
+- score where walking from other side would be easier
 
 
 Welcome to your new project.

@@ -1,7 +1,7 @@
 sap.ui.define([
-        "sap/ui/core/mvc/Controller",
-        'sap/m/MessageToast'
-    ],
+    "sap/ui/core/mvc/Controller",
+    'sap/m/MessageToast'
+],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
@@ -26,7 +26,18 @@ sap.ui.define([
                 oTable.addEventDelegate(this._myDelegate, oTable);
             },
 
+            updateStampCount: function(){
+                var oTable = this.byId("StampingsTable");
+                var iSelectedCount = oTable.getSelectedItems().length;
+                var oSelectedCountLabel = this.byId("selectedCount");
+                oSelectedCountLabel.setText("Erwanderte Stempel: " + iSelectedCount); // Update the text of the label
+            },
+
             onSelectionChange: function (oEvent) {
+
+                this.updateStampCount()
+
+                // Update Backend
                 var oSelectedItem = oEvent.getParameter("listItem");
                 // ListItem set to true
                 var obj = oSelectedItem.getBindingContext().getObject();
@@ -56,6 +67,7 @@ sap.ui.define([
 
             onStampingsUpdateFinished: function (event) {
                 this.selectWhere(context => context.getProperty("hasVisited"));
+                this.updateStampCount()
             },
 
             selectWhere: function (keysAreMatching) {
