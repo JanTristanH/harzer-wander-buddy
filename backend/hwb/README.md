@@ -12,13 +12,14 @@
 - cute mascot
 - backup for user stamps (when using temporary sqlite)
 - Too many parking spaces obscure the relevant neighbor travel times.           --> Sort some out & add
-
+- Distanz < 10 km start n nächtste Nachbarn
 
 ## MVP 2
 
 - Friends feature (plan route together & notification)
 - Ui5 project into cap
 - Stempel als Strtpunkt
+- Kommentare an Stempel "fehlt"
 
 ## Backlog
 - save some hand picked default routes
