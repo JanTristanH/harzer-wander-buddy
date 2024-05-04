@@ -8,7 +8,7 @@ sap.ui.define([
         "use strict";
         const unstampedType = "Error";
 
-        return Controller.extend("hwb.frontendhwb.controller.Map", {
+        return Controller.extend("hwb.frontendhwb.controller.MapInner", {
             itemCache: [],
             onInit: function () {
             },

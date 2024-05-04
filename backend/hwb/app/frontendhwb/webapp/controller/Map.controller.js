@@ -8,7 +8,6 @@ sap.ui.define([
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.Map", {
-            itemCache: [],
             onAfterRendering: function () {
                 this.getView().byId("navButtonMapId").setType("Emphasized");
             }
