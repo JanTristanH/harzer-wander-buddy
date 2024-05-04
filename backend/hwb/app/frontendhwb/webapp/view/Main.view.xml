@@ -1,5 +1,6 @@
 <mvc:View controllerName="hwb.frontendhwb.controller.Main"
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns:core="sap.ui.core"
     xmlns="sap.m">
     <Page id="page" title="{i18n>title}">
         <content>
@@ -16,7 +17,7 @@
                             <mvc:XMLView viewName="hwb.frontendhwb.view.Routes"/>
                         </IconTabFilter>
                         <IconTabFilter text="People" key="people">
-                            <Text text="People content goes here ..." />
+                            <core:Fragment fragmentName="hwb.frontendhwb.fragment.MainMap" type="XML" />
                         </IconTabFilter>
                     </items>
                 </IconTabBar>

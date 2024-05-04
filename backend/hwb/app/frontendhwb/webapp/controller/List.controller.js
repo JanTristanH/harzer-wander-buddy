@@ -1,5 +1,5 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
+    "hwb/frontendhwb/controller/BaseController",
     'sap/m/MessageToast'
 ],
     /**
@@ -11,6 +11,9 @@ sap.ui.define([
         return Controller.extend("hwb.frontendhwb.controller.List", {
             onInit: function () {
                 this.disableSelectAll();
+            },
+            onAfterRendering: function(){
+                this.getView().byId("navButtonListId").setType("Emphasized");
             },
             disableSelectAll() {
                 // hacky workaround, use custom control later:

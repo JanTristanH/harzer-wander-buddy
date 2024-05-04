@@ -1,5 +1,5 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller",
+    "hwb/frontendhwb/controller/BaseController",
     "sap/ui/model/json/JSONModel"
 ],
     /**
@@ -11,8 +11,8 @@ sap.ui.define([
 
         return Controller.extend("hwb.frontendhwb.controller.Map", {
             itemCache: [],
-            onInit: function () {
-
+            onAfterRendering: function () {
+                this.getView().byId("navButtonRoutesId").setType("Emphasized");
             },
 
             onOpenRoutingDialog: async function () {
@@ -169,8 +169,5 @@ sap.ui.define([
                     }.bind(this));
                 }
             }
-
-
-
         });
     });

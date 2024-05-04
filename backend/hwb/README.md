@@ -6,7 +6,7 @@
 - berechnete Travel Times extern persistieren ✔️
 - implement DFS to suggest routes ✔️
 - UI für suggested routes -> General route planning & viewing ✔️
-- dev deploy on domain
+- dev deploy on domain ✔️
 - Mobile optimization & UI overhaul with mobile optimization                          --> do this sooner? 
 - shareability for routes
 - cute mascot

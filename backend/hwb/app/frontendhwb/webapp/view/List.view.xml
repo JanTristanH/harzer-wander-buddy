@@ -1,38 +1,78 @@
-<mvc:View controllerName="hwb.frontendhwb.controller.List"
-    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+<mvc:View
+    controllerName="hwb.frontendhwb.controller.List"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
     xmlns="sap.m"
-    xmlns:core="sap.ui.core">
-    <HBox class="sapUiResponsiveContentPadding">
-        <Table id="StampingsTable" inset="false" growing="true" growingThreshold="250" mode="MultiSelect" selectionChange="onSelectionChange" items="{
+    xmlns:core="sap.ui.core"
+>
+    <App id="app">
+        <Page>
+            <content>
+                <HBox class="sapUiResponsiveContentPadding">
+                    <Table
+                        id="StampingsTable"
+                        inset="false"
+                        growing="true"
+                        growingThreshold="250"
+                        mode="MultiSelect"
+                        selectionChange="onSelectionChange"
+                        items="{
                     path: '/PersonalizedStampboxes',
                     sorter: {
                         path: 'numberInt'
                     }
-                }"  updateFinished=".onStampingsUpdateFinished" >
-                <headerToolbar>
-                    <Toolbar>
-                        <Title text="Stamps" level="H2"/>
-                        <ToolbarSpacer />
-                        <Label id="selectedCount" text="Selected: 0"/> <!-- Added Label for showing the count -->
-                    </Toolbar>
-                </headerToolbar>                
-            <columns>
-                <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline" width="auto">
-                    <Text text="Stempelstelle" />
-                </Column>
-                <Column minScreenWidth="Tablet" demandPopin="true" popinDisplay="Inline" width="auto">
-                    <Text text="Nummer" />
-                </Column>
-            </columns>
-            <items>
-                <ColumnListItem type="Active">
-                    <cells>
-                        <ObjectIdentifier title="{name}"/>
-                        <Text text="{number}" />
-                    </cells>
-                </ColumnListItem>
-            </items>
-        </Table>
-        <Button text="Action" press=".onPress" />
-    </HBox>
+                }"
+                        updateFinished=".onStampingsUpdateFinished"
+                    >
+                        <headerToolbar>
+                            <Toolbar>
+                                <Title
+                                    text="Stamps"
+                                    level="H2"
+                                />
+                                <ToolbarSpacer />
+                                <Label
+                                    id="selectedCount"
+                                    text="Selected: 0"
+                                />
+                                <!-- Added Label for showing the count -->
+                            </Toolbar>
+                        </headerToolbar>
+                        <columns>
+                            <Column
+                                minScreenWidth="Tablet"
+                                demandPopin="true"
+                                popinDisplay="Inline"
+                                width="auto"
+                            >
+                                <Text text="Stempelstelle" />
+                            </Column>
+                            <Column
+                                minScreenWidth="Tablet"
+                                demandPopin="true"
+                                popinDisplay="Inline"
+                                width="auto"
+                            >
+                                <Text text="Nummer" />
+                            </Column>
+                        </columns>
+                        <items>
+                            <ColumnListItem type="Active">
+                                <cells>
+                                    <ObjectIdentifier title="{name}" />
+                                    <Text text="{number}" />
+                                </cells>
+                            </ColumnListItem>
+                        </items>
+                    </Table>
+                </HBox>
+            </content>
+            <footer>
+                <core:Fragment
+                    fragmentName="hwb.frontendhwb.fragment.Toolbar"
+                    type="XML"
+                />
+            </footer>
+        </Page>
+    </App>
 </mvc:View>

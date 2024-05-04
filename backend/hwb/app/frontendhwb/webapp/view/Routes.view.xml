@@ -3,6 +3,8 @@
     xmlns="sap.m"
     xmlns:core="sap.ui.core"
     xmlns:vbm="sap.ui.vbm">
+    <Page>
+        <content>
     
     <Button press='onOpenRoutingDialog' text="Routen Berechnen"/>
     <Button press='onToggleList' text="ListUmschalten"/>
@@ -40,4 +42,12 @@
             </vbm:vos>
         </vbm:GeoMap>
     </HBox>
+    </content>
+    <footer>
+        <core:Fragment
+            fragmentName="hwb.frontendhwb.fragment.Toolbar"
+            type="XML"
+        />
+    </footer>
+</Page>
 </mvc:View>

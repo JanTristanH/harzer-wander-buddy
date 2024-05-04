@@ -1,0 +1,59 @@
+<mvc:View
+    controllerName="hwb.frontendhwb.controller.MapInner"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
+    xmlns="sap.m"
+    xmlns:l="sap.ui.layout"
+    xmlns:core="sap.ui.core"
+    xmlns:vbm="sap.ui.vbm"
+>
+    <Page
+        id="page"
+        showHeader="false"
+        enableScrolling="false"
+        backgroundDesign="Transparent"
+    >
+        <content>
+            <Button
+                press='.onToggleLables'
+                text="Toggle Label"
+            />
+            <Button
+                press='.onToggleStampedSpots'
+                text="Show Unstamped"
+            />
+            <Button
+                press='.onShowGreens'
+                text="Show only Stamped ones"
+            />
+            <Button
+                press='.onShowAll'
+                text="Show All"
+            />
+            <HBox height="100%">
+                <!-- <vk:MapContainer
+                    id="mapContainer"
+                    xmlns:vk="sap.ui.vk"
+                    autoAdjustHeight="false"
+                    showSettings="false"
+                    showFullScreen="true"
+                    showRectangularZoom="false"
+                    showSelection="false"
+                    showHome="false"
+                >
+                    <vk:listPanelStack>
+                    </vk:listPanelStack>
+                    <vk:ContainerContent>
+                        <vk:content> -->
+                            <!-- needs to be sap.ui.vbm.GeoMap -->
+                            <core:Fragment
+                                fragmentName="hwb.frontendhwb.fragment.MainMap"
+                                type="XML"
+                            />
+                        <!-- </vk:content>
+                    </vk:ContainerContent>
+                </vk:MapContainer> -->
+            </HBox>
+        </content>
+    </Page>
+</mvc:View>
