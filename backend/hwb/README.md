@@ -8,14 +8,18 @@
 - UI für suggested routes -> General route planning & viewing ✔️
 - dev deploy on domain ✔️
 - Mobile optimization & UI overhaul with mobile optimization                          --> do this sooner? 
-- shareability for routes
-- cute mascot
-- backup for user stamps (when using temporary sqlite)
+    - show user location on map
+    - enhance List / route handling (show difference walk/drive & parking)
+    - allow manual changes to routes
 - Too many parking spaces obscure the relevant neighbor travel times.           --> Sort some out & add
+- enhance data quality, parking spaces & routes
 - Distanz < 10 km start n nächtste Nachbarn
+- backup for user stamps (when using temporary sqlite)
 
 ## MVP 2
 
+- shareability for routes
+- cute mascot
 - Friends feature (plan route together & notification)
 - Ui5 project into cap
 - Stempel als Strtpunkt
