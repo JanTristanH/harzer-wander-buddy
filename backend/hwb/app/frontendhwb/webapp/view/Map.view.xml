@@ -4,9 +4,7 @@
     xmlns="sap.m">
     <Page id="page" showHeader="false">
         <content>
-            <VBox>
-                <mvc:XMLView viewName="hwb.frontendhwb.view.MapInner"/>
-            </VBox>
+            <mvc:XMLView viewName="hwb.frontendhwb.view.MapInner"/>
         </content>
         <footer>
             <core:Fragment

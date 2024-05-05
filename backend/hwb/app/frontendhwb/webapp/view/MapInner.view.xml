@@ -6,6 +6,7 @@
     xmlns:l="sap.ui.layout"
     xmlns:core="sap.ui.core"
     xmlns:vbm="sap.ui.vbm"
+    height="100%"
 >
     <Page
         id="page"
@@ -24,30 +25,14 @@
             </OverflowToolbar>
         </subHeader>
         <content>
-            <HBox height="100%">
-                <!-- <vk:MapContainer
-                    id="mapContainer"
-                    xmlns:vk="sap.ui.vk"
-                    autoAdjustHeight="false"
-                    showSettings="false"
-                    showFullScreen="true"
-                    showRectangularZoom="false"
-                    showSelection="false"
-                    showHome="false"
-                >
-                    <vk:listPanelStack>
-                    </vk:listPanelStack>
-                    <vk:ContainerContent>
-                        <vk:content> -->
-                <!-- needs to be sap.ui.vbm.GeoMap -->
-                <core:Fragment
+        <l:FixFlex class="fixFlexVertical">
+            <l:flexContent>    
+                    <core:Fragment
                     fragmentName="hwb.frontendhwb.fragment.MainMap"
                     type="XML"
-                />
-                <!-- </vk:content>
-                    </vk:ContainerContent>
-                </vk:MapContainer> -->
-            </HBox>
+                    />
+            </l:flexContent>
+        </l:FixFlex>
         </content>
     </Page>
 </mvc:View>

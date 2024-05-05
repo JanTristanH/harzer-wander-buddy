@@ -14,7 +14,7 @@ sap.ui.define([
             onInit: function () {
             },
             onAfterRendering: function () {
-                this.getView().getModel().setSizeLimit(5000);
+                this.getView().getModel().setSizeLimit(1000);
             },
             onPressOpenFiltersMenu: function (oEvent) {
                 var oButton = oEvent.getSource(),

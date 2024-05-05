@@ -6,7 +6,7 @@
     xmlns:core="sap.ui.core"
 >
     <App id="app">
-        <Page>
+        <Page title="{i18n>title}">
             <content>
                 <HBox class="sapUiResponsiveContentPadding">
                     <Table

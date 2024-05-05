@@ -4,7 +4,7 @@
 >
     <Popover
         id="myPopover"
-        title="{Filters}"
+        title="{i18n>Filters}"
         class="sapUiResponsivePadding--header sapUiResponsivePadding--footer"
         placement="Bottom"
     >
