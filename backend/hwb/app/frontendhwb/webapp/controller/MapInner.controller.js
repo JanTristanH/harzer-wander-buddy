@@ -1,10 +1,11 @@
 sap.ui.define([
-        "hwb/frontendhwb/controller/BaseController",
-    ],
+    "hwb/frontendhwb/controller/BaseController",
+    "sap/ui/core/Fragment"
+],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller) {
+    function (Controller, Fragment) {
         "use strict";
         const unstampedType = "Error";
 
@@ -15,11 +16,30 @@ sap.ui.define([
             onAfterRendering: function () {
                 this.getView().getModel().setSizeLimit(5000);
             },
+            onPressOpenFiltersMenu: function (oEvent) {
+                var oButton = oEvent.getSource(),
+                    oView = this.getView();
+
+                // create popover
+                if (!this._pPopover) {
+                    this._pPopover = Fragment.load({
+                        id: oView.getId(),
+                        name: "hwb.frontendhwb.fragment.MapFilters",
+                        controller: this
+                    }).then(function (oPopover) {
+                        oView.addDependent(oPopover);
+                        return oPopover;
+                    });
+                }
+                this._pPopover.then(function (oPopover) {
+                    oPopover.openBy(oButton);
+                });
+            },
             onToggleLables: function () {
                 //create item cache with unmodified items if not existent
                 this._getItemCache().length ? true : this._createInitialItemCache();
                 let aItems = this.getView().byId("spots").getItems();
-                if(aItems[0].getProperty("labelText")){
+                if (aItems[0].getProperty("labelText")) {
                     aItems.map(e => e.setProperty("labelText", ""))
                 } else {
                     this.getView().getModel().refresh();

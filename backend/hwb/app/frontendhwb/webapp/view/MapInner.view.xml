@@ -9,10 +9,20 @@
 >
     <Page
         id="page"
-        showHeader="false"
         enableScrolling="false"
-        backgroundDesign="Transparent"
+        title="{i18n>title}"
     >
+        <headerContent>
+            <Button
+                icon="sap-icon://menu2"
+                press="onPressOpenFiltersMenu"
+            />
+        </headerContent>
+        <subHeader>
+            <OverflowToolbar>
+                <SearchField />
+            </OverflowToolbar>
+        </subHeader>
         <content>
             <HBox height="100%">
                 <!-- <vk:MapContainer
@@ -29,12 +39,12 @@
                     </vk:listPanelStack>
                     <vk:ContainerContent>
                         <vk:content> -->
-                            <!-- needs to be sap.ui.vbm.GeoMap -->
-                            <core:Fragment
-                                fragmentName="hwb.frontendhwb.fragment.MainMap"
-                                type="XML"
-                            />
-                        <!-- </vk:content>
+                <!-- needs to be sap.ui.vbm.GeoMap -->
+                <core:Fragment
+                    fragmentName="hwb.frontendhwb.fragment.MainMap"
+                    type="XML"
+                />
+                <!-- </vk:content>
                     </vk:ContainerContent>
                 </vk:MapContainer> -->
             </HBox>
