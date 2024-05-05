@@ -1,0 +1,30 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+>
+    <Popover
+        id="myPopover"
+        title="{Filters}"
+        class="sapUiResponsivePadding--header sapUiResponsivePadding--footer"
+        placement="Bottom"
+    >
+        <VBox>
+            <Button
+                press='.onToggleLables'
+                text="Toggle Label"
+            />
+            <Button
+                press='.onToggleStampedSpots'
+                text="Show Unstamped"
+            />
+            <Button
+                press='.onShowGreens'
+                text="Show only Stamped ones"
+            />
+            <Button
+                press='.onShowAll'
+                text="Show All"
+            />
+        </VBox>
+    </Popover>
+</core:FragmentDefinition>

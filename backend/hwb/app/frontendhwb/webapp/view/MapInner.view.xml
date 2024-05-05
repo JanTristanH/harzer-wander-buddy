@@ -14,22 +14,6 @@
         backgroundDesign="Transparent"
     >
         <content>
-            <Button
-                press='.onToggleLables'
-                text="Toggle Label"
-            />
-            <Button
-                press='.onToggleStampedSpots'
-                text="Show Unstamped"
-            />
-            <Button
-                press='.onShowGreens'
-                text="Show only Stamped ones"
-            />
-            <Button
-                press='.onShowAll'
-                text="Show All"
-            />
             <HBox height="100%">
                 <!-- <vk:MapContainer
                     id="mapContainer"
