@@ -3,6 +3,13 @@
 	xmlns:vbm="sap.ui.vbm">
     <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
     <vbm:vos>
+        <vbm:Routes items="{local>/routes}">
+            <vbm:Route position="{local>positionString}"
+                tooltip="Länge: {local>duration}s - Distanz: {local>distance}" labelText="{local>order}" 
+                end="1" start="0" color="rgba(92,186,230,1.0)" 
+                colorBorder="rgb(255,255,255)" hotDeltaColor="RHLSA(0,1,1,0.6)"/>
+        </vbm:Routes>
+
         <vbm:Spots id ="spots" items="{/PersonalizedStampboxes}">
             <vbm:Spot id="inner" position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" type="{= !${hasVisited} ? 'Error' : 'Success' }" />
         </vbm:Spots>

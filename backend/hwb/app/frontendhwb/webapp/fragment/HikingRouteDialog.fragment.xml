@@ -25,11 +25,6 @@
             <f:formContainers>
                 <f:FormContainer>
                     <f:formElements>
-                        <f:FormElement label="Max Depth">
-                            <f:fields>
-                                <Input value="{/maxDepth}" />
-                            </f:fields>
-                        </f:FormElement>
                         <f:FormElement label="Max Duration (in seconds)">
                             <f:fields>
                                 <Input value="{/maxDuration}" />

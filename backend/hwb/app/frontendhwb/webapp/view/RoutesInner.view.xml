@@ -1,15 +1,20 @@
 <mvc:View controllerName="hwb.frontendhwb.controller.RoutesInner"
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
     xmlns="sap.m"
+    xmlns:f="sap.f"
     xmlns:core="sap.ui.core"
+    height="100%"
+    width="100%"
     xmlns:vbm="sap.ui.vbm">
+
+    <f:FlexibleColumnLayout id="fcl">
+		<f:beginColumnPages>
     <Page         id="page"
-    showHeader="false"
     enableScrolling="false"
+    title="{i18n>title}"
     backgroundDesign="Transparent">
         <content >
     <Button press='onOpenRoutingDialog' text="Routen Berechnen"/>
-    <Button press='onToggleList' text="ListUmschalten"/>
      <HBox height="100%">
         <SelectList id="idRouteList" items="{local>/hikingRoutes}" selectionChange="onSelectionChange" >
             <core:ListItem
@@ -18,16 +23,15 @@
                 />
 
         </SelectList>
-        <vbm:GeoMap id="idRoutingMap" mapConfiguration="{mapConfig>/}"
+        <!-- <vbm:GeoMap id="idRoutingMap" mapConfiguration="{mapConfig>/}"
             initialPosition="10.30147999999997;51.7462" initialZoom="12" width="{device>/resize/width}" height="{device>/resize/height}" class="sapUiSmallMargin" >
-             <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU  -->
             <vbm:vos>
                 <vbm:Routes items="{local>/routes}">
                     <vbm:Route
 						position="{local>positionString}"
 						tooltip="Länge: {local>duration}s - Distanz: {local>distance}" labelText="{local>order}" end="1"
 						start="0" color="rgba(92,186,230,1.0)" colorBorder="rgb(255,255,255)"
-						hotDeltaColor="RHLSA(0,1,1,0.6)" click="onClickRoute" contextMenu="onContextMenuRoute" />
+						hotDeltaColor="RHLSA(0,1,1,0.6)" click="onClickRoute"/>
                 </vbm:Routes>
 
                 <vbm:Spots id="spots" items="{/PersonalizedStampboxes}">
@@ -38,8 +42,10 @@
                 </vbm:Spots>
 
             </vbm:vos>
-        </vbm:GeoMap>
+        </vbm:GeoMap> -->
     </HBox>
     </content>
 </Page>
+</f:beginColumnPages>
+</f:FlexibleColumnLayout>
 </mvc:View>

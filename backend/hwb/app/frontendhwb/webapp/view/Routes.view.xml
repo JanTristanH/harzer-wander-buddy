@@ -2,7 +2,7 @@
     xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
     xmlns:core="sap.ui.core"
     xmlns="sap.m">
-    <Page id="page" title="{i18n>title}">
+    <Page id="page" showHeader="false">
         <content>
                 <mvc:XMLView viewName="hwb.frontendhwb.view.RoutesInner"/>
         </content>

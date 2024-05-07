@@ -11,19 +11,19 @@
         <VBox>
             <Button
                 press='.onToggleLables'
-                text="Toggle Label"
+                text="Label Umschalten"
             />
             <Button
                 press='.onToggleStampedSpots'
-                text="Show Unstamped"
+                text="Besuchte Stempel ausblenden"
             />
             <Button
                 press='.onShowGreens'
-                text="Show only Stamped ones"
+                text="Ungestempelte Ausblenden"
             />
             <Button
                 press='.onShowAll'
-                text="Show All"
+                text="Alles anzeigen"
             />
         </VBox>
     </Popover>

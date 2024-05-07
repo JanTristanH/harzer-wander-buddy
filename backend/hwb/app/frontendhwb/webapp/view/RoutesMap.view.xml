@@ -1,0 +1,12 @@
+<mvc:View
+	controllerName="hwb.frontendhwb.controller.RoutesMap"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	displayBlock="true"
+	height="100%"
+	busyIndicatorDelay="0"
+>
+    <Button press='onBackToList' text="Zurück zur Liste" icon="sap-icon://navigation-left-arrow"/>
+    <Button press='test' text="test"/>
+    <mvc:XMLView id="RoutesMapId" async="true" viewName="hwb.frontendhwb.view.MapInner"/>
+</mvc:View>

@@ -1,17 +1,33 @@
 sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
-    "sap/ui/model/json/JSONModel"
+    "sap/ui/model/json/JSONModel",
+    "sap/ui/core/mvc/XMLView",
+	"sap/f/library"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel) {
+    function (Controller, JSONModel, XMLView, fioriLibrary) {
         "use strict";
         var autocomplete; //inspired by https://github.com/costa-satsati/addressautocomplete/
+        var LayoutType = fioriLibrary.LayoutType;
 
         return Controller.extend("hwb.frontendhwb.controller.RoutesInner", {
             itemCache: [],
+
+            onInit: function() {
+                //Open routing dialog when opening this view
+                this.onOpenRoutingDialog();
+                this.oFlexibleColumnLayout = this.byId("fcl");
+                this.bus = this.getOwnerComponent().getEventBus();
+                this.bus.subscribe("flexible", "setList", this.setList, this);
+            },
+
+		setList: function() {
+			this.oFlexibleColumnLayout.setLayout(LayoutType.OneColumn);
+		},
             onAfterRendering: function () {
+                this.getView().getModel().setSizeLimit(1000);
             },
 
             onOpenRoutingDialog: async function () {
@@ -28,19 +44,20 @@ sap.ui.define([
 
                     oView.addDependent(this.pDialog);
                     this.onAfterRenderingFragment();
+
+                    // create routing model
+                    var oModel = new sap.ui.model.json.JSONModel({
+                        maxDepth: 15,
+                        maxDuration: 36000,
+                        maxDistance: 15000,
+                        latitudeStart: '',
+                        longitudeStart: '',
+                        allowDriveInRoute: true,
+                        minStampCount: 1
+                    });
+                    this.pDialog.setModel(oModel);
                 }
 
-                // Reset model or create new one if needed
-                var oModel = new sap.ui.model.json.JSONModel({
-                    maxDepth: 8,
-                    maxDuration: 36000,
-                    maxDistance: 15000,
-                    latitudeStart: '',
-                    longitudeStart: '',
-                    allowDriveInRoute: true,
-                    minStampCount: 1
-                });
-                this.pDialog.setModel(oModel);
 
                 this.pDialog.open();
                 this.onAfterRenderingFragment();
@@ -71,6 +88,7 @@ sap.ui.define([
                     urlParameters: oParams,
                     success: function (oData, oResponse) {
                         sap.m.MessageToast.show("Route calculated successfully!");
+                        this.setDetailPage();
                         // Additional success handling
                         let oLocalModel = new sap.ui.model.json.JSONModel({
                             hikingRoutes: oData.calculateHikingRoute.results
@@ -78,10 +96,6 @@ sap.ui.define([
                         this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
                         if (!!oData.calculateHikingRoute.results.length) {
-
-                            this.getView().byId("idRouteList").setSelectedKey(oData.calculateHikingRoute.results[0].id);
-                            this.getView().byId("idRoutingMap").setInitialPosition(
-                                oData.calculateHikingRoute.results[0].path[1].positionString.split(';0')[0]);
 
                             oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
                         } else {
@@ -103,18 +117,32 @@ sap.ui.define([
 
                 oLocalModel.setProperty("/routes", selectedRoute.path);
 
-                this.getView().byId("idRoutingMap").setCenterPosition(
-                    selectedRoute.path[1].positionString.split(';0')[0]);
+                this.setDetailPage();
 
-                if (this.getView().getModel("device").getProperty("/system/phone")) {
-                    this.onToggleList();
-                }
+                // this.getView().byId("idRoutingMap").setCenterPosition(
+                //     selectedRoute.path[1].positionString.split(';0')[0]);
+
 
             },
 
-            onToggleList: function () {
-                let bVisible = this.getView().byId("idRouteList").getVisible();
-                this.getView().byId("idRouteList").setVisible(!bVisible);
+            setDetailPage: function () {
+                this._loadView({
+                    id: "midView",
+                    viewName: "hwb.frontendhwb.view.RoutesMap"
+                }).then(function(detailView) {
+                    this.oFlexibleColumnLayout.addMidColumnPage(detailView);
+                    this.oFlexibleColumnLayout.setLayout(LayoutType.TwoColumnsMidExpanded);
+                }.bind(this));
+            },
+            // Helper function to manage the lazy loading of views
+            _loadView: function(options) {
+                var mViews = this._mViews = this._mViews || Object.create(null);
+                if (!mViews[options.id]) {
+                    mViews[options.id] = this.getOwnerComponent().runAsOwner(function() {
+                        return XMLView.create(options);
+                    });
+                }
+                return mViews[options.id];
             },
 
             onUseCurrentLocation: function () {
