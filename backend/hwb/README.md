@@ -34,6 +34,12 @@
 - score for completing area
 - score where walking from other side would be easier
 
+## Docker 
+
+`docker build . -t hwb`
+Github registry verbinden
+lowercase pushen
+
 
 Welcome to your new project.
 
