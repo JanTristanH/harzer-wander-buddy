@@ -171,7 +171,7 @@ sap.ui.define([
                     //     }
                     // }
                 }.bind(this));
-                this._geolocate();
+                // this._geolocate();
             },
 
             /** 
