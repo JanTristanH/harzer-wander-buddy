@@ -10,6 +10,8 @@
 - Mobile optimization & UI overhaul with mobile optimization                          --> do this sooner? 
     - show user location on map
     - enhance List / route handling (show difference walk/drive & parking)
+      - different map routes (dotted for walking)
+      - list of route
     - allow manual changes to routes
 - Too many parking spaces obscure the relevant neighbor travel times.           --> Sort some out & add
 - enhance data quality, parking spaces & routes

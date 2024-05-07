@@ -150,6 +150,7 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
         // return sortedRoutes;
         sortedRoutes = filterUniquePaths(sortedRoutes)
             .slice(0, 5);
+        sortedRoutes.map(r => r.path.shift());
         sortedRoutes = await addPositionStrings(sortedRoutes);
         resolve(sortedRoutes);
     });

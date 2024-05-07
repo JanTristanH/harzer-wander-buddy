@@ -1,51 +1,40 @@
-<mvc:View controllerName="hwb.frontendhwb.controller.RoutesInner"
-    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+<mvc:View
+    controllerName="hwb.frontendhwb.controller.RoutesInner"
+    xmlns:mvc="sap.ui.core.mvc"
+    displayBlock="true"
     xmlns="sap.m"
     xmlns:f="sap.f"
     xmlns:core="sap.ui.core"
     height="100%"
     width="100%"
-    xmlns:vbm="sap.ui.vbm">
-
+>
     <f:FlexibleColumnLayout id="fcl">
-		<f:beginColumnPages>
-    <Page         id="page"
-    enableScrolling="false"
-    title="{i18n>title}"
-    backgroundDesign="Transparent">
-        <content >
-    <Button press='onOpenRoutingDialog' text="Routen Berechnen"/>
-     <HBox height="100%">
-        <SelectList id="idRouteList" items="{local>/hikingRoutes}" selectionChange="onSelectionChange" >
-            <core:ListItem
-                key="{local>id}"
-                text="Länge: {local>duration}s - Distanz: {local>distance} - Stempel: {local>stampCount}"
-                />
-
-        </SelectList>
-        <!-- <vbm:GeoMap id="idRoutingMap" mapConfiguration="{mapConfig>/}"
-            initialPosition="10.30147999999997;51.7462" initialZoom="12" width="{device>/resize/width}" height="{device>/resize/height}" class="sapUiSmallMargin" >
-            <vbm:vos>
-                <vbm:Routes items="{local>/routes}">
-                    <vbm:Route
-						position="{local>positionString}"
-						tooltip="Länge: {local>duration}s - Distanz: {local>distance}" labelText="{local>order}" end="1"
-						start="0" color="rgba(92,186,230,1.0)" colorBorder="rgb(255,255,255)"
-						hotDeltaColor="RHLSA(0,1,1,0.6)" click="onClickRoute"/>
-                </vbm:Routes>
-
-                <vbm:Spots id="spots" items="{/PersonalizedStampboxes}">
-                    <vbm:Spot position="{longitude};{latitude}"
-                        text="{number}" labelType="Default" labelText=""
-                        tooltip="{name}" labelPos="5"
-                        type="{= !${hasVisited} ? 'Error' : 'Success' }" />
-                </vbm:Spots>
-
-            </vbm:vos>
-        </vbm:GeoMap> -->
-    </HBox>
-    </content>
-</Page>
-</f:beginColumnPages>
-</f:FlexibleColumnLayout>
+        <f:beginColumnPages>
+            <Page
+                id="page"
+                enableScrolling="false"
+                title="{i18n>title}"
+                backgroundDesign="Transparent"
+            >
+                <content>
+                    <Button
+                        press='onOpenRoutingDialog'
+                        text="Routen Berechnen"
+                    />
+                    <HBox height="100%">
+                        <SelectList
+                            id="idRouteList"
+                            items="{local>/hikingRoutes}"
+                            selectionChange="onSelectionChange"
+                        >
+                            <core:ListItem
+                                key="{local>id}"
+                                text="Länge: {local>duration}s - Distanz: {local>distance} - Stempel: {local>stampCount}"
+                            />
+                        </SelectList>
+                    </HBox>
+                </content>
+            </Page>
+        </f:beginColumnPages>
+    </f:FlexibleColumnLayout>
 </mvc:View>
