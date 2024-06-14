@@ -12,7 +12,7 @@
         </vbm:Routes>
 
         <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{/AllPointsOfInterest}">
-            <vbm:Spot position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" 
+            <vbm:Spot position="{longitude};{latitude}" text="{ID}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" 
                         type="{ path: 'name', formatter: '.onFormatTypeByName'}"
                         click="onNumberSpotClick"/>
         </vbm:Spots>

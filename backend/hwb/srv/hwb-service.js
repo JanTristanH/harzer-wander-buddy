@@ -22,6 +22,8 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('calculateHikingRoute', calculateHikingRoute)
 
+    this.on("DeleteSpotWithRoutes", deleteSpotWithRoutes)
+
 
     this.on('READ', 'TypedTravelTimes', async (req) => {
       // const db = cds.transaction(req);
@@ -32,6 +34,11 @@ module.exports = class api extends cds.ApplicationService {
 
     return super.init()
   }
+}
+
+async function deleteSpotWithRoutes(req) {
+  console.log("Would delete for: " + JSON.stringify(req.data));
+  return "ok";
 }
 
 async function calculateHikingRoute(req) {
@@ -80,22 +87,22 @@ async function calculateHikingRoute(req) {
 
 async function determineStartingParking(params) {
   return new Promise(async (resolve, reject) => {
-    
+
     const { RouteCalculationRequest } = this.entities('hwb.db');
     let calculationRequest = {
-    ID: uuidv4(),
-    latitude: params.latitudeStart,
-    longitude: params.longitudeStart
-  }
-  await INSERT(calculationRequest).into(RouteCalculationRequest);
-  
-  
-  const { NeighborsCalculationRequestParking } = this.api.entities
-  let parking = await SELECT.from(NeighborsCalculationRequestParking)
-  .where({ID : calculationRequest.ID})
-  .limit(2); 
-  resolve(parking);
-});
+      ID: uuidv4(),
+      latitude: params.latitudeStart,
+      longitude: params.longitudeStart
+    }
+    await INSERT(calculationRequest).into(RouteCalculationRequest);
+
+
+    const { NeighborsCalculationRequestParking } = this.api.entities
+    let parking = await SELECT.from(NeighborsCalculationRequestParking)
+      .where({ ID: calculationRequest.ID })
+      .limit(2);
+    resolve(parking);
+  });
 }
 
 /** calculate travel times to neighbors via maps api */

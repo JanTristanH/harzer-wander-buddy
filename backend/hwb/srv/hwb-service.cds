@@ -85,6 +85,8 @@ service api @(requires: 'authenticated-user') {
 
     //action route (statingStampID:Integer, targetNumberOfStamps: Integer) returns Integer;
 
+    action DeleteSpotWithRoutes (SpotId: UUID) returns String;
+
     // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
     // TODO set up read restrictions from external
     entity NeighborsStampStamp     as

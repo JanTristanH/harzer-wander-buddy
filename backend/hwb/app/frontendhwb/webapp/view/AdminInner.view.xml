@@ -27,7 +27,7 @@
             <l:FixFlex class="fixFlexVertical">
                 <l:flexContent>
                     <core:Fragment
-                        fragmentName="hwb.frontendhwb.fragment.AdminMap"
+                        fragmentName="hwb.frontendhwb.fragment.admin.AdminMap"
                         type="XML"
                     />
                 </l:flexContent>

@@ -1,0 +1,18 @@
+<c:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:c="sap.ui.core"
+>
+    <Dialog
+        title="Spot Aktionen"
+        class="sapUiResponsiveContentPadding"
+    >
+        <VBox>
+            <Button press=".onShowRoutesButtonPress" text="Routen Anzeigen" icon="sap-icon://show" enabled="false" />
+            <Button press=".onRecalculateRoutesPress" text="Routen neu berechnen" icon="sap-icon://collections-management" enabled="false" />
+            <Button press=".onDeleteButtonPress" text="Löschen" icon="sap-icon://delete" />
+        </VBox>
+        <endButton>
+            <Button text="Schließen" press="onCloselButtonSpotActionPress" />
+        </endButton>
+    </Dialog>
+</c:FragmentDefinition>
