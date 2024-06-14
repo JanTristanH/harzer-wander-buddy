@@ -1,10 +1,16 @@
 sap.ui.define([
     "hwb/frontendhwb/controller/MapInner.controller",
     "sap/ui/core/Fragment",
-    "sap/m/MessageToast"
+    "sap/m/MessageToast",
+    "sap/ui/unified/Menu",
+    "sap/ui/unified/MenuItem",
+    "sap/ui/vbm/Spot"
 ], function (Controller,
-	Fragment,
-	MessageToast) {
+    Fragment,
+    MessageToast,
+    Menu,
+    MenuItem,
+    Spot) {
     "use strict";
 
     return Controller.extend("hwb.frontendhwb.controller.Admin", {
@@ -47,9 +53,19 @@ sap.ui.define([
             this._pSpotDialog.then(d => d.close());
         },
 
-        onGeoMapContextMenu: function (oEvent) {
+        onGeoMapContextMenu: function (evt) {
+            let oAnchorSpot = sap.ui.getCore().byId("idTemporarySpot");
             debugger
-            alert("Right click at: " + oEvent.getParameter("pos"));
+            if (!oAnchorSpot) {
+                oAnchorSpot = new Spot({
+                    id: "idTemporarySpot",
+                    click: this.onNumberSpotClick.bind(this),
+                    labelText: "temporärer Spot"
+                });
+                this.getView().byId("idAllPointsOfInterestsSpots").addItem(oAnchorSpot);
+            }
+            oAnchorSpot.setPosition(evt.getParameter("pos"));
+
         },
 
         onDeleteButtonPress: function () {
@@ -58,14 +74,14 @@ sap.ui.define([
             oModel.callFunction("/DeleteSpotWithRoutes", {
                 method: "POST",
                 urlParameters: {
-                    SpotId : this.sCurrentSpotId
+                    SpotId: this.sCurrentSpotId
                 },
                 success: this.showMessage("Spot sammt Routen gelöscht"),
                 error: this.showError.bind(this)
             });
         },
         showMessage: function (sMessage) {
-            return function() {
+            return function () {
                 MessageToast.show(sMessage)
                 this.getView().setBusy(false);
             }.bind(this);
