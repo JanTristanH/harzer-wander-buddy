@@ -1,27 +1,27 @@
-
-    <Toolbar     xmlns:mvc="sap.ui.core.mvc"
-    xmlns:vbm="sap.ui.vbm"
-    xmlns="sap.m">
-        <ToolbarSpacer />
-        <Button
-            id="navButtonListId"
-            text="{i18n>StampList}"
-            icon="sap-icon://activity-2"
-            press="onNavToList"
-        />
-        <ToolbarSpacer />
-        <Button
-            id="navButtonMapId"
-            text="{i18n>Map}"
-            icon="sap-icon://map-3"
-            press="onNavToMap"
-        />
-        <ToolbarSpacer />
-        <Button
-            id="navButtonRoutesId"
-            text="{i18n>PlanRoute}"
-            icon="sap-icon://paper-plane"
-            press="onNavToRouting"
-        />
-        <ToolbarSpacer />
-    </Toolbar>
+<Toolbar
+    xmlns="sap.m"
+    height="3.5rem"
+>
+    <ToolbarSpacer />
+    <Button
+        id="navButtonListId"
+        text="{i18n>StampList}"
+        icon="sap-icon://activity-2"
+        press="onNavToList"
+    />
+    <ToolbarSpacer />
+    <Button
+        id="navButtonMapId"
+        text="{i18n>Map}"
+        icon="sap-icon://map-3"
+        press="onNavToMap"
+    />
+    <ToolbarSpacer />
+    <Button
+        id="navButtonRoutesId"
+        text="{i18n>PlanRoute}"
+        icon="sap-icon://paper-plane"
+        press="onNavToRouting"
+    />
+    <ToolbarSpacer />
+</Toolbar>
