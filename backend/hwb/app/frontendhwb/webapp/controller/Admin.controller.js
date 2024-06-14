@@ -23,7 +23,7 @@ sap.ui.define([
         },
 
         onNumberSpotClick: function (oEvent) {
-            this.oSpot = oEvent.getSource();
+            this.sCurrentSpotId = oEvent.getSource().data("id");
             const oView = this.getView();
 
             // create popover
@@ -58,7 +58,7 @@ sap.ui.define([
             oModel.callFunction("/DeleteSpotWithRoutes", {
                 method: "POST",
                 urlParameters: {
-                    SpotId : this.oSpot.getText()
+                    SpotId : this.sCurrentSpotId
                 },
                 success: this.showMessage("Spot sammt Routen gelöscht"),
                 error: this.showError.bind(this)

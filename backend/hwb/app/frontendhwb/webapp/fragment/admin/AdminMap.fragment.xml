@@ -1,6 +1,7 @@
 <vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.30147999999997;51.7462" initialZoom="12"
     height="100%" width="100%"
 	xmlns:vbm="sap.ui.vbm"
+    xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
     contextMenu="onGeoMapContextMenu">
     <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
     <vbm:vos>
@@ -12,8 +13,9 @@
         </vbm:Routes>
 
         <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{/AllPointsOfInterest}">
-            <vbm:Spot position="{longitude};{latitude}" text="{ID}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" 
+            <vbm:Spot position="{longitude};{latitude}" text="" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" 
                         type="{ path: 'name', formatter: '.onFormatTypeByName'}"
+                        customData:id="{ID}" 
                         click="onNumberSpotClick"/>
         </vbm:Spots>
     </vbm:vos>
