@@ -118,5 +118,5 @@ Authorization: Basic Kevin pass
 
 
 ### Get Typed Travel times that is type parking
-GET http://localhost:4004/odata/v2/api/AllPointsOfInterest(guid'c7efeaf4-9519-4309-b72e-dc272a455de7')
+GET http://localhost:4004/odata/v2/api/AllPointsOfInterest
 Authorization: Basic Kevin pass

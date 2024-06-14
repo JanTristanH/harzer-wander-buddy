@@ -23,5 +23,12 @@
         icon="sap-icon://paper-plane"
         press="onNavToRouting"
     />
+    <Button
+        id="idRoutePlanenAdminButton"
+        text="{i18n>AdminMap}"
+        icon="sap-icon://key-user-settings"
+        press="onButtonAdminMapPress"
+        visible="true"
+    />
     <ToolbarSpacer />
 </Toolbar>

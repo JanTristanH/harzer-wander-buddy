@@ -31,6 +31,10 @@ sap.ui.define([
         },
         onNavToList: function (params) {
             this.getRouter().navTo("Main");
+        },
+
+        onButtonAdminMapPress: function(){
+            this.getRouter().navTo("Admin");
         }
   
     });

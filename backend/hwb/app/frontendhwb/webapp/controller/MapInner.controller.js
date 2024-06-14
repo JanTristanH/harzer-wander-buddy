@@ -38,7 +38,7 @@ sap.ui.define([
             onToggleLables: function () {
                 //create item cache with unmodified items if not existent
                 this._getItemCache().length ? true : this._createInitialItemCache();
-                let aItems = this.getView().byId("spots").getItems();
+                let aItems = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
                 if (aItems[0].getProperty("labelText")) {
                     aItems.map(e => e.setProperty("labelText", ""))
                 } else {
@@ -49,7 +49,7 @@ sap.ui.define([
             },
             _createInitialItemCache: function () {
                 //TODO this has to be reset on model Change urgh
-                this.itemCache = this.getView().byId("spots").getItems();
+                this.itemCache = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
             },
             _getItemCache: function () {
                 return this.itemCache;
@@ -67,7 +67,7 @@ sap.ui.define([
                 //create item cache with unmodified items if not existent
                 this._getItemCache().length ? true : this._createInitialItemCache();
 
-                let spots = this.getView().byId("spots");
+                let spots = this.getView().byId("idAllPointsOfInterestsSpots");
                 this._resetItemsForSpots(spots);
                 spots.getItems()
                     .filter(e => e.getProperty("type") !== unstampedType)
@@ -78,7 +78,7 @@ sap.ui.define([
                 //create item cache with unmodified items if not existent
                 this._getItemCache().length ? true : this._createInitialItemCache();
 
-                let spots = this.getView().byId("spots")
+                let spots = this.getView().byId("idAllPointsOfInterestsSpots")
                 this._resetItemsForSpots(spots);
                 spots.getItems()
                     .filter(e => e.getProperty("type") === unstampedType)
@@ -86,7 +86,7 @@ sap.ui.define([
                 //TODO reset items from global model
             },
             onShowAll: function () {
-                let spots = this.getView().byId("spots")
+                let spots = this.getView().byId("idAllPointsOfInterestsSpots")
                 this._resetItemsForSpots(spots);
             }
         });

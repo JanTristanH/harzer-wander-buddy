@@ -1,0 +1,21 @@
+<mvc:View
+	controllerName="hwb.frontendhwb.controller.Admin"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	displayBlock="true"
+	height="100%"
+	busyIndicatorDelay="0"
+>
+<Page showHeader="false">
+    <content>
+        <mvc:XMLView viewName="hwb.frontendhwb.view.AdminInner"/>
+    </content>
+    <footer>
+        <core:Fragment
+            fragmentName="hwb.frontendhwb.fragment.Toolbar"
+            type="XML"
+        />
+    </footer>
+</Page>
+</mvc:View>

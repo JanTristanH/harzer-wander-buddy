@@ -1,6 +1,7 @@
 <vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.30147999999997;51.7462" initialZoom="12"
     height="100%" width="100%"
-	xmlns:vbm="sap.ui.vbm">
+	xmlns:vbm="sap.ui.vbm"
+    contextMenu="onGeoMapContextMenu">
     <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
     <vbm:vos>
         <vbm:Routes items="{local>/routes}">
@@ -10,8 +11,10 @@
                 colorBorder="rgb(255,255,255)" hotDeltaColor="RHLSA(0,1,1,0.6)"/>
         </vbm:Routes>
 
-        <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{/PersonalizedStampboxes}">
-            <vbm:Spot id="inner" position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" type="{= !${hasVisited} ? 'Error' : 'Success' }" />
+        <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{/AllPointsOfInterest}">
+            <vbm:Spot position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" 
+                        type="{ path: 'name', formatter: '.onFormatTypeByName'}"
+                        click="onNumberSpotClick"/>
         </vbm:Spots>
     </vbm:vos>
 </vbm:GeoMap>
