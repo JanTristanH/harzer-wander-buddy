@@ -22,10 +22,14 @@ sap.ui.define([
         },
 
         onFormatTypeByName: function (name) {
-            if (name.includes("Stempelstelle")) {
+            if (this.isStampBoxByName(name)) {
                 return "Success";
             }
             return "Default";
+        },
+
+        isStampBoxByName: function (name) {
+            return name.includes("Stempelstelle");
         },
 
         onNumberSpotClick: function (oEvent) {
@@ -44,7 +48,11 @@ sap.ui.define([
                 });
             }
 
-            this._pSpotDialog.then(function (oDialog) {
+            this._pSpotDialog.then(oDialog => {
+                let sSpotName = this.getModel().getProperty(`/AllPointsOfInterest(guid'${this.sCurrentSpotId}')/name`);
+                this.byId("idNameInput").setValue(sSpotName);
+                let sDescription = this.getModel().getProperty(`/AllPointsOfInterest(guid'${this.sCurrentSpotId}')/description`);
+                this.byId("idDescriptionInput").setValue(sDescription);
                 oDialog.open(oDialog);
             });
         },
@@ -55,7 +63,6 @@ sap.ui.define([
 
         onGeoMapContextMenu: function (evt) {
             let oAnchorSpot = sap.ui.getCore().byId("idTemporarySpot");
-            debugger
             if (!oAnchorSpot) {
                 oAnchorSpot = new Spot({
                     id: "idTemporarySpot",
@@ -69,6 +76,12 @@ sap.ui.define([
         },
 
         onDeleteButtonPress: function () {
+            if (!this.sCurrentSpotId) {
+                // move temporary spot out of sensible viewport
+                sap.ui.getCore().byId("idTemporarySpot").setPosition("0;0;0");
+                this.onCloselButtonSpotActionPress();
+                return;
+            }
             let oModel = this.getView().getModel();
             this.getView().setBusy(true);
             oModel.callFunction("/DeleteSpotWithRoutes", {
@@ -84,14 +97,53 @@ sap.ui.define([
             return function (oData) {
                 MessageToast.show(sMessage + oData.DeleteSpotWithRoutes)
                 this.getView().setBusy(false);
-                debugger
                 this.getModel().refresh();
+                this.onCloselButtonSpotActionPress();
             }.bind(this);
         },
 
         showError: function (oError) {
             this.getView().setBusy(false);
             MessageToast.show(JSON.stringify(oError));
+        },
+
+        onSaveButtonSpotActionPress: function () {
+            if (!this.sCurrentSpotId) {
+                this.saveTemporarySpot();
+            } else {
+                this.updateExisting();
+            }
+        },
+
+        saveTemporarySpot: function () {
+            const aCords = sap.ui.getCore().byId("idTemporarySpot").getPosition().split(";");
+            
+            const oData = {
+                "longitude": aCords[0],
+                "latitude": aCords[1],
+                "name": this.byId("idNameInput").getValue(),
+                "description": this.byId("idDescriptionInput").getValue()
+            };
+           this.getModel().create("/ParkingSpots", oData, {
+            success: this.showMessage("Parkplatz angelgt!"),
+            error: this.showError.bind(this)
+           });
+        },
+
+        updateExisting: function () {
+            const oPoi = this.getModel().getProperty(`/AllPointsOfInterest(guid'${this.sCurrentSpotId}')`);
+            let sPath = this.isStampBoxByName(oPoi.name) ? "/Stampboxes" : "/ParkingSpots";
+            sPath += `(guid'${this.sCurrentSpotId}')`;
+
+            const oData = {
+                "name": this.byId("idNameInput").getValue(),
+                "description": this.byId("idDescriptionInput").getValue()
+            };
+
+            this.getModel().update(sPath, oData, {
+                success: this.showMessage("Spot geupdated!"),
+                error: this.showError.bind(this)
+               });
         }
     });
 });

@@ -5,12 +5,36 @@
     <Dialog
         title="Spot Aktionen"
         class="sapUiResponsiveContentPadding"
+        resizable="true"
     >
+
         <VBox>
-            <Button press=".onShowRoutesButtonPress" text="Routen Anzeigen" icon="sap-icon://show" enabled="false" />
-            <Button press=".onRecalculateRoutesPress" text="Routen neu berechnen" icon="sap-icon://collections-management" enabled="false" />
-            <Button press=".onDeleteButtonPress" text="Löschen" icon="sap-icon://delete" />
+            <Label text="Name" labelFor="idNameInput"/>
+            <Input id="idNameInput" />
+
+            <Label text="Beschreibung" labelFor="idDescriptionInput"/>
+            <Input id="idDescriptionInput"/>
+            <Button
+                press=".onShowRoutesButtonPress"
+                text="Routen Anzeigen"
+                icon="sap-icon://show"
+                enabled="false"
+            />
+            <Button
+                press=".onRecalculateRoutesPress"
+                text="Routen neu berechnen"
+                icon="sap-icon://collections-management"
+                enabled="false"
+            />
+            <Button
+                press=".onDeleteButtonPress"
+                text="Löschen"
+                icon="sap-icon://delete"
+            />
         </VBox>
+        <beginButton>
+            <Button text="Speichern" press="onSaveButtonSpotActionPress" type="Emphasized" />
+        </beginButton>
         <endButton>
             <Button text="Schließen" press="onCloselButtonSpotActionPress" />
         </endButton>

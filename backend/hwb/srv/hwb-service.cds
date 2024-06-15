@@ -34,7 +34,7 @@ service api @(requires: 'authenticated-user') {
         longitude,
         latitude,
         name,
-        CONCAT( number, ' - ', description) as description: String
+        description
     } union all
     select from ParkingSpots {
         key ID,

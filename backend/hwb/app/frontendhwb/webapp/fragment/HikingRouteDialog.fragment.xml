@@ -1,9 +1,7 @@
 <core:FragmentDefinition
     xmlns="sap.m"
     xmlns:core="sap.ui.core"
-    xmlns:f="sap.ui.layout.form"
-    xmlns:l="sap.ui.layout"
-    xmlns:custom="hwb.frontendhwb.controls">
+    xmlns:f="sap.ui.layout.form">
     <Dialog title="Enter Hiking Route Parameters" class="sapUiResponsiveContentPadding">
         <f:Form editable="true">
             <f:layout>

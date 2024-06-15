@@ -36,7 +36,7 @@ async function deleteSpotWithRoutes(req) {
   const { Stampboxes, ParkingSpots, TravelTimes } = full;
 
   let result = 0;
-  result += await DELETE.from(Stampboxes).where({ ID: poiIdToDelete });
+  // result += await DELETE.from(Stampboxes).where({ ID: poiIdToDelete });
   result += await DELETE.from(ParkingSpots).where({ ID: poiIdToDelete });
   result += await DELETE.from(TravelTimes).where({ fromPoi: poiIdToDelete });
   result += await DELETE.from(TravelTimes).where({ toPoi: poiIdToDelete });

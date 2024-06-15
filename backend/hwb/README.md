@@ -8,8 +8,9 @@
 - UI für suggested routes -> General route planning & viewing ✔️
 - dev deploy on domain ✔️
 - Too many parking spaces obscure the relevant neighbor travel times.
-  - admin ui for adding and removing spots
+  - admin ui for adding and removing spots ✔️
   - recalculate routes button
+- distance < 10 km instead of  n nearest neighbors
 - Mobile optimization & UI overhaul with mobile optimization
     - better units in dialog
     - show user location on map
@@ -17,13 +18,13 @@
       - different map routes (dotted for walking)
       - show parking spots of route on map
     - fix map label toggling
-- enhance data quality, parking spaces & routes
-- distance < 10 km instead of  n nearest neighbors
 - configure aiven postgres
 - set up better demo users
+- enhance data quality, parking spaces & routes
 
 ## MVP 2
 
+- implement search above
 - card based view of routes
 - allow manual changes to routes
 - configure social login
