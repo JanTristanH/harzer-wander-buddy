@@ -11,6 +11,9 @@
   - admin ui for adding and removing spots ✔️
   - recalculate routes button
 - distance < 10 km instead of  n nearest neighbors
+- configure aiven postgres
+- set up better demo users
+- enhance data quality, parking spaces & routes
 - Mobile optimization & UI overhaul with mobile optimization
     - better units in dialog
     - show user location on map
@@ -18,9 +21,6 @@
       - different map routes (dotted for walking)
       - show parking spots of route on map
     - fix map label toggling
-- configure aiven postgres
-- set up better demo users
-- enhance data quality, parking spaces & routes
 
 ## MVP 2
 
@@ -28,6 +28,7 @@
 - card based view of routes
 - allow manual changes to routes
 - configure social login
+- paid parking
 - shareability for routes
 - cute mascot
 - Friends feature (plan route together & notification)
