@@ -2,15 +2,13 @@ sap.ui.define([
     "hwb/frontendhwb/controller/MapInner.controller",
     "sap/ui/core/Fragment",
     "sap/m/MessageToast",
-    "sap/ui/unified/Menu",
-    "sap/ui/unified/MenuItem",
-    "sap/ui/vbm/Spot"
+    "sap/ui/vbm/Spot",
+    "sap/m/MessageBox"
 ], function (Controller,
     Fragment,
     MessageToast,
-    Menu,
-    MenuItem,
-    Spot) {
+    Spot,
+    MessageBox) {
     "use strict";
 
     return Controller.extend("hwb.frontendhwb.controller.Admin", {
@@ -50,9 +48,9 @@ sap.ui.define([
 
             this._pSpotDialog.then(oDialog => {
                 let sSpotName = this.getModel().getProperty(`/AllPointsOfInterest(guid'${this.sCurrentSpotId}')/name`);
-                this.byId("idNameInput").setValue(sSpotName);
+                this.byId("idNameInput").setValue(sSpotName ? sSpotName : "Parkplatz");
                 let sDescription = this.getModel().getProperty(`/AllPointsOfInterest(guid'${this.sCurrentSpotId}')/description`);
-                this.byId("idDescriptionInput").setValue(sDescription);
+                this.byId("idDescriptionInput").setValue(sDescription ? sDescription : "Parkplatz");
                 oDialog.open(oDialog);
             });
         },
@@ -117,17 +115,17 @@ sap.ui.define([
 
         saveTemporarySpot: function () {
             const aCords = sap.ui.getCore().byId("idTemporarySpot").getPosition().split(";");
-            
+
             const oData = {
                 "longitude": aCords[0],
                 "latitude": aCords[1],
                 "name": this.byId("idNameInput").getValue(),
                 "description": this.byId("idDescriptionInput").getValue()
             };
-           this.getModel().create("/ParkingSpots", oData, {
-            success: this.showMessage("Parkplatz angelgt!"),
-            error: this.showError.bind(this)
-           });
+            this.getModel().create("/ParkingSpots", oData, {
+                success: this.showMessage("Parkplatz angelgt!"),
+                error: this.showError.bind(this)
+            });
         },
 
         updateExisting: function () {
@@ -143,7 +141,41 @@ sap.ui.define([
             this.getModel().update(sPath, oData, {
                 success: this.showMessage("Spot geupdated!"),
                 error: this.showError.bind(this)
-               });
+            });
+        },
+
+        onCheckAllRoutesButtonPress: function () {
+            const nearestNeighborsCount = 5;
+            let oModel = this.getView().getModel();
+            this.getView().setBusy(true);
+            oModel.callFunction("/getMissingTravelTimesCount", {
+                urlParameters: {
+                    n: nearestNeighborsCount
+                },
+                success: function (oData) {
+                    this.getView().setBusy(false);
+                    MessageBox.confirm(`Es wurden ${oData.getMissingTravelTimesCount} fehlende Routen festgestellt.\n Erneut prüfen ${oData.getMissingTravelTimesCount} fehlende Routen hinzufügen? Es können Kosten anfallen.`, {
+                        onClose: function (oEvent) {
+                            if (oEvent == "OK") {
+                                this.getView().setBusy(true);
+                                oModel.callFunction("/calculateTravelTimesNNearestNeighbors", {
+                                    urlParameters: {
+                                        n: nearestNeighborsCount
+                                    },
+                                    success: function (oData) {
+                                        this.getView().setBusy(false);
+                                        MessageToast.show(`Es wurden ${oData.calculateTravelTimesNNearestNeighbors} Routen ergänzt.`)
+                                    },
+                                    error: this.showError.bind(this)
+                                });
+                            }
+                        }.bind(this)
+                    });
+
+                }.bind(this),
+                error: this.showError.bind(this)
+            });
+
         }
     });
 });

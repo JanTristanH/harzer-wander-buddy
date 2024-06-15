@@ -4,6 +4,8 @@ service api @(requires: 'authenticated-user') {
 
     function calculateTravelTimesNNearestNeighbors(n : Integer) returns Integer;
 
+    function getMissingTravelTimesCount(n : Integer) returns Integer;
+
     entity HikingRoute {
         Points         : Composition of many TravelTimes;
         totalDistance  : Integer;

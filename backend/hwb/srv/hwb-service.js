@@ -8,13 +8,15 @@ require("dotenv").config();
 const routingManager = require('./routingManager')
 
 // 40.000 free 
-// 15.000 used
+// 0 used
 let count = 0;
 let aTravelTimesGlobal = [];
 
 module.exports = class api extends cds.ApplicationService {
   init() {
     this.on('calculateTravelTimesNNearestNeighbors', calculateTravelTimesNNearestNeighbors.bind(this))
+
+    this.on('getMissingTravelTimesCount', getMissingTravelTimesCount.bind(this))
 
     this.on('calculateHikingRoute', calculateHikingRoute)
 
@@ -107,82 +109,135 @@ async function determineStartingParking(params) {
   });
 }
 
+/** Check if all expected routes are present */
+async function getMissingTravelTimesCount(req) {
+  const { n } = req.data
+  let result = await processTravelTimes.bind(this)(n, () => { });
+  return result;
+}
+
 /** calculate travel times to neighbors via maps api */
 async function calculateTravelTimesNNearestNeighbors(req) {
   const { n } = req.data
+  let result = await processTravelTimes.bind(this)(n, getTravelTimes);
+  return result;
+}
+
+function processTravelTimes(nearestNeighborsCount, processor) {
   const { Stampboxes, TravelTimes, ParkingSpots } = this.entities('hwb.db')
   const { NeighborsStampStamp, NeighborsStampParking, NeighborsParkingStamp, NeighborsParkingParking } = this.api.entities
+  let missingTravelTimesCount = 0;
+  return new Promise(async (resolve, reject) => {
+    // s -> s walk
+    // s -> p walk
+ 
+    // fetch all stamps and iterate
+    let aStampBoxes = await SELECT.from(Stampboxes);
 
-  // p -> p via car
-  // p -> s via foot (later bike)
-  // calculate first for stamps, then parking spaces
+    for (let i = 0; i < aStampBoxes.length; i++) {
+      const box = aStampBoxes[i];
+      let aExistingTravelTimes = await SELECT.from(TravelTimes).where({ fromPoi: box.ID });
+      aExistingTravelTimes = aExistingTravelTimes.map(t => t.toPoi);
 
-  // fetch all stamps and iterate
-  let aStampBoxes = await SELECT
-    .from(Stampboxes);
-  aStampBoxes = []; //disable
+      let aTravelTimesWalk = await getTravelTimesStampStamps(box, aExistingTravelTimes);
+      if (aTravelTimesWalk) {
+        UPSERT(aTravelTimesWalk).into(TravelTimes);
+      }
 
-  // for (let i = 0; i < aStampBoxes.length; i++) {
-  //   const box = aStampBoxes[i];
+      aTravelTimesWalk = await getTravelTimesStampParkingSpaces(box, aExistingTravelTimes);
+      if (aTravelTimesWalk) {
+        UPSERT(aTravelTimesWalk).into(TravelTimes);
+      }
 
-  //   // get n nearest stamp neighbors
-  //   let adjacentStamps = await SELECT
-  //     .from(NeighborsStampStamp)
-  //     .where({ ID: box.ID })
-  //     .limit(n);
+    }
 
-  //   // get n nearest parking spaces
-  //   let adjacentParkingSpots = await SELECT
-  //     .from(NeighborsStampParking)
-  //     .where({ ID: box.ID })
-  //     .limit(n);
+    //repeat same for parking spaces
+    // p -> s walk
+    // p -> p drive
 
-  //   let neighborPois = adjacentStamps.concat(adjacentParkingSpots);
-  //   // calculate travel time by foot via maps api
-  //   let aTravelTimes = await getTravelTimes(box, neighborPois, 'walk');
-  //   // save to table
-  //   if (aTravelTimes){
-  //     await UPSERT(aTravelTimes).into(TravelTimes)
-  //   }    
-  // }
+    // fetch all parking spaces and iterate
+    let aParkingSpots = await SELECT.from(ParkingSpots);
 
-  //repeat same for parking spaces
+    for (let i = 0; i < aParkingSpots.length; i++) {
+      const spot = aParkingSpots[i];
+      let aExistingTravelTimes = await SELECT.from(TravelTimes).where({ fromPoi: spot.ID });
+      aExistingTravelTimes = aExistingTravelTimes.map(t => t.toPoi);
 
-  // fetch all parking spaces and iterate
-  let aParkingSpots = await SELECT
-    .from(ParkingSpots);
+      let aTravelTimesWalk = await getTravelTimesParkingStamps(spot, aExistingTravelTimes);
 
-  for (let i = 0; i < aParkingSpots.length; i++) {
-    const spot = aParkingSpots[i];
+      if (aTravelTimesWalk) {
+        UPSERT(aTravelTimesWalk).into(TravelTimes);
+      }
 
-    // // get n nearest stamp neighbors
-    // let adjacentStamps = await SELECT
-    //   .from(NeighborsParkingStamp)
-    //   .where({ ID: spot.ID })
-    //   .limit(n);
-    //   adjacentStamps = []; // disable 
+      let aTravelTimesDrive = await getTravelTimesParkingParking(spot, aExistingTravelTimes);
+      if (aTravelTimesDrive) {
+        UPSERT(aTravelTimesDrive).into(TravelTimes);
+      }
+    }
 
-    // // calculate travel time by foot via maps api
-    // let aTravelTimesWalk = await getTravelTimes(spot, adjacentStamps, 'walk');
-    let aTravelTimesWalk = [];
+    resolve(missingTravelTimesCount);
+  });
 
+  async function getTravelTimesParkingParking(spot, aExistingTravelTimes) {
     // get n nearest parking spaces
     let adjacentParkingSpots = await SELECT
       .from(NeighborsParkingParking)
       .where({ ID: spot.ID })
-      .limit(n);
+      .limit(nearestNeighborsCount);
+
+    adjacentParkingSpots = adjacentParkingSpots.filter(s => !aExistingTravelTimes.includes(s.NeighborsID));
+    missingTravelTimesCount += adjacentParkingSpots.length;
 
     // calculate travel time by car via maps api
-    let aTravelTimesDrive = await getTravelTimes(spot, adjacentParkingSpots, 'drive'); //TODO did this work?
-
-    let aTravelTimes = aTravelTimesWalk.concat(aTravelTimesDrive);
-    // save to table
-    if (aTravelTimes) {
-      await UPSERT(aTravelTimes).into(TravelTimes)
-    }
+    return processor(spot, adjacentParkingSpots, 'drive');
   }
 
-  return { n }
+  async function getTravelTimesParkingStamps(spot, aExistingTravelTimes) {
+    // get n nearest stamp neighbors
+    let adjacentStamps = await SELECT
+      .from(NeighborsParkingStamp)
+      .where({ ID: spot.ID })
+      .limit(nearestNeighborsCount);
+
+    adjacentStamps = adjacentStamps.filter(s => !aExistingTravelTimes.includes(s.NeighborsID));
+    missingTravelTimesCount += adjacentStamps.length;
+
+    // calculate travel time by foot via maps api
+    return processor(spot, adjacentStamps, 'walk');
+  }
+
+  async function getTravelTimesStampParkingSpaces(box, aExistingTravelTimes) {
+    let adjacentParkingSpots = await SELECT
+      .from(NeighborsStampParking)
+      .where({ ID: box.ID })
+      .limit(nearestNeighborsCount);
+
+    adjacentParkingSpots = adjacentParkingSpots.filter(s => !aExistingTravelTimes.includes(s.NeighborsID));
+    missingTravelTimesCount += adjacentParkingSpots.length;
+    // calculate travel time by foot via maps api
+    return processor(box, adjacentParkingSpots, 'walk');
+  }
+
+  async function getTravelTimesStampStamps(box, aExistingTravelTimes) {
+    // // get neighbors within 10 km
+    // let adjacentStamps = await SELECT
+    //   .from(NeighborsStampStamp)
+    //   .where({
+    //     distanceKm: { '<=': 5 }, and: {
+    //       ID: box.ID
+    //     }
+    //   });
+    // get n nearest neighbors
+    let adjacentStamps = await SELECT
+      .from(NeighborsStampStamp)
+      .where({ ID: box.ID })
+      .limit(nearestNeighborsCount);
+
+    adjacentStamps = adjacentStamps.filter(s => !aExistingTravelTimes.includes(s.NeighborsID));
+    missingTravelTimesCount += adjacentStamps.length;
+
+    return processor(box, adjacentStamps, 'walk');
+  }
 }
 
 function getTravelTimes(box, neighborPois, travelMode) {
@@ -211,8 +266,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
           //Waypoint Route
         })
       } else {
-        let a = 5;
-        console.log(JSON.stringify(oRoute));
+        console.error(JSON.stringify(oRoute));
       }
 
     }
