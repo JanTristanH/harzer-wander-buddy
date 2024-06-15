@@ -35,19 +35,19 @@
         "[development]": {
           "kind": "basic-auth",
           "users": {
-            "1": {
-              "pass": "1"
+            "Tris": {
+              "pass": "pass"
             },
-            "2": {
-              "pass": "2"
+            "Momo": {
+              "pass": "pass"
             },
-            "3": {
-              "pass": "3"
+            "Lars": {
+              "pass": "pass"
             },
-            "4": {
-              "pass": "4"
+            "Ammi": {
+              "pass": "pass"
             },
-            "5": {
+            "Husi": {
               "pass": "5"
             },
             "Kevin": {
