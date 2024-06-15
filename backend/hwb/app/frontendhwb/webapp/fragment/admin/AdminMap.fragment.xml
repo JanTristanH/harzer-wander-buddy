@@ -16,7 +16,7 @@
             <vbm:Spot position="{longitude};{latitude}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" 
                         type="{ path: 'name', formatter: '.onFormatTypeByName'}"
                         customData:id="{ID}"  text=""
-                        click="onNumberSpotClick"/>
+                        click="onNumberSpotClick" contextMenu="onSpotContextMenu"/>
         </vbm:Spots>
     </vbm:vos>
 </vbm:GeoMap>

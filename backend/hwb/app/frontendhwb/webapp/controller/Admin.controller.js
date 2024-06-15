@@ -3,15 +3,24 @@ sap.ui.define([
     "sap/ui/core/Fragment",
     "sap/m/MessageToast",
     "sap/ui/vbm/Spot",
-    "sap/m/MessageBox"
+    "sap/m/MessageBox",
+    'sap/ui/model/Filter', 'sap/ui/model/FilterOperator',
+    "sap/ui/model/json/JSONModel",
 ], function (Controller,
     Fragment,
     MessageToast,
     Spot,
-    MessageBox) {
+    MessageBox,
+    Filter, FilterOperator, JSONModel) {
     "use strict";
 
     return Controller.extend("hwb.frontendhwb.controller.Admin", {
+
+        onInit: function() {
+            Controller.prototype.onInit.apply(this, arguments);
+
+            this.getView().setModel(new JSONModel(), "local");        
+        },
 
         onAfterRendering: function () {
             let oButton = this.getView().byId("idRoutePlanenAdminButton");
@@ -57,6 +66,23 @@ sap.ui.define([
 
         onCloselButtonSpotActionPress: function () {
             this._pSpotDialog.then(d => d.close());
+        },
+
+        onSpotContextMenu: function (oEvent) {
+            debugger
+            const sSourceId = oEvent.getSource().data("id");
+            this.getModel().read("/TravelTimes", {
+                filters: [new Filter({
+                    path: "fromPoi",
+                    operator: FilterOperator.EQ,
+                    value1: sSourceId
+                })],
+                success: function (oData) {
+                    let oLocalModel = this.getView().getModel("local");
+                    oLocalModel.setProperty("/routes", oData.results);
+                    debugger
+                }.bind(this)
+            })
         },
 
         onGeoMapContextMenu: function (evt) {

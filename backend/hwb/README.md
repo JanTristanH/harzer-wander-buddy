@@ -9,10 +9,11 @@
 - dev deploy on domain ✔️
 - Too many parking spaces obscure the relevant neighbor travel times.
   - admin ui for adding and removing spots ✔️
-  - recalculate routes button
-- distance < 10 km instead of  n nearest neighbors
-- configure aiven postgres
+  - recalculate routes button ✔️
+  - display routes for spot ✔️
+- ~~ distance < 10 km instead of  n nearest neighbors ~~ -> too many
 - set up better demo users
+- configure aiven postgres
 - enhance data quality, parking spaces & routes
 - Mobile optimization & UI overhaul with mobile optimization
     - better units in dialog
@@ -28,9 +29,11 @@
 - card based view of routes
 - allow manual changes to routes
 - configure social login
-- paid parking
+- paid parking info
 - shareability for routes
+- images for routes & spots
 - cute mascot
+- complient map server
 - Friends feature (plan route together & notification)
 - Ui5 project into cap
 - Stempel als Strtpunkt
