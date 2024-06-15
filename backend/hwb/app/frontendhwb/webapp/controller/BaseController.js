@@ -11,6 +11,13 @@ sap.ui.define([
             return UIComponent.getRouterFor(this);
         },
 
+        getModel : function(){
+            return this.getView().getModel();
+        },
+        getModel : function(sName){
+            return this.getView().getModel(sName);
+        },
+
         onNavBack: function () {
             var oHistory, sPreviousHash;
             oHistory = History.getInstance();

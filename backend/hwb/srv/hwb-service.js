@@ -14,20 +14,14 @@ let aTravelTimesGlobal = [];
 
 module.exports = class api extends cds.ApplicationService {
   init() {
-
-
-    const full = this.entities('hwb.db')
-
-    this.on('calculateTravelTimesNNearestNeighbors', calculateTravelTimesNNearestNeighbors)
+    this.on('calculateTravelTimesNNearestNeighbors', calculateTravelTimesNNearestNeighbors.bind(this))
 
     this.on('calculateHikingRoute', calculateHikingRoute)
 
     this.on("DeleteSpotWithRoutes", deleteSpotWithRoutes)
 
-
     this.on('READ', 'TypedTravelTimes', async (req) => {
       // const db = cds.transaction(req);
-
 
       return typedTravelTimes;
     });
@@ -37,14 +31,22 @@ module.exports = class api extends cds.ApplicationService {
 }
 
 async function deleteSpotWithRoutes(req) {
-  console.log("Would delete for: " + JSON.stringify(req.data));
-  return "ok";
+  let poiIdToDelete = req.data.SpotId
+  const full = this.entities('hwb.db');
+  const { Stampboxes, ParkingSpots, TravelTimes } = full;
+
+  let result = 0;
+  result += await DELETE.from(Stampboxes).where({ ID: poiIdToDelete });
+  result += await DELETE.from(ParkingSpots).where({ ID: poiIdToDelete });
+  result += await DELETE.from(TravelTimes).where({ fromPoi: poiIdToDelete });
+  result += await DELETE.from(TravelTimes).where({ toPoi: poiIdToDelete });
+  return result;
 }
 
 async function calculateHikingRoute(req) {
   // req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
   console.log(req.data);
-  const { typedTravelTimes, PersonalizedStampboxes } = this.api.entities
+  const { typedTravelTimes, PersonalizedStampboxes } = this.api.entities;
   if (aTravelTimesGlobal.length == 0) {
     aTravelTimesGlobal = await SELECT
       .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')

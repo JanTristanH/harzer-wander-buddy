@@ -76,14 +76,16 @@ sap.ui.define([
                 urlParameters: {
                     SpotId: this.sCurrentSpotId
                 },
-                success: this.showMessage("Spot sammt Routen gelöscht"),
+                success: this.showMessage("Spot sammt Routen gelöscht: "),
                 error: this.showError.bind(this)
             });
         },
         showMessage: function (sMessage) {
-            return function () {
-                MessageToast.show(sMessage)
+            return function (oData) {
+                MessageToast.show(sMessage + oData.DeleteSpotWithRoutes)
                 this.getView().setBusy(false);
+                debugger
+                this.getModel().refresh();
             }.bind(this);
         },
 

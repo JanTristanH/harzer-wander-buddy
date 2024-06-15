@@ -9,6 +9,7 @@
 >
 <Page showHeader="false">
     <content>
+        <Button text="Alle Routen überprüfen" press="onCheckAllRoutesButtonPress" icon="sap-icon://collections-management" enabled="false"/>
         <mvc:XMLView viewName="hwb.frontendhwb.view.AdminInner"/>
     </content>
     <footer>
