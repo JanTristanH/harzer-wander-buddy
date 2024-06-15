@@ -3,23 +3,30 @@
 ## Todo
 
 - implement api call to maps to get times (by travel type) ✔️
-- berechnete Travel Times extern persistieren ✔️
+- persist calculated Travel Times ✔️
 - implement DFS to suggest routes ✔️
 - UI für suggested routes -> General route planning & viewing ✔️
 - dev deploy on domain ✔️
-- Mobile optimization & UI overhaul with mobile optimization                          --> do this sooner? 
+- Too many parking spaces obscure the relevant neighbor travel times.
+  - admin ui for adding and removing spots
+  - recalculate routes button
+- Mobile optimization & UI overhaul with mobile optimization
+    - better units in dialog
     - show user location on map
     - enhance List / route handling (show difference walk/drive & parking)
       - different map routes (dotted for walking)
-      - list of route
-    - allow manual changes to routes
-- Too many parking spaces obscure the relevant neighbor travel times.           --> Sort some out & add
+      - show parking spots of route on map
+    - fix map label toggling
 - enhance data quality, parking spaces & routes
-- Distanz < 10 km start n nächtste Nachbarn
-- backup for user stamps (when using temporary sqlite)
+- distance < 10 km instead of  n nearest neighbors
+- configure aiven postgres
+- set up better demo users
 
 ## MVP 2
 
+- card based view of routes
+- allow manual changes to routes
+- configure social login
 - shareability for routes
 - cute mascot
 - Friends feature (plan route together & notification)
@@ -40,27 +47,6 @@
 Github registry verbinden
 lowercase pushen
 
+## Database
 
-Welcome to your new project.
-
-It contains these folders and files, following our recommended project layout:
-
-File or Folder | Purpose
----------|----------
-`app/` | content for UI frontends goes here
-`db/` | your domain models and data go here
-`srv/` | your service models and code go here
-`package.json` | project metadata and configuration
-`readme.md` | this getting started guide
-
-
-## Next Steps
-
-- Open a new terminal and run `cds watch` 
-- (in VS Code simply choose _**Terminal** > Run Task > cds watch_)
-- Start adding content, for example, a [db/schema.cds](db/schema.cds).
-
-
-## Learn More
-
-Learn more at https://cap.cloud.sap/docs/get-started/.
+This project is configured to run with a managed postgres. For example using [aiven](https://console.aiven.io/).
