@@ -18,8 +18,8 @@
 - Mobile optimization & UI overhaul with mobile optimization
     - better units in dialog
     - show user location on map
-    - enhance List / route handling (show difference walk/drive & parking)
-      - different map routes (dotted for walking)
+    - enhance List / route handling
+      - different map routes (dotted for walking) ✔️
       - show parking spots of route on map
     - fix map label toggling
 

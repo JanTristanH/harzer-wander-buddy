@@ -6,9 +6,10 @@
     <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
     <vbm:vos>
         <vbm:Routes items="{local>/routes}">
-            <vbm:Route position="{local>positionString}"
-                tooltip="Länge: {local>duration}s - Distanz: {local>distance}" labelText="{local>order}" 
-                end="1" start="0" color="rgba(92,186,230,1.0)" 
+            <vbm:Route position="{local>positionString}" directionIndicator="true"
+                lineDash="{ path: 'local>travelMode', formatter: '.onFormatRouteLineDash'}"
+                tooltip="Länge: {local>durationSeconds}s - Distanz: {local>distanceMeters}" 
+                end="1" start="1" color="rgba(92,186,230,1.0)" 
                 colorBorder="rgb(255,255,255)" hotDeltaColor="RHLSA(0,1,1,0.6)"/>
         </vbm:Routes>
 

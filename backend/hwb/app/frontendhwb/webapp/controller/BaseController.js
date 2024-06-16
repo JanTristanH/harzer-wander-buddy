@@ -2,19 +2,19 @@ sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/ui/core/routing/History",
     "sap/ui/core/UIComponent"
-  ], function(Controller, History, UIComponent) {
-  
+], function (Controller, History, UIComponent) {
+
     "use strict";
     return Controller.extend("hwb.frontendhwb.controller.BaseController", {
-  
-        getRouter : function () {
+
+        getRouter: function () {
             return UIComponent.getRouterFor(this);
         },
 
-        getModel : function(){
+        getModel: function () {
             return this.getView().getModel();
         },
-        getModel : function(sName){
+        getModel: function (sName) {
             return this.getView().getModel(sName);
         },
 
@@ -23,14 +23,14 @@ sap.ui.define([
             oHistory = History.getInstance();
             sPreviousHash = oHistory.getPreviousHash();
             if (sPreviousHash !== undefined) {
-            window.history.go(-1);
+                window.history.go(-1);
             } else {
-            this.getRouter().navTo("appHome", {}, true /*no history*/);
+                this.getRouter().navTo("appHome", {}, true /*no history*/);
             }
         },
 
-        onNavToMap: function() {
-            
+        onNavToMap: function () {
+
             this.getRouter().navTo("Map");
         },
         onNavToRouting: function () {
@@ -40,9 +40,16 @@ sap.ui.define([
             this.getRouter().navTo("Main");
         },
 
-        onButtonAdminMapPress: function(){
+        onButtonAdminMapPress: function () {
             this.getRouter().navTo("Admin");
+        },
+
+        onFormatRouteLineDash: function (travelMode) {
+            if (travelMode == "walk") {
+                return "9;9"; //dotted line
+            }
+            return ""; //normal line
         }
-  
+
     });
-  });
+});

@@ -16,10 +16,10 @@ sap.ui.define([
 
     return Controller.extend("hwb.frontendhwb.controller.Admin", {
 
-        onInit: function() {
+        onInit: function () {
             Controller.prototype.onInit.apply(this, arguments);
 
-            this.getView().setModel(new JSONModel(), "local");        
+            this.getView().setModel(new JSONModel(), "local");
         },
 
         onAfterRendering: function () {
@@ -69,7 +69,6 @@ sap.ui.define([
         },
 
         onSpotContextMenu: function (oEvent) {
-            debugger
             const sSourceId = oEvent.getSource().data("id");
             this.getModel().read("/TravelTimes", {
                 filters: [new Filter({
@@ -80,7 +79,6 @@ sap.ui.define([
                 success: function (oData) {
                     let oLocalModel = this.getView().getModel("local");
                     oLocalModel.setProperty("/routes", oData.results);
-                    debugger
                 }.bind(this)
             })
         },
