@@ -16,6 +16,8 @@ sap.ui.define([
 
     return Controller.extend("hwb.frontendhwb.controller.Admin", {
 
+        sCurrentSpotId: "",
+
         onInit: function () {
             Controller.prototype.onInit.apply(this, arguments);
 
@@ -68,8 +70,12 @@ sap.ui.define([
             this._pSpotDialog.then(d => d.close());
         },
 
-        onSpotContextMenu: function (oEvent) {
-            const sSourceId = oEvent.getSource().data("id");
+        onShowRoutesButtonPress: function(){
+            this.onSpotContextMenu(null, this.sCurrentSpotId);
+        },
+
+        onSpotContextMenu: function (oEvent, id) {
+            const sSourceId = id ? id :  oEvent.getSource().data("id");
             this.getModel().read("/TravelTimes", {
                 filters: [new Filter({
                     path: "fromPoi",

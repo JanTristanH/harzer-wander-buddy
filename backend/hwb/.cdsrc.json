@@ -1,1 +1,15 @@
-{}
+{
+    "requires": {
+      "db": {
+        "[production]": {
+          "kind": "postgres",
+          "credentials": {
+            "host": "192.168.2.142", "port": 5432,
+            "user": "postgres",
+            "password": "postgres",
+            "database": "postgres"
+          }
+        }
+      }
+    }
+  }

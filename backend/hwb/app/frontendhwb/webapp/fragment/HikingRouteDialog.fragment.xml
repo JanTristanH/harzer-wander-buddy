@@ -2,7 +2,7 @@
     xmlns="sap.m"
     xmlns:core="sap.ui.core"
     xmlns:f="sap.ui.layout.form">
-    <Dialog title="Enter Hiking Route Parameters" class="sapUiResponsiveContentPadding">
+    <Dialog title="{i18n>EnterHikingRouteParameters}" class="sapUiResponsiveContentPadding">
         <f:Form editable="true">
             <f:layout>
                 <f:ResponsiveGridLayout
@@ -23,41 +23,45 @@
             <f:formContainers>
                 <f:FormContainer>
                     <f:formElements>
-                        <f:FormElement label="Max Duration (in seconds)">
+                        <f:FormElement label="{i18n>MaxDuration} (in seconds)">
                             <f:fields>
                                 <Input value="{/maxDuration}" />
                             </f:fields>
                         </f:FormElement>
-                        <f:FormElement label="Max Distance (in meters)">
+                        <f:FormElement label="{i18n>MaxDistance} (in meters)">
                             <f:fields>
                                 <Input value="{/maxDistance}" />
                             </f:fields>
                         </f:FormElement>
 
-                        <f:FormElement label="Enter Address">
+                        <f:FormElement label="{i18n>StartAddress}">
                             <f:fields>
                                 <Input id="autocomplete"
-                                    placeholder="Start entering your address..." />
-                                    <Button press='onUseCurrentLocation' text="Aktuellen Standort verwenden 📍"/>
+                                    placeholder="{i18n>StartWnteringAddress}" />
                                 </f:fields>
                         </f:FormElement>
-                        <f:FormElement label="Latitude Start">
+                        <f:FormElement label="">
+                            <f:fields>
+                                    <Button press='onUseCurrentLocation' text="{i18n>useCurrentLocation} 📍" class="sapUiSmallMarginBottom"/>
+                                </f:fields>
+                        </f:FormElement>
+                        <f:FormElement label="{i18n>LatitudeStart}" visible="false">
                             <f:fields>
                                 <Input value="{/latitudeStart}" enabled="false" />
                             </f:fields>
                         </f:FormElement>
-                        <f:FormElement label="Longitude Start">
+                        <f:FormElement label="{i18n>LongitudeStart}" visible="false">
                             <f:fields>
                                 <Input value="{/longitudeStart}" enabled="false"/>
                             </f:fields>
                         </f:FormElement>
 
-                        <f:FormElement label="Allow Drive in Route">
+                        <f:FormElement label="{i18n>AllowDriveInRoute}">
                             <f:fields>
                                 <Switch state="{/allowDriveInRoute}" />
                             </f:fields>
                         </f:FormElement>
-                        <f:FormElement label="Minimum Stamp Count">
+                        <f:FormElement label="{i18n>MinimumStampCount}" visible="false">
                             <f:fields>
                                 <Input value="{/minStampCount}" type="Number" />
                             </f:fields>
@@ -67,10 +71,10 @@
             </f:formContainers>
         </f:Form>
         <beginButton>
-            <Button text="Submit" press="onSubmitRouting" />
+            <Button text="{i18n>okay}" press="onSubmitRouting" />
         </beginButton>
         <endButton>
-            <Button text="Cancel" press="onCancel" />
+            <Button text="{i18n>cancel}" press="onCancel" />
         </endButton>
     </Dialog>
 </core:FragmentDefinition>

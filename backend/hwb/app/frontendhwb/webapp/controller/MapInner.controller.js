@@ -16,6 +16,21 @@ sap.ui.define([
             onAfterRendering: function () {
                 this.getView().getModel().setSizeLimit(1000);
             },
+
+            onGeoMapZoomChanged: function (oEvent) {
+                let nZoomLevel = oEvent.getParameter("zoomLevel");
+                let aItems = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
+                let bLabelsHidden = aItems.length ? aItems[0].getProperty("labelText") : true;
+                if (nZoomLevel < 12 && bLabelsHidden) {
+                    //for everything smaller than 12, hide labels
+                    this.onToggleLables();
+                } else if (nZoomLevel > 12 && !bLabelsHidden) {
+                    // restore labels
+                    this.onToggleLables();
+                }
+                // keep as is for 12 
+            },
+
             onPressOpenFiltersMenu: function (oEvent) {
                 var oButton = oEvent.getSource(),
                     oView = this.getView();

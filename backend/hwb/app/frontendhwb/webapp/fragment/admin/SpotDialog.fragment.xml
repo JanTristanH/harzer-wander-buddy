@@ -18,7 +18,6 @@
                 press=".onShowRoutesButtonPress"
                 text="Routen Anzeigen"
                 icon="sap-icon://show"
-                enabled="false"
             />
             <Button
                 press=".onRecalculateRoutesPress"

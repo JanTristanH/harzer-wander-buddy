@@ -28,7 +28,7 @@
         text="{i18n>AdminMap}"
         icon="sap-icon://key-user-settings"
         press="onButtonAdminMapPress"
-        visible="true"
+        visible="false"
     />
     <ToolbarSpacer />
 </Toolbar>

@@ -1,8 +1,7 @@
 #!/bin/sh
-# Start the server
-npm start &
-# Your additional command here
-sleep 5
-npm run deploy
-# Keep the container running
-wait
+echo "Starting server..."
+npm start --production &
+echo "Server started, deploying..."
+#npm run deploy --production
+#echo "Deployment complete, keeping container alive..."
+tail -f /dev/null

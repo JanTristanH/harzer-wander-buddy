@@ -20,7 +20,7 @@
         </headerContent>
         <subHeader>
             <OverflowToolbar>
-                <SearchField />
+                <SearchField enabled="false"/>
             </OverflowToolbar>
         </subHeader>
         <content>
