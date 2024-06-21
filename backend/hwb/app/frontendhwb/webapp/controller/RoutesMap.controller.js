@@ -19,13 +19,23 @@ sap.ui.define([
                     
                     map.setInitialPosition(
                         this.getView().getModel("local").oData.hikingRoutes[0].path[1].positionString.split(';0')[0]);
-                }, 1000);
+                }, 3000);
 
             },
+
             onBackToList: function () {
                 this.bus.publish("flexible", "setList")
             },
+
             onListSelect:function (params) {
+                
+            },
+
+            onFormatTravelModeIcon: function (sTravelMode) {
+                if (sTravelMode == "drive"){
+                    return "sap-icon://car-rental";
+                }
+                return "sap-icon://physical-activity"
                 
             }
         });

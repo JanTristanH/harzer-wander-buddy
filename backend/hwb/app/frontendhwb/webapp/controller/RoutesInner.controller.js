@@ -48,8 +48,8 @@ sap.ui.define([
                     // create routing model
                     var oModel = new sap.ui.model.json.JSONModel({
                         maxDepth: 15,
-                        maxDuration: 36000,
-                        maxDistance: 15000,
+                        maxDuration: new Date( 1 * 60 * 60 * 1000), // TODO timezone dependant 
+                        maxDistance: 15,
                         latitudeStart: '',
                         longitudeStart: '',
                         allowDriveInRoute: true,
@@ -76,12 +76,13 @@ sap.ui.define([
                 var oParams = {
                     maxDepth: oDialogModel.getProperty("/maxDepth"),
                     maxDuration: oDialogModel.getProperty("/maxDuration"),
-                    maxDistance: oDialogModel.getProperty("/maxDistance"),
+                    maxDistance: oDialogModel.getProperty("/maxDistance") * 1000,
                     latitudeStart: oDialogModel.getProperty("/latitudeStart"),
                     longitudeStart: oDialogModel.getProperty("/longitudeStart"),
                     allowDriveInRoute: oDialogModel.getProperty("/allowDriveInRoute"),
                     minStampCount: oDialogModel.getProperty("/minStampCount")
                 };
+                oParams.maxDuration = Math.round(oParams.maxDuration.getTime() / 1000) + 3600; //TODO timezone
                 // Call the function import
                 oModel.callFunction(sFunctionName, {
                     method: "GET",
@@ -151,7 +152,7 @@ sap.ui.define([
 
             onAfterRenderingFragment: function () {
                 autocomplete = new google.maps.places.Autocomplete(
-                    (this.byId('autocomplete').getDomRef('inner')), {
+                    (this.byId('idAutocompleteInput').getDomRef('inner')), {
                     types: ['geocode']
                 });
                 autocomplete.addListener('place_changed', function () {
@@ -192,7 +193,7 @@ sap.ui.define([
                         autocomplete.setBounds(circle.getBounds());
                         this.pDialog.getModel().setProperty("/latitudeStart", geolocation.lat);
                         this.pDialog.getModel().setProperty("/longitudeStart", geolocation.lng);
-                        this.byId('autocomplete').setValue("Aktueller Standort 📍")
+                        this.byId('idAutocompleteInput').setValue("Aktueller Standort 📍")
                     }.bind(this));
                 }
             }

@@ -19,13 +19,13 @@
     >
         <List
             id="list"
-            headerText="Products"
+            headerText="Routen Stationen"
             items="{local>/routes}"
         >
             <StandardListItem
                 title="{local>name}"
                 description="{local>toPoiType} - {local>travelMode}"
-                icon="{ProductPicUrl}"
+                icon="{ value: 'travelMode', formatter: '.onFormatTravelModeIcon'}"
             />
         </List>
     </Panel>

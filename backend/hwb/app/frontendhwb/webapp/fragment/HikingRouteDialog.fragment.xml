@@ -23,20 +23,37 @@
             <f:formContainers>
                 <f:FormContainer>
                     <f:formElements>
-                        <f:FormElement label="{i18n>MaxDuration} (in seconds)">
+                        <f:FormElement label="{i18n>AllowDriveInRoute}">
                             <f:fields>
-                                <Input value="{/maxDuration}" />
+                                <Switch state="{/allowDriveInRoute}" />
                             </f:fields>
                         </f:FormElement>
-                        <f:FormElement label="{i18n>MaxDistance} (in meters)">
+
+                        <f:FormElement label="{i18n>MaxDuration}">
                             <f:fields>
-                                <Input value="{/maxDistance}" />
+                                <TimePicker
+                                    value="{
+                                        'path':'/maxDuration',
+                                        'type': 'sap.ui.model.type.Time'
+                                    }"
+                                    minutesStep="15"
+                                    secondsStep = "0"
+                                    placeholder="{i18n>maxDuration}" />
+                            </f:fields>
+                        </f:FormElement>
+                        <f:FormElement label="{i18n>MaxDistance}">
+                            <f:fields>
+                                <Slider max="25" enableTickmarks="true" class="sapUiMediumMarginBottom" width="95%"
+                                    showAdvancedTooltip="true" value="{/maxDistance}"
+                                    showHandleTooltip="false">
+                                    <ResponsiveScale tickmarksBetweenLabels="5"/>
+                                </Slider>
                             </f:fields>
                         </f:FormElement>
 
                         <f:FormElement label="{i18n>StartAddress}">
                             <f:fields>
-                                <Input id="autocomplete"
+                                <Input id="idAutocompleteInput"
                                     placeholder="{i18n>StartWnteringAddress}" />
                                 </f:fields>
                         </f:FormElement>
@@ -53,12 +70,6 @@
                         <f:FormElement label="{i18n>LongitudeStart}" visible="false">
                             <f:fields>
                                 <Input value="{/longitudeStart}" enabled="false"/>
-                            </f:fields>
-                        </f:FormElement>
-
-                        <f:FormElement label="{i18n>AllowDriveInRoute}">
-                            <f:fields>
-                                <Switch state="{/allowDriveInRoute}" />
                             </f:fields>
                         </f:FormElement>
                         <f:FormElement label="{i18n>MinimumStampCount}" visible="false">
