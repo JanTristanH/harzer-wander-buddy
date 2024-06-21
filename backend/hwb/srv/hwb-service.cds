@@ -102,7 +102,7 @@ service api @(requires: 'authenticated-user') {
             NeighborsBox.number as NeighborsNumber,
             NeighborsBox.latitude,
             NeighborsBox.longitude,
-            SQRT(
+            cast ( SQRT(
                 POW(
                     111.2 * (
                         NeighborsBox.latitude - Stampboxes.latitude
@@ -114,13 +114,13 @@ service api @(requires: 'authenticated-user') {
                         NeighborsBox.latitude / 57.3
                     ), 2
                 )
-            )                   as distanceKm : Double
+            )    as Double)               as distanceKm : Double
 
         }
         // where
         //     Stampboxes.ID = 'bebf5cd4-e427-4297-a490-0730968690c2'
         order by
-            distanceKm asc;
+        cast ( $projection.distanceKm as Double ) asc;
 
     entity NeighborsStampParking   as
         select from db.Stampboxes as Stampboxes
@@ -148,7 +148,7 @@ service api @(requires: 'authenticated-user') {
 
         }
         order by
-            distanceKm asc;
+            cast ( $projection.distanceKm as Double ) asc;
 
     entity NeighborsParkingStamp   as
         select from db.ParkingSpots as Parking
@@ -178,7 +178,7 @@ service api @(requires: 'authenticated-user') {
         // where
         //     Stampboxes.ID = 'bebf5cd4-e427-4297-a490-0730968690c2'
         order by
-            distanceKm asc;
+            cast ( $projection.distanceKm as Double ) asc;
 
     entity NeighborsParkingParking as
         select from db.ParkingSpots as Parking
@@ -205,7 +205,7 @@ service api @(requires: 'authenticated-user') {
 
         }
         order by
-            distanceKm asc;
+            cast ( $projection.distanceKm as Double ) asc;
 
  entity NeighborsCalculationRequestParking as
         select from db.RouteCalculationRequest as CalculationRequest
@@ -219,20 +219,20 @@ service api @(requires: 'authenticated-user') {
             SQRT(
                 POW(
                     111.2 * (
-                        Neighbors.latitude - CalculationRequest.latitude
+                        cast ( Neighbors.latitude as Double ) - cast ( CalculationRequest.longitude as Double )
                     ), 2
                 )+POW(
                     111.2 * (
-                        CalculationRequest.longitude - Neighbors.longitude
+                        cast ( CalculationRequest.longitude as Double ) - cast ( Neighbors.longitude as Double )
                     ) * COS(
-                        Neighbors.latitude / 57.3
+                        cast ( Neighbors.latitude as Double ) / 57.3
                     ), 2
                 )
             )            as distanceKm : Double
 
         }
         order by
-            distanceKm asc;
+            cast ( $projection.distanceKm as Double ) asc;
 
 
     entity tree                    as

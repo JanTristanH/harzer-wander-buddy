@@ -8,9 +8,9 @@ using {
 type User : String(255);
 
 aspect PointOfInterest {
-    longitude   : String(40);
-    latitude    : String(40);
-    name        : String(40);
+    longitude   : Double;
+    latitude    : Double;
+    name        : String(255);
     description : String(2048);
     image       : String(2048); //LargeBinary @Core.MediaType : 'image/png';
 }

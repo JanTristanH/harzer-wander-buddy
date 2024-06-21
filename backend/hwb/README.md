@@ -13,6 +13,7 @@
   - display routes for spot ✔️
 - ~~ distance < 10 km instead of  n nearest neighbors ~~ -> too many
 - set up better demo users ✔️
+- Delete unsensible Parking Spots, persist them & update demo data spots & Travel times
 - configure aiven postgres
 - enhance data quality, parking spaces & routes
 - Mobile optimization & UI overhaul with mobile optimization
