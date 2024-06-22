@@ -1,4 +1,4 @@
-<vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.30147999999997;51.7462" initialZoom="12"
+<vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.30147999999997;51.7462" initialZoom="11"
     height="100%" width="100%"
 	xmlns:vbm="sap.ui.vbm"
     zoomChanged="onGeoMapZoomChanged">
@@ -14,6 +14,10 @@
 
         <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{/PersonalizedStampboxes}">
             <vbm:Spot id="inner" position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" type="{= !${hasVisited} ? 'Error' : 'Success' }" />
+        </vbm:Spots>
+
+        <vbm:Spots id ="idParkingSpots" items="{local>/Parking}">
+            <vbm:Spot id="idNumberInnerParkingSpot" position="{local>longitude};{local>latitude}" text="{local>number}" labelType="Default" labelText="{local>name}" tooltip="{local>name}" labelPos="5" type="Default" />
         </vbm:Spots>
     </vbm:vos>
 </vbm:GeoMap>

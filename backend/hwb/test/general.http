@@ -12,7 +12,7 @@ Authorization: Basic Kevin pass
 
 ### Get all stampings done by Kevin
 GET http://localhost:4004/odata/v2/api/Stampings
-Authorization: Basic Kevin pass
+Authorization: Basic Alice pass
 
 ### Post new Stamp for Kevin
 POST http://localhost:4004/odata/v2/api/Stampings

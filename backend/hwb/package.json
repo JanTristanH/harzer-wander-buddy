@@ -1,6 +1,6 @@
 {
   "name": "hwb",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A simple CAP project.",
   "repository": "<Add your repository here>",
   "license": "UNLICENSED",
@@ -61,7 +61,7 @@
               "pass": "pass"
             },
             "Husi": {
-              "pass": "5"
+              "pass": "pass"
             },
             "Kevin": {
               "pass": "pass",
@@ -70,6 +70,9 @@
               ]
             },
             "Alice": {
+              "pass": "pass"
+            },
+            "Jenny": {
               "pass": "pass"
             },
             "*": false
@@ -91,7 +94,10 @@
               "pass": "pass"
             },
             "Husi": {
-              "pass": "5"
+              "pass": "pass"
+            },
+            "Jenny": {
+              "pass": "pass"
             },
             "Kevin": {
               "pass": "pass",

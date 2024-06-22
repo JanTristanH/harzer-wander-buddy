@@ -21,14 +21,14 @@ sap.ui.define([
                 let nZoomLevel = oEvent.getParameter("zoomLevel");
                 let aItems = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
                 let bLabelsHidden = aItems.length ? aItems[0].getProperty("labelText") : true;
-                if (nZoomLevel < 12 && bLabelsHidden) {
-                    //for everything smaller than 12, hide labels
+                if (nZoomLevel < 11 && bLabelsHidden) {
+                    //for everything smaller than 11, hide labels
                     this.onToggleLables();
-                } else if (nZoomLevel > 12 && !bLabelsHidden) {
+                } else if (nZoomLevel > 11 && !bLabelsHidden) {
                     // restore labels
                     this.onToggleLables();
                 }
-                // keep as is for 12 
+                // keep as is for 11
             },
 
             onPressOpenFiltersMenu: function (oEvent) {

@@ -2,7 +2,7 @@
     height="100%" width="100%"
 	xmlns:vbm="sap.ui.vbm"
     xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
-    contextMenu="onGeoMapContextMenu">
+    contextMenu="onGeoMapContextMenu" zoomChanged="onGeoMapZoomChanged">
     <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
     <vbm:vos>
         <vbm:Routes items="{local>/routes}">

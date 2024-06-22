@@ -99,6 +99,7 @@ sap.ui.define([
                         if (!!oData.calculateHikingRoute.results.length) {
 
                             oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
+                            this.updateParkingSpotsOnMap(oData.calculateHikingRoute.results[0]);
                         } else {
                             sap.m.MessageToast.show("No routes found! :(");
                         }
@@ -117,13 +118,31 @@ sap.ui.define([
                     .filter(r => r.id == oEvent.getParameter("selectedItem").getKey())[0];
 
                 oLocalModel.setProperty("/routes", selectedRoute.path);
+                this.updateParkingSpotsOnMap();
 
-                this.setDetailPage();
+                this.setDetailPage(selectedRoute);
 
                 // this.getView().byId("idRoutingMap").setCenterPosition(
                 //     selectedRoute.path[1].positionString.split(';0')[0]);
 
 
+            },
+
+            updateParkingSpotsOnMap: function(oSelectedRoute){
+                debugger
+                let oLocalModel = this.getView().getModel("local");
+
+                let aParkingSpots = oSelectedRoute.path.filter(p => p.toPoiType == "parking" );
+                aParkingSpots = aParkingSpots.map( p => {
+                    let aCords = p.positionString.split("0;").pop().split(";");
+                    return {
+                        longitude: aCords[0],
+                        latitude: aCords[1],
+                        name: "",
+                        number: "P" 
+                    }
+                });
+                oLocalModel.setProperty("/Parking", aParkingSpots);
             },
 
             setDetailPage: function () {

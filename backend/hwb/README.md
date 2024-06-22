@@ -15,6 +15,7 @@
 - set up better demo users ✔️
 ~~ - configure aiven postgres ~~ -> did not work, local docker postgres
 - Delete unsensible Parking Spots, persist them & update demo data spots & Travel times
+- Stampings are not user dependant
 - enhance data quality, parking spaces & routes
 - Mobile optimization & UI overhaul with mobile optimization
     - better units in dialog ✔️
