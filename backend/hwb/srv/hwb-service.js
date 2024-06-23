@@ -14,6 +14,16 @@ let aTravelTimesGlobal = [];
 
 module.exports = class api extends cds.ApplicationService {
   init() {
+
+    this.after ('READ',`Stampboxes`, (stampBoxes, req)=>{
+      return stampBoxes.map(box => {
+        if(box.Stampings){
+          box.Stampings = box.Stampings.filter( s => s.createdBy == req.user.id);
+        }
+        return box;
+      });
+    })
+
     this.on('calculateTravelTimesNNearestNeighbors', calculateTravelTimesNNearestNeighbors.bind(this))
 
     this.on('getMissingTravelTimesCount', getMissingTravelTimesCount.bind(this))
@@ -48,7 +58,7 @@ async function deleteSpotWithRoutes(req) {
 async function calculateHikingRoute(req) {
   // req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
   console.log(req.data);
-  const { typedTravelTimes, PersonalizedStampboxes } = this.api.entities;
+  const { typedTravelTimes, Stampboxes, Stampings } = this.api.entities;
   if (aTravelTimesGlobal.length == 0) {
     aTravelTimesGlobal = await SELECT
       .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
@@ -56,11 +66,10 @@ async function calculateHikingRoute(req) {
   }
 
   aStampsDoneByUser = await SELECT
-    .columns('ID')
-    .from(PersonalizedStampboxes)
-    .where({ hasVisited: true });
-
-  aStampsDoneByUser = aStampsDoneByUser.map(s => s.ID);
+    .columns('stamp_ID')
+    .where({createdBy: req.user.id})
+    .from(Stampings);
+    aStampsDoneByUser = aStampsDoneByUser.map(s => s.stamp_ID);
 
   //Determine starting Parking spaces and iterate
   let aStartingParking = await determineStartingParking.bind(this)(req.data);

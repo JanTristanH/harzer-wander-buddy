@@ -17,11 +17,12 @@
                         mode="MultiSelect"
                         selectionChange="onSelectionChange"
                         items="{
-                    path: '/PersonalizedStampboxes',
-                    sorter: {
-                        path: 'numberInt'
-                    }
-                }"
+                            path: '/Stampboxes',
+                            sorter: {
+                                path: 'number'
+                            },
+                            parameters:{expand : 'Stampings'}
+                        }"
                         updateFinished=".onStampingsUpdateFinished"
                     >
                         <headerToolbar>

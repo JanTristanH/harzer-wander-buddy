@@ -45,6 +45,7 @@ sap.ui.define([
                 // ListItem set to true
                 var obj = oSelectedItem.getBindingContext().getObject();
                 let oModel = this.getView().getModel();
+                debugger
                 if (oEvent.getParameter("selected")) {
                     let ID = obj.ID;
                     let mParameters = {
@@ -58,7 +59,8 @@ sap.ui.define([
                         }
                     }, mParameters);
                 } else {
-                    let StampingId = obj.StampingId;
+                    let oStamping = this.getModel().getProperty("/" + oSelectedItem.getBindingContext().getProperty("Stampings")[0]);
+                    let StampingId = oStamping.ID;
                     let mParameters = {
                         success: () => MessageToast.show("Saved Stamping") || oModel.refresh(),
                         // give message and reset ui to keep it consistent with backend
@@ -69,13 +71,13 @@ sap.ui.define([
             },
 
             onStampingsUpdateFinished: function (event) {
-                this.selectWhere(context => context.getProperty("hasVisited"));
+                this.selectWhere(context => context.getProperty('Stampings').length);
                 this.updateStampCount()
             },
 
             selectWhere: function (keysAreMatching) {
                 const table = this.byId("StampingsTable");
-
+                let that = this;
                 table.getItems().forEach(element => {
                     if (keysAreMatching(element.getBindingContext())) {
                         table.setSelectedItemById(element.getId())

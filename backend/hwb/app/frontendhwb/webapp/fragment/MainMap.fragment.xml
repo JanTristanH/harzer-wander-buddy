@@ -12,8 +12,8 @@
                 colorBorder="rgb(255,255,255)" hotDeltaColor="RHLSA(0,1,1,0.6)"/>
         </vbm:Routes>
 
-        <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{/PersonalizedStampboxes}">
-            <vbm:Spot id="inner" position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" type="{= !${hasVisited} ? 'Error' : 'Success' }" />
+        <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{ path: '/Stampboxes', parameters:{expand : 'Stampings'} }">
+            <vbm:Spot id="inner" position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" type="{ path: 'Stampings', formatter: '.onFormatBoxType'}" />
         </vbm:Spots>
 
         <vbm:Spots id ="idParkingSpots" items="{local>/Parking}">

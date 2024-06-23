@@ -129,7 +129,6 @@ sap.ui.define([
             },
 
             updateParkingSpotsOnMap: function(oSelectedRoute){
-                debugger
                 let oLocalModel = this.getView().getModel("local");
 
                 let aParkingSpots = oSelectedRoute.path.filter(p => p.toPoiType == "parking" );

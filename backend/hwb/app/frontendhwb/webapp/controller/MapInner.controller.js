@@ -103,6 +103,13 @@ sap.ui.define([
             onShowAll: function () {
                 let spots = this.getView().byId("idAllPointsOfInterestsSpots")
                 this._resetItemsForSpots(spots);
+            },
+
+            onFormatBoxType: function (oStampings) {
+                if(oStampings.length){
+                    return 'Success';
+                }
+                return 'Error';
             }
         });
     });

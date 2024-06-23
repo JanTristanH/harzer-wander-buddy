@@ -17,8 +17,7 @@ aspect PointOfInterest {
 
 @assert.integrity: false
 entity Stampboxes : cuid, temporal, PointOfInterest {
-
-    number                 : String(40); // to allow Sonderstempel
+    number                 : Integer; // to allow Sonderstempel via name
 
     isKidFriendly          : Boolean;
     isElderlyFriendly      : Boolean;

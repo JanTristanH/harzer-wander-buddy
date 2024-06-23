@@ -55,36 +55,6 @@ service api @(requires: 'authenticated-user') {
         {grant: 'WRITE'}
     ])                             as projection on db.Stampings;
 
-    @readonly
-    entity PersonalizedStampboxes  as
-        select from db.Stampboxes as Stampboxes distinct {
-            key ID,
-                number,
-                cast (number as Integer ) as numberInt,
-                isKidFriendly,
-                isElderlyFriendly,
-                isStrollerFriendly,
-                hasToilet,
-                hasFood,
-                longitude,
-                latitude,
-                name,
-                description,
-                image,
-
-                case
-                    when
-                        length(
-                            Stampboxes.Stampings.createdBy
-                        ) > 0
-                    then
-                        true
-                    else
-                        false
-                end as hasVisited : Boolean,
-                Stampboxes.Stampings.ID as StampingId
-        };
-
     //action route (statingStampID:Integer, targetNumberOfStamps: Integer) returns Integer;
 
     action DeleteSpotWithRoutes (SpotId: UUID) returns String;

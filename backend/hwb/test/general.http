@@ -3,7 +3,7 @@ GET http://localhost:4004/odata/v2/api/Stampboxes
 Authorization: Basic Kevin pass
 
 ### Get all boxes
-GET http://localhost:4004/odata/v2/api/PersonalizedStampboxes
+GET http://localhost:4004/odata/v2/api/Stampboxes?$expand=Stampings
 Authorization: Basic Kevin pass
 
 ### Get count of boxes
