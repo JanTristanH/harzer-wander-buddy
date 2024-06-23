@@ -54,7 +54,7 @@ sap.ui.define([
                 //create item cache with unmodified items if not existent
                 this._getItemCache().length ? true : this._createInitialItemCache();
                 let aItems = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
-                if (aItems[0].getProperty("labelText")) {
+                if ( aItems.length && aItems[0].getProperty("labelText")) {
                     aItems.map(e => e.setProperty("labelText", ""))
                 } else {
                     this.getView().getModel().refresh();
