@@ -21,10 +21,10 @@ sap.ui.define([
                 let nZoomLevel = oEvent.getParameter("zoomLevel");
                 let aItems = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
                 let bLabelsHidden = aItems.length ? aItems[0].getProperty("labelText") : true;
-                if (nZoomLevel < 11 && bLabelsHidden) {
+                if (nZoomLevel < 14 && bLabelsHidden) {
                     //for everything smaller than 11, hide labels
                     this.onToggleLables();
-                } else if (nZoomLevel > 11 && !bLabelsHidden) {
+                } else if (nZoomLevel >= 14 && !bLabelsHidden) {
                     // restore labels
                     this.onToggleLables();
                 }

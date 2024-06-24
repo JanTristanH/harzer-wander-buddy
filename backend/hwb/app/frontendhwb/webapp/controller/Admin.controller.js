@@ -6,6 +6,7 @@ sap.ui.define([
     "sap/m/MessageBox",
     'sap/ui/model/Filter', 'sap/ui/model/FilterOperator',
     "sap/ui/model/json/JSONModel",
+	"sap/ui/comp/smartmultiedit/Container",
 ], function (Controller,
     Fragment,
     MessageToast,
@@ -123,7 +124,8 @@ sap.ui.define([
         },
         showMessage: function (sMessage) {
             return function (oData) {
-                MessageToast.show(sMessage + oData.DeleteSpotWithRoutes)
+                let extra = oData.DeleteSpotWithRoutes ? oData.DeleteSpotWithRoutes : "";
+                MessageToast.show(sMessage + extra);
                 this.getView().setBusy(false);
                 this.getModel().refresh();
                 this.onCloselButtonSpotActionPress();
@@ -172,6 +174,12 @@ sap.ui.define([
                 success: this.showMessage("Spot geupdated!"),
                 error: this.showError.bind(this)
             });
+        },
+        onFormatPoiName: function (name) {
+            if(name.includes("Stempelstelle")){
+                return name.split(" ")[1];
+            }
+            return 'P';
         },
 
         onCheckAllRoutesButtonPress: function () {

@@ -16,7 +16,7 @@
         <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{/AllPointsOfInterest}">
             <vbm:Spot position="{longitude};{latitude}" labelType="Default" labelText="{name}" tooltip="{name}" labelPos="5" 
                         type="{ path: 'name', formatter: '.onFormatTypeByName'}"
-                        customData:id="{ID}"  text=""
+                        customData:id="{ID}"  text="{ path: 'name', formatter: '.onFormatPoiName'}"
                         click="onNumberSpotClick" contextMenu="onSpotContextMenu"/>
         </vbm:Spots>
     </vbm:vos>
