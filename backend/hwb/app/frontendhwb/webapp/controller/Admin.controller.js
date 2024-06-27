@@ -182,6 +182,13 @@ sap.ui.define([
             return 'P';
         },
 
+        onOpenExternalButtonPress: function() {
+            debugger
+            let sName = this.getModel().getProperty(`/AllPointsOfInterest(guid'${this.sCurrentSpotId}')/name`)
+            const sLink = `https://www.harzer-wandernadel.de/?s=${sName}`;
+            window.open(sLink, '_blank').focus();
+        },
+
         onCheckAllRoutesButtonPress: function () {
             const nearestNeighborsCount = 5;
             let oModel = this.getView().getModel();

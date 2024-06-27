@@ -1,4 +1,4 @@
-<vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.30147999999997;51.7462" initialZoom="12"
+<vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.30147999999997;51.7462" initialZoom="14"
     height="100%" width="100%"
 	xmlns:vbm="sap.ui.vbm"
     xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
