@@ -54,7 +54,7 @@ sap.ui.define([
                 //create item cache with unmodified items if not existent
                 this._getItemCache().length ? true : this._createInitialItemCache();
                 let aItems = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
-                if ( aItems.length && aItems[0].getProperty("labelText")) {
+                if (aItems.length && aItems[0].getProperty("labelText")) {
                     aItems.map(e => e.setProperty("labelText", ""))
                 } else {
                     this.getView().getModel().refresh();
@@ -106,10 +106,16 @@ sap.ui.define([
             },
 
             onFormatBoxType: function (oStampings) {
-                if(oStampings.length){
+                if (oStampings.length) {
                     return 'Success';
                 }
                 return 'Error';
+            },
+
+            onSpotContextMenu: function (oEvent) {
+                let sStampNumber = oEvent.getSource().getText();
+                const sLink = `https://www.harzer-wandernadel.de/?s=${sStampNumber}`;
+                window.open(sLink, '_blank').focus();
             }
         });
     });
