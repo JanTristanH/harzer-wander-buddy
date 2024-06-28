@@ -30,7 +30,13 @@
         "[development]": {
           "kind": "sqlite",
           "credentials": {
-            "url": "db.sqlite"
+            "url": ":memory:"
+          }
+        },
+        "[memory]": {
+          "kind": "sqlite",
+          "credentials": {
+            "url": ":memory:"
           }
         },
         "[production]": {
