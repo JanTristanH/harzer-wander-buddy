@@ -211,7 +211,7 @@ sap.ui.define([
                                     success: function (oData) {
                                         this.getView().setBusy(false);
                                         MessageToast.show(`Es wurden ${oData.calculateTravelTimesNNearestNeighbors} Routen ergänzt.`)
-                                    },
+                                    }.bind(this),
                                     error: this.showError.bind(this)
                                 });
                             }

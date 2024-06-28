@@ -7,18 +7,20 @@ const fetch = require('node-fetch');
 require("dotenv").config();
 const routingManager = require('./routingManager')
 
+const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MAX_REQUESTS_PER_CALL : 1000;
 // 40.000 free 
 // 0 used
 let count = 0;
+let countRequest = 0;
 let aTravelTimesGlobal = [];
 
 module.exports = class api extends cds.ApplicationService {
   init() {
 
-    this.after ('READ',`Stampboxes`, (stampBoxes, req)=>{
+    this.after('READ', `Stampboxes`, (stampBoxes, req) => {
       return stampBoxes.map(box => {
-        if(box.Stampings){
-          box.Stampings = box.Stampings.filter( s => s.createdBy == req.user.id);
+        if (box.Stampings) {
+          box.Stampings = box.Stampings.filter(s => s.createdBy == req.user.id);
         }
         return box;
       });
@@ -67,9 +69,9 @@ async function calculateHikingRoute(req) {
 
   aStampsDoneByUser = await SELECT
     .columns('stamp_ID')
-    .where({createdBy: req.user.id})
+    .where({ createdBy: req.user.id })
     .from(Stampings);
-    aStampsDoneByUser = aStampsDoneByUser.map(s => s.stamp_ID);
+  aStampsDoneByUser = aStampsDoneByUser.map(s => s.stamp_ID);
 
   //Determine starting Parking spaces and iterate
   let aStartingParking = await determineStartingParking.bind(this)(req.data);
@@ -128,6 +130,7 @@ async function getMissingTravelTimesCount(req) {
 /** calculate travel times to neighbors via maps api */
 async function calculateTravelTimesNNearestNeighbors(req) {
   const { n } = req.data
+  countRequest = 0;
   let result = await processTravelTimes.bind(this)(n, getTravelTimes);
   return result;
 }
@@ -139,9 +142,10 @@ function processTravelTimes(nearestNeighborsCount, processor) {
   return new Promise(async (resolve, reject) => {
     // s -> s walk
     // s -> p walk
- 
+
     // fetch all stamps and iterate
     let aStampBoxes = await SELECT.from(Stampboxes);
+    let actualUpdateCount = 0;
 
     for (let i = 0; i < aStampBoxes.length; i++) {
       const box = aStampBoxes[i];
@@ -149,13 +153,15 @@ function processTravelTimes(nearestNeighborsCount, processor) {
       aExistingTravelTimes = aExistingTravelTimes.map(t => t.toPoi);
 
       let aTravelTimesWalk = await getTravelTimesStampStamps(box, aExistingTravelTimes);
-      if (aTravelTimesWalk) {
-        UPSERT(aTravelTimesWalk).into(TravelTimes);
+      if (aTravelTimesWalk && aTravelTimesWalk.length) {
+        await UPSERT(aTravelTimesWalk).into(TravelTimes);
+        actualUpdateCount += aTravelTimesWalk.length;
       }
 
       aTravelTimesWalk = await getTravelTimesStampParkingSpaces(box, aExistingTravelTimes);
-      if (aTravelTimesWalk) {
-        UPSERT(aTravelTimesWalk).into(TravelTimes);
+      if (aTravelTimesWalk && aTravelTimesWalk.length) {
+        await UPSERT(aTravelTimesWalk).into(TravelTimes);
+        actualUpdateCount += aTravelTimesWalk.length;
       }
 
     }
@@ -174,13 +180,15 @@ function processTravelTimes(nearestNeighborsCount, processor) {
 
       let aTravelTimesWalk = await getTravelTimesParkingStamps(spot, aExistingTravelTimes);
 
-      if (aTravelTimesWalk) {
-        UPSERT(aTravelTimesWalk).into(TravelTimes);
+      if (aTravelTimesWalk && aTravelTimesWalk.length) {
+        await UPSERT(aTravelTimesWalk).into(TravelTimes);
+        actualUpdateCount += aTravelTimesWalk.length;
       }
 
       let aTravelTimesDrive = await getTravelTimesParkingParking(spot, aExistingTravelTimes);
-      if (aTravelTimesDrive) {
-        UPSERT(aTravelTimesDrive).into(TravelTimes);
+      if (aTravelTimesDrive && aTravelTimesDrive.length) {
+        await UPSERT(aTravelTimesDrive).into(TravelTimes);
+        actualUpdateCount += aTravelTimesDrive.length;
       }
     }
 
@@ -270,10 +278,9 @@ function getTravelTimes(box, neighborPois, travelMode) {
           durationSeconds: oRoute.routes[0].duration.split('s')[0],
           distanceMeters: oRoute.routes[0].distanceMeters,
           travelMode,
-          positionString: mapPolyLineToPositionString(oRoute.routes[0].polyline.geoJsonLinestring.coordinates)
-
           //Waypoint Route
-        })
+          positionString: mapPolyLineToPositionString(oRoute.routes[0].polyline.geoJsonLinestring.coordinates)
+        });
       } else {
         console.error(JSON.stringify(oRoute));
       }
@@ -291,6 +298,10 @@ function mapPolyLineToPositionString(aCoordinates) {
 
 function calculateRoute(pointA, pointB, travelMode) {
   count++;
+  countRequest++;
+  if (countRequest > MAX_REQUESTS_PER_CALL) {
+    return Promise.resolve([]);
+  }
   console.log(count);
   // return {
   //   "routes": [
@@ -350,13 +361,15 @@ function calculateRoute(pointA, pointB, travelMode) {
         "sec-fetch-site": "cross-site",
         "x-client-data": "CIq2yQEIpbbJAQipncoBCNr2ygEIkqHLAQiLq8wBCJ3+zAEIhaDNAQiD8M0BGPTJzQEYp+rNARjYhs4B",
         "x-goog-api-key": process.env.GOOLGE_MAPS_API_KEY,
-        "x-goog-fieldmask": "routes.duration,routes.distanceMeters,routes.polyline",
-        "Referer": "https://developers-dot-devsite-v2-prod.appspot.com/",
-        "Referrer-Policy": "strict-origin-when-cross-origin"
+        "x-goog-fieldmask": "routes.duration,routes.distanceMeters,routes.polyline"
       },
       "body": JSON.stringify(body),
       "method": "POST"
     }).then(r => r.json())
-      .then(j => resolve(j));
+      .then(j => {
+        console.log(j);
+        resolve(j);
+      }
+      );
   });
 }
