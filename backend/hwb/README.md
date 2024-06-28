@@ -13,18 +13,22 @@
   - display routes for spot ✔️
 - ~~ distance < 10 km instead of  n nearest neighbors ~~ -> too many
 - set up better demo users ✔️
-~~ - configure aiven postgres ~~ -> did not work, local docker postgres
+~~ - configure aiven postgres ~~ -> did not work, local docker postgres ✔️
 - Delete unsensible Parking Spots, persist them & update demo data spots & Travel times
-- Stampings are not user dependant
-- enhance data quality, parking spaces & routes
+- Stampings are not user dependant ✔️
+- enhance data quality, parking spaces & routes ✔️ (ongoing)
+- route calculation broken -> starting parking spaces not correct
+- link spot to external search
+- fix recalculation of routes
 - Mobile optimization & UI overhaul with mobile optimization
     - better units in dialog ✔️
-    - show used parking spaces on route view
+    - show used parking spaces on route view ✔️
     - show user location on map
     - enhance List / route handling
       - different map routes (dotted for walking) ✔️
       - show parking spots of route on map
-    - fix map label toggling 
+    - fix map label toggling ✔️
+    - allow parking toggling
 
 ## MVP 2
 

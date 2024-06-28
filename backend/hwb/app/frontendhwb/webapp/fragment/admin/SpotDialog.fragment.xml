@@ -9,6 +9,7 @@
     >
 
         <VBox>
+            <Label text="Current Id ()" class="sapUiSmallMarginBottom" id="idCurrentIdLabel"/>
             <Label text="Name" labelFor="idNameInput"/>
             <Input id="idNameInput" class="sapUiSmallMarginBottom"/>
 

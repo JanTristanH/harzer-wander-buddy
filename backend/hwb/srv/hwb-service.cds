@@ -184,12 +184,14 @@ service api @(requires: 'authenticated-user') {
         {
             CalculationRequest.ID,
             Neighbors.ID as NeighborsID,
+            cast ( CalculationRequest.longitude as Double ) as CalculationRequestLongitude,
+            cast ( CalculationRequest.latitude as Double ) as CalculationRequestLatitude,
             Neighbors.latitude,
             Neighbors.longitude,
             SQRT(
                 POW(
                     111.2 * (
-                        cast ( Neighbors.latitude as Double ) - cast ( CalculationRequest.longitude as Double )
+                        cast ( Neighbors.latitude as Double ) - cast ( CalculationRequest.latitude as Double )
                     ), 2
                 )+POW(
                     111.2 * (

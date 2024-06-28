@@ -59,6 +59,7 @@ sap.ui.define([
             }
 
             this._pSpotDialog.then(oDialog => {
+                this.byId("idCurrentIdLabel").setText("Id: " + this.sCurrentSpotId);
                 let sSpotName = this.getModel().getProperty(`/AllPointsOfInterest(guid'${this.sCurrentSpotId}')/name`);
                 this.byId("idNameInput").setValue(sSpotName ? sSpotName : "Parkplatz");
                 let sDescription = this.getModel().getProperty(`/AllPointsOfInterest(guid'${this.sCurrentSpotId}')/description`);

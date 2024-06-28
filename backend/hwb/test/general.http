@@ -120,3 +120,16 @@ Authorization: Basic Kevin pass
 ### Get Typed Travel times that is type parking
 GET http://localhost:4004/odata/v2/api/AllPointsOfInterest
 Authorization: Basic Kevin pass
+
+
+### Get Calculation request and its neighborts
+# Timmendorf: 438dc188-d1ce-4f9d-b5ae-f7fb503a04ca
+# Osterode: 5d67b8e3-6d6b-4b41-91a1-10e08ffdff74
+# Bleichesteööe 
+GET http://localhost:4004/odata/v2/api/NeighborsCalculationRequestParking?$top=20&$filter=ID eq guid'5d67b8e3-6d6b-4b41-91a1-10e08ffdff74'
+# and NeighborsID eq guid'0fb2c08a-1c21-4fcf-8807-87b2a72ef91d'&$inlinecount=allpages
+Authorization: Basic Kevin pass
+
+### Get RouteCalculationRequests
+GET http://localhost:4004/odata/v2/api/RouteCalculationRequest
+Authorization: Basic Kevin pass
