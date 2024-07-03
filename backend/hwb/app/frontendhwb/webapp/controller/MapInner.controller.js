@@ -11,6 +11,7 @@ sap.ui.define([
 
         return Controller.extend("hwb.frontendhwb.controller.MapInner", {
             itemCache: [],
+            _aParkingSpaceCache: [],
             onInit: function () {
             },
             onAfterRendering: function () {
@@ -19,16 +20,7 @@ sap.ui.define([
 
             onGeoMapZoomChanged: function (oEvent) {
                 let nZoomLevel = oEvent.getParameter("zoomLevel");
-                let aItems = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
-                let bLabelsHidden = aItems.length ? aItems[0].getProperty("labelText") : true;
-                if (nZoomLevel < 14 && bLabelsHidden) {
-                    //for everything smaller than 11, hide labels
-                    this.onToggleLables();
-                } else if (nZoomLevel >= 14 && !bLabelsHidden) {
-                    // restore labels
-                    this.onToggleLables();
-                }
-                // keep as is for 11
+                this.onToggleLables(nZoomLevel >= 14);
             },
 
             onPressOpenFiltersMenu: function (oEvent) {
@@ -50,17 +42,21 @@ sap.ui.define([
                     oPopover.openBy(oButton);
                 });
             },
-            onToggleLables: function () {
-                //create item cache with unmodified items if not existent
-                this._getItemCache().length ? true : this._createInitialItemCache();
-                let aItems = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
-                if (aItems.length && aItems[0].getProperty("labelText")) {
-                    aItems.map(e => e.setProperty("labelText", ""))
-                } else {
-                    this.getView().getModel().refresh();
-                    this.itemCache = [];
-                }
-                //TODO save labeltext to local set and make them displayable again
+
+            onToggleLabelsCheckBox: function (oEvent) {
+                this.onToggleLables(oEvent.getSource().getSelected());
+            },
+            onToggleLables: function (bVisible) {
+                let aItems = [
+                    ...this.byId("idAllPointsOfInterestsSpots").getItems(),
+                    ...this.byId("idParkingSpotsSpots").getItems()
+                ];
+
+                aItems.forEach(e => {
+                    let sText = e.getProperty("labelText");
+                    sText = bVisible ? e.data("labelTextHidden") : "";
+                    e.setProperty("labelText", sText);
+                });
             },
             _createInitialItemCache: function () {
                 //TODO this has to be reset on model Change urgh
@@ -103,6 +99,26 @@ sap.ui.define([
             onShowAll: function () {
                 let spots = this.getView().byId("idAllPointsOfInterestsSpots")
                 this._resetItemsForSpots(spots);
+            },
+
+            onParkingSpaceCheckBox: function (oEvent) {
+                this.toggleParkingSpaceVisibility(oEvent.getSource().getSelected());
+            },
+
+            toggleParkingSpaceVisibility: function (bVisible) {
+                let oSpots = this.byId("idParkingSpotsSpots");
+                //create cache with unmodified items if not existent
+                if (this._aParkingSpaceCache.length == 0) {
+                    this._aParkingSpaceCache = oSpots.getItems();
+                }
+
+                if (bVisible) {
+                    //show parking
+                    this._aParkingSpaceCache.forEach(item => oSpots.addItem(item));
+                } else {
+                    //hide parking spaces
+                    oSpots.getItems().forEach(e => oSpots.removeItem(e));
+                }
             },
 
             onFormatBoxType: function (oStampings) {

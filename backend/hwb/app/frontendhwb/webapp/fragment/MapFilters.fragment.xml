@@ -9,10 +9,7 @@
         placement="Bottom"
     >
         <VBox>
-            <Button
-                press='.onToggleLables'
-                text="Label Umschalten"
-            />
+            <CheckBox text="Label Umschalten" select="onToggleLabelsCheckBox" selected="true" />
             <Button
                 press='.onToggleStampedSpots'
                 text="Besuchte Stempel ausblenden"
@@ -21,6 +18,7 @@
                 press='.onShowGreens'
                 text="Ungestempelte Ausblenden"
             />
+            <CheckBox id="idParkingSpaceCheckBox" text="{i18n>ParkingSpace}" select="onParkingSpaceCheckBox" selected="true" />
             <Button
                 press='.onShowAll'
                 text="Alles anzeigen"
