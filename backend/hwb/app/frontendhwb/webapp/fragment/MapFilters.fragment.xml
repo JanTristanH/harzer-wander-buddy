@@ -23,6 +23,10 @@
                 press='.onShowAll'
                 text="Alles anzeigen"
             />
+            <Button
+                press='.onLocateMePress'
+                text="Aktuellen Standort bestimmen 📍"
+            />
         </VBox>
     </Popover>
 </core:FragmentDefinition>

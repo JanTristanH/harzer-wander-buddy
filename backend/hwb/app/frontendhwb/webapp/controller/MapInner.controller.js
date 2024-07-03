@@ -13,6 +13,12 @@ sap.ui.define([
             itemCache: [],
             _aParkingSpaceCache: [],
             onInit: function () {
+                var oModel = new sap.ui.model.json.JSONModel();
+                oModel.setData({
+                    UserLocationLat: 0,
+                    UserLocationLng: 0
+                });
+                this.getView().setModel(oModel, "local");
             },
             onAfterRendering: function () {
                 this.getView().getModel().setSizeLimit(1000);
@@ -118,6 +124,20 @@ sap.ui.define([
                 } else {
                     //hide parking spaces
                     oSpots.getItems().forEach(e => oSpots.removeItem(e));
+                }
+            },
+
+            onLocateMePress: function () {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function (position) {
+                        let oUserLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        let oLocalModel = this.getModel("local");
+                        oLocalModel.setProperty("/UserLocationLat", oUserLocation.lat);
+                        oLocalModel.setProperty("/UserLocationLng", oUserLocation.lng);
+                    }.bind(this));
                 }
             },
 

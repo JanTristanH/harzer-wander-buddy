@@ -18,20 +18,19 @@
 - enhance data quality, parking spaces & routes ✔️ (ongoing)
 - route calculation broken -> starting parking spaces not correct (fixed itself) ✔️
 - link spot to external search ✔️
-- Mobile optimization & UI overhaul with mobile optimization
+- Mobile optimization & UI overhaul with mobile optimization	
     - better units in dialog ✔️
     - show used parking spaces on route view ✔️
-    - show user location on map
-    - allow parking toggling
+    - show user location on map ✔️
+    - allow parking toggling ✔️
     - enhance List / route handling
       - different map routes (dotted for walking) ✔️
-      - show parking spots on route on map -> toggling?
-    - fix map label toggling ✔️
+    - fix map label toggling combined with zoom
 - update demo data from live system
+- implement search above
 
 ## MVP 2
 
-- implement search above
 - card based view of routes
 - allow manual changes to routes
 - configure social login

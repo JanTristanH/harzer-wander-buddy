@@ -21,5 +21,9 @@
         <vbm:Spots id ="idParkingSpotsSpots" items="{/ParkingSpots}">
             <vbm:Spot id="idParkingInnerSpot" position="{longitude};{latitude}" text="P" labelText="{name}" tooltip="{name}" labelPos="5" type="Default" app:labelTextHidden="{name}"/>
         </vbm:Spots>
+
+        <vbm:Spots>
+            <vbm:Spot id="idUserLocationSpot" position="{local>/UserLocationLng};{local>/UserLocationLat}"/>
+        </vbm:Spots>
     </vbm:vos>
 </vbm:GeoMap>
