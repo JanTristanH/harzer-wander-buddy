@@ -13,12 +13,14 @@ sap.ui.define([
             itemCache: [],
             _aParkingSpaceCache: [],
             onInit: function () {
-                var oModel = new sap.ui.model.json.JSONModel();
-                oModel.setData({
-                    UserLocationLat: 0,
-                    UserLocationLng: 0
-                });
-                this.getView().setModel(oModel, "local");
+                if (!this.getModel("local")) {
+                    var oModel = new sap.ui.model.json.JSONModel();
+                    oModel.setData({
+                        UserLocationLat: 0,
+                        UserLocationLng: 0
+                    });
+                    this.getView().setModel(oModel, "local");
+                }
             },
             onAfterRendering: function () {
                 this.getView().getModel().setSizeLimit(1000);
@@ -53,10 +55,10 @@ sap.ui.define([
                 this.onToggleLables(oEvent.getSource().getSelected());
             },
             onToggleLables: function (bVisible) {
-                let aItems = [
-                    ...this.byId("idAllPointsOfInterestsSpots").getItems(),
-                    ...this.byId("idParkingSpotsSpots").getItems()
-                ];
+
+                let aItems = [...this.byId("idAllPointsOfInterestsSpots").getItems()];
+                const oParkingSpots = this.byId("idParkingSpotsSpots");
+                oParkingSpots ? aItems.push(...oParkingSpots.getItems()) : null;
 
                 aItems.forEach(e => {
                     let sText = e.getProperty("labelText");

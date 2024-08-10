@@ -133,6 +133,7 @@ sap.ui.define([
                 }).then(function(detailView) {
                     this.oFlexibleColumnLayout.addMidColumnPage(detailView);
                     this.oFlexibleColumnLayout.setLayout(LayoutType.TwoColumnsMidExpanded);
+                    detailView.byId("map").setModel(this.getModel("local"), "local");
                 }.bind(this));
             },
             // Helper function to manage the lazy loading of views

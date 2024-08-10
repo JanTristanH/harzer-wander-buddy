@@ -27,7 +27,7 @@
       - different map routes (dotted for walking) ✔️
     - fix map label toggling combined with zoom
 - Redirect to Login from webapp ✔️ (use /app/...)
-- Create logout button
+- Create logout button ✔️
 - backup current parkin spaces
 - update demo data from live system
 - implement search above
@@ -64,4 +64,4 @@ lowercase pushen
 
 ## Database
 
-This project is configured to run with a managed postgres. For example using [aiven](https://console.aiven.io/).
+This project is configured to run with a postgres.
