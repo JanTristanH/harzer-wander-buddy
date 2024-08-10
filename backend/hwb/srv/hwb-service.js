@@ -4,7 +4,6 @@ const {
 } = require('uuid');
 
 const fetch = require('node-fetch');
-require("dotenv").config();
 const routingManager = require('./routingManager')
 
 const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MAX_REQUESTS_PER_CALL : 1000;

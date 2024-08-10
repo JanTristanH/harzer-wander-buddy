@@ -84,6 +84,9 @@ sap.ui.define([
                     }
                 });
                 return table
+            },
+            onLogoutPress: function () {
+                window.location.href = "/logout";
             }
         });
     });

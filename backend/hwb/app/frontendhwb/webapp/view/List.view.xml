@@ -7,6 +7,9 @@
 >
     <App id="app">
         <Page title="{i18n>title}">
+            <headerContent>
+                <Button text="{i18n>logout}" press="onLogoutPress" icon="sap-icon://log" />
+            </headerContent>
             <content>
                 <HBox class="sapUiResponsiveContentPadding">
                     <Table

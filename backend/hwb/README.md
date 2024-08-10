@@ -26,8 +26,13 @@
     - enhance List / route handling
       - different map routes (dotted for walking) ✔️
     - fix map label toggling combined with zoom
+- Redirect to Login from webapp ✔️ (use /app/...)
+- Create logout button
+- backup current parkin spaces
 - update demo data from live system
 - implement search above
+- /policies/terms-of-service & /policies/privacy-policy => maintain on website
+- upgrade developer to production key
 
 ## MVP 2
 
