@@ -54,9 +54,6 @@
       },
       "auth": {
         "[development]": {
-          "impl": "srv/auth.js"
-        },
-        "[production]": {
           "kind": "basic-auth",
           "users": {
             "Tris": {
@@ -66,21 +63,6 @@
               "pass": "pass"
             },
             "Lars": {
-              "pass": "pass"
-            },
-            "Ammi": {
-              "pass": "pass"
-            },
-            "Husi": {
-              "pass": "pass"
-            },
-            "Jenny": {
-              "pass": "pass"
-            },
-            "Karin": {
-              "pass": "pass"
-            },
-            "Sandra": {
               "pass": "pass"
             },
             "Kevin": {
@@ -94,6 +76,9 @@
             },
             "*": false
           }
+        },
+        "[production]": {
+          "impl": "srv/auth.js"
         }
       }
     }

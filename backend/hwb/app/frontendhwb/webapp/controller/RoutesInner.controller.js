@@ -99,6 +99,8 @@ sap.ui.define([
                         if (!!oData.calculateHikingRoute.results.length) {
 
                             oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
+                            let sStartOfRoute = selectedRoute.path[1].positionString.split(';0')[0];
+                            oLocalModel.setProperty("/centerPosition", sStartOfRoute);
                         } else {
                             sap.m.MessageToast.show("No routes found! :(");
                         }
@@ -117,6 +119,8 @@ sap.ui.define([
                     .filter(r => r.id == oEvent.getParameter("selectedItem").getKey())[0];
 
                 oLocalModel.setProperty("/routes", selectedRoute.path);
+                let sStartOfRoute = selectedRoute.path[1].positionString.split(';0')[0];
+                oLocalModel.setProperty("/centerPosition", sStartOfRoute);
 
                 this.setDetailPage(selectedRoute);
 
@@ -133,7 +137,7 @@ sap.ui.define([
                 }).then(function(detailView) {
                     this.oFlexibleColumnLayout.addMidColumnPage(detailView);
                     this.oFlexibleColumnLayout.setLayout(LayoutType.TwoColumnsMidExpanded);
-                    detailView.byId("map").setModel(this.getModel("local"), "local");
+                    //detailView.byId("map").setModel(this.getModel("local"), "local");
                 }.bind(this));
             },
             // Helper function to manage the lazy loading of views

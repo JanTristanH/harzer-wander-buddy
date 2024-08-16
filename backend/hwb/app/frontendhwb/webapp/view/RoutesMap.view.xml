@@ -17,17 +17,25 @@
         headerText="Routen Details"
         class="sapUiResponsiveMargin"
     >
+    <ScrollContainer
+        width="100%"
+        height="400px"
+        vertical="true"
+        horizontal="false"
+    >
         <List
             id="list"
             headerText="Routen Stationen"
+            growingScrollToLoad="true"
             items="{local>/routes}"
         >
-            <StandardListItem
-                title="{local>name}"
-                description="{local>toPoiType} - {local>travelMode}"
-                icon="{ value: 'travelMode', formatter: '.onFormatTravelModeIcon'}"
-            />
+        <StandardListItem
+            title="{local>name}"
+            description="{local>toPoiType} - {local>travelMode}"
+            icon="{path: 'local>travelMode', formatter: '.onFormatTravelModeIcon'}"
+        />
         </List>
+    </ScrollContainer>
     </Panel>
     <mvc:XMLView
         id="RoutesMapId"

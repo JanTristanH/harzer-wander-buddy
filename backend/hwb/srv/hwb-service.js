@@ -8,7 +8,7 @@ const routingManager = require('./routingManager')
 
 const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MAX_REQUESTS_PER_CALL : 1000;
 // 40.000 free 
-// 0 used
+//  2.500 used
 let count = 0;
 let countRequest = 0;
 let aTravelTimesGlobal = [];
@@ -280,8 +280,8 @@ function getTravelTimes(box, neighborPois, travelMode) {
           //Waypoint Route
           positionString: mapPolyLineToPositionString(oRoute.routes[0].polyline.geoJsonLinestring.coordinates)
         });
-      } else {
-        console.error(JSON.stringify(oRoute));
+      } else if (oRoute != "Quota per Request exceeded!") {
+        console.error("Error Calculating Route, received: " + JSON.stringify(oRoute));
       }
 
     }
@@ -296,11 +296,11 @@ function mapPolyLineToPositionString(aCoordinates) {
 }
 
 function calculateRoute(pointA, pointB, travelMode) {
-  count++;
-  countRequest++;
-  if (countRequest > MAX_REQUESTS_PER_CALL) {
-    return Promise.resolve([]);
+  if (countRequest >= MAX_REQUESTS_PER_CALL) {
+    return Promise.resolve("Quota per Request exceeded!");
   }
+  countRequest++;
+  count++;
   console.log(count);
   // return {
   //   "routes": [
@@ -366,7 +366,7 @@ function calculateRoute(pointA, pointB, travelMode) {
       "method": "POST"
     }).then(r => r.json())
       .then(j => {
-        console.log(j);
+        console.log("computeRoutes: " + j);
         resolve(j);
       }
       );

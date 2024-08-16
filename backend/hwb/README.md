@@ -28,11 +28,13 @@
     - fix map label toggling combined with zoom
 - Redirect to Login from webapp ✔️ (use /app/...)
 - Create logout button ✔️
+- deploy docker to server
 - backup current parkin spaces
 - update demo data from live system
 - implement search above
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
 - upgrade developer to production key
+- look into problem with 24 remaining routes
 
 ## MVP 2
 

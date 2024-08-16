@@ -182,7 +182,10 @@ function addPositionStrings(aRoutes) {
         // Read required positionStrings
         const aTravelTimesWithPositionString = await cds.run(SELECT.from('hwb_db_TravelTimes').where(`ID in (${formattedIds})`));
         const dataMap = aTravelTimesWithPositionString.reduce((map, obj) => {
+            // probably old local db
             map[obj.ID] = obj.positionString;
+            // below from production
+            map[obj.id] = obj.positionstring;
             return map;
         }, {});
 
