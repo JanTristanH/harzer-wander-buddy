@@ -8,11 +8,17 @@ sap.ui.define([
     function (Controller, Fragment) {
         "use strict";
         const unstampedType = "Error";
+        const stampedType = "Success";
 
         return Controller.extend("hwb.frontendhwb.controller.MapInner", {
             itemCache: [],
             _aParkingSpaceCache: [],
+            _aStampedCache: [],
+            _aUnStampedCache: [],
+
+            _oMap: {},
             onInit: function () {
+                this._oMap = this.byId("map");
                 if (!this.getModel("local")) {
                     var oModel = new sap.ui.model.json.JSONModel();
                     oModel.setData({
@@ -53,6 +59,14 @@ sap.ui.define([
 
             onToggleLabelsCheckBox: function (oEvent) {
                 this.onToggleLables(oEvent.getSource().getSelected());
+            },
+
+            onNotVisitedStampsCheckkBoxSelect: function (oEvent) {
+                this.toggleUnStampedVisibility(oEvent.getSource().getSelected());
+            },
+
+            onVisitedStampsCheckkBoxSelect: function (oEvent) {
+                this.toggleStampedVisibility(oEvent.getSource().getSelected());
             },
             onToggleLables: function (bVisible) {
 
@@ -104,9 +118,15 @@ sap.ui.define([
                     .map(e => spots.removeItem(e))
                 //TODO reset items from global model
             },
-            onShowAll: function () {
-                let spots = this.getView().byId("idAllPointsOfInterestsSpots")
-                this._resetItemsForSpots(spots);
+            onShowAllPress: function () {
+                this.byId("idToggleLabelCheckBox").setSelected(true);
+                this.byId("idToggleStampedCheckBox").setSelected(true);
+                this.byId("idToggleUnstampedCheckBox").setSelected(true);
+                this.byId("idParkingSpaceCheckBox").setSelected(true);
+                this.onToggleLables(true);
+                this.toggleStampedVisibility(true);
+                this.toggleUnStampedVisibility(true);
+                this.toggleParkingSpaceVisibility(true);
             },
 
             onParkingSpaceCheckBox: function (oEvent) {
@@ -129,17 +149,59 @@ sap.ui.define([
                 }
             },
 
+            toggleStampedVisibility: function (bVisible) {
+                let oSpots = this.getView().byId("idAllPointsOfInterestsSpots");
+                //create cache with unmodified items if not existent
+                if (this._aStampedCache.length == 0) {
+                    this._aStampedCache = oSpots.getItems().filter(e => e.getProperty("type") === stampedType);
+                }
+
+                if (bVisible) {
+                    //show stamped
+                    this._aStampedCache.forEach(item => oSpots.addItem(item));
+                } else {
+                    //hide stamped
+                    oSpots.getItems().filter(e => e.getProperty("type") === stampedType).forEach(e => oSpots.removeItem(e));
+                }
+            },
+
+            toggleUnStampedVisibility: function (bVisible) {
+                let oSpots = this.getView().byId("idAllPointsOfInterestsSpots");
+                //create cache with unmodified items if not existent
+                if (this._aUnStampedCache.length == 0) {
+                    this._aUnStampedCache = oSpots.getItems().filter(e => e.getProperty("type") === unstampedType);
+                }
+
+                if (bVisible) {
+                    //show stamped
+                    this._aUnStampedCache.forEach(item => oSpots.addItem(item));
+                } else {
+                    //hide stamped
+                    oSpots.getItems().filter(e => e.getProperty("type") === unstampedType).forEach(e => oSpots.removeItem(e));
+                }
+            },
+
             onLocateMePress: function () {
                 if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(function (position) {
-                        let oUserLocation = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude
-                        };
-                        let oLocalModel = this.getModel("local");
-                        oLocalModel.setProperty("/UserLocationLat", oUserLocation.lat);
-                        oLocalModel.setProperty("/UserLocationLng", oUserLocation.lng);
-                    }.bind(this));
+                    navigator.geolocation.getCurrentPosition(
+                        function (position) {
+                            let oUserLocation = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude
+                            };
+                            let oLocalModel = this.getModel("local");
+                            oLocalModel.setProperty("/UserLocationLat", oUserLocation.lat);
+                            oLocalModel.setProperty("/UserLocationLng", oUserLocation.lng);
+                            this._oMap.setCenterPosition(`${oUserLocation.lng};${oUserLocation.lat}`);
+                        }.bind(this),
+                        function (oError) {
+                            //TODO handele error 
+                            debugger
+                        },
+                        { timeout: 3000 });
+                } else {
+                    //TODO handle not available
+                    debugger
                 }
             },
 

@@ -45,7 +45,6 @@ sap.ui.define([
                 // ListItem set to true
                 var obj = oSelectedItem.getBindingContext().getObject();
                 let oModel = this.getView().getModel();
-                debugger
                 if (oEvent.getParameter("selected")) {
                     let ID = obj.ID;
                     let mParameters = {

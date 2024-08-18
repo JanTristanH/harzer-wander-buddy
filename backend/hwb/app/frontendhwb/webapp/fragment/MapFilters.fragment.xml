@@ -9,24 +9,13 @@
         placement="Bottom"
     >
         <VBox>
-            <CheckBox text="Label Umschalten" select="onToggleLabelsCheckBox" selected="true" />
-            <Button
-                press='.onToggleStampedSpots'
-                text="Besuchte Stempel ausblenden"
-            />
-            <Button
-                press='.onShowGreens'
-                text="Ungestempelte Ausblenden"
-            />
-            <CheckBox id="idParkingSpaceCheckBox" text="{i18n>ParkingSpace}" select="onParkingSpaceCheckBox" selected="true" />
-            <Button
-                press='.onShowAll'
-                text="Alles anzeigen"
-            />
-            <Button
-                press='.onLocateMePress'
-                text="Aktuellen Standort bestimmen 📍"
-            />
+            <CheckBox id="idToggleLabelCheckBox" text="Label Umschalten" select="onToggleLabelsCheckBox" selected="true" />
+            <CheckBox id="idToggleStampedCheckBox" text="Besuchte Stempel" select="onVisitedStampsCheckkBoxSelect" selected="true" />
+            <CheckBox id="idToggleUnstampedCheckBox" text="Unbesuchte Stempel" select="onNotVisitedStampsCheckkBoxSelect" selected="true" />
+            <CheckBox id="idParkingSpaceCheckBox" text="{i18n>ParkingSpaces}" select="onParkingSpaceCheckBox" selected="true" />
+            
+            <Button press='onShowAllPress' text="Alles anzeigen"/>
+            <Button press='.onLocateMePress' text="Aktuellen Standort bestimmen 📍"/>
         </VBox>
     </Popover>
 </core:FragmentDefinition>

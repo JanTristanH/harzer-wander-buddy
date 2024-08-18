@@ -184,7 +184,6 @@ sap.ui.define([
         },
 
         onOpenExternalButtonPress: function() {
-            debugger
             let sName = this.getModel().getProperty(`/AllPointsOfInterest(guid'${this.sCurrentSpotId}')/name`)
             const sLink = `https://www.harzer-wandernadel.de/?s=${sName}`;
             window.open(sLink, '_blank').focus();

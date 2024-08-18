@@ -14,6 +14,7 @@ sap.ui.define([
 
         return Controller.extend("hwb.frontendhwb.controller.RoutesInner", {
             itemCache: [],
+            _oMap: {},
 
             onInit: function() {
                 //Open routing dialog when opening this view
@@ -89,6 +90,7 @@ sap.ui.define([
                     urlParameters: oParams,
                     success: function (oData, oResponse) {
                         sap.m.MessageToast.show("Route calculated successfully!");
+                        
                         this.setDetailPage();
                         // Additional success handling
                         let oLocalModel = new sap.ui.model.json.JSONModel({
@@ -97,10 +99,15 @@ sap.ui.define([
                         this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
                         if (!!oData.calculateHikingRoute.results.length) {
-
                             oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
-                            let sStartOfRoute = selectedRoute.path[1].positionString.split(';0')[0];
-                            oLocalModel.setProperty("/centerPosition", sStartOfRoute);
+                            let sStartOfRoute = oData.calculateHikingRoute.results[0].path[1]?.positionString?.split(';0')[0] || '';
+                            setTimeout(() => {
+                                //TODO attach to fitting event
+                                this._oMap = sap.ui.getCore().byId("midView--RoutesMapId--map");
+                                if(this._oMap && sStartOfRoute) {
+                                    this._oMap.setCenterPosition(sStartOfRoute);
+                                }
+                            }, 100);
                         } else {
                             sap.m.MessageToast.show("No routes found! :(");
                         }
@@ -122,7 +129,8 @@ sap.ui.define([
                 let sStartOfRoute = selectedRoute.path[1].positionString.split(';0')[0];
                 oLocalModel.setProperty("/centerPosition", sStartOfRoute);
 
-                this.setDetailPage(selectedRoute);
+                this.setDetailPage(sStartOfRoute);
+
 
                 // this.getView().byId("idRoutingMap").setCenterPosition(
                 //     selectedRoute.path[1].positionString.split(';0')[0]);
@@ -130,14 +138,18 @@ sap.ui.define([
 
             },
 
-            setDetailPage: function () {
+            setDetailPage: function (sCenterPosition) {
                 this._loadView({
                     id: "midView",
                     viewName: "hwb.frontendhwb.view.RoutesMap"
                 }).then(function(detailView) {
+                    //get global Id via debugging for example in locate me function
                     this.oFlexibleColumnLayout.addMidColumnPage(detailView);
                     this.oFlexibleColumnLayout.setLayout(LayoutType.TwoColumnsMidExpanded);
-                    //detailView.byId("map").setModel(this.getModel("local"), "local");
+                    this._oMap = sap.ui.getCore().byId("midView--RoutesMapId--map");
+                    if(this._oMap && sCenterPosition) {
+                        this._oMap.setCenterPosition(sCenterPosition);
+                    }
                 }.bind(this));
             },
             // Helper function to manage the lazy loading of views
