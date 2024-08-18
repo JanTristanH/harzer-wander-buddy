@@ -28,10 +28,12 @@
     - fix map label toggling combined with zoom
 - Redirect to Login from webapp ✔️ (use /app/...)
 - Create logout button ✔️
-- deploy docker to server
-- backup current parkin spaces
-- update demo data from live system
+- deploy docker to server ✔️
+- backup current parkin spaces ✔️
+- add landing page for app domain ✔️
 - implement search above
+- show start parking space
+- show location on map and center on it
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
 - upgrade developer to production key
 - look into problem with 24 remaining routes
@@ -39,8 +41,8 @@
 ## MVP 2
 
 - card based view of routes
+- update demo data from live system
 - allow manual changes to routes
-- configure social login
 - paid parking info
 - shareability for routes
 - images for routes & spots
