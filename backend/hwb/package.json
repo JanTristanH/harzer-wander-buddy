@@ -1,6 +1,6 @@
 {
   "name": "hwb",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "A simple CAP project.",
   "repository": "<Add your repository here>",
   "license": "UNLICENSED",
@@ -12,6 +12,7 @@
     "dotenv": "^16.4.5",
     "express": "^4",
     "express-openid-connect": "^2.17.1",
+    "hwb": "file:",
     "jsonwebtoken": "^9.0.2",
     "node-fetch": "^2.7.0",
     "sqlite3": "^5.0.8",
