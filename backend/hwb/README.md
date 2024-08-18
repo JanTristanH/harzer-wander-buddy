@@ -31,8 +31,8 @@
 - deploy docker to server ✔️
 - backup current parkin spaces ✔️
 - add landing page for app domain ✔️
-- implement search above
-- show start parking space
+- implement search above ✔️
+- show start parking space ✔️
 - show user location on map and center on it ✔️
 - update Readme for dev instructions
 - refactor routes to use joined travel time key (-> persist later, can recalculate dynamically)

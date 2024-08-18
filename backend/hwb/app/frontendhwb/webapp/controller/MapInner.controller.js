@@ -1,11 +1,14 @@
 sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
-    "sap/ui/core/Fragment"
+    "sap/ui/core/Fragment",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator",
+    "sap/m/MessageToast",
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, Fragment) {
+    function (Controller, Fragment, Filter, FilterOperator, MessageToast) {
         "use strict";
         const unstampedType = "Error";
         const stampedType = "Success";
@@ -23,7 +26,8 @@ sap.ui.define([
                     var oModel = new sap.ui.model.json.JSONModel();
                     oModel.setData({
                         UserLocationLat: 0,
-                        UserLocationLng: 0
+                        UserLocationLng: 0,
+                        centerPosition: "10.30147999999997;51.7462"
                     });
                     this.getView().setModel(oModel, "local");
                 }
@@ -216,6 +220,27 @@ sap.ui.define([
                 let sStampNumber = oEvent.getSource().getText();
                 const sLink = `https://www.harzer-wandernadel.de/?s=${sStampNumber}`;
                 window.open(sLink, '_blank').focus();
+            },
+
+            onSearchFieldSuggest: function (oEvent) {
+                const oSearchField = oEvent.getSource();
+                const sValue = oEvent.getParameter("suggestValue").toLowerCase();
+                this.getModel().read("/AllPointsOfInterest", {
+                    filters: [new Filter("name", FilterOperator.Contains, sValue)],
+                    success: function(oData){
+                        this.getModel("local").setProperty("/suggestionItems", oData.results.slice(0, 10));
+                        oSearchField.suggest();
+                    }.bind(this),
+                })
+            },
+
+            onSearchFieldSearch: function (oEvent) {
+                var oItem = oEvent.getParameter("suggestionItem");
+                if (oItem) {
+                    this._oMap.setCenterPosition(oItem.getKey());
+                } else {
+                    MessageToast.show("Bitte einen Ort aus der Liste auswählen!");
+                }
             }
         });
     });

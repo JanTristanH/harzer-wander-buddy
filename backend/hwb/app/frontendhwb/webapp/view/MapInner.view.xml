@@ -20,18 +20,30 @@
         </headerContent>
         <subHeader>
             <OverflowToolbar>
-                <SearchField enabled="false"/>
+                <SearchField
+                    id="idMapSearchField"
+                    showSearchButton="false"
+                    enableSuggestions="true"
+                    search=".onSearchFieldSearch"
+                    suggest=".onSearchFieldSuggest"
+                    suggestionItems="{local>/suggestionItems}"
+                >
+                    <SuggestionItem
+                        description="{local>name}"
+                        key="{local>longitude};{local>latitude}"
+                    />
+                </SearchField>
             </OverflowToolbar>
         </subHeader>
         <content>
-        <l:FixFlex class="fixFlexVertical">
-            <l:flexContent>    
+            <l:FixFlex class="fixFlexVertical">
+                <l:flexContent>
                     <core:Fragment
-                    fragmentName="hwb.frontendhwb.fragment.MainMap"
-                    type="XML"
+                        fragmentName="hwb.frontendhwb.fragment.MainMap"
+                        type="XML"
                     />
-            </l:flexContent>
-        </l:FixFlex>
+                </l:flexContent>
+            </l:FixFlex>
         </content>
     </Page>
 </mvc:View>
