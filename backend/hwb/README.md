@@ -25,7 +25,7 @@
     - allow parking toggling ✔️
     - enhance List / route handling
       - different map routes (dotted for walking) ✔️
-    - fix map label toggling combined with zoom
+    - fix map label toggling combined with zoom ✔️
 - Redirect to Login from webapp ✔️ (use /app/...)
 - Create logout button ✔️
 - deploy docker to server ✔️
@@ -33,24 +33,30 @@
 - add landing page for app domain ✔️
 - implement search above
 - show start parking space
-- show location on map and center on it
+- show user location on map and center on it ✔️
+- update Readme for dev instructions
+- refactor routes to use joined travel time key (-> persist later, can recalculate dynamically)
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
 - upgrade developer to production key
 - look into problem with 24 remaining routes
 
 ## MVP 2
 
+- open individual travel time in maps or hiking app like komoot
 - card based view of routes
+  - highlight selected travel on map
 - update demo data from live system
 - allow manual changes to routes
 - paid parking info
 - shareability for routes
 - images for routes & spots
-- cute mascot
+- cute mascot ✔️
 - complient map server
 - Friends feature (plan route together & notification)
-- Ui5 project into cap
-- Stempel als Strtpunkt
+- refactor starting algorithm
+  - nearest
+  - from stamp
+  - from my location
 - Kommentare an Stempel "fehlt"
 
 ## Backlog
