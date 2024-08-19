@@ -225,9 +225,20 @@ sap.ui.define([
             onSearchFieldSuggest: function (oEvent) {
                 const oSearchField = oEvent.getSource();
                 const sValue = oEvent.getParameter("suggestValue").toLowerCase();
+                let aFilters = [];
+                for (const sWord of sValue.split(" ")) {
+                    aFilters.push(new Filter("name", FilterOperator.Contains, sWord));
+                    aFilters.push(new Filter("name", FilterOperator.Contains, sWord.charAt(0).toUpperCase() + sWord.slice(1)));
+
+                }
+                const oFinalFilter = new Filter({
+                    filters: aFilters,
+                    and: false,
+                });
+
                 this.getModel().read("/AllPointsOfInterest", {
-                    filters: [new Filter("name", FilterOperator.Contains, sValue)],
-                    success: function(oData){
+                    filters: [oFinalFilter],
+                    success: function (oData) {
                         this.getModel("local").setProperty("/suggestionItems", oData.results.slice(0, 10));
                         oSearchField.suggest();
                     }.bind(this),
