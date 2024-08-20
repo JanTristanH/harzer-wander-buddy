@@ -26,6 +26,15 @@ cds.on("bootstrap", (app) => {
     // initialize openid-connect with auth0 configuration
     app.use(auth(config));
     app.use('/app', requiresAuth(), express.static(__dirname + '/../app'));
+
+    // rewrite ui5 dist path
+    app.use((req, res, next) => {
+        const pattern = /~\/.*?\/~/g;
+        if (pattern.test(req.url)) {
+          req.url.replace(pattern, "/");
+        }
+        next();
+     });
 });
 
 module.exports = cds.server;

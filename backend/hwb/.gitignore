@@ -1,6 +1,7 @@
 # env
 .env
 
+dist
 # CAP hwb
 _out
 *.db

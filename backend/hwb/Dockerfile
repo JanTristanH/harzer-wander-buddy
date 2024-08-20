@@ -13,6 +13,15 @@ COPY . .
 RUN npm i @sap/cds -g \
     && npm install
 
+# Build ui5 app
+
+WORKDIR app/frontendhwb
+
+RUN npm ci
+RUN npm run Build
+
+WORKDIR /
+
 # Make the script executable
 COPY start.sh ./
 RUN chmod +x start.sh

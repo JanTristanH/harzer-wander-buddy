@@ -37,11 +37,14 @@
 - update Readme for dev instructions
 - refactor routes to use joined travel time key (-> persist later, can recalculate dynamically)
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
+- build ui5 app & rewrite path in express
 - upgrade developer to production key
 - look into problem with 24 remaining routes
 
 ## MVP 2
 
+- add images & descriptions to stamps
+- optional: generate AI descriptions for routes
 - open individual travel time in maps or hiking app like komoot
 - card based view of routes
   - highlight selected travel on map

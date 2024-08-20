@@ -9,7 +9,11 @@
     ],
     "main": "webapp/index.html",
     "scripts": {
-        "deploy-config": "npx -p @sap/ux-ui5-tooling fiori add deploy-config cf"
+        "deploy-config": "npx -p @sap/ux-ui5-tooling fiori add deploy-config cf",
+        "build": "ui5 build preload --clean-dest --include-task=generateCachebusterInfo"
     },
-    "devDependencies": { }
+    "devDependencies": {
+        "@ui5/cli": "^3.0.3",
+        "ui5-task-zipper": "^0.7.3"
+    }
 }
