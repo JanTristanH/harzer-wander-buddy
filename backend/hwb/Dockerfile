@@ -20,7 +20,7 @@ WORKDIR app/frontendhwb
 RUN npm ci
 RUN npm run build
 
-WORKDIR /
+WORKDIR /usr/src/app
 
 # Make the script executable
 COPY start.sh ./
