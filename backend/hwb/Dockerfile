@@ -18,7 +18,7 @@ RUN npm i @sap/cds -g \
 WORKDIR app/frontendhwb
 
 RUN npm ci
-RUN npm run Build
+RUN npm run build
 
 WORKDIR /
 
