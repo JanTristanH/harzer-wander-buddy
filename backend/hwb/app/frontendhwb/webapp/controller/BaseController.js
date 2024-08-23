@@ -46,7 +46,39 @@ sap.ui.define([
                 return "9;9"; //dotted line
             }
             return ""; //normal line
-        }
+        },
+
+        formatMetersToKilometers: function(iMeters) {
+            debugger
+            if (!iMeters && iMeters !== 0) {
+                return "";
+            }
+
+            var kilometers = iMeters / 1000;
+            return kilometers.toFixed(2) + " km"; // Show 2 decimal places
+        },
+
+        formatSecondsToTime: function(iSeconds) {
+            if (!iSeconds && iSeconds !== 0) {
+                return "";
+            }
+
+            var hours = Math.floor(iSeconds / 3600);
+            var minutes = Math.floor((iSeconds % 3600) / 60);
+            var seconds = iSeconds % 60;
+
+            var formattedTime = "";
+
+            if (hours > 0) {
+                formattedTime += hours + "h ";
+            }
+
+            if (minutes > 0 || hours > 0) { // Include minutes if there are hours
+                formattedTime += minutes + "m ";
+            }
+
+            return formattedTime.trim(); // Remove any trailing whitespace
+        },
 
     });
 });

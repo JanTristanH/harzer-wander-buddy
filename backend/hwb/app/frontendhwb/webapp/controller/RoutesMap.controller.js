@@ -24,6 +24,7 @@ sap.ui.define([
             },
 
             onBackToList: function () {
+                debugger
                 this.bus.publish("flexible", "setList")
             },
 

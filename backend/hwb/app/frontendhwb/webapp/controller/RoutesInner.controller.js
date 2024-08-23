@@ -2,7 +2,7 @@ sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     "sap/ui/model/json/JSONModel",
     "sap/ui/core/mvc/XMLView",
-	"sap/f/library"
+    "sap/f/library"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
@@ -16,7 +16,7 @@ sap.ui.define([
             itemCache: [],
             _oMap: {},
 
-            onInit: function() {
+            onInit: function () {
                 //Open routing dialog when opening this view
                 this.onOpenRoutingDialog();
                 this.oFlexibleColumnLayout = this.byId("fcl");
@@ -24,9 +24,9 @@ sap.ui.define([
                 this.bus.subscribe("flexible", "setList", this.setList, this);
             },
 
-		setList: function() {
-			this.oFlexibleColumnLayout.setLayout(LayoutType.OneColumn);
-		},
+            setList: function () {
+                this.oFlexibleColumnLayout.setLayout(LayoutType.OneColumn);
+            },
             onAfterRendering: function () {
                 this.getView().getModel().setSizeLimit(1000);
             },
@@ -49,7 +49,7 @@ sap.ui.define([
                     // create routing model
                     var oModel = new sap.ui.model.json.JSONModel({
                         maxDepth: 15,
-                        maxDuration: new Date( 1 * 60 * 60 * 1000), // TODO timezone dependant 
+                        maxDuration: new Date(1 * 60 * 60 * 1000), // TODO timezone dependant 
                         maxDistance: 15,
                         latitudeStart: '',
                         longitudeStart: '',
@@ -90,11 +90,14 @@ sap.ui.define([
                     urlParameters: oParams,
                     success: function (oData, oResponse) {
                         sap.m.MessageToast.show("Route calculated successfully!");
-                        
+
                         this.setDetailPage();
                         // Additional success handling
                         let oLocalModel = new sap.ui.model.json.JSONModel({
-                            hikingRoutes: oData.calculateHikingRoute.results
+                            hikingRoutes: oData.calculateHikingRoute.results,
+                            stampCount: oData.calculateHikingRoute.results[0]?.stampCount,
+                            distance: oData.calculateHikingRoute.results[0]?.distance,
+                            duration: oData.calculateHikingRoute.results[0]?.duration
                         });
                         this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
@@ -104,7 +107,7 @@ sap.ui.define([
                             setTimeout(() => {
                                 //TODO attach to fitting event
                                 this._oMap = sap.ui.getCore().byId("midView--RoutesMapId--map");
-                                if(this._oMap && sStartOfRoute) {
+                                if (this._oMap && sStartOfRoute) {
                                     this._oMap.setCenterPosition(sStartOfRoute);
                                 }
                             }, 100);
@@ -125,7 +128,11 @@ sap.ui.define([
                 let selectedRoute = oLocalModel.getProperty("/hikingRoutes")
                     .filter(r => r.id == oEvent.getParameter("selectedItem").getKey())[0];
 
+                debugger
                 oLocalModel.setProperty("/routes", selectedRoute.path);
+                oLocalModel.setProperty("/stampCount", selectedRoute.stampCount);
+                oLocalModel.setProperty("/distance", selectedRoute.distance);
+                oLocalModel.setProperty("/duration", selectedRoute.duration);
                 let sStartOfRoute = selectedRoute.path[1].positionString.split(';0')[0];
                 oLocalModel.setProperty("/centerPosition", sStartOfRoute);
 
@@ -142,21 +149,22 @@ sap.ui.define([
                 this._loadView({
                     id: "midView",
                     viewName: "hwb.frontendhwb.view.RoutesMap"
-                }).then(function(detailView) {
+                }).then(function (detailView) {
+                    detailView.setModel("local", this.getView().getModel("local"));
                     //get global Id via debugging for example in locate me function
                     this.oFlexibleColumnLayout.addMidColumnPage(detailView);
                     this.oFlexibleColumnLayout.setLayout(LayoutType.TwoColumnsMidExpanded);
                     this._oMap = sap.ui.getCore().byId("midView--RoutesMapId--map");
-                    if(this._oMap && sCenterPosition) {
+                    if (this._oMap && sCenterPosition) {
                         this._oMap.setCenterPosition(sCenterPosition);
                     }
                 }.bind(this));
             },
             // Helper function to manage the lazy loading of views
-            _loadView: function(options) {
+            _loadView: function (options) {
                 var mViews = this._mViews = this._mViews || Object.create(null);
                 if (!mViews[options.id]) {
-                    mViews[options.id] = this.getOwnerComponent().runAsOwner(function() {
+                    mViews[options.id] = this.getOwnerComponent().runAsOwner(function () {
                         return XMLView.create(options);
                     });
                 }

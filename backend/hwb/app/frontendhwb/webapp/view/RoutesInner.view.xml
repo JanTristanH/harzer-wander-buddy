@@ -27,10 +27,10 @@
                             items="{local>/hikingRoutes}"
                             selectionChange="onSelectionChange"
                         >
-                            <core:ListItem
-                                key="{local>id}"
-                                text="Länge: {local>duration}s - Distanz: {local>distance} - Stempel: {local>stampCount}"
-                            />
+                        <core:ListItem
+                            key="{local>id}"
+                            text="Länge: {path: 'local>duration', formatter: '.formatSecondsToTime'} - Distanz: {path: 'local>distance', formatter: '.formatMetersToKilometers'} - Stempel: {local>stampCount}"
+                        />
                         </SelectList>
                     </HBox>
                 </content>
