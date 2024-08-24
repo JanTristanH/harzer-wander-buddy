@@ -17,6 +17,5 @@
         "ui5-task-zipper": "^0.7.3"
     },
     "dependencies": {
-        "frontendhwb": "file:"
     }
 }
