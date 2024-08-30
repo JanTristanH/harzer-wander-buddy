@@ -56,10 +56,11 @@ This project is configured to run with a postgres.
 - implement search above ✔️
 - show start parking space ✔️
 - show user location on map and center on it ✔️
-- update Readme for dev instructions
+- update Readme for dev instructions ✔️
+- build ui5 app & rewrite path in express ✔️
+- nice illustrated message on initial routes view
 - refactor routes to use joined travel time key (-> persist later, can recalculate dynamically)
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
-- build ui5 app & rewrite path in express
 - upgrade developer to production key
 - look into problem with 24 remaining routes
 
@@ -76,7 +77,7 @@ This project is configured to run with a postgres.
 - shareability for routes
 - images for routes & spots
 - cute mascot ✔️
-- complient map server
+- compliant map server
 - Friends feature (plan route together & notification)
 - refactor starting algorithm
   - nearest
@@ -88,14 +89,14 @@ This project is configured to run with a postgres.
 
 - add maps api key from env to index file
 - save some hand picked default routes
-- save high profile for routes
+- save height profile for routes
 - link to park for night parking
 - score for completing area
 - score where walking from other side would be easier
 - Filtering on Map view -> Goethe weg usw.
 - Object Page for POIs
 - Admin Master data app -> new Stamps & moving
-- Deal with legacy Stamps & check for deveation on HWN site
+- Deal with legacy Stamps & check for deviation on HWN site
 - History view for changed stamps
 
 ## Build with Docker locally 
