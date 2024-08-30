@@ -1,5 +1,27 @@
 # Getting Started
 
+## Running this project
+
+- run `cds watch` to start the backend
+- the frontend is also served via the cds server
+  - be careful with the link in the console: is protected by the auth0 endpoint.
+    - http://localhost:4004/app -> protected by auth0
+    - http://localhost:4004/frontendhwb/webapp/index.html -> basic auth & geo locating available (Users are configured in `package.json`)
+- The profiles `memory`, `development` and `production` are available and can be selected using the `--profile` flag
+  - `development` is selected as default with a persistent database
+  - to get dummy data, rename the folder `DoNotDeploy-data` to `data` and run `cds deploy`
+  - to configure `production` the postgres location, you can use the `.cdsrc.json` file. `postgres.cdsrc.json` contains the connection details if a container is run from the `pg.yml` file. 
+- building and publishing the final docker container is handled via github actions via tags
+
+## Needed Environment variables
+
+Rename the file `sample.env` to `.env` for development. You must also provide a api key in the `app/frontendhwb/index.html` to load the google maps script.
+For deployment you may also provide them directly to the container.
+
+## Database
+
+This project is configured to run with a postgres.
+
 ## Todo
 
 - implement api call to maps to get times (by travel type) ✔️
@@ -60,21 +82,24 @@
   - nearest
   - from stamp
   - from my location
-- Kommentare an Stempel "fehlt"
+- Comments on Stamps to mark missing / broken ones
 
 ## Backlog
+
+- add maps api key from env to index file
 - save some hand picked default routes
 - save high profile for routes
 - link to park for night parking
 - score for completing area
 - score where walking from other side would be easier
+- Filtering on Map view -> Goethe weg usw.
+- Object Page for POIs
+- Admin Master data app -> new Stamps & moving
+- Deal with legacy Stamps & check for deveation on HWN site
+- History view for changed stamps
 
-## Docker 
+## Build with Docker locally 
 
-`docker build . -t hwb`
-Github registry verbinden
-lowercase pushen
-
-## Database
-
-This project is configured to run with a postgres.
+- run `docker build . -t hwb`
+- connect to Github registry via VS Code extension
+- push all lowercase
