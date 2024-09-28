@@ -17,12 +17,14 @@ sap.ui.define([
             _oMap: {},
 
             onInit: function () {
+                this.getView().setModel(new JSONModel(), "local");
                 //Open routing dialog when opening this view
-                this.onOpenRoutingDialog();
+
                 this.oFlexibleColumnLayout = this.byId("fcl");
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("flexible", "setList", this.setList, this);
 
+                this.getRouter().getRoute("Routes").attachPatternMatched(this.onOpenRoutingDialog, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRouteMatched, this);
             },
 
@@ -50,10 +52,14 @@ sap.ui.define([
                 oLocalModel.setProperty("/stampCount", oTour.stampCount);
                 oLocalModel.setProperty("/distance", oTour.distance);
                 oLocalModel.setProperty("/duration", oTour.duration);
-                let sStartOfRoute = oTour.path[1].positionString.split(';0')[0];
-                oLocalModel.setProperty("/centerPosition", sStartOfRoute);
 
+                let sStartOfRoute = this.getStartOfTour(oTour);
+                oLocalModel.setProperty("/centerPosition", sStartOfRoute);
                 this.setDetailPage(sStartOfRoute);                
+            },
+
+            getStartOfTour: function(oTour) {
+                return oTour.path[1].positionString.split(';0')[0];
             },
 
             setList: function () {
@@ -120,32 +126,28 @@ sap.ui.define([
                 oModel.callFunction(sFunctionName, {
                     method: "GET",
                     urlParameters: oParams,
-                    success: function (oData, oResponse) {
+                    success: function (oData) {
                         sap.m.MessageToast.show("Route calculated successfully!");
 
                         this.setDetailPage();
                         // Additional success handling
-                        let oLocalModel = new sap.ui.model.json.JSONModel({
-                            hikingRoutes: oData.calculateHikingRoute.results,
-                            stampCount: oData.calculateHikingRoute.results[0]?.stampCount,
-                            distance: oData.calculateHikingRoute.results[0]?.distance,
-                            duration: oData.calculateHikingRoute.results[0]?.duration
-                        });
+                        let oLocalModel = this.getView().getModel("local"),
+                            results = oData.calculateHikingRoute.results,
+                            oInitiallySelectedTour = results[0]; 
+                        oLocalModel.setProperty("/hikingRoutes", results);
                         
                         // Map results of calculation to Tour property of model, refactor later
-                        oLocalModel = this._writeHikingRoutesAsToursToModel(oData.calculateHikingRoute.results, oLocalModel);
+                        oLocalModel = this._writeHikingRoutesAsToursToModel(results, oLocalModel);
 
                         this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
-                        if (!!oData.calculateHikingRoute.results.length) {
-                            oLocalModel.setProperty("/routes", oData.calculateHikingRoute.results[0].path);
-                            let sStartOfRoute = oData.calculateHikingRoute.results[0].path[1]?.positionString?.split(';0')[0] || '';
+                        if (!!results.length) {
+                            this.getRouter().navTo("RoutesDetail", {
+                                idListTravelTimes: oInitiallySelectedTour.id
+                            });
                             setTimeout(() => {
                                 //TODO attach to fitting event
-                                this._oMap = sap.ui.getCore().byId("midView--RoutesMapId--map");
-                                if (this._oMap && sStartOfRoute) {
-                                    this._oMap.setCenterPosition(sStartOfRoute);
-                                }
+                                this.setDetailPage(this.getStartOfTour(oInitiallySelectedTour))
                             }, 100);
                         } else {
                             sap.m.MessageToast.show("No routes found! :(");
