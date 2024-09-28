@@ -191,7 +191,7 @@ function addPositionStrings(aRoutes) {
 
         let i = 0;
         aRoutes.forEach(route => {
-            route.id = uuidv4();
+            route.id = route.path.reduce((acc, obj) => acc + ";" + obj.id, "").substring(1);
             i++;
             let itemOrder = 0;
             route.path.forEach(item => {

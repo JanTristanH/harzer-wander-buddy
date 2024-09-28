@@ -22,6 +22,38 @@ sap.ui.define([
                 this.oFlexibleColumnLayout = this.byId("fcl");
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("flexible", "setList", this.setList, this);
+
+                this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRouteMatched, this);
+            },
+
+            onDetailRouteMatched: function (oEvent) {
+                // Get the route parameters
+                var oArguments = oEvent.getParameter("arguments");
+                var idListTravelTimes = oArguments.idListTravelTimes;
+
+                if(idListTravelTimes) {
+                    this.showDetailViewForIdList(idListTravelTimes);
+                }
+            },
+
+            showDetailViewForIdList: function(sIdListTravelTimes) {
+                // load id to model
+                let oLocalModel = this.getView().getModel("local");
+                let oTour = oLocalModel.getProperty(`/Tours(${sIdListTravelTimes})`)
+                // TODO add idList to calculation FunctionImport
+                if(!oTour) {
+                    // TODO load Tour
+                }
+
+                // open Detail with correct data
+                oLocalModel.setProperty("/routes", oTour.path);
+                oLocalModel.setProperty("/stampCount", oTour.stampCount);
+                oLocalModel.setProperty("/distance", oTour.distance);
+                oLocalModel.setProperty("/duration", oTour.duration);
+                let sStartOfRoute = oTour.path[1].positionString.split(';0')[0];
+                oLocalModel.setProperty("/centerPosition", sStartOfRoute);
+
+                this.setDetailPage(sStartOfRoute);                
             },
 
             setList: function () {
@@ -99,6 +131,10 @@ sap.ui.define([
                             distance: oData.calculateHikingRoute.results[0]?.distance,
                             duration: oData.calculateHikingRoute.results[0]?.duration
                         });
+                        
+                        // Map results of calculation to Tour property of model, refactor later
+                        oLocalModel = this._writeHikingRoutesAsToursToModel(oData.calculateHikingRoute.results, oLocalModel);
+
                         this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
                         if (!!oData.calculateHikingRoute.results.length) {
@@ -122,26 +158,18 @@ sap.ui.define([
                     }
                 });
             },
+            _writeHikingRoutesAsToursToModel: function (aHikingRoutes, oModel) {
+                for (let oRoute of aHikingRoutes){
+                    oModel.setProperty(`/Tours(${oRoute.id})`, oRoute);
+                }
+                return oModel;
+            },
 
             onSelectionChange: function (oEvent) {
-                let oLocalModel = this.getView().getModel("local");
-                let selectedRoute = oLocalModel.getProperty("/hikingRoutes")
-                    .filter(r => r.id == oEvent.getParameter("selectedItem").getKey())[0];
-
-                debugger
-                oLocalModel.setProperty("/routes", selectedRoute.path);
-                oLocalModel.setProperty("/stampCount", selectedRoute.stampCount);
-                oLocalModel.setProperty("/distance", selectedRoute.distance);
-                oLocalModel.setProperty("/duration", selectedRoute.duration);
-                let sStartOfRoute = selectedRoute.path[1].positionString.split(';0')[0];
-                oLocalModel.setProperty("/centerPosition", sStartOfRoute);
-
-                this.setDetailPage(sStartOfRoute);
-
-
-                // this.getView().byId("idRoutingMap").setCenterPosition(
-                //     selectedRoute.path[1].positionString.split(';0')[0]);
-
+                let idListTravelTimes = oEvent.getParameter("selectedItem").getKey();              
+                this.getRouter().navTo("RoutesDetail", {
+                    idListTravelTimes
+                });
 
             },
 

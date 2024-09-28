@@ -121,6 +121,13 @@
                 ]
             },
             {
+                "name": "RoutesDetail",
+                "pattern": "routes/{idListTravelTimes}",
+                "target": [
+                    "TargetRoutes"
+                ]
+            },
+            {
                 "name": "Admin",
                 "pattern": "admin",
                 "target": [

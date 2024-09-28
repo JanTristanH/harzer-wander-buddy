@@ -27,7 +27,6 @@ sap.ui.define([
         },
 
         onNavToMap: function () {
-
             this.getRouter().navTo("Map");
         },
         onNavToRouting: function () {
@@ -48,8 +47,7 @@ sap.ui.define([
             return ""; //normal line
         },
 
-        formatMetersToKilometers: function(iMeters) {
-            debugger
+        formatMetersToKilometers: function(iMeters) {           
             if (!iMeters && iMeters !== 0) {
                 return "";
             }

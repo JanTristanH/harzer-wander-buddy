@@ -13,18 +13,7 @@ sap.ui.define([
                 this.bus.subscribe("list", "onListSelect", this.onListSelect, this);
             },
 
-            onAfterRendering: function() {
-                setTimeout(() => {
-                    let map = this.byId("RoutesMapId").byId("map");
-                    
-                    map.setInitialPosition(
-                        this.getView().getModel("local").oData.hikingRoutes[0].path[1].positionString.split(';0')[0]);
-                }, 3000);
-
-            },
-
             onBackToList: function () {
-                debugger
                 this.bus.publish("flexible", "setList")
             },
 
