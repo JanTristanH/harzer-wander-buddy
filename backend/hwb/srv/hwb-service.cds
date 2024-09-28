@@ -30,6 +30,8 @@ service api @(requires: 'authenticated-user') {
     @readonly
     entity RouteCalculationRequest as projection on db.RouteCalculationRequest;
 
+    entity Tours as projection on db.Tours;
+
     @readonly
     entity AllPointsOfInterest as select from Stampboxes {
         key ID,

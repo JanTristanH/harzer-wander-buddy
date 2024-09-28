@@ -66,6 +66,7 @@ This project is configured to run with a postgres.
 
 ## MVP 2
 
+- fix handler to be normally performant: this.after('READ', `Stampboxes`
 - add images & descriptions to stamps
 - optional: generate AI descriptions for routes
 - open individual travel time in maps or hiking app like komoot

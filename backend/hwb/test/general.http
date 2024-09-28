@@ -133,3 +133,28 @@ Authorization: Basic Kevin pass
 ### Get RouteCalculationRequests
 GET http://localhost:4004/odata/v2/api/RouteCalculationRequest
 Authorization: Basic Kevin pass
+
+
+### Get not saved tour
+GET http://localhost:4004/odata/v2/api/Tours('52ecfbac-149e-4023-bed8-74c8b8834f14;ec2fbd15-9ec4-40f3-b104-afd55202f33b;62e38328-023f-47a6-8887-014af62dd05b')?$expand=paths
+Authorization: Basic Kevin pass
+
+### Get not saved tour
+GET http://localhost:4004/odata/v2/api/Tours?$expand=paths,paths/travelTime
+Authorization: Basic Kevin pass
+
+### get dummy tour
+GET  http://localhost:4004/odata/v2/api/Tours
+Authorization: Basic Kevin pass
+
+### Create dummy tour
+POST http://localhost:4004/odata/v2/api/Tours
+Accept: application/json
+content-type: application/json
+Authorization: Basic Kevin pass
+
+{
+    "idListTravelTimes": "52ecfbac-149e-4023-bed8-74c8b8834f14;ec2fbd15-9ec4-40f3-b104-afd55202f33b;62e38328-023f-47a6-8887-014af62dd05b",
+    "duration": 420,
+    "distance": 69
+}

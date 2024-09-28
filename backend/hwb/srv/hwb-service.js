@@ -25,6 +25,10 @@ module.exports = class api extends cds.ApplicationService {
       });
     })
 
+    this.after('CREATE', 'Tours', async (req) => {
+      return upsertTourDetailsById(req, this.entities('hwb.db'));
+    });
+
     this.on('calculateTravelTimesNNearestNeighbors', calculateTravelTimesNNearestNeighbors.bind(this))
 
     this.on('getMissingTravelTimesCount', getMissingTravelTimesCount.bind(this))
@@ -41,6 +45,19 @@ module.exports = class api extends cds.ApplicationService {
 
     return super.init()
   }
+}
+
+function upsertTourDetailsById(req, entities) {
+  const {Tour2TravelTime } = entities;
+  //TODO recalculate Details of distance & duration
+  const aTravelTimeIds = req.idListTravelTimes.split(";");
+  let aTour2TravelTime = aTravelTimeIds.map( travelTime_ID => {
+    return {
+      travelTime_ID,
+      tour_ID: req.ID
+    }
+  })
+  return UPSERT(aTour2TravelTime).into(Tour2TravelTime);
 }
 
 async function deleteSpotWithRoutes(req) {

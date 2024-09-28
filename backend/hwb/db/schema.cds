@@ -61,13 +61,15 @@ entity RouteCalculationRequest : cuid {
 }
 
 @assert.integrity: false
+@cds.autoexpose
 entity TravelTimes : cuid {
     fromPoi         : UUID;
     toPoi           : UUID;
     durationSeconds : Integer64;
     distanceMeters  : Integer64;
     travelMode      : String(128);
-    positionString : LargeString;
+    positionString  : LargeString;
+    tours : Association to many Tour2TravelTime on tours.travelTime = $self;
 }
 
 @assert.integrity: false
@@ -75,6 +77,19 @@ entity Stampings : cuid {
     stamp     : Association to Stampboxes;
     createdAt : Timestamp @cds.on.insert: $now;
     createdBy : User      @cds.on.insert: $user;
+}
+
+entity Tours : cuid {
+    distance: Integer64;
+    duration: Integer64;
+    stampCount: Int32;
+    idListTravelTimes: LargeString;
+    paths: Association to many Tour2TravelTime on paths.tour = $self;
+}
+
+entity Tour2TravelTime @cds.autoexpose {
+    key tour : Association to Tours;
+    key travelTime : Association to TravelTimes;
 }
 
 // Todo save commen stamps as suggested routed
