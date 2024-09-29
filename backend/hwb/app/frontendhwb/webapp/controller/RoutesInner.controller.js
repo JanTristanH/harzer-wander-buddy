@@ -33,18 +33,16 @@ sap.ui.define([
                 var oArguments = oEvent.getParameter("arguments");
                 var idListTravelTimes = oArguments.idListTravelTimes;
 
-                if(idListTravelTimes) {
-                    this.showDetailViewForIdList(idListTravelTimes);
+                if (idListTravelTimes) {
+                    this._showDetailViewForIdList(idListTravelTimes);
                 }
             },
 
-            showDetailViewForIdList: function(sIdListTravelTimes) {
+            _showDetailViewForIdList: function (sIdListTravelTimes) {
                 // load id to model
                 let oLocalModel = this.getView().getModel("local");
                 let oTour = oLocalModel.getProperty(`/Tours(${sIdListTravelTimes})`)
-                // TODO add idList to calculation FunctionImport
-                if(!oTour) {
-                    // TODO load Tour
+                if (!oTour) {
                     this.getModel().callFunction("/getTourByIdListTravelTimes", {
                         method: "GET",
                         urlParameters: { idListTravelTimes: sIdListTravelTimes },
@@ -60,9 +58,9 @@ sap.ui.define([
                                 travelMode: obj.travelMode,
                                 toPoiType: "-",
                                 positionString: obj.positionString
-                              }));
+                            }));
                             oLocalModel.setProperty(`/Tours(${sIdListTravelTimes})`, oData.getTourByIdListTravelTimes);
-                            this.showDetailViewForIdList(sIdListTravelTimes);
+                            this._showDetailViewForIdList(sIdListTravelTimes);
                         }.bind(this)
                     });
                 } else {
@@ -71,11 +69,11 @@ sap.ui.define([
                     oLocalModel.setProperty("/stampCount", oTour.stampCount);
                     oLocalModel.setProperty("/distance", oTour.distance);
                     oLocalModel.setProperty("/duration", oTour.duration);
-                    
-                    let sStartOfTour = this.getStartOfTour(oTour);
+
+                    let sStartOfTour = this._getStartOfTour(oTour);
                     oLocalModel.setProperty("/centerPosition", sStartOfTour);
                     this.setDetailPage(sStartOfTour);
-                    
+
                     setTimeout(() => {
                         //TODO attach to fitting event
                         this.setDetailPage(sStartOfTour)
@@ -83,7 +81,7 @@ sap.ui.define([
                 }
             },
 
-            getStartOfTour: function(oTour) {
+            _getStartOfTour: function (oTour) {
                 return oTour.path[1].positionString.split(';0')[0];
             },
 
@@ -158,9 +156,9 @@ sap.ui.define([
                         // Additional success handling
                         let oLocalModel = this.getView().getModel("local"),
                             results = oData.calculateHikingRoute.results,
-                            oInitiallySelectedTour = results[0]; 
+                            oInitiallySelectedTour = results[0];
                         oLocalModel.setProperty("/hikingRoutes", results);
-                        
+
                         // Map results of calculation to Tour property of model, refactor later
                         this._writeHikingRoutesAsToursToModel(results, oLocalModel);
 
@@ -181,13 +179,13 @@ sap.ui.define([
                 });
             },
             _writeHikingRoutesAsToursToModel: function (aHikingRoutes, oModel) {
-                for (let oRoute of aHikingRoutes){
+                for (let oRoute of aHikingRoutes) {
                     oModel.setProperty(`/Tours(${oRoute.id})`, oRoute);
                 }
             },
 
             onSelectionChange: function (oEvent) {
-                let idListTravelTimes = oEvent.getParameter("selectedItem").getKey();              
+                let idListTravelTimes = oEvent.getParameter("selectedItem").getKey();
                 this.getRouter().navTo("RoutesDetail", {
                     idListTravelTimes
                 });
