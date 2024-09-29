@@ -230,3 +230,4 @@ function filterUniquePaths(paths) {
 
 exports.loadSubTree = loadSubTree;
 exports.calculateHikingRoutes = calculateHikingRoutes;
+exports.addPositionStrings = addPositionStrings;

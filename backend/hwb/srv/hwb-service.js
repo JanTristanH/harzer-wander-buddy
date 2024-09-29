@@ -77,29 +77,63 @@ async function deleteSpotWithRoutes(req) {
 
 async function getTourByIdListTravelTimes(req) {
   let id = req.data.idListTravelTimes;
-  const { TravelTimes } = this.api.entities;
+  const { TravelTimes, Stampboxes, Stampings } =  this.entities('hwb.db');
+  const { typedTravelTimes } = this.api.entities;
 
-  let aPathIds = id.split(";").map(id => `'${id}'`).join(',');
-  const aTravelTimesWithPositionString = await cds.run(SELECT.from(TravelTimes).where(`ID in (${aPathIds})`));
-
-  // TODO add name and toPoiType to aTravelTimesWithPositionString
+  let aPathIds = id.split(";").map(id => `'${id}'`);
   
+   const aTravelTimesWithPositionString =  await SELECT
+    .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
+    .where(`ID in (${aPathIds.join(',')})`)
+    .from(typedTravelTimes);
 
-  let distance = 0, duration = 0, stampCount = "???";
+  let aStampBoxes = await SELECT.from(Stampboxes);
+  const currentUser = req.user.id; // Get the current user ID
+  let aStampingForUser = await SELECT.from(Stampings).where({ createdBy: currentUser });
+  aStampingForUser = aStampingForUser.map(stamping => stamping.stamp_ID);
 
+  let oStampBoxById = {};
+  aStampBoxes.forEach( box => {
+    box.stampedByUser = !!aStampingForUser[box.ID];
+    oStampBoxById[box.ID] = box;
+  });
+
+  let distance = 0, duration = 0, stampCount = 0;
+  // TODO refactor to make first entry meaningful
+  distance -= aTravelTimesWithPositionString[0].distanceMeters; // we do not need to travel to the start
   for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
     const oTravelTime = aTravelTimesWithPositionString[i];
     distance += parseInt(oTravelTime.distanceMeters);
     duration += parseInt(oTravelTime.durationSeconds);
+
+    if(oStampBoxById[oTravelTime.toPoi] && oStampBoxById[oTravelTime.toPoi].stampedByUser == false) {
+      stampCount++;
+    }
+
+    oTravelTime.id = oTravelTime.ID;
+    aTravelTimesWithPositionString[i] = oTravelTime;
   }
 
-  return {
+  // sort path like requested
+  let oTravelTimesById = {};
+  const path = [];
+  aTravelTimesWithPositionString.forEach( travelTime => {
+    oTravelTimesById[travelTime.ID] = travelTime;
+  });
+
+  for (let i = 0; i < aPathIds.length; i++) {
+    let id = aPathIds[i].replaceAll("'", ""); 
+    path.push(oTravelTimesById[id]);
+  }
+
+  const result =  await routingManager.addPositionStrings([{
     stampCount,
     distance,
     duration,
     id,
-    path: aTravelTimesWithPositionString
-  };
+    path
+  }]);
+  return result[0];
 }
 
 async function calculateHikingRoute(req) {

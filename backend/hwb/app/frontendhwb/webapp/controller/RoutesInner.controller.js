@@ -51,12 +51,12 @@ sap.ui.define([
                             oData.getTourByIdListTravelTimes.path = oData.getTourByIdListTravelTimes.path.map(obj => ({
                                 id: obj.ID,
                                 fromPoi: obj.fromPoi,
-                                name: "placeholder",
+                                name: obj.name,
                                 poi: obj.toPoi,
                                 duration: obj.durationSeconds,
                                 distance: obj.distanceMeters,
                                 travelMode: obj.travelMode,
-                                toPoiType: "-",
+                                toPoiType: obj.toPoiType,
                                 positionString: obj.positionString
                             }));
                             oLocalModel.setProperty(`/Tours(${sIdListTravelTimes})`, oData.getTourByIdListTravelTimes);
@@ -204,6 +204,11 @@ sap.ui.define([
                     this._oMap = sap.ui.getCore().byId("midView--RoutesMapId--map");
                     if (this._oMap && sCenterPosition) {
                         this._oMap.setCenterPosition(sCenterPosition);
+                    } else {
+                        setTimeout(() => {
+                            //TODO attach to fitting event
+                            this.setDetailPage(sCenterPosition)
+                        }, 100);
                     }
                 }.bind(this));
             },

@@ -80,6 +80,10 @@ GET http://localhost:4004/odata/v2/api/TravelTimes?$filter=fromPoi eq guid'5810c
 # and travelMode eq 'walk'
 Authorization: Basic Kevin pass
 
+### Get Single Travel Time
+GET http://localhost:4004/odata/v2/api/TravelTimes(guid'9b6ef05b-b288-4960-bae9-734a43c3986f')
+Authorization: Basic Kevin pass
+
 ### Get calculatd travelTimes
 GET http://localhost:4004/odata/v2/api/TravelTimes/$count
 Authorization: Basic Kevin pass
