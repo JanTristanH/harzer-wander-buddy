@@ -84,7 +84,7 @@ entity Tours : cuid {
     duration: Integer64;
     stampCount: Int32;
     idListTravelTimes: LargeString;
-    paths: Association to many Tour2TravelTime on paths.tour = $self;
+    path: Association to many Tour2TravelTime on path.tour = $self;
 }
 
 entity Tour2TravelTime @cds.autoexpose {

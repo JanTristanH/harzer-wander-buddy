@@ -37,6 +37,8 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on("DeleteSpotWithRoutes", deleteSpotWithRoutes)
 
+    this.on("getTourByIdListTravelTimes", getTourByIdListTravelTimes)
+
     this.on('READ', 'TypedTravelTimes', async (req) => {
       // const db = cds.transaction(req);
 
@@ -48,10 +50,10 @@ module.exports = class api extends cds.ApplicationService {
 }
 
 function upsertTourDetailsById(req, entities) {
-  const {Tour2TravelTime } = entities;
+  const { Tour2TravelTime } = entities;
   //TODO recalculate Details of distance & duration
   const aTravelTimeIds = req.idListTravelTimes.split(";");
-  let aTour2TravelTime = aTravelTimeIds.map( travelTime_ID => {
+  let aTour2TravelTime = aTravelTimeIds.map(travelTime_ID => {
     return {
       travelTime_ID,
       tour_ID: req.ID
@@ -71,6 +73,33 @@ async function deleteSpotWithRoutes(req) {
   result += await DELETE.from(TravelTimes).where({ fromPoi: poiIdToDelete });
   result += await DELETE.from(TravelTimes).where({ toPoi: poiIdToDelete });
   return result;
+}
+
+async function getTourByIdListTravelTimes(req) {
+  let id = req.data.idListTravelTimes;
+  const { TravelTimes } = this.api.entities;
+
+  let aPathIds = id.split(";").map(id => `'${id}'`).join(',');
+  const aTravelTimesWithPositionString = await cds.run(SELECT.from(TravelTimes).where(`ID in (${aPathIds})`));
+
+  // TODO add name and toPoiType to aTravelTimesWithPositionString
+  
+
+  let distance = 0, duration = 0, stampCount = "???";
+
+  for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
+    const oTravelTime = aTravelTimesWithPositionString[i];
+    distance += parseInt(oTravelTime.distanceMeters);
+    duration += parseInt(oTravelTime.durationSeconds);
+  }
+
+  return {
+    stampCount,
+    distance,
+    duration,
+    id,
+    path: aTravelTimesWithPositionString
+  };
 }
 
 async function calculateHikingRoute(req) {

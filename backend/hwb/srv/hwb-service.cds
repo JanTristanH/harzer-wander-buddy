@@ -21,6 +21,8 @@ service api @(requires: 'authenticated-user') {
                                   latitudeStart : String,
                                   longitudeStart : String)      returns String;
 
+    function getTourByIdListTravelTimes(idListTravelTimes : String) returns String;
+
     @cds.redirection.target
     entity Stampboxes              as projection on db.Stampboxes;
 

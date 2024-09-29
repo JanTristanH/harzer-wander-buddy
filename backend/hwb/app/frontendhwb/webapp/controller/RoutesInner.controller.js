@@ -45,17 +45,42 @@ sap.ui.define([
                 // TODO add idList to calculation FunctionImport
                 if(!oTour) {
                     // TODO load Tour
+                    this.getModel().callFunction("/getTourByIdListTravelTimes", {
+                        method: "GET",
+                        urlParameters: { idListTravelTimes: sIdListTravelTimes },
+                        success: function (oData) {
+                            // todo harmonize in backend
+                            oData.getTourByIdListTravelTimes.path = oData.getTourByIdListTravelTimes.path.map(obj => ({
+                                id: obj.ID,
+                                fromPoi: obj.fromPoi,
+                                name: "placeholder",
+                                poi: obj.toPoi,
+                                duration: obj.durationSeconds,
+                                distance: obj.distanceMeters,
+                                travelMode: obj.travelMode,
+                                toPoiType: "-",
+                                positionString: obj.positionString
+                              }));
+                            oLocalModel.setProperty(`/Tours(${sIdListTravelTimes})`, oData.getTourByIdListTravelTimes);
+                            this.showDetailViewForIdList(sIdListTravelTimes);
+                        }.bind(this)
+                    });
+                } else {
+                    // open Detail with correct data
+                    oLocalModel.setProperty("/routes", oTour.path);
+                    oLocalModel.setProperty("/stampCount", oTour.stampCount);
+                    oLocalModel.setProperty("/distance", oTour.distance);
+                    oLocalModel.setProperty("/duration", oTour.duration);
+                    
+                    let sStartOfTour = this.getStartOfTour(oTour);
+                    oLocalModel.setProperty("/centerPosition", sStartOfTour);
+                    this.setDetailPage(sStartOfTour);
+                    
+                    setTimeout(() => {
+                        //TODO attach to fitting event
+                        this.setDetailPage(sStartOfTour)
+                    }, 100);
                 }
-
-                // open Detail with correct data
-                oLocalModel.setProperty("/routes", oTour.path);
-                oLocalModel.setProperty("/stampCount", oTour.stampCount);
-                oLocalModel.setProperty("/distance", oTour.distance);
-                oLocalModel.setProperty("/duration", oTour.duration);
-
-                let sStartOfRoute = this.getStartOfTour(oTour);
-                oLocalModel.setProperty("/centerPosition", sStartOfRoute);
-                this.setDetailPage(sStartOfRoute);                
             },
 
             getStartOfTour: function(oTour) {
@@ -137,18 +162,13 @@ sap.ui.define([
                         oLocalModel.setProperty("/hikingRoutes", results);
                         
                         // Map results of calculation to Tour property of model, refactor later
-                        oLocalModel = this._writeHikingRoutesAsToursToModel(results, oLocalModel);
+                        this._writeHikingRoutesAsToursToModel(results, oLocalModel);
 
-                        this.getView().setModel(oLocalModel, "local");
                         this.pDialog.close();
                         if (!!results.length) {
                             this.getRouter().navTo("RoutesDetail", {
                                 idListTravelTimes: oInitiallySelectedTour.id
                             });
-                            setTimeout(() => {
-                                //TODO attach to fitting event
-                                this.setDetailPage(this.getStartOfTour(oInitiallySelectedTour))
-                            }, 100);
                         } else {
                             sap.m.MessageToast.show("No routes found! :(");
                         }
@@ -164,7 +184,6 @@ sap.ui.define([
                 for (let oRoute of aHikingRoutes){
                     oModel.setProperty(`/Tours(${oRoute.id})`, oRoute);
                 }
-                return oModel;
             },
 
             onSelectionChange: function (oEvent) {
