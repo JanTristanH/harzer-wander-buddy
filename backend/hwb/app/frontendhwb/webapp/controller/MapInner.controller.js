@@ -4,11 +4,12 @@ sap.ui.define([
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
     "sap/m/MessageToast",
+    "sap/ui/model/json/JSONModel"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, Fragment, Filter, FilterOperator, MessageToast) {
+    function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel) {
         "use strict";
         const unstampedType = "Error";
         const stampedType = "Success";
@@ -252,6 +253,69 @@ sap.ui.define([
                 } else {
                     MessageToast.show("Bitte einen Ort aus der Liste auswählen!");
                 }
+            },
+
+            onSpotClick: function (oEvent) {
+                const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
+                if (oSplitter.getContentAreas().length > 1) {
+                    // if more than 1 exists, the info card is open and can be recreated
+                    // this also resets the location of the splitter
+                    const oLastContentArea = oSplitter.getContentAreas().pop();
+                    oSplitter.removeContentArea(oLastContentArea);
+                    oLastContentArea.destroy();
+                    this._pSPOIInforCard = null;
+                    setTimeout(() => this.onSpotClick(oEvent), 0);
+                    return;
+                }
+
+                let oView = this.getView();
+                if (!this._pSPOIInforCard) {
+                    this._pSPOIInforCard = Fragment.load({
+                        id: oView.getId(),
+                        name: "hwb.frontendhwb.fragment.POIInfoCard",
+                        controller: this
+                    }).then(function (oDialog) {
+                        oView.addDependent(oDialog);
+                        return oDialog;
+                    });
+                }
+
+                const oSpot = oEvent.getSource();
+                let sCurrentSpotId = oSpot.data("id");
+                let localModel = this.getModel("local");
+                localModel.setProperty("/title", oSpot.getLabelText());
+                localModel.setProperty("/description", oSpot.data("description"));
+                localModel.setProperty("/bStampingVisible", this.stringToBoolean(oSpot.data("stamp")));
+                localModel.setProperty("/bStampingEnabled", oSpot.getType() == "Error");
+                localModel.setProperty("/sSelectedSpotLocation", oSpot.getPosition());
+                this._oMap.setCenterPosition(oSpot.getPosition());
+
+                this._pSPOIInforCard.then(oInfoCard => {
+                    oSplitter.addContentArea(oInfoCard);
+                    oSplitter.resetContentAreasSizes();
+                });
+            },
+
+            formatStampButtonIcon: function (bStampingEnabled) {
+                // disabled = already stamped -> no quick stamp
+                if (bStampingEnabled) {
+                    return "sap-icon://checklist-item";
+                } else {
+                    return "sap-icon://checklist-item-2";
+                }
+            },
+            onButtonStampPress: function () {
+                debugger
+            },
+
+            onButtonOpenWithMapsAppPress: function () {
+                const sLocation = this.getModel("local").getProperty("/sSelectedSpotLocation");
+                const lat = sLocation.split(";")[1];
+                const long = sLocation.split(";")[0];
+                    if /* if we're on iOS, open in Apple Maps */
+                      (/iPad|iPhone|iPod/.test(navigator.userAgent))
+                      window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);else /* else use Google */
+                      window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
             }
         });
     });

@@ -1,0 +1,43 @@
+<f:Card
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:card="sap.f.cards"
+    class="sapUiSmallMargin"
+    width="92%"
+>
+    <f:header>
+        <card:Header title="{local>/title}" />
+    </f:header>
+    <f:content>
+        <VBox 
+            class="sapUiSmallMargin"
+            justifyContent="SpaceBetween"
+        >
+            <HBox>
+                <Button
+                    text=""
+                    icon="sap-icon://forward"
+                    type="Emphasized"
+                    press="onButtonOpenWithMapsAppPress"
+                />
+                <Button
+                    text="{i18n>stamp}"
+                    icon="{path: 'local>/bStampingEnabled', formatter: '.formatStampButtonIcon'}"
+                    visible="{local>/bStampingVisible}"
+                    enabled="{local>/bStampingEnabled}"
+                    type="Transparent"
+                    press="onButtonStampPress"
+                />
+                <Button
+                    text="{i18n>share}"
+                    icon="sap-icon://share-2"
+                    type="Transparent"
+                    enabled="false"
+                />
+            </HBox>
+            <HBox>
+                <ExpandableText class="sapUiTinyMarginBottom sapUiTinyMarginTop" text="{local>/description}" />
+            </HBox>
+        </VBox>
+    </f:content>
+</f:Card>

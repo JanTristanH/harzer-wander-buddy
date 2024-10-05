@@ -16,11 +16,12 @@
 
         <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{ path: '/Stampboxes', parameters:{expand : 'Stampings'} }">
             <vbm:Spot id="inner" position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" app:labelTextHidden="{name}" tooltip="{name}" labelPos="5" type="{ path: 'Stampings', formatter: '.onFormatBoxType'}" 
-                contextMenu="onSpotContextMenu"/>
+                contextMenu="onSpotContextMenu" click="onSpotClick" app:id="{ID}" app:stamp="true" app:description="{description}"/>
         </vbm:Spots>
 
         <vbm:Spots id ="idParkingSpotsSpots" items="{/ParkingSpots}">
-            <vbm:Spot id="idParkingInnerSpot" position="{longitude};{latitude}" text="P" labelText="{name}" tooltip="{name}" labelPos="5" type="Default" app:labelTextHidden="{name}"/>
+            <vbm:Spot id="idParkingInnerSpot" position="{longitude};{latitude}" text="P" labelText="{name}" tooltip="{name}" labelPos="5" type="Default" app:labelTextHidden="{name}"
+                click="onSpotClick" app:id="{ID}" app:stamp="false" app:description="{description}"/>
         </vbm:Spots>
 
         <vbm:Spots>

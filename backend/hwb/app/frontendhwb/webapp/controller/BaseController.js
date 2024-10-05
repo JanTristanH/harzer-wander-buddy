@@ -7,6 +7,10 @@ sap.ui.define([
     "use strict";
     return Controller.extend("hwb.frontendhwb.controller.BaseController", {
 
+        stringToBoolean: function (str) {
+            return str === "true";
+        },
+
         getRouter: function () {
             return UIComponent.getRouterFor(this);
         },
@@ -47,7 +51,7 @@ sap.ui.define([
             return ""; //normal line
         },
 
-        formatMetersToKilometers: function(iMeters) {           
+        formatMetersToKilometers: function (iMeters) {
             if (!iMeters && iMeters !== 0) {
                 return "";
             }
@@ -56,7 +60,7 @@ sap.ui.define([
             return kilometers.toFixed(2) + " km"; // Show 2 decimal places
         },
 
-        formatSecondsToTime: function(iSeconds) {
+        formatSecondsToTime: function (iSeconds) {
             if (!iSeconds && iSeconds !== 0) {
                 return "";
             }
