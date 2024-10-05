@@ -58,7 +58,12 @@ This project is configured to run with a postgres.
 - show user location on map and center on it ✔️
 - update Readme for dev instructions ✔️
 - build ui5 app & rewrite path in express ✔️
-- nice illustrated message on initial routes view
+- sorting column
+- add quick view for selected POI
+  - contains navigate to button that opens maps
+- Profile page
+- basic tour planning
+- nice illustrated message on initial routes view -> show list of tours 
 - refactor routes to use joined travel time key (-> persist later, can recalculate dynamically)
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
 - upgrade developer to production key
@@ -85,6 +90,8 @@ This project is configured to run with a postgres.
   - from stamp
   - from my location
 - Comments on Stamps to mark missing / broken ones
+- support for multi book management
+- support maps.me navigation
 
 ## Backlog
 
