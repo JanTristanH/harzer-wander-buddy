@@ -22,7 +22,7 @@
                         items="{
                             path: '/Stampboxes',
                             sorter: {
-                                path: 'number'
+                                path: 'orderBy'
                             },
                             parameters:{expand : 'Stampings'}
                         }"

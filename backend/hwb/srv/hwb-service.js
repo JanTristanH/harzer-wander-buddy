@@ -31,6 +31,26 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('calculateTravelTimesNNearestNeighbors', calculateTravelTimesNNearestNeighbors.bind(this))
 
+    this.on('updateOrderBy', async (req) => {
+      const { Stampboxes } = this.entities('hwb.db');
+      
+      let aStampBoxes = await SELECT.from(Stampboxes);
+      
+      const updatePromises = aStampBoxes.map(async (oBox) => {
+        oBox.orderBy = oBox.number.padStart(3, '0');
+        
+        await UPDATE(Stampboxes)
+          .set({
+            orderBy: oBox.orderBy
+          })
+          .where({ ID: oBox.ID });
+      });
+
+      await Promise.all(updatePromises);
+      
+      return `Updated ${aStampBoxes.length} Boxes`;
+    });
+
     this.on('getMissingTravelTimesCount', getMissingTravelTimesCount.bind(this))
 
     this.on('calculateHikingRoute', calculateHikingRoute)

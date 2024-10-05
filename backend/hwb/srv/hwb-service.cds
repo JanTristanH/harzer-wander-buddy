@@ -23,6 +23,8 @@ service api @(requires: 'authenticated-user') {
 
     function getTourByIdListTravelTimes(idListTravelTimes : String) returns String;
 
+    function updateOrderBy() returns String;
+
     @cds.redirection.target
     entity Stampboxes              as projection on db.Stampboxes;
 

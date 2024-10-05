@@ -58,7 +58,7 @@ This project is configured to run with a postgres.
 - show user location on map and center on it ✔️
 - update Readme for dev instructions ✔️
 - build ui5 app & rewrite path in express ✔️
-- sorting column
+- sorting column ✔️
 - add quick view for selected POI
   - contains navigate to button that opens maps
 - Profile page
