@@ -204,7 +204,7 @@ sap.ui.define([
                     this._oMap = sap.ui.getCore().byId("midView--RoutesMapId--map");
                     if (this._oMap && sCenterPosition) {
                         this._oMap.setCenterPosition(sCenterPosition);
-                    } else {
+                    } else if(sCenterPosition) {
                         setTimeout(() => {
                             //TODO attach to fitting event
                             this.setDetailPage(sCenterPosition)

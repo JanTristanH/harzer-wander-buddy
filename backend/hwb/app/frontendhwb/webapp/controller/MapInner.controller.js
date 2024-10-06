@@ -276,13 +276,17 @@ sap.ui.define([
                         this.onSpotClick({ getSource: function () { return oSpot; } }, true);
                     }
                 };
-            
+                
                 // Attach the render event to wait until the control is rendered
                 this._oMap.attachEvent("render", fnRenderHandler);
             },
-
+            
             onSpotClick: function (oEvent, bSuppressNavigation) {
+                const oSpot = oEvent.getSource();
+                this._oMap.setCenterPosition(oSpot.getPosition());
+
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
+                if(!oSplitter) return;
                 if (oSplitter.getContentAreas().length > 1) {
                     // if more than 1 exists, the info card is open and can be recreated
                     // this also resets the location of the splitter
@@ -306,7 +310,6 @@ sap.ui.define([
                     });
                 }
 
-                const oSpot = oEvent.getSource();
                 let sCurrentSpotId = oSpot.data("id");
                 let localModel = this.getModel("local");
                 localModel.setProperty("/sCurrentSpotId", sCurrentSpotId);
@@ -315,7 +318,6 @@ sap.ui.define([
                 localModel.setProperty("/bStampingVisible", this.stringToBoolean(oSpot.data("stamp")));
                 localModel.setProperty("/bStampingEnabled", oSpot.getType() == "Error");
                 localModel.setProperty("/sSelectedSpotLocation", oSpot.getPosition());
-                this._oMap.setCenterPosition(oSpot.getPosition());
 
                 if(!bSuppressNavigation) {
                     this.getRouter().navTo("MapWithPOI", { idPOI: sCurrentSpotId });
@@ -335,8 +337,7 @@ sap.ui.define([
                     return "sap-icon://checklist-item-2";
                 }
             },
-            onButtonStampPress: function (oEvent) {
-                debugger
+            onButtonStampPress: function (oEvent) {                
                 const oModel = this.getModel(),
                 localModel = this.getModel("local");
                 let ID = localModel.getProperty("/sCurrentSpotId");
