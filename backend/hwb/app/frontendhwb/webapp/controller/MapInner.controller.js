@@ -309,7 +309,8 @@ sap.ui.define([
                 const oSpot = oEvent.getSource();
                 let sCurrentSpotId = oSpot.data("id");
                 let localModel = this.getModel("local");
-                localModel.setProperty("/title", oSpot.getLabelText());
+                localModel.setProperty("/sCurrentSpotId", sCurrentSpotId);
+                localModel.setProperty("/title", oSpot.data("labelTextHidden"));
                 localModel.setProperty("/description", oSpot.data("description"));
                 localModel.setProperty("/bStampingVisible", this.stringToBoolean(oSpot.data("stamp")));
                 localModel.setProperty("/bStampingEnabled", oSpot.getType() == "Error");
@@ -334,8 +335,26 @@ sap.ui.define([
                     return "sap-icon://checklist-item-2";
                 }
             },
-            onButtonStampPress: function () {
+            onButtonStampPress: function (oEvent) {
                 debugger
+                const oModel = this.getModel(),
+                localModel = this.getModel("local");
+                let ID = localModel.getProperty("/sCurrentSpotId");
+                let mParameters = {
+                    success: () => {
+                        oEvent.getSource().setIcon("sap-icon://checklist-item-2");
+                        oEvent.getSource().setEnabled(false);
+                        MessageToast.show("Saved Stamping");
+                        oModel.refresh();
+                    },
+                    // give message and reset ui to keep it consistent with backend
+                    error: () => MessageToast.show("An Error Occured")
+                }
+                oModel.create("/Stampings", {
+                    "stamp": {
+                        ID
+                    }
+                }, mParameters);
             },
 
             onButtonOpenWithMapsAppPress: function () {
