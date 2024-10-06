@@ -9,7 +9,7 @@
         <card:Header title="{local>/title}" />
     </f:header>
     <f:content>
-        <VBox 
+        <VBox
             class="sapUiSmallMargin"
             justifyContent="SpaceBetween"
         >
@@ -35,8 +35,24 @@
                     press="onButtonSharePress"
                 />
             </HBox>
-            <HBox>
-                <ExpandableText class="sapUiTinyMarginBottom sapUiTinyMarginTop" text="{local>/description}" />
+            <HBox class="sapUiSmallMarginTop">
+                <ExpandableText
+                    class="sapUiTinyMarginBottom sapUiTinyMarginTop"
+                    text="{local>/description}"
+                />
+            </HBox>
+            <HBox class="sapUiSmallMarginTop">
+                <List
+                    id="idTravelTimesList"
+                    headerText="{i18n>nearbyPois}"
+                    items="{local>/TravelTimes}"
+                >
+                    <StandardListItem
+                        title="Stempel"
+                        description="{local>distanceMeters}m - {local>durationSeconds}s"
+                        icon="sap-icon://task"
+                    />
+                </List>
             </HBox>
         </VBox>
     </f:content>

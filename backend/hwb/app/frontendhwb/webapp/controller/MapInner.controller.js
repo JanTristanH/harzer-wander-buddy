@@ -28,7 +28,8 @@ sap.ui.define([
                     oModel.setData({
                         UserLocationLat: 0,
                         UserLocationLng: 0,
-                        centerPosition: "10.30147999999997;51.7462"
+                        centerPosition: "10.30147999999997;51.7462",
+                        TravelTimes: [{}]
                     });
                     this.getView().setModel(oModel, "local");
                 }
@@ -258,35 +259,35 @@ sap.ui.define([
 
             onMapWithPOIRouteMatched: function (oEvent) {
                 let sCurrentSpotId = oEvent.getParameter("arguments").idPOI;
-            
+
                 // Define the callback function to handle the render event
                 const fnRenderHandler = () => {
                     let aItems = [...this.byId("idAllPointsOfInterestsSpots").getItems()];
                     const oParkingSpots = this.byId("idParkingSpotsSpots");
-            
+
                     if (oParkingSpots) {
                         aItems.push(...oParkingSpots.getItems());
                     }
-            
+
                     const oSpot = aItems.find(e => e.data("id") === sCurrentSpotId);
-            
+
                     if (oSpot) {
                         // Detach the render event once the spot is found
                         this._oMap.detachEvent("render", fnRenderHandler);
                         this.onSpotClick({ getSource: function () { return oSpot; } }, true);
                     }
                 };
-                
+
                 // Attach the render event to wait until the control is rendered
                 this._oMap.attachEvent("render", fnRenderHandler);
             },
-            
+
             onSpotClick: function (oEvent, bSuppressNavigation) {
                 const oSpot = oEvent.getSource();
                 this._oMap.setCenterPosition(oSpot.getPosition());
 
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
-                if(!oSplitter) return;
+                if (!oSplitter) return;
                 if (oSplitter.getContentAreas().length > 1) {
                     // if more than 1 exists, the info card is open and can be recreated
                     // this also resets the location of the splitter
@@ -319,15 +320,78 @@ sap.ui.define([
                 localModel.setProperty("/bStampingEnabled", oSpot.getType() == "Error");
                 localModel.setProperty("/sSelectedSpotLocation", oSpot.getPosition());
 
-                if(!bSuppressNavigation) {
+                this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
+
+                if (!bSuppressNavigation) {
                     this.getRouter().navTo("MapWithPOI", { idPOI: sCurrentSpotId });
                 }
 
                 this._pSPOIInforCard.then(oInfoCard => {
+                    oInfoCard.setModel("local", localModel);
                     oSplitter.addContentArea(oInfoCard);
                     oSplitter.resetContentAreasSizes();
                 });
             },
+
+            _loadRelevantTravelTimesForPoi: function (sCurrentSpotId, localModel) {
+                // Define the filters for the read request
+                let aFilters = [
+                    new sap.ui.model.Filter("fromPoi", sap.ui.model.FilterOperator.EQ, sCurrentSpotId),
+                    new sap.ui.model.Filter("travelMode", sap.ui.model.FilterOperator.EQ, "walk"),
+                    new sap.ui.model.Filter("distanceMeters", sap.ui.model.FilterOperator.LT, 10000)
+                ];
+
+                // Define the sorter for ordering by distanceMeters in ascending order
+                let aSorters = [
+                    new sap.ui.model.Sorter("distanceMeters", false) // `false` means ascending order
+                ];
+
+                // Execute the read request with filters, sorters, and $top to limit to 5 results
+                this.getModel().read("/TravelTimes", {
+                    filters: aFilters,
+                    sorters: aSorters,
+                    urlParameters: {
+                        "$top": 5 // Limit to top 5 results
+                    },
+                    success: function(oData) {
+                        let oLocalModel = this.getModel("local");
+                        if (oData && oData.results) {
+                            oLocalModel.setProperty("/TravelTimes", oData.results);
+                        } else {
+                            oLocalModel.setProperty("/TravelTimes", []);
+                        }
+            
+                        // Get the list control
+                        let oList = this.byId("idTravelTimesList");
+            
+                        // Remove all current items before adding the new ones
+                        oList.removeAllItems();
+            
+                        // Add items to the list manually using the addItem method
+                        oData.results.forEach(oItemData => {
+                            let oListItem = new sap.m.StandardListItem({
+                                title: this._getPoiById(oItemData.toPoi)?.name || "",
+                                description: `${this.formatMetersToKilometers(oItemData.distanceMeters)} - ${this.formatSecondsToTime(oItemData.durationSeconds)}`,
+                                icon: "sap-icon://task"
+                            });
+            
+                            oList.addItem(oListItem);
+                        });
+                    }.bind(this),
+                    error: function (oError) {
+                        // Handle error - log or display an error message
+                        console.error("Error loading travel times:", oError);
+                    }
+                });
+            },
+
+		_getPoiById: function(ID) {
+			let oModel = this.getModel();
+            let oStamp = oModel.getProperty(`/Stampboxes(guid'${ID}')`);
+            let oParking = oModel.getProperty(`/ParkingSpots(guid'${ID}')`);
+            return oStamp || oParking;
+		},
+
 
             formatStampButtonIcon: function (bStampingEnabled) {
                 // disabled = already stamped -> no quick stamp
@@ -337,9 +401,9 @@ sap.ui.define([
                     return "sap-icon://checklist-item-2";
                 }
             },
-            onButtonStampPress: function (oEvent) {                
+            onButtonStampPress: function (oEvent) {
                 const oModel = this.getModel(),
-                localModel = this.getModel("local");
+                    localModel = this.getModel("local");
                 let ID = localModel.getProperty("/sCurrentSpotId");
                 let mParameters = {
                     success: () => {
@@ -359,6 +423,7 @@ sap.ui.define([
             },
 
             onButtonOpenWithMapsAppPress: function () {
+                debugger
                 const sLocation = this.getModel("local").getProperty("/sSelectedSpotLocation");
                 const lat = sLocation.split(";")[1];
                 const long = sLocation.split(";")[0];

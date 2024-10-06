@@ -35,11 +35,6 @@
                 growingScrollToLoad="true"
                 items="{local>/routes}"
             >
-                <StandardListItem
-                    title="{local>name}"
-                    description="{local>toPoiType} - {local>travelMode}"
-                    icon="{path: 'local>travelMode', formatter: '.onFormatTravelModeIcon'}"
-                />
             </List>
         </ScrollContainer>
     </Panel>
