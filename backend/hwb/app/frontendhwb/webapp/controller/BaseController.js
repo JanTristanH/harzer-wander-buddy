@@ -11,6 +11,15 @@ sap.ui.define([
             return str === "true";
         },
 
+        onButtonSharePress: function () {
+            navigator
+            .share({
+                title: document.title,
+                text: 'Harzer Wander Buddy',
+                url: window.location.href
+            })
+        },
+
         getRouter: function () {
             return UIComponent.getRouterFor(this);
         },

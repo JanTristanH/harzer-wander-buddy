@@ -32,7 +32,7 @@
                     text="{i18n>share}"
                     icon="sap-icon://share-2"
                     type="Transparent"
-                    enabled="false"
+                    press="onButtonSharePress"
                 />
             </HBox>
             <HBox>

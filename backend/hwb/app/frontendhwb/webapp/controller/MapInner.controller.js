@@ -32,6 +32,7 @@ sap.ui.define([
                     });
                     this.getView().setModel(oModel, "local");
                 }
+                this.getRouter().getRoute("MapWithPOI").attachPatternMatched(this.onMapWithPOIRouteMatched, this);
             },
             onAfterRendering: function () {
                 this.getView().getModel().setSizeLimit(1000);
@@ -255,7 +256,32 @@ sap.ui.define([
                 }
             },
 
-            onSpotClick: function (oEvent) {
+            onMapWithPOIRouteMatched: function (oEvent) {
+                let sCurrentSpotId = oEvent.getParameter("arguments").idPOI;
+            
+                // Define the callback function to handle the render event
+                const fnRenderHandler = () => {
+                    let aItems = [...this.byId("idAllPointsOfInterestsSpots").getItems()];
+                    const oParkingSpots = this.byId("idParkingSpotsSpots");
+            
+                    if (oParkingSpots) {
+                        aItems.push(...oParkingSpots.getItems());
+                    }
+            
+                    const oSpot = aItems.find(e => e.data("id") === sCurrentSpotId);
+            
+                    if (oSpot) {
+                        // Detach the render event once the spot is found
+                        this._oMap.detachEvent("render", fnRenderHandler);
+                        this.onSpotClick({ getSource: function () { return oSpot; } }, true);
+                    }
+                };
+            
+                // Attach the render event to wait until the control is rendered
+                this._oMap.attachEvent("render", fnRenderHandler);
+            },
+
+            onSpotClick: function (oEvent, bSuppressNavigation) {
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
                 if (oSplitter.getContentAreas().length > 1) {
                     // if more than 1 exists, the info card is open and can be recreated
@@ -290,6 +316,10 @@ sap.ui.define([
                 localModel.setProperty("/sSelectedSpotLocation", oSpot.getPosition());
                 this._oMap.setCenterPosition(oSpot.getPosition());
 
+                if(!bSuppressNavigation) {
+                    this.getRouter().navTo("MapWithPOI", { idPOI: sCurrentSpotId });
+                }
+
                 this._pSPOIInforCard.then(oInfoCard => {
                     oSplitter.addContentArea(oInfoCard);
                     oSplitter.resetContentAreasSizes();
@@ -312,10 +342,10 @@ sap.ui.define([
                 const sLocation = this.getModel("local").getProperty("/sSelectedSpotLocation");
                 const lat = sLocation.split(";")[1];
                 const long = sLocation.split(";")[0];
-                    if /* if we're on iOS, open in Apple Maps */
-                      (/iPad|iPhone|iPod/.test(navigator.userAgent))
-                      window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);else /* else use Google */
-                      window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
+                if /* if we're on iOS, open in Apple Maps */
+                    (/iPad|iPhone|iPod/.test(navigator.userAgent))
+                    window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`); else /* else use Google */
+                    window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
             }
         });
     });

@@ -102,13 +102,20 @@
             },
             "routes": [{
                 "name": "Main",
-                "pattern": ":?query:",
+                "pattern": "main",
                 "target": [
                     "TargetList"
                 ]
             },{
                 "name": "Map",
-                "pattern": "map",
+                "pattern": ":?query:",
+                "target": [
+                    "TargetMap"
+                ]
+            },
+            {
+                "name": "MapWithPOI",
+                "pattern": "{idPOI}",
                 "target": [
                     "TargetMap"
                 ]
