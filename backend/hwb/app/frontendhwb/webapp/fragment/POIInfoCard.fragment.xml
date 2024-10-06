@@ -35,7 +35,7 @@
                     press="onButtonSharePress"
                 />
             </HBox>
-            <HBox class="sapUiSmallMarginTop">
+            <HBox class="sapUiSmallMarginTop" width="95%">
                 <ExpandableText
                     class="sapUiTinyMarginBottom sapUiTinyMarginTop"
                     text="{local>/description}"
