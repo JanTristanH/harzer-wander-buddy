@@ -4,4 +4,6 @@
     height: 2rem !important;
   }
   
-  
+  .sapUiLoSplitter .sapUiLoSplitterContent{
+    overflow: hidden;
+  }
