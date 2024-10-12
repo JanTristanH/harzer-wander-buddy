@@ -1,6 +1,6 @@
 {
   "name": "hwb",
-  "version": "0.0.12",
+  "version": "0.0.14",
   "description": "A simple CAP project.",
   "repository": "<Add your repository here>",
   "license": "UNLICENSED",
@@ -54,7 +54,31 @@
         }
       },
       "auth": {
-        "[x]": {
+        "[development]": {
+          "kind": "basic-auth",
+          "users": {
+            "Tris": {
+              "pass": "pass"
+            },
+            "Momo": {
+              "pass": "pass"
+            },
+            "Lars": {
+              "pass": "pass"
+            },
+            "Kevin": {
+              "pass": "pass",
+              "roles": [
+                "dummy"
+              ]
+            },
+            "Alice": {
+              "pass": "pass"
+            },
+            "*": false
+          }
+        },
+        "[production]": {
           "impl": "srv/auth.js"
         }
       }
