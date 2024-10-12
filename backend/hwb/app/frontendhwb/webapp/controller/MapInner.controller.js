@@ -385,6 +385,13 @@ sap.ui.define([
                 });
             },
 
+		onButtonOpenExternalPress: function(oEvent) {
+            let localModel = this.getModel("local");
+            let oStamp = this._getPoiById(localModel.getProperty("/sCurrentSpotId"));
+            const sLink = `https://www.harzer-wandernadel.de/?s=${oStamp.number}`;
+            window.open(sLink, '_blank').focus();
+		},
+
 		_getPoiById: function(ID) {
 			let oModel = this.getModel();
             let oStamp = oModel.getProperty(`/Stampboxes(guid'${ID}')`);
@@ -423,7 +430,6 @@ sap.ui.define([
             },
 
             onButtonOpenWithMapsAppPress: function () {
-                debugger
                 const sLocation = this.getModel("local").getProperty("/sSelectedSpotLocation");
                 const lat = sLocation.split(";")[1];
                 const long = sLocation.split(";")[0];

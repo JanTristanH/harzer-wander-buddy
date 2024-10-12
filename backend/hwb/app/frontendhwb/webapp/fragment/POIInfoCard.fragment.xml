@@ -34,6 +34,13 @@
                     type="Transparent"
                     press="onButtonSharePress"
                 />
+                <Button
+                    text="{}"
+                    icon="sap-icon://world"
+                    visible="{local>/bStampingVisible}"
+                    type="Transparent"
+                    press="onButtonOpenExternalPress"
+            />
             </HBox>
             <HBox class="sapUiSmallMarginTop" width="95%">
                 <ExpandableText

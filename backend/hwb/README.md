@@ -61,6 +61,7 @@ This project is configured to run with a postgres.
 - sorting column ✔️
 - add quick view for selected POI ✔️
   - contains navigate to button that opens maps ✔️
+  - link to external site ✔️
   - fix user experience on mobile for this view -> pull up card
 - refactor routes to use joined travel time key (-> persist later, can recalculate dynamically)
 - basic tour planning
