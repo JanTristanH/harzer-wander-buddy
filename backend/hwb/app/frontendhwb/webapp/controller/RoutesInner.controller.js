@@ -224,6 +224,7 @@ sap.ui.define([
             },
 
             onUseCurrentLocation: function () {
+                this.byId('idAutocompleteInput').setBusy(true);
                 this._geolocate();
             },
 
@@ -259,6 +260,7 @@ sap.ui.define([
             _geolocate: function () {
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(function (position) {
+                        this.byId('idAutocompleteInput').setBusy(false);
                         var geolocation = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude

@@ -41,7 +41,7 @@ sap.ui.define([
 
             onGeoMapZoomChanged: function (oEvent) {
                 let nZoomLevel = oEvent.getParameter("zoomLevel");
-                this.onToggleLables(nZoomLevel >= 14);
+                this.onToggleLables(nZoomLevel >= 16);
             },
 
             onPressOpenFiltersMenu: function (oEvent) {

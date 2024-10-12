@@ -27,6 +27,15 @@ sap.ui.define([
                 }
                 return "sap-icon://physical-activity"
                 
-            }
+            },
+
+		onButtonShareTourPress: function(oEvent) {
+            navigator
+            .share({
+                title: document.title,
+                text: 'Harzer Wander Buddy',
+                url: window.location.href
+            })
+		}
         });
     });

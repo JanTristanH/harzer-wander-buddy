@@ -7,11 +7,19 @@
     busyIndicatorDelay="0"
 >
     <VBox>
-        <Button
-            press='onBackToList'
-            text="Zurück zur Liste"
-            icon="sap-icon://navigation-left-arrow"
-        />
+        <HBox>
+            <Button
+                press='onBackToList'
+                text="Zurück zur Liste"
+                icon="sap-icon://navigation-left-arrow"
+            />
+            <Button
+                text="{i18n>share}"
+                icon="sap-icon://share-2"
+                type="Transparent"
+                press="onButtonShareTourPress"
+            />
+        </HBox>
 
         <Text
             text="Länge: {path: 'local>/duration', formatter: '.formatSecondsToTime'} - Distanz: {path: 'local>/distance', formatter: '.formatMetersToKilometers'} - Stempel: {local>/stampCount}"
@@ -35,6 +43,11 @@
                 growingScrollToLoad="true"
                 items="{local>/routes}"
             >
+                <StandardListItem
+                    title="{local>name}"
+                    description="{local>toPoiType} - {local>travelMode}"
+                    icon="{path: 'local>travelMode', formatter: '.onFormatTravelModeIcon'}"
+                />
             </List>
         </ScrollContainer>
     </Panel>
