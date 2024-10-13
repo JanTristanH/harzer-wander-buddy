@@ -66,7 +66,7 @@ sap.ui.define([
             }
 
             var kilometers = iMeters / 1000;
-            return kilometers.toFixed(2) + "km"; // Show 2 decimal places
+            return kilometers.toFixed(2) + " km"; // Show 2 decimal places
         },
 
         formatSecondsToTime: function (iSeconds) {

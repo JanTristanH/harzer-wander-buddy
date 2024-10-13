@@ -10,7 +10,12 @@ sap.ui.define([
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
             onInit: function () {
                 this.bus = this.getOwnerComponent().getEventBus();
-                this.bus.subscribe("list", "onListSelect", this.onListSelect, this);
+                this.bus.subscribe("idRoutesWayPointList", "onListSelect", this.onListSelect, this);
+            },
+
+            onSplitterRoutesDetailResize: function (oEvent) {
+                let nNewSize = oEvent.getParameters().newSizes[1] - 200;
+                this.getModel("local").setProperty("/wayPointScrollContainerHeight", nNewSize + "px");
             },
 
             onBackToList: function () {
@@ -22,20 +27,31 @@ sap.ui.define([
             },
 
             onFormatTravelModeIcon: function (sTravelMode) {
-                if (sTravelMode == "drive"){
+                if (sTravelMode == "start"){
+                    return "sap-icon://functional-location";
+                } else if (sTravelMode == "drive") {
                     return "sap-icon://car-rental";
                 }
                 return "sap-icon://physical-activity"
                 
             },
 
-		onButtonShareTourPress: function(oEvent) {
-            navigator
-            .share({
-                title: document.title,
-                text: 'Harzer Wander Buddy',
-                url: window.location.href
-            })
-		}
+            formatDescription: function(duration, distance) {
+                if (duration === 0 && distance === 0) {
+                    return "";  // No description if both are 0
+                }
+                var formattedDuration = this.formatSecondsToTime(duration);
+                var formattedDistance = this.formatMetersToKilometers(distance);
+                return formattedDuration + " - " + formattedDistance + " - 0 HM";
+            },
+
+            onButtonShareTourPress: function(oEvent) {
+                navigator
+                .share({
+                    title: document.title,
+                    text: 'Harzer Wander Buddy',
+                    url: window.location.href
+                })
+            }
         });
     });

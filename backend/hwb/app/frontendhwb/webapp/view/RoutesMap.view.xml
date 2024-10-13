@@ -27,6 +27,7 @@
     <l:Splitter
         orientation="Vertical"
         id="idRoutesDetialSplitter"
+        resize="onSplitterRoutesDetailResize"
     >
         <mvc:XMLView
             id="RoutesMapId"
@@ -85,22 +86,23 @@
                 expanded="true"
                 width="auto"
                 headerText="{i18n>wayPoints}"
-                class="sapUiResponsiveMargin"
+                class="sapUiTinyMargin"
             >
                 <ScrollContainer
                     width="100%"
-                    height="400px"
+                    height="{local>/wayPointScrollContainerHeight}"
                     vertical="true"
                     horizontal="false"
                 >
                     <List
-                        id="list"
+                        id="idRoutesWayPointList"
                         growingScrollToLoad="true"
                         items="{local>/routes}"
                     >
                         <StandardListItem
+                            wrapping="true"
                             title="{local>name}"
-                            description="{local>toPoiType} - {local>travelMode}"
+                            description="{parts: [{path: 'local>duration'}, {path: 'local>distance'}], formatter: '.formatDescription'}"
                             icon="{path: 'local>travelMode', formatter: '.onFormatTravelModeIcon'}"
                         />
                     </List>

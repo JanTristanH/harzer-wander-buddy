@@ -65,10 +65,11 @@ sap.ui.define([
                     });
                 } else {
                     // open Detail with correct data
-                    oLocalModel.setProperty("/routes", oTour.path);
+                    oLocalModel.setProperty("/routes", this._mapTravelTimeToPOIList(oTour.path));
                     oLocalModel.setProperty("/stampCount", oTour.stampCount);
                     oLocalModel.setProperty("/distance", oTour.distance);
                     oLocalModel.setProperty("/duration", oTour.duration);
+                    oLocalModel.setProperty("/wayPointScrollContainerHeight", "400px");
 
                     let sStartOfTour = this._getStartOfTour(oTour);
                     oLocalModel.setProperty("/centerPosition", sStartOfTour);
@@ -79,6 +80,19 @@ sap.ui.define([
                         this.setDetailPage(sStartOfTour)
                     }, 100);
                 }
+            },
+
+            _mapTravelTimeToPOIList: function(aPath) {
+            aPath.unshift({
+                "name": this.getModel("i18n").getProperty("start"),
+                //"fromPoi": "1e4b7315-a596-4e73-95b6-92fbf79a92a1",
+                //"poi": "729ba51a-acd5-4c6c-b888-313dc637da8c",
+                "duration": 0,
+                "distance": 0,
+                "travelMode": "start",
+                "toPoiType": "start",
+              });
+              return aPath;  
             },
 
             _getStartOfTour: function (oTour) {
