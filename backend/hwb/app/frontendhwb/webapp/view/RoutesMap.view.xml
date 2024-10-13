@@ -1,29 +1,71 @@
 <mvc:View
     controllerName="hwb.frontendhwb.controller.RoutesMap"
     xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
     xmlns="sap.m"
     displayBlock="true"
     height="100%"
     busyIndicatorDelay="0"
 >
     <VBox>
-        <HBox>
+        <HBox justifyContent="SpaceBetween">
             <Button
+                class="sapUiTinyMargin"
                 press='onBackToList'
-                text="Zurück zur Liste"
+                type="Transparent"
+                text="{i18n>back}"
                 icon="sap-icon://navigation-left-arrow"
             />
             <Button
+                class="sapUiTinyMargin"
                 text="{i18n>share}"
                 icon="sap-icon://share-2"
                 type="Transparent"
                 press="onButtonShareTourPress"
             />
         </HBox>
-
-        <Text
-            text="Länge: {path: 'local>/duration', formatter: '.formatSecondsToTime'} - Distanz: {path: 'local>/distance', formatter: '.formatMetersToKilometers'} - Stempel: {local>/stampCount}"
-        />
+        <FlexBox
+            justifyContent="SpaceAround"
+            alignItems="Center"
+        >
+            <VBox
+                alignContent="Center"
+                alignItems="Center"
+                class="sapUiMediumMarginBegin"
+            >
+                <core:Icon src="sap-icon://fob-watch" />
+                <Text
+                    text="{path: 'local>/duration', formatter: '.formatSecondsToTime'}"
+                />
+            </VBox>
+            <Text text="|" />
+            <VBox
+                alignContent="Center"
+                alignItems="Center"
+            >
+                <core:Icon src="sap-icon://direction-arrows" />
+                <Text
+                    text="{path: 'local>/distance', formatter: '.formatMetersToKilometers'}"
+                />
+            </VBox>
+            <Text text="|" />
+            <VBox
+                alignContent="Center"
+                alignItems="Center"
+            >
+                <core:Icon src="sap-icon://toaster-top" />
+                <Text text="{local>/stampCount}" />
+            </VBox>
+            <Text text="|" />
+            <VBox
+                alignContent="Center"
+                alignItems="Center"
+                class="sapUiMediumMarginEnd"
+            >
+                <core:Icon src="sap-icon://trend-up" />
+                <Text text="-" />
+            </VBox>
+        </FlexBox>
     </VBox>
     <Panel
         expandable="true"
