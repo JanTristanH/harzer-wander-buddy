@@ -199,6 +199,7 @@ sap.ui.define([
                             let oLocalModel = this.getModel("local");
                             oLocalModel.setProperty("/UserLocationLat", oUserLocation.lat);
                             oLocalModel.setProperty("/UserLocationLng", oUserLocation.lng);
+                            oLocalModel.setProperty("/centerPosition", `${oUserLocation.lng};${oUserLocation.lat}`);
                             this._oMap.setCenterPosition(`${oUserLocation.lng};${oUserLocation.lat}`);
                         }.bind(this),
                         function (oError) {
@@ -385,19 +386,19 @@ sap.ui.define([
                 });
             },
 
-		onButtonOpenExternalPress: function(oEvent) {
-            let localModel = this.getModel("local");
-            let oStamp = this._getPoiById(localModel.getProperty("/sCurrentSpotId"));
-            const sLink = `https://www.harzer-wandernadel.de/?s=${oStamp.number}`;
-            window.open(sLink, '_blank').focus();
-		},
+            onButtonOpenExternalPress: function(oEvent) {
+                let localModel = this.getModel("local");
+                let oStamp = this._getPoiById(localModel.getProperty("/sCurrentSpotId"));
+                const sLink = `https://www.harzer-wandernadel.de/?s=${oStamp.number}`;
+                window.open(sLink, '_blank').focus();
+            },
 
-		_getPoiById: function(ID) {
-			let oModel = this.getModel();
-            let oStamp = oModel.getProperty(`/Stampboxes(guid'${ID}')`);
-            let oParking = oModel.getProperty(`/ParkingSpots(guid'${ID}')`);
-            return oStamp || oParking;
-		},
+            _getPoiById: function(ID) {
+                let oModel = this.getModel();
+                let oStamp = oModel.getProperty(`/Stampboxes(guid'${ID}')`);
+                let oParking = oModel.getProperty(`/ParkingSpots(guid'${ID}')`);
+                return oStamp || oParking;
+            },
 
 
             formatStampButtonIcon: function (bStampingEnabled) {
@@ -408,6 +409,7 @@ sap.ui.define([
                     return "sap-icon://checklist-item-2";
                 }
             },
+
             onButtonStampPress: function (oEvent) {
                 const oModel = this.getModel(),
                     localModel = this.getModel("local");

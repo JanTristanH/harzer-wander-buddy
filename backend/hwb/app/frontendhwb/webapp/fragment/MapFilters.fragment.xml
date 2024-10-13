@@ -9,13 +9,13 @@
         placement="Bottom"
     >
         <VBox>
-            <CheckBox id="idToggleLabelCheckBox" text="Label Umschalten" select="onToggleLabelsCheckBox" selected="true" />
-            <CheckBox id="idToggleStampedCheckBox" text="Besuchte Stempel" select="onVisitedStampsCheckkBoxSelect" selected="true" />
-            <CheckBox id="idToggleUnstampedCheckBox" text="Unbesuchte Stempel" select="onNotVisitedStampsCheckkBoxSelect" selected="true" />
+            <CheckBox id="idToggleLabelCheckBox" text="{i18n>toggleLabel}" select="onToggleLabelsCheckBox" selected="true" />
+            <CheckBox id="idToggleStampedCheckBox" text="{i18n>visitedStamps}" select="onVisitedStampsCheckkBoxSelect" selected="true" />
+            <CheckBox id="idToggleUnstampedCheckBox" text="{i18n>missingStamps}" select="onNotVisitedStampsCheckkBoxSelect" selected="true" />
             <CheckBox id="idParkingSpaceCheckBox" text="{i18n>ParkingSpaces}" select="onParkingSpaceCheckBox" selected="true" />
             
-            <Button press='onShowAllPress' text="Alles anzeigen"/>
-            <Button press='.onLocateMePress' text="Aktuellen Standort bestimmen 📍"/>
+            <Button press='onShowAllPress' text="{i18n>showAll}" class="sapUiTinyMargin" />
+            <Button press='.onLocateMePress' text="{i18n>showCurrentLocation} 📍" class="sapUiTinyMarginBeginEnd sapUiTinyMarginBottom"/>
         </VBox>
     </Popover>
 </core:FragmentDefinition>

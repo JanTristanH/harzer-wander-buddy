@@ -25,7 +25,7 @@
         </vbm:Spots>
 
         <vbm:Spots>
-            <vbm:Spot id="idUserLocationSpot" position="{local>/UserLocationLng};{local>/UserLocationLat}"/>
+            <vbm:Spot text="📍" id="idUserLocationSpot" position="{local>/UserLocationLng};{local>/UserLocationLat}"/>
         </vbm:Spots>
     </vbm:vos>
 </vbm:GeoMap>

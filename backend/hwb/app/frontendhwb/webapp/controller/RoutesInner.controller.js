@@ -150,29 +150,29 @@ sap.ui.define([
                     method: "GET",
                     urlParameters: oParams,
                     success: function (oData) {
-                        sap.m.MessageToast.show("Route calculated successfully!");
-
+                        
                         this.setDetailPage();
                         // Additional success handling
                         let oLocalModel = this.getView().getModel("local"),
-                            results = oData.calculateHikingRoute.results,
-                            oInitiallySelectedTour = results[0];
+                        results = oData.calculateHikingRoute.results,
+                        oInitiallySelectedTour = results[0];
                         oLocalModel.setProperty("/hikingRoutes", results);
-
+                        
                         // Map results of calculation to Tour property of model, refactor later
                         this._writeHikingRoutesAsToursToModel(results, oLocalModel);
-
+                        
                         this.pDialog.close();
                         if (!!results.length) {
+                            sap.m.MessageToast.show(this.getModel("i18n").getProperty("routeCalculatedSuccessfully"));
                             this.getRouter().navTo("RoutesDetail", {
                                 idListTravelTimes: oInitiallySelectedTour.id
                             });
                         } else {
-                            sap.m.MessageToast.show("No routes found! :(");
+                            sap.m.MessageToast.show(this.getModel("i18n").getProperty("noRoutesFound"));
                         }
                     }.bind(this),
                     error: function (oError) {
-                        sap.m.MessageToast.show("Failed to calculate route.");
+                        sap.m.MessageToast.show(this.getModel("i18n").getProperty("someThingWentWrong"));
                         // Additional error handling
                         this.pDialog.close();
                     }
