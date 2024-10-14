@@ -218,6 +218,11 @@ sap.ui.define([
                     this._oMap = sap.ui.getCore().byId("midView--RoutesMapId--map");
                     if (this._oMap && sCenterPosition) {
                         this._oMap.setCenterPosition(sCenterPosition);
+                        debugger
+                        let oNestedController = sap.ui.getCore().byId("midView--RoutesMapId").getController()
+                        oNestedController.onSpotClick = () => {};
+                        oNestedController.onSpotClick = () => {};
+                        onSpotContextMenu
                     } else if(sCenterPosition) {
                         setTimeout(() => {
                             //TODO attach to fitting event
