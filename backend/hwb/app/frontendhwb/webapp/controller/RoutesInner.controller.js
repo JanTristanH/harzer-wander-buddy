@@ -26,16 +26,21 @@ sap.ui.define([
 
                 this.getRouter().getRoute("Routes").attachPatternMatched(this.onOpenRoutingDialog, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRouteMatched, this);
+                this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onDetailRouteEditMatched, this);
+            },
+            onDetailRouteEditMatched: function (oEvent) {
+              this.getModel("local").setProperty("/edit", true);
+              this.onDetailRouteMatched(oEvent);  
             },
 
             onDetailRouteMatched: function (oEvent) {
                 // Get the route parameters
                 var oArguments = oEvent.getParameter("arguments");
                 var idListTravelTimes = oArguments.idListTravelTimes;
-
                 if (idListTravelTimes) {
                     this._showDetailViewForIdList(idListTravelTimes);
                 }
+                this.getModel("local").setProperty("/sIdListTravelTimes", idListTravelTimes);
             },
 
             _showDetailViewForIdList: function (sIdListTravelTimes) {
@@ -122,7 +127,7 @@ sap.ui.define([
                     this.onAfterRenderingFragment();
 
                     // create routing model
-                    var oModel = new sap.ui.model.json.JSONModel({
+                    var oModel = new JSONModel({
                         maxDepth: 15,
                         maxDuration: new Date(1 * 60 * 60 * 1000), // TODO timezone dependant 
                         maxDistance: 15,
@@ -211,18 +216,18 @@ sap.ui.define([
                     id: "midView",
                     viewName: "hwb.frontendhwb.view.RoutesMap"
                 }).then(function (detailView) {
-                    detailView.setModel("local", this.getView().getModel("local"));
+                    let oLocalModel = this.getView().getModel("local");
+                    oLocalModel.setProperty("/edit", false);
+                    detailView.setModel("local", oLocalModel);
                     //get global Id via debugging for example in locate me function
                     this.oFlexibleColumnLayout.addMidColumnPage(detailView);
                     this.oFlexibleColumnLayout.setLayout(LayoutType.TwoColumnsMidExpanded);
                     this._oMap = sap.ui.getCore().byId("midView--RoutesMapId--map");
                     if (this._oMap && sCenterPosition) {
                         this._oMap.setCenterPosition(sCenterPosition);
-                        debugger
                         let oNestedController = sap.ui.getCore().byId("midView--RoutesMapId").getController()
                         oNestedController.onSpotClick = () => {};
-                        oNestedController.onSpotClick = () => {};
-                        onSpotContextMenu
+                        oNestedController.onSpotContextMenu = () => {};
                     } else if(sCenterPosition) {
                         setTimeout(() => {
                             //TODO attach to fitting event

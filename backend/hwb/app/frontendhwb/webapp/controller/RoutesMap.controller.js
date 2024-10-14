@@ -52,6 +52,21 @@ sap.ui.define([
                     text: 'Harzer Wander Buddy',
                     url: window.location.href
                 })
+            },
+
+            onButtonEditPress: function() {
+                const oLocalModel = this.getView().getModel("local");
+                oLocalModel.setProperty("/edit", true);
+                this.getRouter().navTo("RoutesDetailEdit", {
+                    idListTravelTimes: oLocalModel.getProperty("/sIdListTravelTimes")
+                });
+            },
+            onButtonSavePress: function() {
+                const oLocalModel = this.getView().getModel("local");
+                oLocalModel.setProperty("/edit", false);
+                this.getRouter().navTo("RoutesDetailEdit", {
+                    idListTravelTimes: oLocalModel.getProperty("/sIdListTravelTimes")
+                });
             }
         });
     });

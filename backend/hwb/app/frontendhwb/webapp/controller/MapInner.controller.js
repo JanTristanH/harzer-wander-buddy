@@ -24,7 +24,7 @@ sap.ui.define([
             onInit: function () {
                 this._oMap = this.byId("map");
                 if (!this.getModel("local")) {
-                    var oModel = new sap.ui.model.json.JSONModel();
+                    var oModel = new JSONModel();
                     oModel.setData({
                         UserLocationLat: 0,
                         UserLocationLng: 0,
