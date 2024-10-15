@@ -52,7 +52,13 @@
         <Table
             id="idEditRouteTable"
             mode="SingleSelectMaster"
-            items="{local>/routes}"
+            items="{
+            path: 'local>/routes',
+            sorter: {
+                path: 'rank',
+                descending: true
+            }
+        }"
         >
             <headerToolbar>
                 <OverflowToolbar>
@@ -65,7 +71,9 @@
                 </OverflowToolbar>
             </headerToolbar>
             <columns>
-                <Column width="85%"/>
+                <Column visible="false"/>
+                <Column visible="false"/>
+                <Column width="85%" />
                 <Column />
             </columns>
             <dragDropConfig>
@@ -89,12 +97,14 @@
             <items>
                 <ColumnListItem>
                     <cells>
+                        <Text text="{local>rank}" visible="false" /> <!-- used for easy access in controller -->
+                        <Text text="{local>id}" visible="false" /> <!-- used for easy access in controller -->
                         <Text text="{local>name}" />
                         <Button
-                        icon="sap-icon://delete"
-                        type="Transparent"
-                        press="onDeleteWayPointButtonPress"
-                    />
+                            icon="sap-icon://delete"
+                            type="Transparent"
+                            press="onDeleteWayPointButtonPress"
+                        />
                     </cells>
                 </ColumnListItem>
             </items>

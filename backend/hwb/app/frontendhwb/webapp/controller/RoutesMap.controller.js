@@ -1,10 +1,11 @@
 sap.ui.define([
-    "hwb/frontendhwb/controller/BaseController"
-    ],
+    "hwb/frontendhwb/controller/BaseController",
+    "sap/m/ColumnListItem",
+],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller) {
+    function (Controller, ColumnListItem) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
@@ -22,21 +23,21 @@ sap.ui.define([
                 this.bus.publish("flexible", "setList")
             },
 
-            onListSelect:function (params) {
-                
+            onListSelect: function (params) {
+
             },
 
             onFormatTravelModeIcon: function (sTravelMode) {
-                if (sTravelMode == "start"){
+                if (sTravelMode == "start") {
                     return "sap-icon://functional-location";
                 } else if (sTravelMode == "drive") {
                     return "sap-icon://car-rental";
                 }
                 return "sap-icon://physical-activity"
-                
+
             },
 
-            formatDescription: function(duration, distance) {
+            formatDescription: function (duration, distance) {
                 if (duration === 0 && distance === 0) {
                     return "";  // No description if both are 0
                 }
@@ -45,28 +46,92 @@ sap.ui.define([
                 return formattedDuration + " - " + formattedDistance + " - 0 HM";
             },
 
-            onButtonShareTourPress: function(oEvent) {
+            onButtonShareTourPress: function (oEvent) {
                 navigator
-                .share({
-                    title: document.title,
-                    text: 'Harzer Wander Buddy',
-                    url: window.location.href
-                })
+                    .share({
+                        title: document.title,
+                        text: 'Harzer Wander Buddy',
+                        url: window.location.href
+                    })
             },
 
-            onButtonEditPress: function() {
+            onButtonEditPress: function () {
                 const oLocalModel = this.getView().getModel("local");
                 oLocalModel.setProperty("/edit", true);
                 this.getRouter().navTo("RoutesDetailEdit", {
                     idListTravelTimes: oLocalModel.getProperty("/sIdListTravelTimes")
                 });
             },
-            onButtonSavePress: function() {
+            onButtonSavePress: function () {
                 const oLocalModel = this.getView().getModel("local");
                 oLocalModel.setProperty("/edit", false);
                 this.getRouter().navTo("RoutesDetailEdit", {
                     idListTravelTimes: oLocalModel.getProperty("/sIdListTravelTimes")
                 });
+            },
+
+            onDropSelectedProductsTable: function (oEvent) {
+                let ranking = {
+                    Initial: 0,
+                    Default: 1024,
+                    Before: function (iRank) {
+                        return iRank + 1024;
+                    },
+                    Between: function (iRank1, iRank2) {
+                        // limited to 53 rows
+                        return (iRank1 + iRank2) / 2;
+                    },
+                    After: function (iRank) {
+                        return iRank / 2;
+                    }
+                };
+
+                var oDraggedItem = oEvent.getParameter("draggedControl");
+                var oRanking = ranking;
+                var iNewRank = oRanking.Default;
+                var oDroppedItem = oEvent.getParameter("droppedControl");
+
+                if (oDroppedItem instanceof ColumnListItem) {
+                    // get the dropped row data
+                    var sDropPosition = oEvent.getParameter("dropPosition");
+                    var iDroppedItemRank = parseInt(oDroppedItem.getCells()[0].getText());
+                    var oDroppedTable = oDroppedItem.getParent();
+                    var iDroppedItemIndex = oDroppedTable.indexOfItem(oDroppedItem);
+                    
+                    // find the new index of the dragged row depending on the drop position
+                    var iNewItemIndex = iDroppedItemIndex + (sDropPosition === "After" ? 1 : -1);
+                    var oNewItem = oDroppedTable.getItems()[iNewItemIndex];
+                    if (!oNewItem) {
+                        // dropped before the first row or after the last row
+                        
+                        iNewRank = oRanking[sDropPosition](iDroppedItemRank);
+                    } else {
+                        debugger
+                        // dropped between first and the last row
+                        let iOtherRank = parseInt(oNewItem.getCells()[0].getText());
+                        iNewRank = oRanking.Between(iDroppedItemRank, iOtherRank);
+                    }
+                }
+
+                // set the rank property and update the model to refresh the bindings
+                const oLocalModel = this.getModel("local");
+                let sId = oDraggedItem.getCells()[1].getText();
+                let aUpdatedRoutes = oLocalModel.getProperty('/routes').map(r => {
+                    if (r.id == sId) {
+                        r.rank = iNewRank;
+                    }
+                    return r;
+                })
+                oLocalModel.setProperty(`/routes`, aUpdatedRoutes);
+
+                // Reapply the sorter to trigger refresh of the table
+                const oTable = this.byId("idEditRouteTable");
+                const oBinding = oTable.getBinding("items");
+                const oSorter = new sap.ui.model.Sorter({
+                    path: "rank",
+                    descending: true
+                });
+                oBinding.sort(oSorter);
             }
         });
     });

@@ -89,6 +89,7 @@ sap.ui.define([
 
             _mapTravelTimeToPOIList: function(aPath) {
             aPath.unshift({
+                "id": "start",
                 "name": this.getModel("i18n").getProperty("start"),
                 //"fromPoi": "1e4b7315-a596-4e73-95b6-92fbf79a92a1",
                 //"poi": "729ba51a-acd5-4c6c-b888-313dc637da8c",
@@ -97,7 +98,16 @@ sap.ui.define([
                 "travelMode": "start",
                 "toPoiType": "start",
               });
-              return aPath;  
+
+              let rank = 2048;
+              aPath.reverse();
+              aPath = aPath.map(p => {
+                p.rank = rank ;
+                rank = rank * 2;
+                return p;
+              });
+              aPath.reverse();
+              return aPath;
             },
 
             _getStartOfTour: function (oTour) {
