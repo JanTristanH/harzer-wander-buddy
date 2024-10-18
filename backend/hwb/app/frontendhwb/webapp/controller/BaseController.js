@@ -32,6 +32,13 @@ sap.ui.define([
             return this.getModel("i18n").getResourceBundle().getText(sKey);
         },
 
+        _getPoiById: function(ID) {
+            let oModel = this.getModel();
+            let oStamp = oModel.getProperty(`/Stampboxes(guid'${ID}')`);
+            let oParking = oModel.getProperty(`/ParkingSpots(guid'${ID}')`);
+            return oStamp || oParking;
+        },
+
         onNavBack: function () {
             var oHistory, sPreviousHash;
             oHistory = History.getInstance();

@@ -393,14 +393,6 @@ sap.ui.define([
                 window.open(sLink, '_blank').focus();
             },
 
-            _getPoiById: function(ID) {
-                let oModel = this.getModel();
-                let oStamp = oModel.getProperty(`/Stampboxes(guid'${ID}')`);
-                let oParking = oModel.getProperty(`/ParkingSpots(guid'${ID}')`);
-                return oStamp || oParking;
-            },
-
-
             formatStampButtonIcon: function (bStampingEnabled) {
                 // disabled = already stamped -> no quick stamp
                 if (bStampingEnabled) {

@@ -22,17 +22,20 @@ sap.ui.define([
             onInit: function () {
                 this.getView().setModel(new JSONModel(), "local");
                 //Open routing dialog when opening this view
-
+                
                 this.oFlexibleColumnLayout = this.byId("fcl");
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("flexible", "setList", this.setList, this);
-
+                
                 this.getRouter().getRoute("Routes").attachPatternMatched(this.onOpenRoutingDialog, this);
                 this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onDetailRouteMatched, this);
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onDetailRouteEditMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRoutePersistedMatched, this);
             },
             onDetailRoutePersistedMatched: function (oEvent) {
+                this.getView().getModel().read("/Stampboxes");
+                this.getView().getModel().read("/ParkingSpots");
+                // TODO here we could wait for the requests to actually return
                 this.onDetailRouteEditMatched(oEvent);
                 let oLocalModel = this.getView().getModel("local");
                 oLocalModel.setProperty("/edit", false);
@@ -64,7 +67,8 @@ sap.ui.define([
                                             .map(tt => {
                                                 tt.duration = tt.durationSeconds;
                                                 tt.distance = tt.distanceMeters;
-                                                tt.name = "Platzhalter";
+                                                debugger
+                                                tt.name = this._getPoiById(tt.toPoi).name;
                                                 return tt;
                                             });
                                         oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
