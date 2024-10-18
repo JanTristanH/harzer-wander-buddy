@@ -37,7 +37,6 @@ sap.ui.define([
             },
 
             onSelectionChange: function (oEvent) {
-
                 this.updateStampCount()
 
                 // Update Backend

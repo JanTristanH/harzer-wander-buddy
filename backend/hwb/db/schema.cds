@@ -80,7 +80,9 @@ entity Stampings : cuid {
     createdBy : User      @cds.on.insert: $user;
 }
 
+@cds.autoexpose
 entity Tours : cuid {
+    name: String;
     distance: Integer64;
     duration: Integer64;
     stampCount: Int32;

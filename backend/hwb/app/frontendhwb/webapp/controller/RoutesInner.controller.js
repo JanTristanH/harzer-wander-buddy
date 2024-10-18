@@ -2,12 +2,15 @@ sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     "sap/ui/model/json/JSONModel",
     "sap/ui/core/mvc/XMLView",
-    "sap/f/library"
+    "sap/f/library",
+    "sap/m/MessageToast",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, XMLView, fioriLibrary) {
+    function (Controller, JSONModel, XMLView, fioriLibrary, MessageToast, Filter, FilterOperator) {
         "use strict";
         var autocomplete; //inspired by https://github.com/costa-satsati/addressautocomplete/
         var LayoutType = fioriLibrary.LayoutType;
@@ -25,12 +28,64 @@ sap.ui.define([
                 this.bus.subscribe("flexible", "setList", this.setList, this);
 
                 this.getRouter().getRoute("Routes").attachPatternMatched(this.onOpenRoutingDialog, this);
-                this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRouteMatched, this);
+                this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onDetailRouteMatched, this);
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onDetailRouteEditMatched, this);
+                this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRoutePersistedMatched, this);
             },
+            onDetailRoutePersistedMatched: function (oEvent) {
+                this.onDetailRouteEditMatched(oEvent);
+                let oLocalModel = this.getView().getModel("local");
+                oLocalModel.setProperty("/edit", false);
+            },
+
             onDetailRouteEditMatched: function (oEvent) {
-              this.getModel("local").setProperty("/edit", true);
-              this.onDetailRouteMatched(oEvent);  
+                let oLocalModel = this.getView().getModel("local");
+                oLocalModel.setProperty("/edit", true);
+                this.onDetailRouteMatched(oEvent);
+                var sTourId = oEvent.getParameter("arguments").TourId;
+                //TODO show detail page for persisted tour
+                if (sTourId && oLocalModel.getProperty(`/Tours(${sTourId})`)) {
+                    this._showDetailViewForIdList(sTourId);
+                } else {
+                    this.getModel().read(`/Tours(${sTourId})`, {
+                        success: function (oData, response) {
+                            // Check if the deferred entity needs to be loaded separately
+                            // load in two steps as expand is currently broken
+                            if (oData.path && oData.path.__deferred) {
+                                this.getModel().read(`/Tour2TravelTime`, {
+                                    urlParameters: { "$expand": "travelTime" },
+                                    filters: [
+                                        new Filter("tour_ID", FilterOperator.EQ, sTourId)
+                                    ],
+                                    success: function (oRelatedData, oResponse) {
+                                        // Set the related data in the local model or handle as needed
+                                        debugger
+                                        oData.path = oRelatedData.results.map(path => path.travelTime)
+                                            .map(tt => {
+                                                tt.duration = tt.durationSeconds;
+                                                tt.distance = tt.distanceMeters;
+                                                tt.name = "Platzhalter";
+                                                return tt;
+                                            });
+                                        oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
+
+                                        // Show details for the main entity
+                                        this._showDetailViewForIdList(oData.ID);
+                                    }.bind(this),
+                                    error: function (oError) {
+                                        MessageToast.show("Error loading deferred entity!");
+                                        console.error(oError);
+                                    }
+                                });
+                            }
+                        }.bind(this),
+                        error: function (oError) {
+                            MessageToast.show("Error saving the tour!");
+                            console.error(oError);
+                        }
+                    });
+                }
+                this.getModel("local").setProperty("/sIdListTravelTimes", sTourId);
             },
 
             onDetailRouteMatched: function (oEvent) {
@@ -70,10 +125,12 @@ sap.ui.define([
                     });
                 } else {
                     // open Detail with correct data
+                    oLocalModel.setProperty("/oSelectedTour", oTour);
                     oLocalModel.setProperty("/routes", this._mapTravelTimeToPOIList(oTour.path));
                     oLocalModel.setProperty("/stampCount", oTour.stampCount);
                     oLocalModel.setProperty("/distance", oTour.distance);
                     oLocalModel.setProperty("/duration", oTour.duration);
+                    oLocalModel.setProperty("/name", oTour.name);
                     oLocalModel.setProperty("/wayPointScrollContainerHeight", "400px");
 
                     let sStartOfTour = this._getStartOfTour(oTour);
@@ -87,30 +144,36 @@ sap.ui.define([
                 }
             },
 
-            _mapTravelTimeToPOIList: function(aPath) {
-            aPath.unshift({
-                "id": "start",
-                "name": this.getModel("i18n").getProperty("start"),
-                //"fromPoi": "1e4b7315-a596-4e73-95b6-92fbf79a92a1",
-                //"poi": "729ba51a-acd5-4c6c-b888-313dc637da8c",
-                "duration": 0,
-                "distance": 0,
-                "travelMode": "start",
-                "toPoiType": "start",
-              });
+            _mapTravelTimeToPOIList: function (aPath) {
+                if (!Array.isArray(aPath)) {
+                    return [];
+                }
+                aPath.unshift({
+                    "id": "start",
+                    "name": this.getModel("i18n").getProperty("start"),
+                    //"fromPoi": "1e4b7315-a596-4e73-95b6-92fbf79a92a1",
+                    //"poi": "729ba51a-acd5-4c6c-b888-313dc637da8c",
+                    "duration": 0,
+                    "distance": 0,
+                    "travelMode": "start",
+                    "toPoiType": "start",
+                });
 
-              let rank = 2048;
-              aPath.reverse();
-              aPath = aPath.map(p => {
-                p.rank = rank ;
-                rank = rank * 2;
-                return p;
-              });
-              aPath.reverse();
-              return aPath;
+                let rank = 2048;
+                aPath.reverse();
+                aPath = aPath.map(p => {
+                    p.rank = rank;
+                    rank = rank * 2;
+                    return p;
+                });
+                aPath.reverse();
+                return aPath;
             },
 
             _getStartOfTour: function (oTour) {
+                if (!Array.isArray(oTour.path)) {
+                    return ("10.445580000000064;51.80594")
+                }
                 return oTour.path[1].positionString.split(';0')[0];
             },
 
@@ -179,21 +242,22 @@ sap.ui.define([
                     method: "GET",
                     urlParameters: oParams,
                     success: function (oData) {
-                        
+                        this.byId("idIconTabBarMulti").setSelectedKey("iconTabFilterCalculatedRoutes");
+
                         this.setDetailPage();
                         // Additional success handling
                         let oLocalModel = this.getView().getModel("local"),
-                        results = oData.calculateHikingRoute.results,
-                        oInitiallySelectedTour = results[0];
+                            results = oData.calculateHikingRoute.results,
+                            oInitiallySelectedTour = results[0];
                         oLocalModel.setProperty("/hikingRoutes", results);
-                        
+
                         // Map results of calculation to Tour property of model, refactor later
                         this._writeHikingRoutesAsToursToModel(results, oLocalModel);
-                        
+
                         this.pDialog.close();
                         if (!!results.length) {
                             sap.m.MessageToast.show(this.getModel("i18n").getProperty("routeCalculatedSuccessfully"));
-                            this.getRouter().navTo("RoutesDetail", {
+                            this.getRouter().navTo("RoutesDetailTransient", {
                                 idListTravelTimes: oInitiallySelectedTour.id
                             });
                         } else {
@@ -213,12 +277,20 @@ sap.ui.define([
                 }
             },
 
+            onSelectionChangeTour: function (oEvent) {
+                debugger
+                let TourId = oEvent.getParameter("selectedItem").getKey()
+                    || this.getRouter().getRouteInfoByHash(this.getRouter().getHashChanger().getHash()).arguments.TourId;
+                this.getRouter().navTo("RoutesDetail", {
+                    TourId
+                });
+            },
+
             onSelectionChange: function (oEvent) {
                 let idListTravelTimes = oEvent.getParameter("selectedItem").getKey();
-                this.getRouter().navTo("RoutesDetail", {
+                this.getRouter().navTo("RoutesDetailTransient", {
                     idListTravelTimes
                 });
-
             },
 
             setDetailPage: function (sCenterPosition) {
@@ -236,9 +308,9 @@ sap.ui.define([
                     if (this._oMap && sCenterPosition) {
                         this._oMap.setCenterPosition(sCenterPosition);
                         let oNestedController = sap.ui.getCore().byId("midView--RoutesMapId").getController()
-                        oNestedController.onSpotClick = () => {};
-                        oNestedController.onSpotContextMenu = () => {};
-                    } else if(sCenterPosition) {
+                        oNestedController.onSpotClick = () => { };
+                        oNestedController.onSpotContextMenu = () => { };
+                    } else if (sCenterPosition) {
                         setTimeout(() => {
                             //TODO attach to fitting event
                             this.setDetailPage(sCenterPosition)

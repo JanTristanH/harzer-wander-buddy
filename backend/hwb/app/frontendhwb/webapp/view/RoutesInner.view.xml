@@ -17,21 +17,65 @@
                 backgroundDesign="Transparent"
             >
                 <content>
-                    <Button
-                        press='onOpenRoutingDialog'
-                        text="Routen Berechnen"
-                    />
-                    <HBox height="100%">
-                        <SelectList
-                            id="idRouteList"
-                            items="{local>/hikingRoutes}"
-                            selectionChange="onSelectionChange"
+                    <HBox
+                        height="100%"
+                        width="100%"
+                    >
+                        <IconTabBar
+                            id="idIconTabBarMulti"
+                            class="sapUiResponsiveContentPadding"
                         >
-                        <core:ListItem
-                            key="{local>id}"
-                            text="Länge: {path: 'local>duration', formatter: '.formatSecondsToTime'} - Distanz: {path: 'local>distance', formatter: '.formatMetersToKilometers'} - Stempel: {local>stampCount}"
-                        />
-                        </SelectList>
+                            <items>
+                                <IconTabFilter
+                                    icon="sap-icon://expand-all"
+                                    key="iconTabFilterTours"
+                                    text="{i18n>allTours}"
+                                >
+                                    <SelectList
+                                        id="idTourList"
+                                        items="{/Tours}"
+                                        selectionChange="onSelectionChangeTour"
+                                        enabled="true"
+                                    >
+                                        <core:ListItem
+                                            key="{ID}"
+                                            text="{name} - Länge: {path: 'duration', formatter: '.formatSecondsToTime'} - Distanz: {path: 'distance', formatter: '.formatMetersToKilometers'} - Stempel: {stampCount}"
+                                        />
+                                    </SelectList>
+                                </IconTabFilter>
+                                <IconTabFilter
+                                    icon="sap-icon://ai"
+                                    key="iconTabFilterCalculatedRoutes"
+                                    text="{i18n>individuel}"
+                                >
+                                    <IllustratedMessage
+                                        enableVerticalResponsiveness="true"
+                                        illustrationType="sapIllus-SearchEarth"
+                                        title="{i18n>noIndividuellDataHeader}"
+                                        description="{i18n>noIndividuellData}"
+                                        visible="{= ${local>/hikingRoutes}.length === 0 }"
+                                    >
+                                        <additionalContent>
+                                            <Button
+                                                text="{i18n>calculateTour}"
+                                                press='onOpenRoutingDialog'
+                                                class="sapUiSmallMargin"
+                                            />
+                                        </additionalContent>
+                                    </IllustratedMessage>
+                                    <SelectList
+                                        id="idRouteList"
+                                        items="{local>/hikingRoutes}"
+                                        selectionChange="onSelectionChange"
+                                    >
+                                        <core:ListItem
+                                            key="{local>id}"
+                                            text="Länge: {path: 'local>duration', formatter: '.formatSecondsToTime'} - Distanz: {path: 'local>distance', formatter: '.formatMetersToKilometers'} - Stempel: {local>stampCount}"
+                                        />
+                                    </SelectList>
+                                </IconTabFilter>
+                            </items>
+                        </IconTabBar>
                     </HBox>
                 </content>
             </Page>

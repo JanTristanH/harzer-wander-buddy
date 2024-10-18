@@ -62,10 +62,10 @@ This project is configured to run with a postgres.
 - add quick view for selected POI ✔️
   - contains navigate to button that opens maps ✔️
   - link to external site ✔️
-  - fix user experience on mobile for this view -> pull up card
-- refactor routes to use joined travel time key (-> persist later, can recalculate dynamically)
+  - fix user experience on mobile for this view -> pull up card ✔️
+- refactor routes to use joined travel time key (-> persist later, can recalculate dynamically) ✔️
 - basic tour planning
-- nice illustrated message on initial routes view -> show list of tours 
+- nice illustrated message on initial routes view -> show list of tours ✔️
 - Profile page
   - saved tours
   - overview achievements
@@ -77,6 +77,7 @@ This project is configured to run with a postgres.
 
 - fix handler to be normally performant: this.after('READ', `Stampboxes`
 - add images & descriptions to stamps
+- Update color schema of app to match background of mascot
 - Profile: timeline for stampings (allow change of date)
 - optional: generate AI descriptions for routes
 - open individual travel time in maps or hiking app like komoot

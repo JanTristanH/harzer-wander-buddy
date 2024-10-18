@@ -128,15 +128,22 @@
                 ]
             },
             {
+                "name": "RoutesDetailTransient",
+                "pattern": "tour/transient/{idListTravelTimes}",
+                "target": [
+                    "TargetRoutes"
+                ]
+            },
+            {
                 "name": "RoutesDetail",
-                "pattern": "routes/{idListTravelTimes}",
+                "pattern": "tour/{TourId}",
                 "target": [
                     "TargetRoutes"
                 ]
             },
             {
                 "name": "RoutesDetailEdit",
-                "pattern": "routes/{idListTravelTimes}/edit",
+                "pattern": "tour/{TourId}/edit",
                 "target": [
                     "TargetRoutes"
                 ]

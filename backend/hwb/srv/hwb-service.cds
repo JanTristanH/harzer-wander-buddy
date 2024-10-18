@@ -23,6 +23,8 @@ service api @(requires: 'authenticated-user') {
 
     function getTourByIdListTravelTimes(idListTravelTimes : String) returns String;
 
+    action updateTourByPOIList(TourID: UUID, POIList: String) returns String;
+
     function updateOrderBy() returns String;
 
     @cds.redirection.target
@@ -42,14 +44,16 @@ service api @(requires: 'authenticated-user') {
         longitude,
         latitude,
         name,
-        description
+        description,
+        'stamp' as poiType: String
     } union all
     select from ParkingSpots {
         key ID,
         longitude,
         latitude,
         name,
-        description
+        description,
+        'parking' as poiType: String
     };
 
 

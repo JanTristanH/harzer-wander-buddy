@@ -59,6 +59,8 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on("getTourByIdListTravelTimes", getTourByIdListTravelTimes)
 
+    this.on("updateTourByPOIList", updateTourByPOIList)
+
     this.on('READ', 'TypedTravelTimes', async (req) => {
       // const db = cds.transaction(req);
 
@@ -94,6 +96,95 @@ async function deleteSpotWithRoutes(req) {
   result += await DELETE.from(TravelTimes).where({ toPoi: poiIdToDelete });
   return result;
 }
+
+async function updateTourByPOIList(req) {
+  let id = req.data.TourID;
+  let poiList = req.data.POIList;
+
+  const { typedTravelTimes } = this.api.entities;
+
+  let aPois = poiList.split(";");
+  let aPoiPairs = [];
+
+  // Loop through all POI pairs and create the list of required pairs
+  for (let i = 0; i < aPois.length - 1; i++) {
+      aPoiPairs.push({ fromPoi: aPois[i], toPoi: aPois[i + 1] });
+  }
+
+  // Construct a condition string for the WHERE clause to match pairs of POIs
+  let conditionString = aPoiPairs
+    .map(pair => `(fromPoi = '${pair.fromPoi}' AND toPoi = '${pair.toPoi}')`)
+    .join(' OR ');
+
+  // If there are no pairs, skip the query
+  if (conditionString.length === 0) {
+    conditionString = '1 = 0'; // Just to ensure no results are returned
+  }
+
+  // Step 1: Load applicable travel times for the given POI pairs
+  const aTravelTimesWithPositionString = await SELECT
+    .columns('ID', 'fromPoi', 'toPoi', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
+    .from(typedTravelTimes)
+    .where(`${conditionString}`);
+
+  // Step 2: Identify missing travel times
+  // Create a set of POI pairs from the results for easier lookup
+  let existingTravelTimes = new Set();
+  aTravelTimesWithPositionString.forEach((entry) => {
+    existingTravelTimes.add(`${entry.fromPoi}-${entry.toPoi}`);
+  });
+
+  // Prepare an array of POI pairs for which travel times are missing
+  let aMissingTravelTimes = [];
+
+  // Loop through all POI pairs and check if the travel time is already present
+  aPoiPairs.forEach((pair) => {
+    let pairKey = `${pair.fromPoi}-${pair.toPoi}`;
+    if (!existingTravelTimes.has(pairKey)) {
+      aMissingTravelTimes.push(pair);
+    }
+  });
+
+  // Step 3: Calculate missing travel times (pseudo-code)
+  let aNeededTravelTimes = [];
+  for (let pair of aMissingTravelTimes) {
+    // Assuming you have a method to calculate travel time
+    let calculatedTravelTime = await calculateTravelTime(pair.fromPoi, pair.toPoi);
+
+    // Add the calculated travel time to the array of needed travel times
+    aNeededTravelTimes.push({
+      fromPoi: pair.fromPoi,
+      toPoi: pair.toPoi,
+      durationSeconds: calculatedTravelTime.duration,
+      distanceMeters: calculatedTravelTime.distance,
+      travelMode: calculatedTravelTime.mode,
+      name: `${pair.fromPoi}-${pair.toPoi}`
+    });
+  }
+
+  // TODO: You might want to save the new travel times to the database here
+  // await INSERT.into(typedTravelTimes).entries(aNeededTravelTimes);
+
+  //TODO update stamp count, total time and distance
+  return id;
+}
+
+// Example of a method to calculate travel time (needs to be implemented)
+async function calculateTravelTime(fromPoi, toPoi) {
+  // Placeholder logic to simulate travel time calculation
+  return {
+    duration: Math.random() * 3600, // Duration in seconds
+    distance: Math.random() * 10000, // Distance in meters
+    mode: "car" // Travel mode
+  };
+  const { AllPointsOfInterest } = this.api.entities;
+  await SELECT
+    .columns('ID', 'fromPoi', 'toPoi', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
+    .from(AllPointsOfInterest)
+    .where(`${conditionString}`);
+  return getTravelTimes(fromPoi, toPoi, "walk");
+}
+
 
 async function getTourByIdListTravelTimes(req) {
   let id = req.data.idListTravelTimes;

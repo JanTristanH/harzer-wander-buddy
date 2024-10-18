@@ -160,5 +160,24 @@ Authorization: Basic Kevin pass
 {
     "idListTravelTimes": "52ecfbac-149e-4023-bed8-74c8b8834f14;ec2fbd15-9ec4-40f3-b104-afd55202f33b;62e38328-023f-47a6-8887-014af62dd05b",
     "duration": 420,
-    "distance": 69
+    "distance": 69,
+    "stampCount": 222
+}
+
+### Get Tours
+GET  http://localhost:4004/odata/v2/api/Tours
+Accept: application/json
+Authorization: Basic Kevin pass
+
+
+### Create dummy tour
+# Eselsplatz, parkin, parking without tt, Maaßener Gaipel
+POST http://localhost:4004/odata/v2/api/updateTourByPOIList
+Accept: application/json
+content-type: application/json
+Authorization: Basic Kevin pass
+
+{
+    "TourID": "2b604de9-f811-428a-b749-68eb26bbdfdc",
+    "POIList": "8d6a69ad-5b1c-4465-83b6-578c330499e4;214e3552-49f7-4fa1-8ac9-584a2a5e38cf;6a6bf0f8-91df-4581-85d5-cdab9ab426a8;7ad39d20-46b0-4984-85cd-30942561eab7"
 }

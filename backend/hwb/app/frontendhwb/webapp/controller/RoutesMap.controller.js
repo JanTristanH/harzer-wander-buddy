@@ -1,17 +1,30 @@
 sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     "sap/m/ColumnListItem",
+    "sap/m/MessageToast"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, ColumnListItem) {
+    function (Controller, ColumnListItem, MessageToast) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
+            bPersistedDisplayed: true,
             onInit: function () {
+                this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onRoutesDetailTransientRouteMatched, this);
+                this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onRoutesDetailMatched, this);
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("idRoutesWayPointList", "onListSelect", this.onListSelect, this);
+            },
+
+            onRoutesDetailMatched: function () {
+                this.bPersistedDisplayed = true;
+            },
+
+            onRoutesDetailTransientRouteMatched: function (oEvent) {
+                this.bPersistedDisplayed = false;
+                this.TourId = oEvent.getParameter("arguments").TourId;
             },
 
             onSplitterRoutesDetailResize: function (oEvent) {
@@ -56,17 +69,49 @@ sap.ui.define([
             },
 
             onButtonEditPress: function () {
+                var oModel = this.getModel();
                 const oLocalModel = this.getView().getModel("local");
                 oLocalModel.setProperty("/edit", true);
-                this.getRouter().navTo("RoutesDetailEdit", {
-                    idListTravelTimes: oLocalModel.getProperty("/sIdListTravelTimes")
-                });
+
+                if (this.bPersistedDisplayed) {
+                    let TourId = this.TourId || this.getRouter().getRouteInfoByHash(this.getRouter().getHashChanger().getHash()).arguments.TourId; 
+                    this.getRouter().navTo("RoutesDetailEdit", {
+                        TourId
+                    });
+                } else {
+                    // Prepare the payload
+                    var oPayload = {
+                        "name": "Neue Tour",
+                        "idListTravelTimes": oLocalModel.getProperty("/sIdListTravelTimes"),
+                        // TODO those will be calculated by backend
+                        "duration": oLocalModel.getProperty("/duration"),
+                        "distance": oLocalModel.getProperty("/distance"),
+                        "stampCount": oLocalModel.getProperty("/stampCount")
+                    };
+
+                    // Call function
+                    oModel.create("/Tours", oPayload, {
+                        success: function (oData, response) {
+                            oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
+                            sap.m.MessageToast.show("Post successful!");
+
+                            this.getRouter().navTo("RoutesDetailEdit", {
+                                TourId: oData.ID
+                            });
+
+                        }.bind(this),
+                        error: function (oError) {
+                            sap.m.MessageToast.show("Error saving the tour!");
+                            console.error(oError);
+                        }
+                    });
+                }
             },
             onButtonSavePress: function () {
                 const oLocalModel = this.getView().getModel("local");
                 oLocalModel.setProperty("/edit", false);
                 this.getRouter().navTo("RoutesDetailEdit", {
-                    idListTravelTimes: oLocalModel.getProperty("/sIdListTravelTimes")
+                    TourId: oLocalModel.getProperty("/sIdListTravelTimes")
                 });
             },
 
@@ -97,16 +142,15 @@ sap.ui.define([
                     var iDroppedItemRank = parseInt(oDroppedItem.getCells()[0].getText());
                     var oDroppedTable = oDroppedItem.getParent();
                     var iDroppedItemIndex = oDroppedTable.indexOfItem(oDroppedItem);
-                    
+
                     // find the new index of the dragged row depending on the drop position
                     var iNewItemIndex = iDroppedItemIndex + (sDropPosition === "After" ? 1 : -1);
                     var oNewItem = oDroppedTable.getItems()[iNewItemIndex];
                     if (!oNewItem) {
                         // dropped before the first row or after the last row
-                        
+
                         iNewRank = oRanking[sDropPosition](iDroppedItemRank);
                     } else {
-                        debugger
                         // dropped between first and the last row
                         let iOtherRank = parseInt(oNewItem.getCells()[0].getText());
                         iNewRank = oRanking.Between(iDroppedItemRank, iOtherRank);
@@ -132,6 +176,25 @@ sap.ui.define([
                     descending: true
                 });
                 oBinding.sort(oSorter);
+            },
+
+            onNameInputChange: function(oEvent) {
+                let sNewName = oEvent.getSource().getValue();
+                let oSelectedTour = this.getModel("local").getProperty("/oSelectedTour");
+    
+                let sPath = "/Tours(guid'" + oSelectedTour.ID + "')";
+                let oData = {
+                    name: sNewName
+                };
+            debugger
+                this.getModel().update(sPath, oData, {
+                    success: function() {
+                        MessageToast.show(this.getText("saved"));
+                    },
+                    error: function(oError) {
+                        MessageToast.show(this.getText("error"));
+                    }
+                });
             }
         });
     });

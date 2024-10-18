@@ -49,6 +49,7 @@
         headerText="{i18n>wayPoints}"
         class="sapUiTinyMargin"
     >
+        <Input value="{local>/name}" change="onNameInputChange"/>
         <Table
             id="idEditRouteTable"
             mode="SingleSelectMaster"

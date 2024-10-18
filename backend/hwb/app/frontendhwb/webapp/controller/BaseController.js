@@ -28,6 +28,10 @@ sap.ui.define([
             return this.getView().getModel(sName);
         },
 
+        getText: function(sKey) {
+            return this.getModel("i18n").getResourceBundle().getText(sKey);
+        },
+
         onNavBack: function () {
             var oHistory, sPreviousHash;
             oHistory = History.getInstance();
