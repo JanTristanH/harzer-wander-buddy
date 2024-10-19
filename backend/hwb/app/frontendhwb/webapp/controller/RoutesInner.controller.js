@@ -22,26 +22,68 @@ sap.ui.define([
             onInit: function () {
                 this.getView().setModel(new JSONModel(), "local");
                 //Open routing dialog when opening this view
-                
+
                 this.oFlexibleColumnLayout = this.byId("fcl");
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("flexible", "setList", this.setList, this);
-                
+
                 this.getRouter().getRoute("Routes").attachPatternMatched(this.onOpenRoutingDialog, this);
                 this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onDetailRouteMatched, this);
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onDetailRouteEditMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRoutePersistedMatched, this);
             },
             onDetailRoutePersistedMatched: function (oEvent) {
-                this.getView().getModel().read("/Stampboxes");
-                this.getView().getModel().read("/ParkingSpots");
-                // TODO here we could wait for the requests to actually return
-                this.onDetailRouteEditMatched(oEvent);
+                let oModel = this.getView().getModel();
                 let oLocalModel = this.getView().getModel("local");
-                oLocalModel.setProperty("/edit", false);
+
+                // Create promises for the read operations
+                let stampboxesPromise = new Promise(function (resolve, reject) {
+                    oModel.read("/Stampboxes", {
+                        urlParameters: {
+                            "$top": 500
+                        },
+                        success: function (oData) {
+                            resolve(oData);
+                        },
+                        error: function (oError) {
+                            reject(oError);
+                        }
+                    });
+                });
+
+                let parkingSpotsPromise = new Promise(function (resolve, reject) {
+                    oModel.read("/ParkingSpots", {
+                        urlParameters: {
+                            "$top": 500
+                        },
+                        success: function (oData) {
+                            resolve(oData);
+                        },
+                        error: function (oError) {
+                            reject(oError);
+                        }
+                    });
+                });
+
+                // Wait for both requests to finish
+                Promise.all([stampboxesPromise, parkingSpotsPromise])
+                    .then(function () {
+                        // Continue once both requests are successful
+                        this.onDetailRouteEditMatchedInner(oEvent);
+                        oLocalModel.setProperty("/edit", false);
+                    }.bind(this))
+                    .catch(function (oError) {
+                        // Handle any errors here
+                        console.error("Error reading Stampboxes or ParkingSpots:", oError);
+                    });
             },
 
             onDetailRouteEditMatched: function (oEvent) {
+                this.onDetailRoutePersistedMatched(oEvent);
+                setTimeout(() => this.getModel("local").setProperty("/edit", true), 1500);
+            },
+
+            onDetailRouteEditMatchedInner: function (oEvent) {
                 let oLocalModel = this.getView().getModel("local");
                 oLocalModel.setProperty("/edit", true);
                 this.onDetailRouteMatched(oEvent);
@@ -62,12 +104,13 @@ sap.ui.define([
                                     ],
                                     success: function (oRelatedData, oResponse) {
                                         // Set the related data in the local model or handle as needed
-                                        debugger
                                         oData.path = oRelatedData.results.map(path => path.travelTime)
                                             .map(tt => {
+                                                if (!this._getPoiById(tt.toPoi)) {
+                                                    debugger
+                                                }
                                                 tt.duration = tt.durationSeconds;
                                                 tt.distance = tt.distanceMeters;
-                                                debugger
                                                 tt.name = this._getPoiById(tt.toPoi).name;
                                                 return tt;
                                             });
@@ -152,11 +195,15 @@ sap.ui.define([
                 if (!Array.isArray(aPath)) {
                     return [];
                 }
+                if (aPath.filter(p => p.id == "start").length != 0) {
+                    return aPath;
+                }
+
                 aPath.unshift({
                     "id": "start",
                     "name": this.getModel("i18n").getProperty("start"),
                     //"fromPoi": "1e4b7315-a596-4e73-95b6-92fbf79a92a1",
-                    //"poi": "729ba51a-acd5-4c6c-b888-313dc637da8c",
+                    "poi": aPath[0].poi,
                     "duration": 0,
                     "distance": 0,
                     "travelMode": "start",
@@ -282,7 +329,6 @@ sap.ui.define([
             },
 
             onSelectionChangeTour: function (oEvent) {
-                debugger
                 let TourId = oEvent.getParameter("selectedItem").getKey()
                     || this.getRouter().getRouteInfoByHash(this.getRouter().getHashChanger().getHash()).arguments.TourId;
                 this.getRouter().navTo("RoutesDetail", {
