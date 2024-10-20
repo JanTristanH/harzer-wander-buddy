@@ -75,10 +75,13 @@ function upsertTourDetailsById(req, entities) {
   const { Tour2TravelTime } = entities;
   //TODO recalculate Details of distance & duration
   const aTravelTimeIds = req.idListTravelTimes.split(";");
+  let rank = 32767;
   let aTour2TravelTime = aTravelTimeIds.map(travelTime_ID => {
+    rank--;
     return {
       travelTime_ID,
-      tour_ID: req.ID
+      tour_ID: req.ID,
+      rank
     }
   })
   return UPSERT(aTour2TravelTime).into(Tour2TravelTime);
@@ -102,6 +105,7 @@ async function updateTourByPOIList(req) {
   let poiList = req.data.POIList;
 
   const { typedTravelTimes } = this.api.entities;
+  const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime } = this.entities('hwb.db');
 
   let aPois = poiList.split(";");
   let aPoiPairs = [];
@@ -130,9 +134,9 @@ async function updateTourByPOIList(req) {
   // Step 2: Identify missing travel times
   // Create a set of POI pairs from the results for easier lookup
   let existingTravelTimes = new Set();
-  aTravelTimesWithPositionString.forEach((entry) => {
-    existingTravelTimes.add(`${entry.fromPoi}-${entry.toPoi}`);
-  });
+  // aTravelTimesWithPositionString.forEach((entry) => {
+  //   existingTravelTimes.add(`${entry.fromPoi}-${entry.toPoi}`);
+  // });
 
   // Prepare an array of POI pairs for which travel times are missing
   let aMissingTravelTimes = [];
@@ -153,19 +157,30 @@ async function updateTourByPOIList(req) {
 
     // Add the calculated travel time to the array of needed travel times
     aNeededTravelTimes.push({
+      ID : uuidv4(),
       fromPoi: pair.fromPoi,
       toPoi: pair.toPoi,
       durationSeconds: calculatedTravelTime.duration,
       distanceMeters: calculatedTravelTime.distance,
       travelMode: calculatedTravelTime.mode,
-      name: `${pair.fromPoi}-${pair.toPoi}`
+      positionString: calculatedTravelTime.positionString
     });
   }
+  // save the new travel times to the database
+  await INSERT.into(TravelTimes).entries(aNeededTravelTimes);
 
-  // TODO: You might want to save the new travel times to the database here
-  // await INSERT.into(typedTravelTimes).entries(aNeededTravelTimes);
-
+  // Update Tour TravelTimes
+  await DELETE.from(Tour2TravelTime).where({ tour_ID: id });
   //TODO update stamp count, total time and distance
+
+  aTravelTimesWithPositionString = aTravelTimesWithPositionString.join(aNeededTravelTimes);
+  let aTour2TravelTime = aTravelTimesWithPositionString.map( tt => {
+    return {
+      travelTime_ID: tt.ID,
+      tour_ID: id
+    }
+  })
+  await UPSERT(aTour2TravelTime).into(Tour2TravelTime);
   return id;
 }
 

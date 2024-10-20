@@ -93,6 +93,7 @@ entity Tours : cuid {
 entity Tour2TravelTime @cds.autoexpose {
     key tour : Association to Tours;
     key travelTime : Association to TravelTimes;
+    rank: Int16;
 }
 
 // Todo save commen stamps as suggested routed

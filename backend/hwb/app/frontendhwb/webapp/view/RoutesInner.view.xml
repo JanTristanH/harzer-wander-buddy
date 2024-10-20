@@ -48,6 +48,17 @@
                                     key="iconTabFilterCalculatedRoutes"
                                     text="{i18n>individuel}"
                                 >
+                                    <HBox>
+                                        <!-- alternate calculation button when IllustratedMessage is hidden -->
+                                        <Button
+                                            id="idTourCalculateButton"
+                                            visible="false"
+                                            text="{i18n>calculateTour}"
+                                            press='onOpenRoutingDialog'
+                                            class="sapUiSmallMargin"
+                                            icon="sap-icon://activate"
+                                        />
+                                    </HBox>
                                     <IllustratedMessage
                                         enableVerticalResponsiveness="true"
                                         illustrationType="sapIllus-SearchEarth"
@@ -60,6 +71,7 @@
                                                 text="{i18n>calculateTour}"
                                                 press='onOpenRoutingDialog'
                                                 class="sapUiSmallMargin"
+                                                icon="sap-icon://activate"
                                             />
                                         </additionalContent>
                                     </IllustratedMessage>

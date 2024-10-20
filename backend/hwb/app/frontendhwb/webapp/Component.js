@@ -25,6 +25,12 @@ sap.ui.define([
 
                 // set the device model
                 this.setModel(models.createDeviceModel(), "device");
+
+                let oModel = this.getModel();
+                oModel.read("/Stampboxes", { 
+                    urlParameters: { "$top": 500 }});
+                oModel.read("/ParkingSpots", { 
+                    urlParameters: { "$top": 500 }})
             }
         });
     }

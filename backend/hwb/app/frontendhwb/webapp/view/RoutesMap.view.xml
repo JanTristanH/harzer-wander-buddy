@@ -34,6 +34,14 @@
             />
             <Button
                 class="sapUiTinyMargin"
+                text="{i18n>delete}"
+                icon="sap-icon://delete"
+                visible="{local>/edit}"
+                type="Transparent"
+                press="onButtonDeletePress"
+            />
+            <Button
+                class="sapUiTinyMargin"
                 text="{i18n>save}"
                 icon="sap-icon://save"
                 visible="{local>/edit}"
@@ -49,7 +57,10 @@
         headerText="{i18n>wayPoints}"
         class="sapUiTinyMargin"
     >
-        <Input value="{local>/name}" change="onNameInputChange"/>
+        <Input
+            value="{local>/name}"
+            change="onNameInputChange"
+        />
         <Table
             id="idEditRouteTable"
             mode="SingleSelectMaster"
@@ -68,12 +79,14 @@
                         icon="sap-icon://add"
                         type="Transparent"
                         press="onAddWayPointButtonPress"
+                        enabled="false"
                     />
                 </OverflowToolbar>
             </headerToolbar>
             <columns>
-                <Column visible="false"/>
-                <Column visible="false"/>
+                <Column visible="false" />
+                <Column visible="false" />
+                <Column visible="false" />
                 <Column width="85%" />
                 <Column />
             </columns>
@@ -98,13 +111,27 @@
             <items>
                 <ColumnListItem>
                     <cells>
-                        <Text text="{local>rank}" visible="false" /> <!-- used for easy access in controller -->
-                        <Text text="{local>id}" visible="false" /> <!-- used for easy access in controller -->
-                        <Text text="{local>name}" />
+                        <Text
+                            text="{local>rank}"
+                            visible="false"
+                        />
+                        <!-- used for easy access in controller -->
+                        <Text
+                            text="{local>ID}"
+                            visible="false"
+                        />
+                        <!-- used for easy access in controller -->
+                        <Text
+                            text="{local>toPoi}"
+                            visible="false"
+                        />
+                        <!-- used for easy access in controller -->
+                        <Text text="{local>rank} - {local>name}" />
                         <Button
                             icon="sap-icon://delete"
                             type="Transparent"
                             press="onDeleteWayPointButtonPress"
+                            enabled="false"
                         />
                     </cells>
                 </ColumnListItem>

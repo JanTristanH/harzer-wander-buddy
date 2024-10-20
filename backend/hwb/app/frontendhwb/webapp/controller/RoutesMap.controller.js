@@ -73,8 +73,8 @@ sap.ui.define([
                 const oLocalModel = this.getView().getModel("local");
                 oLocalModel.setProperty("/edit", true);
 
-                if (this.bPersistedDisplayed) {
-                    let TourId = this.TourId || this.getRouter().getRouteInfoByHash(this.getRouter().getHashChanger().getHash()).arguments.TourId; 
+                let TourId = this.TourId || this.getRouter().getRouteInfoByHash(this.getRouter().getHashChanger().getHash()).arguments.TourId;
+                if (this.bPersistedDisplayed && TourId) {
                     this.getRouter().navTo("RoutesDetailEdit", {
                         TourId
                     });
@@ -156,12 +156,11 @@ sap.ui.define([
                         iNewRank = oRanking.Between(iDroppedItemRank, iOtherRank);
                     }
                 }
-
                 // set the rank property and update the model to refresh the bindings
                 const oLocalModel = this.getModel("local");
                 let sId = oDraggedItem.getCells()[1].getText();
                 let aUpdatedRoutes = oLocalModel.getProperty('/routes').map(r => {
-                    if (r.id == sId) {
+                    if (r.ID == sId) {
                         r.rank = iNewRank;
                     }
                     return r;
@@ -176,25 +175,54 @@ sap.ui.define([
                     descending: true
                 });
                 oBinding.sort(oSorter);
+                this._persistTour(oTable);
             },
 
-            onNameInputChange: function(oEvent) {
+            _persistTour: function (oTable) {
+                let aRoutesSortedByRank = this.getModel("local").getProperty("/routes").sort((a, b) => {
+                    return b.rank - a.rank;  // This will sort in descending order
+                });
+                // create sensible POI list
+                let aResultListPois = [];
+                aResultListPois.push(aRoutesSortedByRank[0].fromPoi);
+                aRoutesSortedByRank.forEach( r => {
+                    aResultListPois.push(r.toPoi);
+                });
+                // send list to backend and refresh
+                aRoutesSortedByRank = aRoutesSortedByRank.map( r => r.toPoi);
+            },
+
+            onNameInputChange: function (oEvent) {
                 let sNewName = oEvent.getSource().getValue();
                 let oSelectedTour = this.getModel("local").getProperty("/oSelectedTour");
-    
+
                 let sPath = "/Tours(guid'" + oSelectedTour.ID + "')";
                 let oData = {
                     name: sNewName
                 };
-            debugger
                 this.getModel().update(sPath, oData, {
-                    success: function() {
+                    success: function () {
                         MessageToast.show(this.getText("saved"));
                     },
-                    error: function(oError) {
+                    error: function (oError) {
                         MessageToast.show(this.getText("error"));
                     }
                 });
-            }
+            },
+
+		onButtonDeletePress: function() {
+            const sIDTourToDelete = this.getModel("local").getProperty("/oSelectedTour").ID;
+            this.getModel().remove(`/Tours(guid'${sIDTourToDelete}')`, {
+                success: function () {
+                    MessageToast.show(this.getText("tourDeletedSuccessfully"));
+                    this.getRouter().navTo("Routes");
+                }.bind(this),
+                error: function (oError) {
+                    MessageToast.show(this.getText("error"));
+                    console.error(oError);
+                }
+            });
+            
+		}
         });
     });

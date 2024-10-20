@@ -77,7 +77,7 @@ sap.ui.define([
             }
 
             var kilometers = iMeters / 1000;
-            return kilometers.toFixed(2) + " km"; // Show 2 decimal places
+            return kilometers.toFixed(2) + "km"; // Show 2 decimal places
         },
 
         formatSecondsToTime: function (iSeconds) {
@@ -96,7 +96,7 @@ sap.ui.define([
             }
 
             if (minutes > 0 || hours > 0) { // Include minutes if there are hours
-                formattedTime += minutes + "m ";
+                formattedTime += minutes + "min ";
             }
 
             return formattedTime.trim(); // Remove any trailing whitespace

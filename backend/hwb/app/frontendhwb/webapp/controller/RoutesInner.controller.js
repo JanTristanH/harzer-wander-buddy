@@ -21,13 +21,13 @@ sap.ui.define([
 
             onInit: function () {
                 this.getView().setModel(new JSONModel(), "local");
-                //Open routing dialog when opening this view
-
+                
                 this.oFlexibleColumnLayout = this.byId("fcl");
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("flexible", "setList", this.setList, this);
-
-                this.getRouter().getRoute("Routes").attachPatternMatched(this.onOpenRoutingDialog, this);
+                
+                //Open routing dialog when opening this view
+                // this.getRouter().getRoute("Routes").attachPatternMatched(this.onOpenRoutingDialog, this);
                 this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onDetailRouteMatched, this);
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onDetailRouteEditMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRoutePersistedMatched, this);
@@ -98,22 +98,27 @@ sap.ui.define([
                             // load in two steps as expand is currently broken
                             if (oData.path && oData.path.__deferred) {
                                 this.getModel().read(`/Tour2TravelTime`, {
-                                    urlParameters: { "$expand": "travelTime" },
+                                    urlParameters: { 
+                                        "$expand": "travelTime",
+                                        "$orderby": "rank asc"
+                                    },
                                     filters: [
                                         new Filter("tour_ID", FilterOperator.EQ, sTourId)
                                     ],
                                     success: function (oRelatedData, oResponse) {
                                         // Set the related data in the local model or handle as needed
-                                        oData.path = oRelatedData.results.map(path => path.travelTime)
-                                            .map(tt => {
-                                                if (!this._getPoiById(tt.toPoi)) {
-                                                    debugger
-                                                }
+                                        oData.path = oRelatedData.results
+                                            .map(path => {
+                                                const tt = path.travelTime;
+                                                const poi = this._getPoiById(tt.toPoi);
+                                                
+                                                tt.name = poi ? poi.name : this.getText("start");
                                                 tt.duration = tt.durationSeconds;
                                                 tt.distance = tt.distanceMeters;
-                                                tt.name = this._getPoiById(tt.toPoi).name;
+                                        
                                                 return tt;
                                             });
+                                    
                                         oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
 
                                         // Show details for the main entity
@@ -198,16 +203,17 @@ sap.ui.define([
                 if (aPath.filter(p => p.id == "start").length != 0) {
                     return aPath;
                 }
-
+                let toPoi = aPath[0].fromPoi;
                 aPath.unshift({
                     "id": "start",
-                    "name": this.getModel("i18n").getProperty("start"),
+                    "name": this._getPoiById(toPoi)?.name || this.getText("start"),
                     //"fromPoi": "1e4b7315-a596-4e73-95b6-92fbf79a92a1",
-                    "poi": aPath[0].poi,
+                    "toPoi": toPoi,
                     "duration": 0,
                     "distance": 0,
                     "travelMode": "start",
                     "toPoiType": "start",
+                    "rank": 0
                 });
 
                 let rank = 2048;
@@ -307,6 +313,7 @@ sap.ui.define([
 
                         this.pDialog.close();
                         if (!!results.length) {
+                            this.byId("idTourCalculateButton").setVisible(true);
                             sap.m.MessageToast.show(this.getModel("i18n").getProperty("routeCalculatedSuccessfully"));
                             this.getRouter().navTo("RoutesDetailTransient", {
                                 idListTravelTimes: oInitiallySelectedTour.id
