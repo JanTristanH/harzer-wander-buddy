@@ -33,12 +33,12 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('updateOrderBy', async (req) => {
       const { Stampboxes } = this.entities('hwb.db');
-      
+
       let aStampBoxes = await SELECT.from(Stampboxes);
-      
+
       const updatePromises = aStampBoxes.map(async (oBox) => {
         oBox.orderBy = oBox.number.padStart(3, '0');
-        
+
         await UPDATE(Stampboxes)
           .set({
             orderBy: oBox.orderBy
@@ -47,7 +47,7 @@ module.exports = class api extends cds.ApplicationService {
       });
 
       await Promise.all(updatePromises);
-      
+
       return `Updated ${aStampBoxes.length} Boxes`;
     });
 
@@ -105,14 +105,24 @@ async function updateTourByPOIList(req) {
   let poiList = req.data.POIList;
 
   const { typedTravelTimes } = this.api.entities;
-  const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime } = this.entities('hwb.db');
+  const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours } = this.entities('hwb.db');
 
   let aPois = poiList.split(";");
   let aPoiPairs = [];
+  let aParkingSpots = await SELECT.from(ParkingSpots);
+  let oParkingSpotsById = {};
+  aParkingSpots.forEach(p => {
+    oParkingSpotsById[p.ID] = p;
+  });
+  let aStampBoxes = await SELECT.from(Stampboxes);
+  let oStampBoxById = {};
+  aStampBoxes.forEach(box => {
+    oStampBoxById[box.ID] = box;
+  });
 
   // Loop through all POI pairs and create the list of required pairs
   for (let i = 0; i < aPois.length - 1; i++) {
-      aPoiPairs.push({ fromPoi: aPois[i], toPoi: aPois[i + 1] });
+    aPoiPairs.push({ fromPoi: aPois[i], toPoi: aPois[i + 1] });
   }
 
   // Construct a condition string for the WHERE clause to match pairs of POIs
@@ -126,17 +136,18 @@ async function updateTourByPOIList(req) {
   }
 
   // Step 1: Load applicable travel times for the given POI pairs
-  const aTravelTimesWithPositionString = await SELECT
+  let aTravelTimesWithPositionString = await SELECT
     .columns('ID', 'fromPoi', 'toPoi', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
     .from(typedTravelTimes)
     .where(`${conditionString}`);
+  aTravelTimesWithPositionString = getUniqueRoutes(aTravelTimesWithPositionString);
 
   // Step 2: Identify missing travel times
   // Create a set of POI pairs from the results for easier lookup
   let existingTravelTimes = new Set();
-  // aTravelTimesWithPositionString.forEach((entry) => {
-  //   existingTravelTimes.add(`${entry.fromPoi}-${entry.toPoi}`);
-  // });
+  aTravelTimesWithPositionString.forEach((entry) => {
+    existingTravelTimes.add(`${entry.fromPoi}-${entry.toPoi}`);
+  });
 
   // Prepare an array of POI pairs for which travel times are missing
   let aMissingTravelTimes = [];
@@ -153,11 +164,27 @@ async function updateTourByPOIList(req) {
   let aNeededTravelTimes = [];
   for (let pair of aMissingTravelTimes) {
     // Assuming you have a method to calculate travel time
-    let calculatedTravelTime = await calculateTravelTime(pair.fromPoi, pair.toPoi);
+    // let calculatedTravelTime = await calculateTravelTime(pair.fromPoi, pair.toPoi);
+    let fromPoi = oStampBoxById[pair.fromPoi];
+    if (!fromPoi) {
+      fromPoi = oParkingSpotsById[pair.fromPoi];
+      fromPoi.type = "parking"
+    }
+
+    let toPoi = oStampBoxById[pair.toPoi];
+    if (!toPoi) {
+      toPoi = oParkingSpotsById[pair.toPoi];
+      toPoi.type = "parking"
+    }
+
+    toPoi.distanceKm = 2; // Temporary
+
+    let travelMode = toPoi.type == toPoi.type == "parking" ? "drive" : "walk";
+    let calculatedTravelTime = await getTravelTimes(fromPoi, [toPoi], travelMode);
 
     // Add the calculated travel time to the array of needed travel times
     aNeededTravelTimes.push({
-      ID : uuidv4(),
+      ID: uuidv4(),
       fromPoi: pair.fromPoi,
       toPoi: pair.toPoi,
       durationSeconds: calculatedTravelTime.duration,
@@ -167,29 +194,85 @@ async function updateTourByPOIList(req) {
     });
   }
   // save the new travel times to the database
-  await INSERT.into(TravelTimes).entries(aNeededTravelTimes);
+  if (aNeededTravelTimes.length > 0) {
+    await INSERT(aNeededTravelTimes).into(TravelTimes);
+  }
 
   // Update Tour TravelTimes
-  await DELETE.from(Tour2TravelTime).where({ tour_ID: id });
-  //TODO update stamp count, total time and distance
 
-  aTravelTimesWithPositionString = aTravelTimesWithPositionString.join(aNeededTravelTimes);
-  let aTour2TravelTime = aTravelTimesWithPositionString.map( tt => {
-    return {
-      travelTime_ID: tt.ID,
-      tour_ID: id
+  aTravelTimesWithPositionString = aTravelTimesWithPositionString.concat(aNeededTravelTimes);
+  let rankMap = {};
+  aPois.forEach((id, index) => {
+    rankMap[id] = index + 1;  // Assign ranks based on the position in aPois
+  });
+
+  let rank = 32767;
+  let aTour2TravelTime = aTravelTimesWithPositionString
+    // Sort by the rank determined by aPois
+    .sort((a, b) => rankMap[a.ID] - rankMap[b.ID])
+    // Then map to include rank decrementing for each item
+    .map(tt => {
+      return {
+        travelTime_ID: tt.ID,
+        tour_ID: id,
+        rank: rank--
+      };
+    });
+  await DELETE.from(Tour2TravelTime).where({ tour_ID: id });
+  await INSERT(aTour2TravelTime).into(Tour2TravelTime);
+
+  let distance = 0, duration = 0, stampCount = 0, idListTravelTimes = "";
+  distance -= aTravelTimesWithPositionString[0].distanceMeters; // we do not need to travel to the start
+  for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
+    const oTravelTime = aTravelTimesWithPositionString[i];
+    distance += parseInt(oTravelTime.distanceMeters) || 0;
+    duration += parseInt(oTravelTime.durationSeconds) || 0;
+    idListTravelTimes = idListTravelTimes + aTravelTimesWithPositionString.ID
+
+    if (oStampBoxById[oTravelTime.toPoi]) {
+      stampCount++;
     }
-  })
-  await UPSERT(aTour2TravelTime).into(Tour2TravelTime);
-  return id;
+  }
+
+  let oTour = {
+    ID: id,
+    distance,
+    duration,
+    stampCount,
+    idListTravelTimes
+  }
+  await UPSERT(oTour).into(Tours);
+
+  oTour.path = aTour2TravelTime;
+  return oTour;
+}
+
+function getUniqueRoutes(routes) {
+  const uniqueRoutes = {};
+
+  routes.forEach((route) => {
+    const pairKey = `${route.fromPoi}-${route.toPoi}`;
+    const duration = parseFloat(route.durationSeconds);
+
+    // If the pair doesn't exist yet, or if the current route has a smaller duration, update the entry
+    if (!uniqueRoutes[pairKey] || duration < parseFloat(uniqueRoutes[pairKey].durationSeconds)) {
+      uniqueRoutes[pairKey] = route;
+    }
+  });
+
+  // Convert the result back to an array
+  return Object.values(uniqueRoutes);
 }
 
 // Example of a method to calculate travel time (needs to be implemented)
 async function calculateTravelTime(fromPoi, toPoi) {
+  console.log(`calculating TravelTime from ${fromPoi} to ${toPoi}`);
+
   // Placeholder logic to simulate travel time calculation
   return {
     duration: Math.random() * 3600, // Duration in seconds
     distance: Math.random() * 10000, // Distance in meters
+    positionString: "10.674580599999999;51.749002399999995",
     mode: "car" // Travel mode
   };
   const { AllPointsOfInterest } = this.api.entities;
@@ -203,12 +286,12 @@ async function calculateTravelTime(fromPoi, toPoi) {
 
 async function getTourByIdListTravelTimes(req) {
   let id = req.data.idListTravelTimes;
-  const { TravelTimes, Stampboxes, Stampings } =  this.entities('hwb.db');
+  const { TravelTimes, Stampboxes, Stampings } = this.entities('hwb.db');
   const { typedTravelTimes } = this.api.entities;
 
   let aPathIds = id.split(";").map(id => `'${id}'`);
-  
-   const aTravelTimesWithPositionString =  await SELECT
+
+  const aTravelTimesWithPositionString = await SELECT
     .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
     .where(`ID in (${aPathIds.join(',')})`)
     .from(typedTravelTimes);
@@ -219,7 +302,7 @@ async function getTourByIdListTravelTimes(req) {
   aStampingForUser = aStampingForUser.map(stamping => stamping.stamp_ID);
 
   let oStampBoxById = {};
-  aStampBoxes.forEach( box => {
+  aStampBoxes.forEach(box => {
     box.stampedByUser = !!aStampingForUser[box.ID];
     oStampBoxById[box.ID] = box;
   });
@@ -232,7 +315,7 @@ async function getTourByIdListTravelTimes(req) {
     distance += parseInt(oTravelTime.distanceMeters);
     duration += parseInt(oTravelTime.durationSeconds);
 
-    if(oStampBoxById[oTravelTime.toPoi] && oStampBoxById[oTravelTime.toPoi].stampedByUser == false) {
+    if (oStampBoxById[oTravelTime.toPoi] && oStampBoxById[oTravelTime.toPoi].stampedByUser == false) {
       stampCount++;
     }
 
@@ -243,16 +326,16 @@ async function getTourByIdListTravelTimes(req) {
   // sort path like requested
   let oTravelTimesById = {};
   const path = [];
-  aTravelTimesWithPositionString.forEach( travelTime => {
+  aTravelTimesWithPositionString.forEach(travelTime => {
     oTravelTimesById[travelTime.ID] = travelTime;
   });
 
   for (let i = 0; i < aPathIds.length; i++) {
-    let id = aPathIds[i].replaceAll("'", ""); 
+    let id = aPathIds[i].replaceAll("'", "");
     path.push(oTravelTimesById[id]);
   }
 
-  const result =  await routingManager.addPositionStrings([{
+  const result = await routingManager.addPositionStrings([{
     stampCount,
     distance,
     duration,
@@ -472,7 +555,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
       if (neighbor.distanceKm == 0) {
         continue;
       }
-
+      console.info(`Calculating Route from ${box} to ${neighbor}`);
       let oRoute = await calculateRoute(box, neighbor, travelMode);
 
       if (oRoute && oRoute.routes && oRoute.routes[0]) {

@@ -28,7 +28,7 @@ sap.ui.define([
             },
 
             onSplitterRoutesDetailResize: function (oEvent) {
-                let nNewSize = oEvent.getParameters().newSizes[1] - 200;
+                let nNewSize = oEvent.getParameters().newSizes[1] - 250;
                 this.getModel("local").setProperty("/wayPointScrollContainerHeight", nNewSize + "px");
             },
 
@@ -185,11 +185,30 @@ sap.ui.define([
                 // create sensible POI list
                 let aResultListPois = [];
                 aResultListPois.push(aRoutesSortedByRank[0].fromPoi);
-                aRoutesSortedByRank.forEach( r => {
+                aRoutesSortedByRank.forEach(r => {
                     aResultListPois.push(r.toPoi);
                 });
                 // send list to backend and refresh
-                aRoutesSortedByRank = aRoutesSortedByRank.map( r => r.toPoi);
+                aRoutesSortedByRank = aRoutesSortedByRank.map(r => r.toPoi);
+                const sPOIList = aRoutesSortedByRank.join(";");
+                const sTourID = this.getModel("local").getProperty("/oSelectedTour/ID");
+                this.getModel().callFunction("/updateTourByPOIList", {
+                    method: "POST",
+                    urlParameters: {
+                        POIList: sPOIList,
+                        TourID: sTourID
+                    },
+                    success: function(oData, response) {
+                        // Handle the successful response here
+                        MessageToast.show("POI List fetched successfully.");
+                        console.log(oData);
+                    },
+                    error: function(oError) {
+                        // Handle errors here
+                        MessageToast.show("Error fetching POI List.");
+                        console.error(oError);
+                    }
+                });
             },
 
             onNameInputChange: function (oEvent) {
@@ -210,19 +229,19 @@ sap.ui.define([
                 });
             },
 
-		onButtonDeletePress: function() {
-            const sIDTourToDelete = this.getModel("local").getProperty("/oSelectedTour").ID;
-            this.getModel().remove(`/Tours(guid'${sIDTourToDelete}')`, {
-                success: function () {
-                    MessageToast.show(this.getText("tourDeletedSuccessfully"));
-                    this.getRouter().navTo("Routes");
-                }.bind(this),
-                error: function (oError) {
-                    MessageToast.show(this.getText("error"));
-                    console.error(oError);
-                }
-            });
-            
-		}
+            onButtonDeletePress: function () {
+                const sIDTourToDelete = this.getModel("local").getProperty("/oSelectedTour").ID;
+                this.getModel().remove(`/Tours(guid'${sIDTourToDelete}')`, {
+                    success: function () {
+                        MessageToast.show(this.getText("tourDeletedSuccessfully"));
+                        this.getRouter().navTo("Routes");
+                    }.bind(this),
+                    error: function (oError) {
+                        MessageToast.show(this.getText("error"));
+                        console.error(oError);
+                    }
+                });
+
+            }
         });
     });

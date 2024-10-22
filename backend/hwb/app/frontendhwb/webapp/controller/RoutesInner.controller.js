@@ -100,7 +100,7 @@ sap.ui.define([
                                 this.getModel().read(`/Tour2TravelTime`, {
                                     urlParameters: { 
                                         "$expand": "travelTime",
-                                        "$orderby": "rank asc"
+                                        "$orderby": "rank desc"
                                     },
                                     filters: [
                                         new Filter("tour_ID", FilterOperator.EQ, sTourId)
@@ -228,10 +228,12 @@ sap.ui.define([
             },
 
             _getStartOfTour: function (oTour) {
-                if (!Array.isArray(oTour.path)) {
+                let sPositionString = oTour.path[1].positionString
+                if (!Array.isArray(oTour.path) || !sPositionString) {
                     return ("10.445580000000064;51.80594")
                 }
-                return oTour.path[1].positionString.split(';0')[0];
+                return sPositionString.split(';0')[0];
+
             },
 
             setList: function () {
