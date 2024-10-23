@@ -222,7 +222,6 @@ async function updateTourByPOIList(req) {
   await INSERT(aTour2TravelTime).into(Tour2TravelTime);
 
   let distance = 0, duration = 0, stampCount = 0, idListTravelTimes = "";
-  distance -= aTravelTimesWithPositionString[0].distanceMeters; // we do not need to travel to the start
   for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
     const oTravelTime = aTravelTimesWithPositionString[i];
     distance += parseInt(oTravelTime.distanceMeters) || 0;

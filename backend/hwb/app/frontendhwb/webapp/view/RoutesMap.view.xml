@@ -79,7 +79,6 @@
                         icon="sap-icon://add"
                         type="Transparent"
                         press="onAddWayPointButtonPress"
-                        enabled="false"
                     />
                 </OverflowToolbar>
             </headerToolbar>
@@ -88,6 +87,7 @@
                 <Column visible="false" />
                 <Column visible="false" />
                 <Column width="85%" />
+                <Column />
                 <Column />
             </columns>
             <dragDropConfig>
@@ -125,8 +125,22 @@
                             text="{local>toPoi}"
                             visible="false"
                         />
-                        <!-- used for easy access in controller -->
-                        <Text text="{local>rank} - {local>name}" />
+                        <Input
+                            placeholder="{i18n>enterStampOrParking}"
+                            showSuggestion="true"
+                            suggestionItemSelected="onSuggestionItemSelected"
+                            suggestionItems="{/AllPointsOfInterest}"
+                            value="{local>name}"
+                        >
+                        <suggestionItems>
+                            <core:Item text="{name}">
+                                <core:customData>
+                                    <core:CustomData key="ID" value="{ID}" />
+                                </core:customData>
+                            </core:Item>
+                        </suggestionItems>
+                        </Input>
+                        <Button icon="sap-icon://menu2" type="Transparent" enabled="false"/>
                         <Button
                             icon="sap-icon://delete"
                             type="Transparent"

@@ -179,9 +179,11 @@ sap.ui.define([
             },
 
             _persistTour: function (oTable) {
-                let aRoutesSortedByRank = this.getModel("local").getProperty("/routes").sort((a, b) => {
-                    return b.rank - a.rank;  // This will sort in descending order
-                });
+                let aRoutesSortedByRank = this.getModel("local").getProperty("/routes")
+                    .filter(r => !!r.ID)
+                    .sort((a, b) => {
+                        return b.rank - a.rank;  // This will sort in descending order
+                    });
                 // create sensible POI list
                 let aResultListPois = [];
                 aResultListPois.push(aRoutesSortedByRank[0].fromPoi);
@@ -198,12 +200,12 @@ sap.ui.define([
                         POIList: sPOIList,
                         TourID: sTourID
                     },
-                    success: function(oData, response) {
+                    success: function (oData, response) {
                         // Handle the successful response here
                         MessageToast.show("POI List fetched successfully.");
-                        console.log(oData);
+                        this.getModel("local").setProperty("/oSelectedTour", oData.updateTourByPOIList);
                     },
-                    error: function(oError) {
+                    error: function (oError) {
                         // Handle errors here
                         MessageToast.show("Error fetching POI List.");
                         console.error(oError);
@@ -244,14 +246,49 @@ sap.ui.define([
 
             },
 
-		onDeleteWayPointButtonPress: function(oEvent) {
-			debugger
-            let aRoutes = this.getModel("local").getProperty("/routes");
-            const oSource = oEvent.getSource();
-            let idToRemove = oSource.getParent().getCells()[1].getText();
-            aRoutes = aRoutes.filter( r => r.ID !== idToRemove);
-            this.getModel("local").setProperty("/routes", aRoutes)
-            this._persistTour(this.byId("idEditRouteTable"));
-		}
+            onAddWayPointButtonPress: function (oEvent) {
+                let aRoutes = this.getModel("local").getProperty("/routes");
+                let rank = aRoutes[aRoutes.length - 1].rank / 2;
+                aRoutes.push({ rank });
+                this.getModel("local").setProperty("/routes", aRoutes)
+            },
+
+            onDeleteWayPointButtonPress: function (oEvent) {
+                debugger
+                let aRoutes = this.getModel("local").getProperty("/routes");
+                const oSource = oEvent.getSource();
+                let idToRemove = oSource.getParent().getCells()[1].getText();
+                aRoutes = aRoutes.filter(r => r.ID !== idToRemove);
+                this.getModel("local").setProperty("/routes", aRoutes)
+                this._persistTour(this.byId("idEditRouteTable"));
+            },
+
+            onSuggestionItemSelected: function (oEvent) {
+                var oSelectedItem = oEvent.getParameter("selectedItem");
+                let aRoutes = this.getModel("local").getProperty("/routes");
+                var sChangedRouteId = oEvent.getSource().getParent().getCells()[1].getText();
+
+                if (oSelectedItem) {
+                    var aCustomData = oSelectedItem.getCustomData();
+
+                    // Loop through custom data to find the one with key 'ID'
+                    aCustomData.forEach(function (oCustomData) {
+                        if (oCustomData.getKey() === "ID") {
+                            var sID = oCustomData.getValue();
+                            console.log("Selected ID:", sID);
+
+                            aRoutes = aRoutes.map(r => {
+                                if (r.ID == sChangedRouteId) {
+                                    r.toPoi = sID;
+                                }
+                                return r;
+                            })
+                        }
+                    });
+
+                    this.getModel("local").setProperty("/routes", aRoutes)
+                    this._persistTour(this.byId("idEditRouteTable"));
+                }
+            }
         });
     });

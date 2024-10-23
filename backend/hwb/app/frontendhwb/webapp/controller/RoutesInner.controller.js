@@ -205,6 +205,7 @@ sap.ui.define([
                 }
                 let toPoi = aPath[0].fromPoi;
                 aPath.unshift({
+                    "ID": "start",
                     "id": "start",
                     "name": this._getPoiById(toPoi)?.name || this.getText("start"),
                     //"fromPoi": "1e4b7315-a596-4e73-95b6-92fbf79a92a1",
