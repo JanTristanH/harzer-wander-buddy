@@ -242,6 +242,16 @@ sap.ui.define([
                     }
                 });
 
-            }
+            },
+
+		onDeleteWayPointButtonPress: function(oEvent) {
+			debugger
+            let aRoutes = this.getModel("local").getProperty("/routes");
+            const oSource = oEvent.getSource();
+            let idToRemove = oSource.getParent().getCells()[1].getText();
+            aRoutes = aRoutes.filter( r => r.ID !== idToRemove);
+            this.getModel("local").setProperty("/routes", aRoutes)
+            this._persistTour(this.byId("idEditRouteTable"));
+		}
         });
     });

@@ -131,7 +131,6 @@
                             icon="sap-icon://delete"
                             type="Transparent"
                             press="onDeleteWayPointButtonPress"
-                            enabled="false"
                         />
                     </cells>
                 </ColumnListItem>

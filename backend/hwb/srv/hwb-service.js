@@ -230,6 +230,7 @@ async function updateTourByPOIList(req) {
     idListTravelTimes = idListTravelTimes + aTravelTimesWithPositionString.ID
 
     if (oStampBoxById[oTravelTime.toPoi]) {
+      oStampBoxById[oTravelTime.toPoi] = null;
       stampCount++;
     }
   }
