@@ -86,7 +86,7 @@ sap.ui.define([
                 })],
                 success: function (oData) {
                     let oLocalModel = this.getView().getModel("local");
-                    oLocalModel.setProperty("/routes", oData.results);
+                    oLocalModel.setProperty("/oSelectedTour/path", oData.results);
                 }.bind(this)
             })
         },

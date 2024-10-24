@@ -31,6 +31,9 @@
                                     key="iconTabFilterTours"
                                     text="{i18n>allTours}"
                                 >
+                                <Toolbar>
+                                    <Button icon="sap-icon://add" press="onButtonCreateTourPress"/>
+                                </Toolbar>
                                     <SelectList
                                         id="idTourList"
                                         items="{/Tours}"

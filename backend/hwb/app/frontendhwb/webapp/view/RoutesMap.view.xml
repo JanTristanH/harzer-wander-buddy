@@ -58,14 +58,15 @@
         class="sapUiTinyMargin"
     >
         <Input
-            value="{local>/name}"
+            value="{local>/oSelectedTour/name}"
             change="onNameInputChange"
         />
         <Table
             id="idEditRouteTable"
+            noDataText="{i18n>noWayPointsPleaseAdd}"
             mode="SingleSelectMaster"
             items="{
-            path: 'local>/routes',
+            path: 'local>/oSelectedTour/path',
             sorter: {
                 path: 'rank',
                 descending: true
@@ -86,7 +87,7 @@
                 <Column visible="false" />
                 <Column visible="false" />
                 <Column visible="false" />
-                <Column width="85%" />
+                <Column width="80%" />
                 <Column />
                 <Column />
             </columns>
@@ -113,7 +114,7 @@
                     <cells>
                         <Text
                             text="{local>rank}"
-                            visible="false"
+                            visible="true"
                         />
                         <!-- used for easy access in controller -->
                         <Text
@@ -126,6 +127,7 @@
                             visible="false"
                         />
                         <Input
+                            class="sapUiSmallMarginTop sapUiSmallMarginBottom"
                             placeholder="{i18n>enterStampOrParking}"
                             showSuggestion="true"
                             suggestionItemSelected="onSuggestionItemSelected"
@@ -180,7 +182,7 @@
                 >
                     <core:Icon src="sap-icon://fob-watch" />
                     <Text
-                        text="{path: 'local>/duration', formatter: '.formatSecondsToTime'}"
+                        text="{path: 'local>/oSelectedTour/duration', formatter: '.formatSecondsToTime'}"
                     />
                 </VBox>
                 <Text text="|" />
@@ -190,7 +192,7 @@
                 >
                     <core:Icon src="sap-icon://direction-arrows" />
                     <Text
-                        text="{path: 'local>/distance', formatter: '.formatMetersToKilometers'}"
+                        text="{path: 'local>/oSelectedTour/distance', formatter: '.formatMetersToKilometers'}"
                     />
                 </VBox>
                 <Text text="|" />
@@ -199,7 +201,7 @@
                     alignItems="Center"
                 >
                     <core:Icon src="sap-icon://toaster-top" />
-                    <Text text="{local>/stampCount}" />
+                    <Text text="{local>/oSelectedTour/stampCount}" />
                 </VBox>
                 <Text text="|" />
                 <VBox
@@ -227,7 +229,7 @@
                     <List
                         id="idRoutesWayPointList"
                         growingScrollToLoad="true"
-                        items="{local>/routes}"
+                        items="{local>/oSelectedTour/path}"
                     >
                         <StandardListItem
                             wrapping="true"

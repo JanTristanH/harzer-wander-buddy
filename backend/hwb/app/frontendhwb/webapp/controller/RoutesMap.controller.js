@@ -1,12 +1,14 @@
 sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     "sap/m/ColumnListItem",
-    "sap/m/MessageToast"
+    "sap/m/MessageToast",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, ColumnListItem, MessageToast) {
+    function (Controller, ColumnListItem, MessageToast, Filter, FilterOperator) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
@@ -84,24 +86,25 @@ sap.ui.define([
                         "name": "Neue Tour",
                         "idListTravelTimes": oLocalModel.getProperty("/sIdListTravelTimes"),
                         // TODO those will be calculated by backend
-                        "duration": oLocalModel.getProperty("/duration"),
-                        "distance": oLocalModel.getProperty("/distance"),
-                        "stampCount": oLocalModel.getProperty("/stampCount")
+                        "duration": oLocalModel.getProperty("/oSelectedTour/duration"),
+                        "distance": oLocalModel.getProperty("/oSelectedTour/distance"),
+                        "stampCount": oLocalModel.getProperty("/oSelectedTour/stampCount")
                     };
 
                     // Call function
                     oModel.create("/Tours", oPayload, {
                         success: function (oData, response) {
                             oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
-                            sap.m.MessageToast.show("Post successful!");
+                            MessageToast.show(this.getText("tourSaved"));
 
                             this.getRouter().navTo("RoutesDetailEdit", {
                                 TourId: oData.ID
                             });
+                            location.reload();
 
                         }.bind(this),
                         error: function (oError) {
-                            sap.m.MessageToast.show("Error saving the tour!");
+                            MessageToast.show(this.getText("error"));
                             console.error(oError);
                         }
                     });
@@ -159,13 +162,13 @@ sap.ui.define([
                 // set the rank property and update the model to refresh the bindings
                 const oLocalModel = this.getModel("local");
                 let sId = oDraggedItem.getCells()[1].getText();
-                let aUpdatedRoutes = oLocalModel.getProperty('/routes').map(r => {
+                let aUpdatedRoutes = oLocalModel.getProperty('/oSelectedTour/path').map(r => {
                     if (r.ID == sId) {
                         r.rank = iNewRank;
                     }
                     return r;
                 })
-                oLocalModel.setProperty(`/routes`, aUpdatedRoutes);
+                oLocalModel.setProperty(`/oSelectedTour/path`, aUpdatedRoutes);
 
                 // Reapply the sorter to trigger refresh of the table
                 const oTable = this.byId("idEditRouteTable");
@@ -179,38 +182,98 @@ sap.ui.define([
             },
 
             _persistTour: function (oTable) {
-                let aRoutesSortedByRank = this.getModel("local").getProperty("/routes")
+                const sNameBefore = this.getModel("local").getProperty("/oSelectedTour/name");
+                let aRoutesSortedByRank = this.getModel("local").getProperty("/oSelectedTour/path")
                     .filter(r => !!r.ID)
                     .sort((a, b) => {
                         return b.rank - a.rank;  // This will sort in descending order
                     });
-                // create sensible POI list
-                let aResultListPois = [];
-                aResultListPois.push(aRoutesSortedByRank[0].fromPoi);
-                aRoutesSortedByRank.forEach(r => {
-                    aResultListPois.push(r.toPoi);
-                });
-                // send list to backend and refresh
-                aRoutesSortedByRank = aRoutesSortedByRank.map(r => r.toPoi);
-                const sPOIList = aRoutesSortedByRank.join(";");
-                const sTourID = this.getModel("local").getProperty("/oSelectedTour/ID");
-                this.getModel().callFunction("/updateTourByPOIList", {
-                    method: "POST",
-                    urlParameters: {
-                        POIList: sPOIList,
-                        TourID: sTourID
-                    },
-                    success: function (oData, response) {
-                        // Handle the successful response here
-                        MessageToast.show("POI List fetched successfully.");
-                        this.getModel("local").setProperty("/oSelectedTour", oData.updateTourByPOIList);
-                    },
-                    error: function (oError) {
-                        // Handle errors here
-                        MessageToast.show("Error fetching POI List.");
-                        console.error(oError);
-                    }
-                });
+                if (aRoutesSortedByRank.length > 1) {
+
+                    // create sensible POI list
+                    let aResultListPois = [];
+                    aResultListPois.push(aRoutesSortedByRank[0].fromPoi);
+                    aRoutesSortedByRank.forEach(r => {
+                        aResultListPois.push(r.toPoi);
+                    });
+                    // send list to backend and refresh
+                    aRoutesSortedByRank = aRoutesSortedByRank.map(r => r.toPoi);
+                    const sPOIList = aRoutesSortedByRank.join(";");
+                    const sTourID = this.getModel("local").getProperty("/oSelectedTour/ID");
+                    this.getModel().callFunction("/updateTourByPOIList", {
+                        method: "POST",
+                        urlParameters: {
+                            POIList: sPOIList,
+                            TourID: sTourID
+                        },
+                        success: function (oData, response) {
+                            // Handle the successful response here
+                            MessageToast.show("POI List fetched successfully.");
+                            const oLocalModel = this.getModel("local");
+                            let oTour = oData.updateTourByPOIList;
+                            oTour.name = sNameBefore;
+                            oLocalModel.setProperty("/oSelectedTour", oTour);
+                            this.getModel().read(`/Tour2TravelTime`, {
+                                urlParameters: {
+                                    "$expand": "travelTime",
+                                    "$orderby": "rank desc"
+                                },
+                                filters: [
+                                    new Filter("tour_ID", FilterOperator.EQ, sTourID)
+                                ],
+                                success: function (oRelatedData, oResponse) {
+                                    // Set the related data in the local model or handle as needed
+                                    oData.path = oRelatedData.results
+                                        .map(path => {
+                                            const tt = path.travelTime;
+                                            if(tt){
+                                                const poi = this._getPoiById(tt.toPoi);   
+                                                tt.name = poi ? poi.name : this.getText("start");
+                                                tt.duration = tt.durationSeconds;
+                                                tt.distance = tt.distanceMeters;
+                                            }
+                                            return tt;
+                                        })
+                                        .filter( p => !!p);
+
+                                    oLocalModel.setProperty(`/oSelectedTour/path`, this._mapTravelTimeToPOIList(oData.path));
+                                }.bind(this),
+                                error: function (oError) {
+                                    MessageToast.show("Error loading deferred entity!");
+                                    console.error(oError);
+                                }
+                            });
+                            // this.getModel().callFunction("/getTourByIdListTravelTimes", {
+                            //     method: "GET",
+                            //     urlParameters: { idListTravelTimes: oTour.idListTravelTimes },
+                            //     success: function (oData) {
+                            //         // todo harmonize in backend
+                            //         oTour.path = oData.getTourByIdListTravelTimes.path.map(obj => ({
+                            //             ID: obj.ID,
+                            //             fromPoi: obj.fromPoi,
+                            //             name: obj.name,
+                            //             poi: obj.toPoi,
+                            //             duration: obj.durationSeconds,
+                            //             distance: obj.distanceMeters,
+                            //             travelMode: obj.travelMode,
+                            //             toPoiType: obj.toPoiType,
+                            //             positionString: obj.positionString
+                            //         }));
+                            //         oLocalModel.setProperty("/oSelectedTour/path", this._mapTravelTimeToPOIList(oTour.path));
+                            //     }.bind(this)
+                            // });
+                            
+                            
+                        }.bind(this),
+                        error: function (oError) {
+                            // Handle errors here
+                            MessageToast.show("Error fetching POI List.");
+                            console.error(oError);
+                        }
+                    });
+                } else {
+                    console.info("no calculation needed");
+                }
             },
 
             onNameInputChange: function (oEvent) {
@@ -223,11 +286,12 @@ sap.ui.define([
                 };
                 this.getModel().update(sPath, oData, {
                     success: function () {
+                        this.getModel("local").getProperty("/oSelectedTour/name", sNewName);
                         MessageToast.show(this.getText("saved"));
-                    },
+                    }.bind(this),
                     error: function (oError) {
                         MessageToast.show(this.getText("error"));
-                    }
+                    }.bind(this)
                 });
             },
 
@@ -247,25 +311,24 @@ sap.ui.define([
             },
 
             onAddWayPointButtonPress: function (oEvent) {
-                let aRoutes = this.getModel("local").getProperty("/routes");
-                let rank = aRoutes[aRoutes.length - 1].rank / 2;
-                aRoutes.push({ rank });
-                this.getModel("local").setProperty("/routes", aRoutes)
+                let aRoutes = this.getModel("local").getProperty("/oSelectedTour/path");
+                let rank = aRoutes[aRoutes.length - 1]?.rank / 2 || 1024
+                aRoutes.push({ rank, ID: Math.floor(Math.random() * 1024) + 1 });
+                this.getModel("local").setProperty("/oSelectedTour/path", aRoutes)
             },
 
             onDeleteWayPointButtonPress: function (oEvent) {
-                debugger
-                let aRoutes = this.getModel("local").getProperty("/routes");
+                let aRoutes = this.getModel("local").getProperty("/oSelectedTour/path");
                 const oSource = oEvent.getSource();
                 let idToRemove = oSource.getParent().getCells()[1].getText();
                 aRoutes = aRoutes.filter(r => r.ID !== idToRemove);
-                this.getModel("local").setProperty("/routes", aRoutes)
+                this.getModel("local").setProperty("/oSelectedTour/path", aRoutes)
                 this._persistTour(this.byId("idEditRouteTable"));
             },
 
             onSuggestionItemSelected: function (oEvent) {
                 var oSelectedItem = oEvent.getParameter("selectedItem");
-                let aRoutes = this.getModel("local").getProperty("/routes");
+                let aRoutes = this.getModel("local").getProperty("/oSelectedTour/path");
                 var sChangedRouteId = oEvent.getSource().getParent().getCells()[1].getText();
 
                 if (oSelectedItem) {
@@ -286,7 +349,7 @@ sap.ui.define([
                         }
                     });
 
-                    this.getModel("local").setProperty("/routes", aRoutes)
+                    this.getModel("local").setProperty("/oSelectedTour/path", aRoutes)
                     this._persistTour(this.byId("idEditRouteTable"));
                 }
             }

@@ -21,11 +21,11 @@ sap.ui.define([
 
             onInit: function () {
                 this.getView().setModel(new JSONModel(), "local");
-                
+
                 this.oFlexibleColumnLayout = this.byId("fcl");
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("flexible", "setList", this.setList, this);
-                
+
                 //Open routing dialog when opening this view
                 // this.getRouter().getRoute("Routes").attachPatternMatched(this.onOpenRoutingDialog, this);
                 this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onDetailRouteMatched, this);
@@ -98,7 +98,7 @@ sap.ui.define([
                             // load in two steps as expand is currently broken
                             if (oData.path && oData.path.__deferred) {
                                 this.getModel().read(`/Tour2TravelTime`, {
-                                    urlParameters: { 
+                                    urlParameters: {
                                         "$expand": "travelTime",
                                         "$orderby": "rank desc"
                                     },
@@ -110,15 +110,16 @@ sap.ui.define([
                                         oData.path = oRelatedData.results
                                             .map(path => {
                                                 const tt = path.travelTime;
-                                                const poi = this._getPoiById(tt.toPoi);
-                                                
-                                                tt.name = poi ? poi.name : this.getText("start");
-                                                tt.duration = tt.durationSeconds;
-                                                tt.distance = tt.distanceMeters;
-                                        
+                                                if(tt){
+                                                    const poi = this._getPoiById(tt.toPoi);   
+                                                    tt.name = poi ? poi.name : this.getText("start");
+                                                    tt.duration = tt.durationSeconds;
+                                                    tt.distance = tt.distanceMeters;
+                                                }
                                                 return tt;
-                                            });
-                                    
+                                            })
+                                            .filter( p => !!p);
+
                                         oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
 
                                         // Show details for the main entity
@@ -177,12 +178,9 @@ sap.ui.define([
                     });
                 } else {
                     // open Detail with correct data
+                    
                     oLocalModel.setProperty("/oSelectedTour", oTour);
-                    oLocalModel.setProperty("/routes", this._mapTravelTimeToPOIList(oTour.path));
-                    oLocalModel.setProperty("/stampCount", oTour.stampCount);
-                    oLocalModel.setProperty("/distance", oTour.distance);
-                    oLocalModel.setProperty("/duration", oTour.duration);
-                    oLocalModel.setProperty("/name", oTour.name);
+                    oLocalModel.setProperty("/oSelectedTour/path", this._mapTravelTimeToPOIList(oTour.path));
                     oLocalModel.setProperty("/wayPointScrollContainerHeight", "400px");
 
                     let sStartOfTour = this._getStartOfTour(oTour);
@@ -196,42 +194,10 @@ sap.ui.define([
                 }
             },
 
-            _mapTravelTimeToPOIList: function (aPath) {
-                if (!Array.isArray(aPath)) {
-                    return [];
-                }
-                if (aPath.filter(p => p.id == "start").length != 0) {
-                    return aPath;
-                }
-                let toPoi = aPath[0].fromPoi;
-                aPath.unshift({
-                    "ID": "start",
-                    "id": "start",
-                    "name": this._getPoiById(toPoi)?.name || this.getText("start"),
-                    //"fromPoi": "1e4b7315-a596-4e73-95b6-92fbf79a92a1",
-                    "toPoi": toPoi,
-                    "duration": 0,
-                    "distance": 0,
-                    "travelMode": "start",
-                    "toPoiType": "start",
-                    "rank": 0
-                });
-
-                let rank = 2048;
-                aPath.reverse();
-                aPath = aPath.map(p => {
-                    p.rank = rank;
-                    rank = rank * 2;
-                    return p;
-                });
-                aPath.reverse();
-                return aPath;
-            },
-
             _getStartOfTour: function (oTour) {
-                let sPositionString = oTour.path[1].positionString
+                let sPositionString = oTour.path[1]?.positionString
                 if (!Array.isArray(oTour.path) || !sPositionString) {
-                    return ("10.445580000000064;51.80594")
+                    return (this.fallBackCords)
                 }
                 return sPositionString.split(';0')[0];
 
@@ -392,6 +358,29 @@ sap.ui.define([
             onUseCurrentLocation: function () {
                 this.byId('idAutocompleteInput').setBusy(true);
                 this._geolocate();
+            },
+            onButtonCreateTourPress: function(oEvent) {
+                var oPayload = {
+                    "name": "Neue Tour",
+                    "idListTravelTimes": "",
+                };
+
+                // Call function
+                this.getModel().create("/Tours", oPayload, {
+                    success: function (oData, response) {
+                        this.getModel("local").setProperty(`/Tours(${oData.ID})`, oData);
+                        MessageToast.show(this.getText("tourSaved"));
+
+                        this.getRouter().navTo("RoutesDetailEdit", {
+                            TourId: oData.ID
+                        });
+
+                    }.bind(this),
+                    error: function (oError) {
+                        MessageToast.show(this.getText("error"));
+                        console.error(oError);
+                    }
+                });
             },
 
             onAfterRenderingFragment: function () {

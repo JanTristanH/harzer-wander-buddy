@@ -1,4 +1,4 @@
-<vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.30147999999997;51.7462" initialZoom="16"
+<vbm:GeoMap id="map" mapConfiguration="{mapConfig>/}" initialPosition="10.615779999999972;51.80054" initialZoom="16"
     height="100%" width="100%"
 	xmlns:vbm="sap.ui.vbm"
     centerPosition="{local>centerPosition}"
@@ -6,7 +6,7 @@
     zoomChanged="onGeoMapZoomChanged">
     <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
     <vbm:vos>
-        <vbm:Routes items="{local>/routes}">
+        <vbm:Routes items="{local>/oSelectedTour/path}">
             <vbm:Route position="{local>positionString}" directionIndicator="true"
                 lineDash="{ path: 'local>travelMode', formatter: '.onFormatRouteLineDash'}"
                 tooltip="Länge: {local>duration}s - Distanz: {local>distance}" labelText="{local>order}" 

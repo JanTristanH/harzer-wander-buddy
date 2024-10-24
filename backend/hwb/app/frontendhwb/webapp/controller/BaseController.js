@@ -7,6 +7,8 @@ sap.ui.define([
     "use strict";
     return Controller.extend("hwb.frontendhwb.controller.BaseController", {
 
+        fallBackCords: "10.615779999999972;51.80054",
+
         stringToBoolean: function (str) {
             return str === "true";
         },
@@ -101,6 +103,38 @@ sap.ui.define([
 
             return formattedTime.trim(); // Remove any trailing whitespace
         },
+
+        _mapTravelTimeToPOIList: function (aPath) {
+            if (!Array.isArray(aPath) || !aPath.length) {
+                return [];
+            }
+            if (aPath.filter(p => p.id == "start").length != 0) {
+                return aPath;
+            }
+            let toPoi = aPath[0].fromPoi;
+            aPath.unshift({
+                "ID": "start",
+                "id": "start",
+                "name": this._getPoiById(toPoi)?.name || this.getText("start"),
+                //"fromPoi": "1e4b7315-a596-4e73-95b6-92fbf79a92a1",
+                "toPoi": toPoi,
+                "duration": 0,
+                "distance": 0,
+                "travelMode": "start",
+                "toPoiType": "start",
+                "rank": 0
+            });
+
+            let rank = 2048;
+            aPath.reverse();
+            aPath = aPath.map(p => {
+                p.rank = rank;
+                rank = rank * 2;
+                return p;
+            });
+            aPath.reverse();
+            return aPath;
+        }
 
     });
 });

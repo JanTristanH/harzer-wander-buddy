@@ -28,7 +28,7 @@ sap.ui.define([
                     oModel.setData({
                         UserLocationLat: 0,
                         UserLocationLng: 0,
-                        centerPosition: "10.30147999999997;51.7462",
+                        centerPosition: "10.615779999999972;51.80054",
                         TravelTimes: [{}]
                     });
                     this.getView().setModel(oModel, "local");

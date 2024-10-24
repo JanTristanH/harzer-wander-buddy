@@ -163,7 +163,7 @@ function addPositionStrings(aRoutes) {
 
         aRoutes.forEach(route => {
             route.path.forEach(item => {
-                if (item.id) {
+                if (item?.id) {
                     uniqueIds.add(item.id);
                 }
             });
@@ -173,11 +173,12 @@ function addPositionStrings(aRoutes) {
         uniqueIds = Array.from(uniqueIds);
 
         // Format UUIDs for SQL query (ensure each UUID is surrounded by single quotes)
-        const formattedIds = uniqueIds.map(id => `'${id}'`).join(',');
+        let formattedIds = uniqueIds.map(id => `'${id}'`).join(',');
         if(formattedIds == ''){
             resolve([]);
             return;
         }
+        formattedIds = "'xx'," + formattedIds;
 
         // Read required positionStrings
         const aTravelTimesWithPositionString = await cds.run(SELECT.from('hwb_db_TravelTimes').where(`ID in (${formattedIds})`));

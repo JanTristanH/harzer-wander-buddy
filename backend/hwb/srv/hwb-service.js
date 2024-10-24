@@ -167,13 +167,13 @@ async function updateTourByPOIList(req) {
     // let calculatedTravelTime = await calculateTravelTime(pair.fromPoi, pair.toPoi);
     let fromPoi = oStampBoxById[pair.fromPoi];
     if (!fromPoi) {
-      fromPoi = oParkingSpotsById[pair.fromPoi];
+      fromPoi = oParkingSpotsById[pair.fromPoi] || {};
       fromPoi.type = "parking"
     }
 
     let toPoi = oStampBoxById[pair.toPoi];
     if (!toPoi) {
-      toPoi = oParkingSpotsById[pair.toPoi];
+      toPoi = oParkingSpotsById[pair.toPoi] || {};
       toPoi.type = "parking"
     }
 
@@ -243,6 +243,7 @@ async function updateTourByPOIList(req) {
   }
   await UPSERT(oTour).into(Tours);
 
+  oTour.idListTravelTimes = aTour2TravelTime.map( tt => tt.travelTime_ID).join(";") 
   oTour.path = aTour2TravelTime;
   return oTour;
 }
@@ -286,10 +287,14 @@ async function calculateTravelTime(fromPoi, toPoi) {
 
 async function getTourByIdListTravelTimes(req) {
   let id = req.data.idListTravelTimes;
+  if(!id) {
+    return {};
+  }
   const { TravelTimes, Stampboxes, Stampings } = this.entities('hwb.db');
   const { typedTravelTimes } = this.api.entities;
 
   let aPathIds = id.split(";").map(id => `'${id}'`);
+  aPathIds.unshift("'xx'");
 
   const aTravelTimesWithPositionString = await SELECT
     .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
@@ -332,7 +337,9 @@ async function getTourByIdListTravelTimes(req) {
 
   for (let i = 0; i < aPathIds.length; i++) {
     let id = aPathIds[i].replaceAll("'", "");
-    path.push(oTravelTimesById[id]);
+    if(oTravelTimesById[id]){
+      path.push(oTravelTimesById[id]);
+    }
   }
 
   const result = await routingManager.addPositionStrings([{
