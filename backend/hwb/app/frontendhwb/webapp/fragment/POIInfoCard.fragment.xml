@@ -15,7 +15,7 @@
         >
             <HBox>
                 <Button
-                    text=""
+                    text="{i18n>navigate}"
                     icon="sap-icon://forward"
                     type="Emphasized"
                     press="onButtonOpenWithMapsAppPress"
@@ -35,7 +35,7 @@
                     press="onButtonSharePress"
                 />
                 <Button
-                    text="{}"
+                    text="{i18n>website}"
                     icon="sap-icon://world"
                     visible="{local>/bStampingVisible}"
                     type="Transparent"

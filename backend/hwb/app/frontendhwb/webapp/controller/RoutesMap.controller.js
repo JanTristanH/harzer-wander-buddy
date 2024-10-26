@@ -208,7 +208,7 @@ sap.ui.define([
                         },
                         success: function (oData, response) {
                             // Handle the successful response here
-                            MessageToast.show("POI List fetched successfully.");
+                            MessageToast.show(this.getText("tourSaved"));
                             const oLocalModel = this.getModel("local");
                             let oTour = oData.updateTourByPOIList;
                             oTour.name = sNameBefore;
@@ -226,15 +226,15 @@ sap.ui.define([
                                     oData.path = oRelatedData.results
                                         .map(path => {
                                             const tt = path.travelTime;
-                                            if(tt){
-                                                const poi = this._getPoiById(tt.toPoi);   
+                                            if (tt) {
+                                                const poi = this._getPoiById(tt.toPoi);
                                                 tt.name = poi ? poi.name : this.getText("start");
                                                 tt.duration = tt.durationSeconds;
                                                 tt.distance = tt.distanceMeters;
                                             }
                                             return tt;
                                         })
-                                        .filter( p => !!p);
+                                        .filter(p => !!p);
 
                                     oLocalModel.setProperty(`/oSelectedTour/path`, this._mapTravelTimeToPOIList(oData.path));
                                 }.bind(this),
@@ -262,8 +262,8 @@ sap.ui.define([
                             //         oLocalModel.setProperty("/oSelectedTour/path", this._mapTravelTimeToPOIList(oTour.path));
                             //     }.bind(this)
                             // });
-                            
-                            
+
+
                         }.bind(this),
                         error: function (oError) {
                             // Handle errors here
@@ -352,6 +352,80 @@ sap.ui.define([
                     this.getModel("local").setProperty("/oSelectedTour/path", aRoutes)
                     this._persistTour(this.byId("idEditRouteTable"));
                 }
+            },
+            
+            onUpButtonPress: function (oEvent) {
+                this._moveItem(oEvent, -1);
+            },
+            
+            onDownButtonPress: function (oEvent) {
+                this._moveItem(oEvent, 1);
+            },
+            
+            _moveItem: function (oEvent, direction) {
+                let oItemPressed = oEvent.getSource().getParent();
+                oItemPressed.rank = oItemPressed.getCells()[0].getText();
+                oItemPressed.ID = oItemPressed.getCells()[1].getText();
+                const oTable = this.byId("idEditRouteTable");
+                let aItems = oTable.getItems();
+                let oSwitchingItem = this._getSwitchingItem(aItems, oItemPressed, direction);
+            
+                if (!oSwitchingItem) {
+                    return;
+                }
+            
+                oSwitchingItem.rank = oSwitchingItem.getCells()[0].getText();
+                oSwitchingItem.ID = oSwitchingItem.getCells()[1].getText();
+            
+                // Swap ranks
+                this._swapRanks(oItemPressed, oSwitchingItem);
+            
+                // Update the model with the new ranks
+                this._updateModel(oItemPressed, oSwitchingItem);
+            
+                // Reapply the sorter to trigger refresh of the table
+                this._refreshTable(oTable);
+            },
+            
+            _getSwitchingItem: function (aItems, oItemPressed, direction) {
+                const currentIndex = aItems.findIndex(item => item.rank == oItemPressed.rank);
+                const targetIndex = currentIndex + direction;
+            
+                if (targetIndex >= 0 && targetIndex < aItems.length) {
+                    return aItems[targetIndex];
+                }
+                return null;
+            },
+            
+            _swapRanks: function (oItem1, oItem2) {
+                let tempRank = oItem1.rank;
+                oItem1.rank = oItem2.rank;
+                oItem2.rank = tempRank;
+            },
+            
+            _updateModel: function (oItem1, oItem2) {
+                const oLocalModel = this.getModel("local");
+                let aUpdatedRoutes = oLocalModel.getProperty('/oSelectedTour/path').map(r => {
+                    if (r.ID === oItem1.ID) {
+                        r.rank = oItem1.rank;
+                    }
+                    if (r.ID === oItem2.ID) {
+                        r.rank = oItem2.rank;
+                    }
+                    return r;
+                });
+                oLocalModel.setProperty(`/oSelectedTour/path`, aUpdatedRoutes);
+            },
+            
+            _refreshTable: function (oTable) {
+                const oBinding = oTable.getBinding("items");
+                const oSorter = new sap.ui.model.Sorter({
+                    path: "rank",
+                    descending: true
+                });
+                oBinding.sort(oSorter);
+                this._persistTour(oTable);
             }
+            
         });
     });
