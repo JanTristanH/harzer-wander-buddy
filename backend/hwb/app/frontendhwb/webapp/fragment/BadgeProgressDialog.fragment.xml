@@ -127,8 +127,8 @@
                             />
                             <chart:RadialMicroChart
                                 size="M"
-                                percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '111'}], formatter: '.calculatePercentage'}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '111'}], formatter: '.calculateValueColor'}"
+                                percentage="{localDialog>/iRiserPercentage}"
+                                valueColor="{localDialog>/sRiserValueColor}"
                                 class="sapUiTinyMarginBeginEnd"
                             />
                         </FlexBox>
@@ -235,7 +235,7 @@
                                 src="images/badges/S1-boarder.jpg"
                                 mode="Background"
                                 height="5rem"
-                                width="10rem"
+                                width="5rem"
                             />
                             <chart:RadialMicroChart
                                 size="M"
@@ -271,7 +271,7 @@
                                 src="images/badges/S2-goethe.jpg"
                                 mode="Background"
                                 height="5rem"
-                                width="10rem"
+                                width="5rem"
                             />
                             <chart:RadialMicroChart
                                 size="M"

@@ -120,6 +120,8 @@ sap.ui.define([
 
                     oDialog.setModel(new JSONModel({
                         iSelectedCount,
+                        "iRiserPercentage": 0,
+                        "sRiserValueColor": "Neutral",
                         "iBoarderPercentage": 0,
                         "sBoarderValueColor": "Neutral",
                         "iGoethePercentage": 0,
