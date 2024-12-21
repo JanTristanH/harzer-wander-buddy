@@ -8,6 +8,10 @@
 
 This app is intended to help plan your route and collect all 222 stamps.
 
+## Docker image
+
+[here](https://github.com/JanTristanH/harzer-wander-buddy/pkgs/container/hwb)
+
 ## Technical README
 
 [here](./backend/hwb/README.md)
