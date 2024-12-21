@@ -69,17 +69,23 @@
                     />
                 </HBox>
                 <HBox class="sapUiSmallMarginTop">
-                    <List
-                        id="idTravelTimesList"
-                        headerText="{i18n>nearbyPois}"
-                        items="{local>/TravelTimes}"
+                    <ScrollContainer
+                        width="100%"
+                        height="100%"
+                        vertical="true"
                     >
-                        <StandardListItem
-                            title="Stempel"
-                            description="{local>distanceMeters}m - {local>durationSeconds}s"
-                            icon="sap-icon://task"
-                        />
-                    </List>
+                        <List
+                            id="idTravelTimesList"
+                            headerText="{i18n>nearbyPois}"
+                            items="{local>/TravelTimes}"
+                        >
+                            <StandardListItem
+                                title="Stempel"
+                                description="{local>distanceMeters}m - {local>durationSeconds}s"
+                                icon="sap-icon://task"
+                            />
+                        </List>
+                    </ScrollContainer>
                 </HBox>
             </VBox>
         </f:content>

@@ -1,0 +1,214 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:chart="sap.suite.ui.microchart"
+>
+    <Dialog
+        title="{i18n>badges}"
+        class="sapUiResponsiveContentPadding"
+    >
+        <VBox class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop sapUiMediumMarginBottom">
+            <Title text="{i18n>titleBronze}" />
+            <FlexBox justifyContent="SpaceBetween">
+                <Image
+                    src="images/badges/01-bronze.jpg"
+                    mode="Background"
+                    height="5rem"
+                    width="5rem"
+                />
+                <chart:RadialMicroChart
+                    size="M"
+                    percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '8'}], formatter: '.calculatePercentage'}"
+                    valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '8'}], formatter: '.calculateValueColor'}"
+                    class="sapUiTinyMarginBeginEnd"
+                />
+            </FlexBox>
+            <Text
+                text="{i18n>bronzeRequirementText}"
+                class="sapUiTinyMarginBegin"
+            />
+        </VBox>
+
+        <VBox class="sapUiSmallMarginBeginEnd sapUiMediumMarginTopBottom">
+            <Title text="{i18n>titleSilver}" />
+            <FlexBox justifyContent="SpaceBetween">
+                <Image
+                    src="images/badges/02-silver.jpg"
+                    mode="Background"
+                    height="5rem"
+                    width="5rem"
+                />
+                <chart:RadialMicroChart
+                    size="M"
+                    percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '16'}], formatter: '.calculatePercentage'}"
+                    valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '16'}], formatter: '.calculateValueColor'}"
+                    class="sapUiTinyMarginBeginEnd"
+                />
+            </FlexBox>
+            <Text
+                text="{i18n>silverRequirementText}"
+                class="sapUiTinyMarginBegin"
+            />
+        </VBox>
+
+        <VBox class="sapUiSmallMarginBeginEnd sapUiMediumMarginTopBottom">
+            <Title text="{i18n>titleGold}" />
+            <FlexBox justifyContent="SpaceBetween">
+                <Image
+                    src="images/badges/03-gold.jpg"
+                    mode="Background"
+                    height="5rem"
+                    width="5rem"
+                />
+                <chart:RadialMicroChart
+                    size="M"
+                    percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '24'}], formatter: '.calculatePercentage'}"
+                    valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '24'}], formatter: '.calculateValueColor'}"
+                    class="sapUiTinyMarginBeginEnd"
+                />
+            </FlexBox>
+            <Text
+                text="{i18n>goldRequirementText}"
+                class="sapUiTinyMarginBegin"
+            />
+        </VBox>
+
+        <VBox class="sapUiSmallMarginBeginEnd sapUiMediumMarginTopBottom">
+            <Title text="{i18n>titlePrince}" />
+            <FlexBox justifyContent="SpaceBetween">
+                <Image
+                    src="images/badges/99-prince.png"
+                    mode="Background"
+                    height="5rem"
+                    width="15rem"
+                />
+                <chart:RadialMicroChart
+                    size="M"
+                    percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '11'}], formatter: '.calculatePercentage'}"
+                    valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '11'}], formatter: '.calculateValueColor'}"
+                    class="sapUiTinyMarginBeginEnd"
+                />
+            </FlexBox>
+            <Text
+                text="{i18n>princeRequirementText}"
+                class="sapUiTinyMarginBegin"
+            />
+        </VBox>
+
+        <VBox class="sapUiSmallMarginBeginEnd sapUiMediumMarginTopBottom">
+            <Title text="{i18n>titleKing}" />
+            <FlexBox justifyContent="SpaceBetween">
+                <Image
+                    src="images/badges/04-king.jpg"
+                    mode="Background"
+                    height="5rem"
+                    width="5rem"
+                />
+                <chart:RadialMicroChart
+                    size="M"
+                    percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '50'}], formatter: '.calculatePercentage'}"
+                    valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '50'}], formatter: '.calculateValueColor'}"
+                    class="sapUiTinyMarginBeginEnd"
+                />
+            </FlexBox>
+            <Text
+                text="{i18n>kingRequirementText}"
+                class="sapUiTinyMarginBegin"
+            />
+        </VBox>
+
+        <VBox class="sapUiSmallMarginBeginEnd sapUiMediumMarginTopBottom">
+            <Title text="{i18n>titleRiser}" />
+            <FlexBox justifyContent="SpaceBetween">
+                <Image
+                    src="images/badges/05-riser.png"
+                    mode="Background"
+                    height="5rem"
+                    width="10rem"
+                />
+                <chart:RadialMicroChart
+                    size="M"
+                    percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '111'}], formatter: '.calculatePercentage'}"
+                    valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '111'}], formatter: '.calculateValueColor'}"
+                    class="sapUiTinyMarginBeginEnd"
+                />
+            </FlexBox>
+            <Text
+                text="{i18n>riserRequirementText}"
+                class="sapUiTinyMarginBegin"
+            />
+        </VBox>
+
+        <VBox class="sapUiSmallMarginBeginEnd sapUiMediumMarginTopBottom">
+            <Title text="{i18n>titleBackpack}" />
+            <FlexBox justifyContent="SpaceBetween">
+                <Image
+                    src="images/badges/06-backpack.jpg"
+                    mode="Background"
+                    height="5rem"
+                    width="5rem"
+                />
+                <chart:RadialMicroChart
+                    size="M"
+                    percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '100'}], formatter: '.calculatePercentage'}"
+                    valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '100'}], formatter: '.calculateValueColor'}"
+                    class="sapUiTinyMarginBeginEnd"
+                />
+            </FlexBox>
+            <Text
+                text="{i18n>backpackRequirementText}"
+                class="sapUiTinyMarginBegin"
+            />
+        </VBox>
+
+        <VBox class="sapUiSmallMarginBeginEnd sapUiMediumMarginTopBottom">
+            <Title text="{i18n>titleShoe}" />
+            <FlexBox justifyContent="SpaceBetween">
+                <Image
+                    src="images/badges/07-shoe.jpg"
+                    mode="Background"
+                    height="10rem"
+                    width="5rem"
+                />
+                <chart:RadialMicroChart
+                    size="M"
+                    percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '150'}], formatter: '.calculatePercentage'}"
+                    valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '150'}], formatter: '.calculateValueColor'}"
+                    class="sapUiTinyMarginBeginEnd"
+                />
+            </FlexBox>
+            <Text
+                text="{i18n>goldRequirementText}"
+                class="sapUiTinyMarginBegin"
+            />
+        </VBox>
+
+        <VBox class="sapUiSmallMarginBeginEnd sapUiMediumMarginTopBottom">
+            <Title text="{i18n>titleEmperor}" />
+            <FlexBox justifyContent="SpaceBetween">
+                <Image
+                    src="images/badges/08-emperor.jpg"
+                    mode="Background"
+                    height="5rem"
+                    width="10rem"
+                />
+                <chart:RadialMicroChart
+                    size="M"
+                    percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '222'}], formatter: '.calculatePercentage'}"
+                    valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '222'}], formatter: '.calculateValueColor'}"
+                    class="sapUiTinyMarginBeginEnd"
+                />
+            </FlexBox>
+            <Text
+                text="{i18n>emperorRequirementText}"
+                class="sapUiTinyMarginBegin"
+            />
+        </VBox>
+        <endButton>
+            <Button
+                text="{i18n>close}"
+                press="onCloseButtonPress"
+            />
+        </endButton>
+    </Dialog>
+</core:FragmentDefinition>
