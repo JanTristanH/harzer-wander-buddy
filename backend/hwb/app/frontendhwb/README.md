@@ -12,7 +12,7 @@
 |**Application Title**<br>Harzer Wanderbuddy|
 |**Namespace**<br>hwb|
 |**UI5 Theme**<br>sap_horizon|
-|**UI5 Version**<br>1.122.2|
+|**UI5 Version**<br>1.120.24|
 |**Enable Code Assist Libraries**<br>False|
 |**Enable TypeScript**<br>False|
 |**Add Eslint configuration**<br>False|
