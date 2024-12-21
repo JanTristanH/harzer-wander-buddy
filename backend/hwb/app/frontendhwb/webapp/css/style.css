@@ -7,3 +7,8 @@
   .sapUiLoSplitter .sapUiLoSplitterContent{
     overflow: hidden;
   }
+
+  .scrollableHbox {
+    overflow-y: hidden; /* Enable horizontal scrolling */
+    overflow-x: scroll; /* Enable horizontal scrolling */
+}

@@ -431,6 +431,13 @@ sap.ui.define([
                     (/iPad|iPhone|iPod/.test(navigator.userAgent))
                     window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`); else /* else use Google */
                     window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
+            },
+
+            onButtonClosePress: function(oEvent) {
+                this.getRouter().navTo("Map");
+                const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
+                const oLastContentArea = oSplitter.getContentAreas().pop();
+                oSplitter.removeContentArea(oLastContentArea);
             }
         });
     });

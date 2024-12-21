@@ -1,66 +1,87 @@
-<f:Card
+<VBox
     xmlns="sap.m"
     xmlns:f="sap.f"
     xmlns:card="sap.f.cards"
-    class="sapUiSmallMargin"
-    width="92%"
 >
-    <f:header>
-        <card:Header title="{local>/title}" />
-    </f:header>
-    <f:content>
-        <VBox
-            class="sapUiSmallMargin"
-            justifyContent="SpaceBetween"
-        >
-            <HBox>
-                <Button
-                    text="{i18n>navigate}"
-                    icon="sap-icon://forward"
-                    type="Emphasized"
-                    press="onButtonOpenWithMapsAppPress"
-                />
-                <Button
-                    text="{i18n>stamp}"
-                    icon="{path: 'local>/bStampingEnabled', formatter: '.formatStampButtonIcon'}"
-                    visible="{local>/bStampingVisible}"
-                    enabled="{local>/bStampingEnabled}"
-                    type="Transparent"
-                    press="onButtonStampPress"
-                />
-                <Button
-                    text="{i18n>share}"
-                    icon="sap-icon://share-2"
-                    type="Transparent"
-                    press="onButtonSharePress"
-                />
-                <Button
-                    text="{i18n>website}"
-                    icon="sap-icon://world"
-                    visible="{local>/bStampingVisible}"
-                    type="Transparent"
-                    press="onButtonOpenExternalPress"
-            />
-            </HBox>
-            <HBox class="sapUiSmallMarginTop" width="95%">
-                <ExpandableText
-                    class="sapUiTinyMarginBottom sapUiTinyMarginTop"
-                    text="{local>/description}"
-                />
-            </HBox>
-            <HBox class="sapUiSmallMarginTop">
-                <List
-                    id="idTravelTimesList"
-                    headerText="{i18n>nearbyPois}"
-                    items="{local>/TravelTimes}"
-                >
-                    <StandardListItem
-                        title="Stempel"
-                        description="{local>distanceMeters}m - {local>durationSeconds}s"
-                        icon="sap-icon://task"
+    <HBox
+        justifyContent="End"
+        alignItems="Center"
+        class="sapUiTinyMarginTop sapUiTinyMarginEnd"
+    >
+        <Button
+            icon="sap-icon://decline"
+            type="Transparent"
+            press="onButtonClosePress"
+        />
+    </HBox>
+    <f:Card
+        class="sapUiSmallMarginBeginEnd"
+        width="92%"
+    >
+        <f:header>
+            <card:Header title="{local>/title}" />
+        </f:header>
+        <f:content>
+            <VBox
+                class="sapUiSmallMargin"
+                justifyContent="SpaceBetween"
+            >
+                <HBox width="80%" class="scrollableHbox">
+                    <Button
+                        text="{i18n>navigate}"
+                        icon="sap-icon://forward"
+                        type="Emphasized"
+                        press="onButtonOpenWithMapsAppPress"
+                        class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
                     />
-                </List>
-            </HBox>
-        </VBox>
-    </f:content>
-</f:Card>
+                    <Button
+                        text="{i18n>stamp}"
+                        icon="{path: 'local>/bStampingEnabled', formatter: '.formatStampButtonIcon'}"
+                        visible="{local>/bStampingVisible}"
+                        enabled="{local>/bStampingEnabled}"
+                        type="Transparent"
+                        press="onButtonStampPress"
+                        class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
+                    />
+                    <Button
+                        text="{i18n>share}"
+                        icon="sap-icon://share-2"
+                        type="Transparent"
+                        press="onButtonSharePress"
+                        class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
+                    />
+                    <Button
+                        text="{i18n>website}"
+                        icon="sap-icon://world"
+                        visible="{local>/bStampingVisible}"
+                        type="Transparent"
+                        press="onButtonOpenExternalPress"
+                        class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
+                    />
+                </HBox>
+                <HBox
+                    class="sapUiSmallMarginTop"
+                    width="95%"
+                >
+                    <ExpandableText
+                        class="sapUiTinyMarginBottom sapUiTinyMarginTop"
+                        text="{local>/description}"
+                    />
+                </HBox>
+                <HBox class="sapUiSmallMarginTop">
+                    <List
+                        id="idTravelTimesList"
+                        headerText="{i18n>nearbyPois}"
+                        items="{local>/TravelTimes}"
+                    >
+                        <StandardListItem
+                            title="Stempel"
+                            description="{local>distanceMeters}m - {local>durationSeconds}s"
+                            icon="sap-icon://task"
+                        />
+                    </List>
+                </HBox>
+            </VBox>
+        </f:content>
+    </f:Card>
+</VBox>
