@@ -1,18 +1,29 @@
 sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
-    'sap/m/MessageToast'
+    'sap/m/MessageToast',
+    "sap/ui/core/Fragment",
+    "sap/ui/model/json/JSONModel"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, MessageToast) {
+    function (Controller, MessageToast, Fragment, JSONModel) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.List", {
+
+            //SX-Zwei-Länder-Eiche
+            //SX-Jungborn
+            //SX-Drei-Länder-Stein
+            aBorderRoute: [1, 2, 3, 9, 10, 11, 19, 46, 90, 156, 159, 164, 166, 167, 168],
+            aGoethe: [9, 13, 14, 31, 38, 41, 42, 62, 69, 71, 78, 80, 85, 88, 91, 95, 99, 101, 105, 116, 117, 129, 132, 136, 140, 144, 155, 188],
+
+            aWitchTrail: [9, 13, 17, 22, 40, 41, 42, 52, 60, 62, 63, 69, 123, 128, 133, 136, 137, 140, 155, 178],
+            aWitchTrailAdditional: [69, 140],
             onInit: function () {
                 this.disableSelectAll();
             },
-            onAfterRendering: function(){
+            onAfterRendering: function () {
                 this.getView().byId("navButtonListId").setType("Emphasized");
             },
             disableSelectAll() {
@@ -29,7 +40,7 @@ sap.ui.define([
                 oTable.addEventDelegate(this._myDelegate, oTable);
             },
 
-            updateStampCount: function(){
+            updateStampCount: function () {
                 var oTable = this.byId("StampingsTable");
                 var iSelectedCount = oTable.getSelectedItems().length;
                 var oSelectedCountLabel = this.byId("selectedCount");
@@ -85,6 +96,61 @@ sap.ui.define([
             },
             onLogoutPress: function () {
                 window.location.href = "/logout";
+            },
+
+            onShowBagdesButtonPress: function (oEvent) {
+                const oView = this.getView();
+
+                // create popover
+                if (!this.pBadgeProgressDialog) {
+                    this.pBadgeProgressDialog = Fragment.load({
+                        id: oView.getId(),
+                        name: "hwb.frontendhwb.fragment.BadgeProgressDialog",
+                        controller: this
+                    }).then(function (oDialog) {
+                        oView.addDependent(oDialog);
+                        return oDialog;
+                    });
+                }
+
+                this.pBadgeProgressDialog.then(oDialog => {
+                    var oTable = this.byId("StampingsTable");
+                    var iSelectedCount = oTable.getSelectedItems().length;
+
+
+                    oDialog.setModel(new JSONModel({
+                        iSelectedCount,
+                        "iBoarderPercentage": 0,
+                        "sBoarderValueColor": "Neutral",
+                        "iGoethePercentage": 0,
+                        "sGoetheValueColor": "Neutral",
+                        "iWithTrailPercentage": 0,
+                        "sWithTrailValueColor": "Neutral",
+                    }), "localDialog")
+                    oDialog.open(oDialog);
+                });
+            },
+
+            onCloseButtonPress: function (oEvent) {
+                this.pBadgeProgressDialog.then(d => d.close());
+            },
+
+            calculatePercentage: function (iCurrent, iMax) {
+                if (!iCurrent || !iMax || iMax <= 0) {
+                    return 0; // Return 0 if invalid input
+                }
+                return Math.min((iCurrent / iMax) * 100, 100); // Ensure percentage doesn't exceed 100
+            },
+
+            calculateValueColor: function (iCurrent, iMax) {
+                let nPercentage = (iCurrent / iMax) * 100;
+                // Determine color based on percentage
+                if (nPercentage >= 100) {
+                    return "Good"; // Green for 100%
+                } else {
+                    return "Neutral"; // Grey otherwise
+                }
             }
+
         });
     });
