@@ -29,6 +29,13 @@
                                 height="5rem"
                                 width="5rem"
                             />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iSelectedCount} >= 8 }"
+                            />
                             <chart:HarveyBallMicroChart
                                 size="M"
                                 total="8"
@@ -57,6 +64,13 @@
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
+                            />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iSelectedCount} >= 16 }"
                             />
                             <chart:HarveyBallMicroChart
                                 size="M"
@@ -87,6 +101,13 @@
                                 height="5rem"
                                 width="5rem"
                             />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iSelectedCount} >= 24 }"
+                            />
                             <chart:HarveyBallMicroChart
                                 size="M"
                                 total="24"
@@ -116,6 +137,13 @@
                                 height="5rem"
                                 width="5rem"
                             />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iSelectedCount} >= 50 }"
+                            />
                             <chart:HarveyBallMicroChart
                                 size="M"
                                 total="50"
@@ -144,6 +172,13 @@
                                 mode="Background"
                                 height="5rem"
                                 width="10rem"
+                            />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iRiserProgressCount} >= 111 }"
                             />
                             <chart:HarveyBallMicroChart
                                 size="M"
@@ -219,6 +254,13 @@
                                 height="5rem"
                                 width="5rem"
                             />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iSelectedCount} >= 100 }"
+                            />
                             <chart:HarveyBallMicroChart
                                 size="M"
                                 total="100"
@@ -248,6 +290,13 @@
                                 height="10rem"
                                 width="5rem"
                             />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iSelectedCount} >= 150 }"
+                            />
                             <chart:HarveyBallMicroChart
                                 size="M"
                                 total="150"
@@ -276,6 +325,13 @@
                                 mode="Background"
                                 height="5rem"
                                 width="10rem"
+                            />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iSelectedCount} >= 222 }"
                             />
                             <chart:HarveyBallMicroChart
                                 size="M"
@@ -310,14 +366,21 @@
                                 height="5rem"
                                 width="5rem"
                             />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iBoarderProgressCount} >= 15 }"
+                            />
                             <chart:HarveyBallMicroChart
                                 size="M"
-                                total="20"
+                                total="22"
                             >
                                 <chart:items>
                                     <chart:HarveyBallMicroChartItem
-                                        fraction="{parts: [{path: 'localDialog>/iBoarderProgressCount'}, {value: '15'}], formatter: '.min'}"
-                                        color="{parts: [{path: 'localDialog>/iBoarderProgressCount'}, {value: '15'}], formatter: '.calculateValueColor'}"
+                                        fraction="{parts: [{path: 'localDialog>/iBoarderProgressCount'}, {value: '22'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iBoarderProgressCount'}, {value: '22'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
                             </chart:HarveyBallMicroChart>
@@ -390,6 +453,13 @@
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
+                            />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iGoetheProgressCount} >= 28 }"
                             />
                             <chart:HarveyBallMicroChart
                                 size="M"
@@ -465,6 +535,13 @@
                                 height="5rem"
                                 width="5rem"
                             />
+                            <Image
+                                src="images/buddy-celebrating-removebg.png"
+                                mode="Background"
+                                height="5rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iWitchProgressCount} >= 11 }"
+                            />
                             <chart:HarveyBallMicroChart
                                 size="M"
                                 total="11"
@@ -537,12 +614,19 @@
                         class="sapUiSmallMarginBeginEnd sapUiSmallMarginTop sapUiMediumMarginBottom"
                     >
                         <Title text="{i18n>titlePrince}" />
+                        <Image
+                            src="images/badges/99-prince.png"
+                            mode="Background"
+                            height="5rem"
+                            width="15rem"
+                        />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/99-prince.png"
+                                src="images/buddy-celebrating-removebg.png"
                                 mode="Background"
                                 height="5rem"
-                                width="15rem"
+                                width="5rem"
+                                visible="{= ${localDialog>/iSelectedCount} >= 11 }"
                             />
                             <chart:HarveyBallMicroChart
                                 size="M"
