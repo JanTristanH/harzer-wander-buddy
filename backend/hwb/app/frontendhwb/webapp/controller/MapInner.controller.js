@@ -221,9 +221,7 @@ sap.ui.define([
             },
 
             onSpotContextMenu: function (oEvent) {
-                let sStampNumber = oEvent.getSource().getText();
-                const sLink = `https://www.harzer-wandernadel.de/?s=${sStampNumber}`;
-                window.open(sLink, '_blank').focus();
+                this.onButtonOpenExternalPress(oEvent);
             },
 
             onSearchFieldSuggest: function (oEvent) {
@@ -389,7 +387,7 @@ sap.ui.define([
             onButtonOpenExternalPress: function(oEvent) {
                 let localModel = this.getModel("local");
                 let oStamp = this._getPoiById(localModel.getProperty("/sCurrentSpotId"));
-                const sLink = `https://www.harzer-wandernadel.de/?s=${oStamp.number}`;
+                const sLink = `https://www.harzer-wandernadel.de/?s=${oStamp.name}`;
                 window.open(sLink, '_blank').focus();
             },
 
@@ -436,8 +434,11 @@ sap.ui.define([
             onButtonClosePress: function(oEvent) {
                 this.getRouter().navTo("Map");
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
-                const oLastContentArea = oSplitter.getContentAreas().pop();
+                var oLastContentArea = oSplitter.getContentAreas().pop();
                 oSplitter.removeContentArea(oLastContentArea);
+                oLastContentArea.destroy();
+                this._pSPOIInforCard = null;
+                oSplitter.resetContentAreasSizes();
             }
         });
     });
