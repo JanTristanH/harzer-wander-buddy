@@ -62,6 +62,7 @@
                                             icon="sap-icon://activate"
                                         />
                                     </HBox>
+                                    <HBox width="100rem">
                                     <IllustratedMessage
                                         enableVerticalResponsiveness="true"
                                         illustrationType="sapIllus-SearchEarth"
@@ -78,10 +79,12 @@
                                             />
                                         </additionalContent>
                                     </IllustratedMessage>
+                                    </HBox>
                                     <SelectList
                                         id="idRouteList"
                                         items="{local>/hikingRoutes}"
                                         selectionChange="onSelectionChange"
+                                        width="100%"
                                     >
                                         <core:ListItem
                                             key="{local>id}"
