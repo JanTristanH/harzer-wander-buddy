@@ -29,12 +29,17 @@
                                 height="5rem"
                                 width="5rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '8'}], formatter: '.calculatePercentage'}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '8'}], formatter: '.calculateValueColor'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="8"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '8'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '8'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>bronzeRequirementText}"
@@ -53,12 +58,17 @@
                                 height="5rem"
                                 width="5rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '16'}], formatter: '.calculatePercentage'}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '16'}], formatter: '.calculateValueColor'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="16"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '16'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '16'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>silverRequirementText}"
@@ -77,12 +87,17 @@
                                 height="5rem"
                                 width="5rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '24'}], formatter: '.calculatePercentage'}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '24'}], formatter: '.calculateValueColor'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="24"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '24'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '24'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>goldRequirementText}"
@@ -101,12 +116,17 @@
                                 height="5rem"
                                 width="5rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '50'}], formatter: '.calculatePercentage'}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '50'}], formatter: '.calculateValueColor'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="50"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '50'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '50'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>kingRequirementText}"
@@ -125,12 +145,17 @@
                                 height="5rem"
                                 width="10rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{localDialog>/iRiserPercentage}"
-                                valueColor="{parts: [{path: 'localDialog>/iRiserPercentage'}], formatter: '.calculateValueColorPercentage'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="111"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iRiserProgressCount'}, {value: '111'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iRiserProgressCount'}, {value: '111'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>riserRequirementText}"
@@ -194,12 +219,17 @@
                                 height="5rem"
                                 width="5rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '100'}], formatter: '.calculatePercentage'}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '100'}], formatter: '.calculateValueColor'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="100"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '100'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '100'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>backpackRequirementText}"
@@ -218,12 +248,17 @@
                                 height="10rem"
                                 width="5rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '150'}], formatter: '.calculatePercentage'}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '150'}], formatter: '.calculateValueColor'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="150"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '150'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '150'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>shoeRequirementText}"
@@ -242,12 +277,17 @@
                                 height="5rem"
                                 width="10rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '222'}], formatter: '.calculatePercentage'}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '222'}], formatter: '.calculateValueColor'}"
-                                class="sapUiTinyMar ginBeginEnd"
-                            />
+                                total="222"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '222'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '222'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>emperorRequirementText}"
@@ -270,12 +310,17 @@
                                 height="5rem"
                                 width="5rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{localDialog>/iBoarderPercentage}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}], formatter: '.calculateValueColorPercentage'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="20"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iBoarderProgressCount'}, {value: '15'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iBoarderProgressCount'}, {value: '15'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>boarderRequirementText}"
@@ -346,12 +391,17 @@
                                 height="5rem"
                                 width="5rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{localDialog>/iGoethePercentage}"
-                                valueColor="{parts: [{path: 'localDialog>/iGoethePercentage'}], formatter: '.calculateValueColorPercentage'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="28"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iGoetheProgressCount'}, {value: '28'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iGoetheProgressCount'}, {value: '28'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>goetheRequirementText}"
@@ -415,12 +465,17 @@
                                 height="5rem"
                                 width="5rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{localDialog>/iWitchTrailPercentage}"
-                                valueColor="{parts: [{path: 'localDialog>/iWitchTrailPercentage'}], formatter: '.calculateValueColorPercentage'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="11"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iWitchProgressCount'}, {value: '11'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iWitchProgressCount'}, {value: '11'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
 
                         <Text
@@ -489,12 +544,17 @@
                                 height="5rem"
                                 width="15rem"
                             />
-                            <chart:RadialMicroChart
+                            <chart:HarveyBallMicroChart
                                 size="M"
-                                percentage="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '11'}], formatter: '.calculatePercentage'}"
-                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '11'}], formatter: '.calculateValueColor'}"
-                                class="sapUiTinyMarginBeginEnd"
-                            />
+                                total="11"
+                            >
+                                <chart:items>
+                                    <chart:HarveyBallMicroChartItem
+                                        fraction="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '11'}], formatter: '.min'}"
+                                        color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '11'}], formatter: '.calculateValueColor'}"
+                                    />
+                                </chart:items>
+                            </chart:HarveyBallMicroChart>
                         </FlexBox>
                         <Text
                             text="{i18n>princeRequirementText}"

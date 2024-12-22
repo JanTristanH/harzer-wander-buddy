@@ -113,13 +113,13 @@ sap.ui.define([
 
                     oDialog.setModel(new JSONModel({
                         iSelectedCount,
-                        "iRiserPercentage": this.getRiserPercentage(aStampedNumbers),
-                        "aRequiredStampsRiser" : this.getRequiredStampsRiser(),
-                        "iBoarderPercentage": this.getBoarderPercentage(aStampedNumbers),
+                        "iRiserProgressCount": this.getRiserProgressCount(aStampedNumbers),
+                        "aRequiredStampsRiser": this.getRequiredStampsRiser(),
+                        "iBoarderProgressCount": this.getBoarderProgressCount(aStampedNumbers),
                         "aRequiredStampsBoarder": this.getRequiredStampsBoarder(),
-                        "iGoethePercentage": this.getGoethePercentage(aStampedNumbers),
+                        "iGoetheProgressCount": this.getGoetheProgressCount(aStampedNumbers),
                         "aRequiredStampsGoethe": this.getRequiredStampsGoethe(),
-                        "iWitchTrailPercentage": this.getWitchTrailPercentage(aStampedNumbers),
+                        "iWitchProgressCount": this.getWitchTrailPercentage(aStampedNumbers),
                         "aRequiredStampsWitchTrail": this.getRequiredStampsWithTrail(),
                     }), "localDialog")
                     oDialog.open(oDialog);
@@ -131,11 +131,10 @@ sap.ui.define([
             //SX-Zwei-Länder-Eiche
             //SX-Jungborn
             //SX-Drei-Länder-Stein
-            aBorderRequiredStamps: [1, 2, 3, 9, 10, 11, 19, 46, 90, 156, 159, 164, 166, 167, 168].map(s => "" + s),
-            getBoarderPercentage: function (aStampedNumbers) {
-
+            aBorderRequiredStamps: [1, 2, 3, 4, 9, 10, 11, 18, 19, 46, 90, 136, 156, 159, 164, 165, 166, 167, 168, 170].map(s => "" + s),
+            getBoarderProgressCount: function (aStampedNumbers) {
                 const applicableStampings = aStampedNumbers.filter(stamped => this.aBorderRequiredStamps.includes(stamped));
-                return this.calculatePercentage(applicableStampings.length, this.aBorderRequiredStamps.length);
+                return applicableStampings.length;
             },
 
             getRequiredStampsBoarder: function () {
@@ -151,9 +150,9 @@ sap.ui.define([
 
             aGoetheRequiredStamps: [9, 13, 14, 31, 38, 41, 42, 62, 69, 71, 78, 80, 85, 88, 91, 95, 99, 101, 105, 116, 117, 129, 132, 136, 140, 144, 155, 188].map(s => "" + s),
 
-            getGoethePercentage: function (aStampedNumbers) {
+            getGoetheProgressCount: function (aStampedNumbers) {
                 const applicableStampings = aStampedNumbers.filter(stamped => this.aGoetheRequiredStamps.includes(stamped));
-                return this.calculatePercentage(applicableStampings.length, this.aGoetheRequiredStamps.length);
+                return applicableStampings.length;
             },
 
             getRequiredStampsGoethe: function () {
@@ -180,7 +179,7 @@ sap.ui.define([
                 if (aStampedNumbers.includes("140")) {
                     sStampedForRequiredCount++;
                 }
-                return this.calculatePercentage(applicableStampings.length, 11);
+                return applicableStampings.length;
             },
 
             getRequiredStampsWithTrail: function () {
@@ -198,16 +197,16 @@ sap.ui.define([
                 });
             },
 
-            aRiserRequiredStamps : [37, 39, 60, 61, 85, 91, 107, 113, 126, 127, 128, 133, 137, 146, 155, 172, 175, 179, 190, 193, 194, 217, 222].map(s => "" + s),
+            aRiserRequiredStamps: [37, 39, 60, 61, 85, 91, 107, 113, 126, 127, 128, 133, 137, 146, 155, 172, 175, 179, 190, 193, 194, 217, 222].map(s => "" + s),
 
-            getRiserPercentage: function (aStampedNumbers) {
+            getRiserProgressCount: function (aStampedNumbers) {
                 let nStampedCount = aStampedNumbers.length;
                 nStampedCount = Math.min(nStampedCount, 111);
-                
+
                 const applicableStampings = aStampedNumbers.filter(stamped => this.aRiserRequiredStamps.includes(stamped));
                 const missingRequiredCount = this.aRiserRequiredStamps.length - applicableStampings.length;
-                
-                return this.calculatePercentage(nStampedCount- missingRequiredCount, 111);
+
+                return nStampedCount - missingRequiredCount;
             },
 
             getRequiredStampsRiser: function () {
@@ -231,6 +230,9 @@ sap.ui.define([
                 return Math.min((iCurrent / iMax) * 100, 100); // Ensure percentage doesn't exceed 100
             },
 
+            min: function (iCurrent, iMax) {
+                return Math.min(iCurrent, iMax);
+            },
             calculateValueColor: function (iCurrent, iMax) {
                 let nPercentage = (iCurrent / iMax) * 100;
                 return this.calculateValueColorPercentage(nPercentage);
@@ -242,7 +244,7 @@ sap.ui.define([
                 } else if (nPercentage == 0) {
                     return "None"; // Grey for 0%
                 } else {
-                    return "Neutral"; // Blue otherwise
+                    return "rgb(50, 120, 190)"; // Blue otherwise
                 }
             },
 
