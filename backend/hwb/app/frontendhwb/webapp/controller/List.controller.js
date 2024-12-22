@@ -113,8 +113,8 @@ sap.ui.define([
 
                     oDialog.setModel(new JSONModel({
                         iSelectedCount,
-                        "iRiserPercentage": 0,
-                        "sRiserValueColor": "Neutral",
+                        "iRiserPercentage": this.getRiserPercentage(aStampedNumbers),
+                        "aRequiredStampsRiser" : this.getRequiredStampsRiser(),
                         "iBoarderPercentage": this.getBoarderPercentage(aStampedNumbers),
                         "aRequiredStampsBoarder": this.getRequiredStampsBoarder(),
                         "iGoethePercentage": this.getGoethePercentage(aStampedNumbers),
@@ -198,6 +198,28 @@ sap.ui.define([
                 });
             },
 
+            aRiserRequiredStamps : [37, 39, 60, 61, 85, 91, 107, 113, 126, 127, 128, 133, 137, 146, 155, 172, 175, 179, 190, 193, 194, 217, 222].map(s => "" + s),
+
+            getRiserPercentage: function (aStampedNumbers) {
+                let nStampedCount = aStampedNumbers.length;
+                nStampedCount = Math.min(nStampedCount, 111);
+                
+                const applicableStampings = aStampedNumbers.filter(stamped => this.aRiserRequiredStamps.includes(stamped));
+                const missingRequiredCount = this.aRiserRequiredStamps.length - applicableStampings.length;
+                
+                return this.calculatePercentage(nStampedCount- missingRequiredCount, 111);
+            },
+
+            getRequiredStampsRiser: function () {
+                return this.aRiserRequiredStamps.map(s => this.getStampByNumber(s)).map(o => {
+                    return {
+                        ID: o.ID,
+                        name: o.name,
+                        number: o.number,
+                        visited: o.Stampings.__list.length != 0
+                    }
+                });
+            },
             onCloseButtonPress: function (oEvent) {
                 this.pBadgeProgressDialog.then(d => d.close());
             },
