@@ -384,8 +384,8 @@
                             />
                             <chart:RadialMicroChart
                                 size="M"
-                                percentage="{localDialog>/iWithTrailPercentage}"
-                                valueColor="{localDialog>/sWithTrailValueColor}"
+                                percentage="{localDialog>/iWitchTrailPercentage}"
+                                valueColor="{parts: [{path: 'localDialog>/iWitchTrailPercentage'}], formatter: '.calculateValueColorPercentage'}"
                                 class="sapUiTinyMarginBeginEnd"
                             />
                         </FlexBox>
@@ -401,9 +401,43 @@
                             class="sapUiTinyMargin"
                         >
                             <content>
-                                <Text
-                                    text="TODO hier kommt eine Liste der Benötigten Stempel"
-                                />
+
+<List
+                                    mode="SingleSelectMaster"
+                                    items="{localDialog>/aRequiredStampsWitchTrail}"
+                                >
+                                    <CustomListItem>
+                                        <HBox
+                                            justifyContent="SpaceBetween"
+                                            alignItems="Center"
+                                            width="100%"
+                                        >
+                                            <HBox>
+                                                <CheckBox
+                                                    editable="false"
+                                                    selected="{localDialog>visited}"
+                                                />
+                                                <Text
+                                                    text="{localDialog>name}"
+                                                    class="sapUiTinyMargin"
+                                                />
+                                            </HBox>
+                                            <Button
+                                                icon="sap-icon://navigation-right-arrow"
+                                                type="Transparent"
+                                                press="onStampNavigatePress"
+                                            >
+                                                <customData>
+                                                    <core:CustomData
+                                                        key="ID"
+                                                        value="{localDialog>ID}"
+                                                        writeToDom="true"
+                                                    />
+                                                </customData>
+                                            </Button>
+                                        </HBox>
+                                    </CustomListItem>
+                                </List>
                             </content>
                         </Panel>
                     </VBox>
