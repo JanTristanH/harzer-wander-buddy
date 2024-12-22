@@ -64,6 +64,7 @@ This project is configured to run with a postgres.
   - link to external site ✔️
   - fix user experience on mobile for this view -> pull up card ✔️
 - refactor routes to use joined travel time key (-> persist later, can recalculate dynamically) ✔️
+- badge progress overview ✔️
 - basic tour planning
 - nice illustrated message on initial routes view -> show list of tours ✔️
 - Profile page
