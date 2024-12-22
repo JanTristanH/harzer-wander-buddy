@@ -24,7 +24,7 @@
                         <Title text="{i18n>titleBronze}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/01-bronze.jpg"
+                                src="images/badges/01-bronze.png"
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
@@ -48,7 +48,7 @@
                         <Title text="{i18n>titleSilver}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/02-silver.jpg"
+                                src="images/badges/02-silver.png"
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
@@ -72,7 +72,7 @@
                         <Title text="{i18n>titleGold}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/03-gold.jpg"
+                                src="images/badges/03-gold.png"
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
@@ -96,7 +96,7 @@
                         <Title text="{i18n>titleKing}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/04-king.jpg"
+                                src="images/badges/04-king.png"
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
@@ -189,7 +189,7 @@
                         <Title text="{i18n>titleBackpack}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/06-backpack.jpg"
+                                src="images/badges/06-backpack.png"
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
@@ -213,7 +213,7 @@
                         <Title text="{i18n>titleShoe}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/07-shoe.jpg"
+                                src="images/badges/07-shoe.png"
                                 mode="Background"
                                 height="10rem"
                                 width="5rem"
@@ -237,7 +237,7 @@
                         <Title text="{i18n>titleEmperor}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/08-emperor.jpg"
+                                src="images/badges/08-emperor.png"
                                 mode="Background"
                                 height="5rem"
                                 width="10rem"
@@ -265,7 +265,7 @@
                         <Title text="{i18n>titleBoarder}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/S1-boarder.jpg"
+                                src="images/badges/S1-boarder.png"
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
@@ -341,7 +341,7 @@
                         <Title text="{i18n>titleGoethe}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/S2-goethe.jpg"
+                                src="images/badges/S2-goethe.png"
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
@@ -410,7 +410,7 @@
                         <Title text="{i18n>titleWitchTrail}" />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
-                                src="images/badges/S3-witchTrail.jpg"
+                                src="images/badges/S3-witchTrail.png"
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
