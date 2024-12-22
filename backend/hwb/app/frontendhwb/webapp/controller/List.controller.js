@@ -168,9 +168,11 @@ sap.ui.define([
 
             aWitchTrailRequiredStamps: [69, 140, 9, 13, 17, 22, 40, 41, 42, 52, 60, 62, 63, 123, 128, 133, 136, 137, 155, 178].map(s => "" + s),
             getWitchTrailPercentage: function (aStampedNumbers) {
+                let aWitchTrailRequiredStampsWithoutSpecific = this.aWitchTrailRequiredStamps.filter(s => s != "69" && s != "140");
+                debugger;
                 const applicableStampings = aStampedNumbers
-                    .filter(s => s != "69" && s != !"140")
-                    .filter(stamped => this.aWitchTrailRequiredStamps.includes(stamped));
+                    
+                    .filter(stamped => aWitchTrailRequiredStampsWithoutSpecific.includes(stamped));
 
                 let sStampedForRequiredCount = Math.min(applicableStampings.length, 9);
                 if (aStampedNumbers.includes("69")) {
@@ -179,7 +181,7 @@ sap.ui.define([
                 if (aStampedNumbers.includes("140")) {
                     sStampedForRequiredCount++;
                 }
-                return applicableStampings.length;
+                return sStampedForRequiredCount;
             },
 
             getRequiredStampsWithTrail: function () {
