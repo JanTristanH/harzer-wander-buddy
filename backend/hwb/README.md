@@ -66,6 +66,7 @@ This project is configured to run with a postgres.
 - refactor routes to use joined travel time key (-> persist later, can recalculate dynamically) ✔️
 - badge progress overview ✔️
 - basic tour planning
+  - clicking a poi should move it to the center of the map
 - nice illustrated message on initial routes view -> show list of tours ✔️
 - have map start near me if possible & keep viewport on reload
 - Profile page
