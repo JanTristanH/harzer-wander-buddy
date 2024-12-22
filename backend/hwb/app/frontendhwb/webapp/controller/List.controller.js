@@ -11,11 +11,8 @@ sap.ui.define([
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.List", {
+            aWitchTrail: [69, 140, 9, 13, 17, 22, 40, 41, 42, 52, 60, 62, 63, 123, 128, 133, 136, 137, 155, 178],
 
-            aGoethe: [9, 13, 14, 31, 38, 41, 42, 62, 69, 71, 78, 80, 85, 88, 91, 95, 99, 101, 105, 116, 117, 129, 132, 136, 140, 144, 155, 188],
-
-            aWitchTrail: [9, 13, 17, 22, 40, 41, 42, 52, 60, 62, 63, 69, 123, 128, 133, 136, 137, 140, 155, 178],
-            aWitchTrailAdditional: [69, 140],
             onInit: function () {
                 this.disableSelectAll();
             },
@@ -117,16 +114,15 @@ sap.ui.define([
                     const aStampedNumbers = aSelectedItems.map(item => item.getCells()[1].getText());
 
                     let iBoarderPercentage = this.getBoarderPercentage(aStampedNumbers);
-                    
+                    let iGoethePercentage = this.getGoethePercentage(aStampedNumbers);
                     oDialog.setModel(new JSONModel({
                         iSelectedCount,
                         "iRiserPercentage": 0,
                         "sRiserValueColor": "Neutral",
                         "iBoarderPercentage": iBoarderPercentage,
-                        "sBoarderValueColor": this.calculateValueColorPercentage(iBoarderPercentage),
                         "aRequiredStampsBoarder": this.getRequiredStampsBoarder(),
-                        "iGoethePercentage": 0,
-                        "sGoetheValueColor": "Neutral",
+                        "iGoethePercentage": iGoethePercentage,
+                        "aRequiredStampsGoethe": this.getRequiredStampsGoethe(),
                         "iWithTrailPercentage": 0,
                         "sWithTrailValueColor": "Neutral",
                     }), "localDialog")
@@ -148,6 +144,24 @@ sap.ui.define([
             
             getRequiredStampsBoarder: function() {
                 return this.aBorderRequiredStamps.map(s => this.getStampByNumber(s)).map( o => {
+                    return {
+                        ID: o.ID,
+                        name : o.name,
+                        number: o.number,
+                        visited: o.Stampings.__list.length != 0
+                    }
+                });
+            },
+            
+            aGoetheRequiredStamps: [9, 13, 14, 31, 38, 41, 42, 62, 69, 71, 78, 80, 85, 88, 91, 95, 99, 101, 105, 116, 117, 129, 132, 136, 140, 144, 155, 188].map(s => "" + s),
+            
+            getGoethePercentage: function (aStampedNumbers) {
+                const applicableStampings = aStampedNumbers.filter(stamped => this.aGoetheRequiredStamps.includes(stamped));
+                return this.calculatePercentage(applicableStampings.length, this.aGoetheRequiredStamps.length);
+            },
+            
+            getRequiredStampsGoethe: function() {
+                return this.aGoetheRequiredStamps.map(s => this.getStampByNumber(s)).map( o => {
                     return {
                         ID: o.ID,
                         name : o.name,

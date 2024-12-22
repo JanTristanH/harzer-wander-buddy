@@ -255,15 +255,13 @@
                             class="sapUiTinyMargin"
                         >
                             <content>
-                            <MessageStrip
-                                text="{i18n>warningMsgMissingSpecialStamps}"
-                                type="Warning"
-                                class="sapUiTinyMarginBottom"
-                            >
-                                <link>
-                                    
-                                </link>
-                            </MessageStrip>
+                                <MessageStrip
+                                    text="{i18n>warningMsgMissingSpecialStamps}"
+                                    type="Warning"
+                                    class="sapUiTinyMarginBottom"
+                                >
+                                    <link />
+                                </MessageStrip>
                                 <List
                                     mode="SingleSelectMaster"
                                     items="{localDialog>/aRequiredStampsBoarder}"
@@ -318,7 +316,7 @@
                             <chart:RadialMicroChart
                                 size="M"
                                 percentage="{localDialog>/iGoethePercentage}"
-                                valueColor="{localDialog>/sGoetheValueColor}"
+                                valueColor="{parts: [{path: 'localDialog>/iGoethePercentage'}], formatter: '.calculateValueColorPercentage'}"
                                 class="sapUiTinyMarginBeginEnd"
                             />
                         </FlexBox>
@@ -333,9 +331,42 @@
                             class="sapUiTinyMargin"
                         >
                             <content>
-                                <Text
-                                    text="TODO hier kommt eine Liste der Benötigten Stempel"
-                                />
+<List
+                                    mode="SingleSelectMaster"
+                                    items="{localDialog>/aRequiredStampsGoethe}"
+                                >
+                                    <CustomListItem>
+                                        <HBox
+                                            justifyContent="SpaceBetween"
+                                            alignItems="Center"
+                                            width="100%"
+                                        >
+                                            <HBox>
+                                                <CheckBox
+                                                    editable="false"
+                                                    selected="{localDialog>visited}"
+                                                />
+                                                <Text
+                                                    text="{localDialog>name}"
+                                                    class="sapUiTinyMargin"
+                                                />
+                                            </HBox>
+                                            <Button
+                                                icon="sap-icon://navigation-right-arrow"
+                                                type="Transparent"
+                                                press="onStampNavigatePress"
+                                            >
+                                                <customData>
+                                                    <core:CustomData
+                                                        key="ID"
+                                                        value="{localDialog>ID}"
+                                                        writeToDom="true"
+                                                    />
+                                                </customData>
+                                            </Button>
+                                        </HBox>
+                                    </CustomListItem>
+                                </List>
                             </content>
                         </Panel>
                     </VBox>
