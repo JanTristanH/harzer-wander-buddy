@@ -41,6 +41,11 @@ sap.ui.define([
             return oStamp || oParking;
         },
 
+        getStampByNumber: function (sNumber) {
+            let aData = Object.values(this.getModel().oData);
+            return aData.filter( e => e.number == sNumber).pop();
+        },
+
         onNavBack: function () {
             var oHistory, sPreviousHash;
             oHistory = History.getInstance();

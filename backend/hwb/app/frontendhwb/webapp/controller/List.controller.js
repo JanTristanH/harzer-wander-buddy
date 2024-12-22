@@ -12,10 +12,6 @@ sap.ui.define([
 
         return Controller.extend("hwb.frontendhwb.controller.List", {
 
-            //SX-Zwei-Länder-Eiche
-            //SX-Jungborn
-            //SX-Drei-Länder-Stein
-            aBorderRoute: [1, 2, 3, 9, 10, 11, 19, 46, 90, 156, 159, 164, 166, 167, 168],
             aGoethe: [9, 13, 14, 31, 38, 41, 42, 62, 69, 71, 78, 80, 85, 88, 91, 95, 99, 101, 105, 116, 117, 129, 132, 136, 140, 144, 155, 188],
 
             aWitchTrail: [9, 13, 17, 22, 40, 41, 42, 52, 60, 62, 63, 69, 123, 128, 133, 136, 137, 140, 155, 178],
@@ -114,22 +110,50 @@ sap.ui.define([
                 }
 
                 this.pBadgeProgressDialog.then(oDialog => {
-                    var oTable = this.byId("StampingsTable");
-                    var iSelectedCount = oTable.getSelectedItems().length;
+                    let oTable = this.byId("StampingsTable");
+                    const aSelectedItems = oTable.getSelectedItems();
+                    let iSelectedCount = aSelectedItems.length;
 
+                    const aStampedNumbers = aSelectedItems.map(item => item.getCells()[1].getText());
 
+                    let iBoarderPercentage = this.getBoarderPercentage(aStampedNumbers);
+                    
                     oDialog.setModel(new JSONModel({
                         iSelectedCount,
                         "iRiserPercentage": 0,
                         "sRiserValueColor": "Neutral",
-                        "iBoarderPercentage": 0,
-                        "sBoarderValueColor": "Neutral",
+                        "iBoarderPercentage": iBoarderPercentage,
+                        "sBoarderValueColor": this.calculateValueColorPercentage(iBoarderPercentage),
+                        "aRequiredStampsBoarder": this.getRequiredStampsBoarder(),
                         "iGoethePercentage": 0,
                         "sGoetheValueColor": "Neutral",
                         "iWithTrailPercentage": 0,
                         "sWithTrailValueColor": "Neutral",
                     }), "localDialog")
                     oDialog.open(oDialog);
+                });
+            },
+
+
+
+            //SX-Zwei-Länder-Eiche
+            //SX-Jungborn
+            //SX-Drei-Länder-Stein
+            aBorderRequiredStamps: [1, 2, 3, 9, 10, 11, 19, 46, 90, 156, 159, 164, 166, 167, 168].map(s => "" + s),
+            getBoarderPercentage: function (aStampedNumbers) {
+                
+                const applicableStampings = aStampedNumbers.filter(stamped => this.aBorderRequiredStamps.includes(stamped));
+                return this.calculatePercentage(applicableStampings.length, this.aBorderRequiredStamps.length);
+            },
+            
+            getRequiredStampsBoarder: function() {
+                return this.aBorderRequiredStamps.map(s => this.getStampByNumber(s)).map( o => {
+                    return {
+                        ID: o.ID,
+                        name : o.name,
+                        number: o.number,
+                        visited: o.Stampings.__list.length != 0
+                    }
                 });
             },
 
@@ -146,13 +170,23 @@ sap.ui.define([
 
             calculateValueColor: function (iCurrent, iMax) {
                 let nPercentage = (iCurrent / iMax) * 100;
+                return this.calculateValueColorPercentage(nPercentage);
+            },
+            calculateValueColorPercentage: function (nPercentage) {
                 // Determine color based on percentage
                 if (nPercentage >= 100) {
                     return "Good"; // Green for 100%
+                } else if (nPercentage == 0) {
+                    return "None"; // Grey for 0%
                 } else {
-                    return "Neutral"; // Grey otherwise
+                    return "Neutral"; // Blue otherwise
                 }
-            }
+            },
 
+            onStampNavigatePress: function (oEvent) {
+                const sId = oEvent.getSource().data("ID");
+                this.getRouter().navTo("MapWithPOI", { idPOI: sId });
+            }
+            
         });
     });

@@ -132,9 +132,13 @@
                                 class="sapUiTinyMarginBeginEnd"
                             />
                         </FlexBox>
+                        <Text
+                            text="{i18n>riserRequirementText}"
+                            class="sapUiTinyMargin"
+                        />
                         <Panel
                             expandable="true"
-                            headerText="{i18n>requiredStamps}"
+                            headerText="{i18n>miningStamps}"
                             width="auto"
                             class="sapUiTinyMargin"
                         >
@@ -144,10 +148,6 @@
                                 />
                             </content>
                         </Panel>
-                        <Text
-                            text="{i18n>riserRequirementText}"
-                            class="sapUiTinyMargin"
-                        />
                     </VBox>
 
                     <VBox
@@ -240,26 +240,68 @@
                             <chart:RadialMicroChart
                                 size="M"
                                 percentage="{localDialog>/iBoarderPercentage}"
-                                valueColor="{localDialog>/sBoarderValueColor}"
+                                valueColor="{parts: [{path: 'localDialog>/iSelectedCount'}], formatter: '.calculateValueColorPercentage'}"
                                 class="sapUiTinyMarginBeginEnd"
                             />
                         </FlexBox>
-                        <Panel
-                            expandable="true"
-                            headerText="{i18n>requiredStamps}"
-                            width="auto"
-                            class="sapUiTinyMargin"
-                        >
-                            <content>
-                                <Text
-                                    text="TODO hier kommt eine Liste der Benötigten Stempel"
-                                />
-                            </content>
-                        </Panel>
                         <Text
                             text="{i18n>boarderRequirementText}"
                             class="sapUiTinyMarginBeginEnd sapUiTinyMarginBottom"
                         />
+                        <Panel
+                            expandable="true"
+                            headerText="{i18n>boarderStamps}"
+                            width="auto"
+                            class="sapUiTinyMargin"
+                        >
+                            <content>
+                            <MessageStrip
+                                text="{i18n>warningMsgMissingSpecialStamps}"
+                                type="Warning"
+                                class="sapUiTinyMarginBottom"
+                            >
+                                <link>
+                                    
+                                </link>
+                            </MessageStrip>
+                                <List
+                                    mode="SingleSelectMaster"
+                                    items="{localDialog>/aRequiredStampsBoarder}"
+                                >
+                                    <CustomListItem>
+                                        <HBox
+                                            justifyContent="SpaceBetween"
+                                            alignItems="Center"
+                                            width="100%"
+                                        >
+                                            <HBox>
+                                                <CheckBox
+                                                    editable="false"
+                                                    selected="{localDialog>visited}"
+                                                />
+                                                <Text
+                                                    text="{localDialog>name}"
+                                                    class="sapUiTinyMargin"
+                                                />
+                                            </HBox>
+                                            <Button
+                                                icon="sap-icon://navigation-right-arrow"
+                                                type="Transparent"
+                                                press="onStampNavigatePress"
+                                            >
+                                                <customData>
+                                                    <core:CustomData
+                                                        key="ID"
+                                                        value="{localDialog>ID}"
+                                                        writeToDom="true"
+                                                    />
+                                                </customData>
+                                            </Button>
+                                        </HBox>
+                                    </CustomListItem>
+                                </List>
+                            </content>
+                        </Panel>
                     </VBox>
 
                     <VBox
@@ -280,9 +322,13 @@
                                 class="sapUiTinyMarginBeginEnd"
                             />
                         </FlexBox>
+                        <Text
+                            text="{i18n>goetheRequirementText}"
+                            class="sapUiTinyMarginBeginEnd sapUiTinyMarginBottom"
+                        />
                         <Panel
                             expandable="true"
-                            headerText="{i18n>requiredStamps}"
+                            headerText="{i18n>goethteStamps}"
                             width="auto"
                             class="sapUiTinyMargin"
                         >
@@ -292,10 +338,6 @@
                                 />
                             </content>
                         </Panel>
-                        <Text
-                            text="{i18n>goetheRequirementText}"
-                            class="sapUiTinyMarginBeginEnd sapUiTinyMarginBottom"
-                        />
                     </VBox>
 
                     <VBox
@@ -316,9 +358,14 @@
                                 class="sapUiTinyMarginBeginEnd"
                             />
                         </FlexBox>
+
+                        <Text
+                            text="{i18n>withTrailRequirementText}"
+                            class="sapUiTinyMarginBeginEnd sapUiTinyMarginBottom"
+                        />
                         <Panel
                             expandable="true"
-                            headerText="{i18n>requiredStamps}"
+                            headerText="{i18n>witchTrailStamps}"
                             width="auto"
                             class="sapUiTinyMargin"
                         >
@@ -328,10 +375,6 @@
                                 />
                             </content>
                         </Panel>
-                        <Text
-                            text="{i18n>withTrailRequirementText}"
-                            class="sapUiTinyMarginBeginEnd sapUiTinyMarginBottom"
-                        />
                     </VBox>
                 </IconTabFilter>
                 <IconTabFilter
