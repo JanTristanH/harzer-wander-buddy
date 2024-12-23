@@ -31,7 +31,8 @@ sap.ui.define([
         },
 
         getText: function(sKey) {
-            return this.getModel("i18n").getResourceBundle().getText(sKey);
+            //get the i18n resource bundle from core
+            return this.getOwnerComponent().getModel("i18n").getResourceBundle().getText(sKey);
         },
 
         _getPoiById: function(ID) {

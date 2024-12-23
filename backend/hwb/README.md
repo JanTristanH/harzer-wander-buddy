@@ -67,7 +67,7 @@ This project is configured to run with a postgres.
 - badge progress overview ✔️
 - basic tour planning
 - nice illustrated message on initial routes view -> show list of tours ✔️
-- have map start near me if possible & keep viewport on reload
+- have map start near me if possible & keep viewport on reload ✔️
 - Profile page
   - saved tours
   - overview achievements

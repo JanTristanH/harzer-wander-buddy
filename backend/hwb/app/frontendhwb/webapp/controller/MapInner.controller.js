@@ -32,9 +32,24 @@ sap.ui.define([
                         TravelTimes: [{}]
                     });
                     this.getView().setModel(oModel, "local");
+                    this._oMap.setCenterPosition(oModel.getProperty("/centerPosition"));
                 }
                 this.getRouter().getRoute("MapWithPOI").attachPatternMatched(this.onMapWithPOIRouteMatched, this);
+                //check localstorage last center position and set it
+                let sLastCenterPosition = sessionStorage.getItem("lastCenterPosition");
+                if (sLastCenterPosition) {
+                    this._oMap.setCenterPosition(sLastCenterPosition);
+                    let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? 16;
+                    this._oMap.setZoomlevel(parseInt( sLastZoomLevel, 10));
+                    //wait for map to render
+                    setTimeout(() => this.onToggleLables(parseInt(sLastZoomLevel, 10) >= 16), 1000);
+                    // create current location marker
+                    this.onLocateMePress(null, false);
+                } else {
+                    this.onLocateMePress(null, true);
+                }
             },
+
             onAfterRendering: function () {
                 this.getView().getModel().setSizeLimit(1000);
             },
@@ -42,6 +57,8 @@ sap.ui.define([
             onGeoMapZoomChanged: function (oEvent) {
                 let nZoomLevel = oEvent.getParameter("zoomLevel");
                 this.onToggleLables(nZoomLevel >= 16);
+                // save zoom level in session storage
+                sessionStorage.setItem("lastZoomLevel", nZoomLevel);
             },
 
             onPressOpenFiltersMenu: function (oEvent) {
@@ -188,28 +205,33 @@ sap.ui.define([
                 }
             },
 
-            onLocateMePress: function () {
+            onLocateMePress: function (oEvent, bMoveToLocation = true) {
                 if (navigator.geolocation) {
+                    MessageToast.show(this.getText("locatingMe"));
                     navigator.geolocation.getCurrentPosition(
                         function (position) {
                             let oUserLocation = {
                                 lat: position.coords.latitude,
                                 lng: position.coords.longitude
                             };
+                            if(oUserLocation.lat == 0 && oUserLocation.lng == 0){
+                                MessageToast.show(this.getText("errorLocateMe"));
+                                return;
+                            }
                             let oLocalModel = this.getModel("local");
                             oLocalModel.setProperty("/UserLocationLat", oUserLocation.lat);
                             oLocalModel.setProperty("/UserLocationLng", oUserLocation.lng);
-                            oLocalModel.setProperty("/centerPosition", `${oUserLocation.lng};${oUserLocation.lat}`);
-                            this._oMap.setCenterPosition(`${oUserLocation.lng};${oUserLocation.lat}`);
+                            if (bMoveToLocation) {
+                                oLocalModel.setProperty("/centerPosition", `${oUserLocation.lng};${oUserLocation.lat}`);
+                                this._oMap.setCenterPosition(`${oUserLocation.lng};${oUserLocation.lat}`);
+                            }
                         }.bind(this),
                         function (oError) {
-                            //TODO handele error 
-                            debugger
-                        },
-                        { timeout: 3000 });
+                            MessageToast.show(this.getText("errorLocateMe"));
+                        }.bind(this),
+                        { timeout: 7500 });
                 } else {
-                    //TODO handle not available
-                    debugger
+                    MessageToast.show(this.getText("errorLocatorNotSupported"));
                 }
             },
 
@@ -352,20 +374,20 @@ sap.ui.define([
                     urlParameters: {
                         "$top": 5 // Limit to top 5 results
                     },
-                    success: function(oData) {
+                    success: function (oData) {
                         let oLocalModel = this.getModel("local");
                         if (oData && oData.results) {
                             oLocalModel.setProperty("/TravelTimes", oData.results);
                         } else {
                             oLocalModel.setProperty("/TravelTimes", []);
                         }
-            
+
                         // Get the list control
                         let oList = this.byId("idTravelTimesList");
-            
+
                         // Remove all current items before adding the new ones
                         oList.removeAllItems();
-            
+
                         // Add items to the list manually using the addItem method
                         oData.results.forEach(oItemData => {
                             let oListItem = new sap.m.StandardListItem({
@@ -373,7 +395,7 @@ sap.ui.define([
                                 description: `${this.formatMetersToKilometers(oItemData.distanceMeters)} - ${this.formatSecondsToTime(oItemData.durationSeconds)}`,
                                 icon: "sap-icon://task"
                             });
-            
+
                             oList.addItem(oListItem);
                         });
                     }.bind(this),
@@ -384,7 +406,7 @@ sap.ui.define([
                 });
             },
 
-            onButtonOpenExternalPress: function(oEvent) {
+            onButtonOpenExternalPress: function (oEvent) {
                 let localModel = this.getModel("local");
                 let oStamp = this._getPoiById(localModel.getProperty("/sCurrentSpotId"));
                 const sLink = `https://www.harzer-wandernadel.de/?s=${oStamp.name}`;
@@ -431,7 +453,7 @@ sap.ui.define([
                     window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
             },
 
-            onButtonClosePress: function(oEvent) {
+            onButtonClosePress: function (oEvent) {
                 this.getRouter().navTo("Map");
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
                 var oLastContentArea = oSplitter.getContentAreas().pop();
@@ -439,6 +461,11 @@ sap.ui.define([
                 oLastContentArea.destroy();
                 this._pSPOIInforCard = null;
                 oSplitter.resetContentAreasSizes();
+            },
+
+            onGeoMapCenterChanged: function (oEvent) {
+                //set last center position in local storage
+                sessionStorage.setItem("lastCenterPosition", oEvent.getParameter("centerPoint"));
             }
         });
     });

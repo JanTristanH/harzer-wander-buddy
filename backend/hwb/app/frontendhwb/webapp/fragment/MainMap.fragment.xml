@@ -3,7 +3,8 @@
 	xmlns:vbm="sap.ui.vbm"
     centerPosition="{local>centerPosition}"
     xmlns:app="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
-    zoomChanged="onGeoMapZoomChanged">
+    zoomChanged="onGeoMapZoomChanged"
+    centerChanged="onGeoMapCenterChanged">
     <!-- map config from https://embed.plnkr.co/plunk/k5ql5sUBbmmfJ0yU -->
     <vbm:vos>
         <vbm:Routes items="{local>/oSelectedTour/path}">
