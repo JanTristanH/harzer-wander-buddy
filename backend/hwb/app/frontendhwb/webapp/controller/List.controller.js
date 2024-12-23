@@ -169,7 +169,6 @@ sap.ui.define([
             aWitchTrailRequiredStamps: [69, 140, 9, 13, 17, 22, 40, 41, 42, 52, 60, 62, 63, 123, 128, 133, 136, 137, 155, 178].map(s => "" + s),
             getWitchTrailPercentage: function (aStampedNumbers) {
                 let aWitchTrailRequiredStampsWithoutSpecific = this.aWitchTrailRequiredStamps.filter(s => s != "69" && s != "140");
-                debugger;
                 const applicableStampings = aStampedNumbers
                     
                     .filter(stamped => aWitchTrailRequiredStampsWithoutSpecific.includes(stamped));

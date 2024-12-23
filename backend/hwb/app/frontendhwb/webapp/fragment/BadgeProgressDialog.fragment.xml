@@ -618,7 +618,7 @@
                             src="images/badges/99-prince.png"
                             mode="Background"
                             height="5rem"
-                            width="15rem"
+                            width="25rem"
                         />
                         <FlexBox justifyContent="SpaceBetween">
                             <Image
