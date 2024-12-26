@@ -23,6 +23,9 @@ sap.ui.define([
             _oMap: {},
             onInit: function () {
                 this._oMap = this.byId("map");
+                if(!this._oMap){
+                    return;
+                }
                 if (!this.getModel("local")) {
                     var oModel = new JSONModel();
                     oModel.setData({
