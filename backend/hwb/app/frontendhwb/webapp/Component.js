@@ -1,8 +1,8 @@
 sap.ui.define([
-        "sap/ui/core/UIComponent",
-        "sap/ui/Device",
-        "hwb/frontendhwb/model/models"
-    ],
+    "sap/ui/core/UIComponent",
+    "sap/ui/Device",
+    "hwb/frontendhwb/model/models"
+],
     function (UIComponent, Device, models) {
         "use strict";
 
@@ -27,10 +27,14 @@ sap.ui.define([
                 this.setModel(models.createDeviceModel(), "device");
 
                 let oModel = this.getModel();
-                oModel.read("/Stampboxes", { 
-                    urlParameters: { "$top": 500 }});
-                oModel.read("/ParkingSpots", { 
-                    urlParameters: { "$top": 500 }})
+                oModel.read("/Stampboxes", {
+                    urlParameters: { "$top": 500 }
+                });
+                oModel.read("/ParkingSpots", {
+                    urlParameters: { "$top": 500 }
+                })
+
+                document.getElementById("busyIndicator").style.display = "none";
             }
         });
     }
