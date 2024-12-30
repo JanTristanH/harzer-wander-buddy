@@ -35,7 +35,7 @@ sap.ui.define([
             },
 
             onBackToList: function () {
-                this.bus.publish("flexible", "setList")
+                this.getRouter().navTo("Routes");
             },
 
             onListSelect: function (params) {
