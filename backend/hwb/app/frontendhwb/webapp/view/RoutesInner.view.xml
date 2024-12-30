@@ -5,6 +5,7 @@
     xmlns="sap.m"
     xmlns:f="sap.f"
     xmlns:core="sap.ui.core"
+    xmlns:card="sap.f.cards"
     height="100%"
     width="100%"
 >
@@ -12,7 +13,7 @@
         <f:beginColumnPages>
             <Page
                 id="page"
-                enableScrolling="false"
+                enableScrolling="true"
                 title="{i18n>title}"
                 backgroundDesign="Transparent"
             >
@@ -24,6 +25,7 @@
                         <IconTabBar
                             id="idIconTabBarMulti"
                             class="sapUiResponsiveContentPadding"
+                            
                         >
                             <items>
                                 <IconTabFilter
@@ -44,24 +46,107 @@
                                         mode="SingleSelectMaster"
                                     >
                                         <CustomListItem>
-                                            <VBox>
-                                                <HBox>
-                                                    <Text text="{name}" />
-                                                    <Text text=" - Länge: " />
-                                                    <Text
-                                                        text="{path: 'duration', formatter: '.formatSecondsToTime'}"
-                                                    />
-                                                </HBox>
-                                                <HBox>
-                                                    <Text text="Distanz: " />
-                                                    <Text
-                                                        text="{path: 'distance', formatter: '.formatMetersToKilometers'}"
-                                                    />
-                                                </HBox>
-                                                <HBox>
-                                                    <Text text="Stempel: " />
-                                                    <Text text="{stampCount}" />
-                                                </HBox>
+                                            <VBox
+                                                class="sapUiResponsiveMargin sapUiMediumMarginEnd"
+                                                width="95%"
+                                            >
+                                                <f:Card
+                                                    class="sapUiTinyMargin"
+                                                    width="100%"
+                                                >
+                                                    <f:header>
+                                                        <card:Header
+                                                            title="{name}"
+                                                        />
+                                                    </f:header>
+                                                    <f:content>
+                                                        <VBox width="100%">
+                                                            <HBox
+                                                                justifyContent="SpaceAround"
+                                                                alignItems="Center"
+                                                                class="sapUiSmallMarginTop sapUiSmallMarginBottom"
+                                                                width="100%"
+                                                            >
+                                                                <Image
+                                                                    src="images/placeholder/MapPlaceholder.png"
+                                                                    mode="Background"
+                                                                    height="10rem"
+                                                                    width="10rem"
+                                                                />
+                                                                <Image
+                                                                    src="images/placeholder/LocationPlaceholder.jpg"
+                                                                    mode="Background"
+                                                                    backgroundPosition="center"
+                                                                    height="10rem"
+                                                                    width="10rem"
+                                                                />
+                                                            </HBox>
+                                                            <!-- hard facts bar below -->
+                                                            <FlexBox
+                                                                justifyContent="SpaceAround"
+                                                                alignItems="Center"
+                                                                class="sapUiSmallMarginTop sapUiSmallMarginBottom"
+                                                                width="95%"
+                                                            >
+                                                                <VBox
+                                                                    alignContent="Center"
+                                                                    alignItems="Center"
+                                                                    class="sapUiMediumMarginBegin"
+                                                                >
+                                                                    <core:Icon
+                                                                        src="sap-icon://fob-watch"
+                                                                    />
+                                                                    <Text
+                                                                        text="{path: 'duration', formatter: '.formatSecondsToTime'}"
+                                                                    />
+                                                                </VBox>
+                                                                <Text
+                                                                    text="|"
+                                                                />
+                                                                <VBox
+                                                                    alignContent="Center"
+                                                                    alignItems="Center"
+                                                                >
+                                                                    <core:Icon
+                                                                        src="sap-icon://direction-arrows"
+                                                                    />
+                                                                    <Text
+                                                                        text="{path: 'distance', formatter: '.formatMetersToKilometers'}"
+                                                                    />
+                                                                </VBox>
+                                                                <Text
+                                                                    text="|"
+                                                                />
+                                                                <VBox
+                                                                    alignContent="Center"
+                                                                    alignItems="Center"
+                                                                >
+                                                                    <core:Icon
+                                                                        src="sap-icon://toaster-top"
+                                                                    />
+                                                                    <Text
+                                                                        text="{stampCount}"
+                                                                    />
+                                                                </VBox>
+                                                                <Text
+                                                                    text="|"
+                                                                />
+                                                                <VBox
+                                                                    alignContent="Center"
+                                                                    alignItems="Center"
+                                                                    class="sapUiMediumMarginEnd"
+                                                                >
+                                                                    <core:Icon
+                                                                        src="sap-icon://trend-up"
+                                                                    />
+                                                                    <Text
+                                                                        text="-"
+                                                                    />
+                                                                </VBox>
+                                                            </FlexBox>
+                                                        </VBox>
+                                                    </f:content>
+                                                </f:Card>
                                             </VBox>
                                             <customData>
                                                 <core:CustomData
