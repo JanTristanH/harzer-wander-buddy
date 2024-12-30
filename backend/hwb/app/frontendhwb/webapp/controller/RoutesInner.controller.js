@@ -107,15 +107,15 @@ sap.ui.define([
                                         oData.path = oRelatedData.results
                                             .map(path => {
                                                 const tt = path.travelTime;
-                                                if(tt){
-                                                    const poi = this._getPoiById(tt.toPoi);   
+                                                if (tt) {
+                                                    const poi = this._getPoiById(tt.toPoi);
                                                     tt.name = poi ? poi.name : this.getText("start");
                                                     tt.duration = tt.durationSeconds;
                                                     tt.distance = tt.distanceMeters;
                                                 }
                                                 return tt;
                                             })
-                                            .filter( p => !!p);
+                                            .filter(p => !!p);
 
                                         oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
 
@@ -175,7 +175,7 @@ sap.ui.define([
                     });
                 } else {
                     // open Detail with correct data
-                    
+
                     oLocalModel.setProperty("/oSelectedTour", oTour);
                     oLocalModel.setProperty("/oSelectedTour/path", this._mapTravelTimeToPOIList(oTour.path));
                     oLocalModel.setProperty("/wayPointScrollContainerHeight", "400px");
@@ -301,9 +301,10 @@ sap.ui.define([
                 }
             },
 
-            onSelectionChangeTour: function (oEvent) {
-                let TourId = oEvent.getParameter("selectedItem").getKey()
-                    || this.getRouter().getRouteInfoByHash(this.getRouter().getHashChanger().getHash()).arguments.TourId;
+            onToursListSelectionChange: function (oEvent) {
+                let oSelectedItem = oEvent.getParameter("listItem");
+                let TourId = oSelectedItem.getCustomData().find(data => data.getKey() === "ID").getValue();
+                
                 this.getRouter().navTo("RoutesDetail", {
                     TourId
                 });
@@ -356,7 +357,8 @@ sap.ui.define([
                 this.byId('idAutocompleteInput').setBusy(true);
                 this._geolocate();
             },
-            onButtonCreateTourPress: function(oEvent) {
+
+            onButtonCreateTourPress: function (oEvent) {
                 var oPayload = {
                     "name": "Neue Tour",
                     "idListTravelTimes": "",

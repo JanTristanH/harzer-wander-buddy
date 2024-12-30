@@ -31,20 +31,47 @@
                                     key="iconTabFilterTours"
                                     text="{i18n>allTours}"
                                 >
-                                <Toolbar>
-                                    <Button icon="sap-icon://add" press="onButtonCreateTourPress"/>
-                                </Toolbar>
-                                    <SelectList
+                                    <Toolbar>
+                                        <Button
+                                            icon="sap-icon://add"
+                                            press="onButtonCreateTourPress"
+                                        />
+                                    </Toolbar>
+                                    <List
                                         id="idTourList"
                                         items="{/Tours}"
-                                        selectionChange="onSelectionChangeTour"
-                                        enabled="true"
+                                        selectionChange="onToursListSelectionChange"
+                                        mode="SingleSelectMaster"
                                     >
-                                        <core:ListItem
-                                            key="{ID}"
-                                            text="{name} - Länge: {path: 'duration', formatter: '.formatSecondsToTime'} - Distanz: {path: 'distance', formatter: '.formatMetersToKilometers'} - Stempel: {stampCount}"
-                                        />
-                                    </SelectList>
+                                        <CustomListItem>
+                                            <VBox>
+                                                <HBox>
+                                                    <Text text="{name}" />
+                                                    <Text text=" - Länge: " />
+                                                    <Text
+                                                        text="{path: 'duration', formatter: '.formatSecondsToTime'}"
+                                                    />
+                                                </HBox>
+                                                <HBox>
+                                                    <Text text="Distanz: " />
+                                                    <Text
+                                                        text="{path: 'distance', formatter: '.formatMetersToKilometers'}"
+                                                    />
+                                                </HBox>
+                                                <HBox>
+                                                    <Text text="Stempel: " />
+                                                    <Text text="{stampCount}" />
+                                                </HBox>
+                                            </VBox>
+                                            <customData>
+                                                <core:CustomData
+                                                    key="ID"
+                                                    value="{ID}"
+                                                    writeToDom="true"
+                                                />
+                                            </customData>
+                                        </CustomListItem>
+                                    </List>
                                 </IconTabFilter>
                                 <IconTabFilter
                                     icon="sap-icon://ai"
@@ -63,22 +90,22 @@
                                         />
                                     </HBox>
                                     <HBox width="100rem">
-                                    <IllustratedMessage
-                                        enableVerticalResponsiveness="true"
-                                        illustrationType="sapIllus-SearchEarth"
-                                        title="{i18n>noIndividuellDataHeader}"
-                                        description="{i18n>noIndividuellData}"
-                                        visible="{= ${local>/hikingRoutes}.length === 0 }"
-                                    >
-                                        <additionalContent>
-                                            <Button
-                                                text="{i18n>calculateTour}"
-                                                press='onOpenRoutingDialog'
-                                                class="sapUiSmallMargin"
-                                                icon="sap-icon://activate"
-                                            />
-                                        </additionalContent>
-                                    </IllustratedMessage>
+                                        <IllustratedMessage
+                                            enableVerticalResponsiveness="true"
+                                            illustrationType="sapIllus-SearchEarth"
+                                            title="{i18n>noIndividuellDataHeader}"
+                                            description="{i18n>noIndividuellData}"
+                                            visible="{= ${local>/hikingRoutes}.length === 0 }"
+                                        >
+                                            <additionalContent>
+                                                <Button
+                                                    text="{i18n>calculateTour}"
+                                                    press='onOpenRoutingDialog'
+                                                    class="sapUiSmallMargin"
+                                                    icon="sap-icon://activate"
+                                                />
+                                            </additionalContent>
+                                        </IllustratedMessage>
                                     </HBox>
                                     <SelectList
                                         id="idRouteList"
