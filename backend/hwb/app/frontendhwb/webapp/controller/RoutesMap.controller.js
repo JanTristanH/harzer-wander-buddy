@@ -20,6 +20,10 @@ sap.ui.define([
                 this.bus.subscribe("idRoutesWayPointList", "onListSelect", this.onListSelect, this);
             },
 
+            _getMap() {
+                return this.byId("RoutesMapId").byId("map");
+            },
+
             onRoutesDetailMatched: function () {
                 this.bPersistedDisplayed = true;
             },
@@ -425,6 +429,15 @@ sap.ui.define([
                 });
                 oBinding.sort(oSorter);
                 this._persistTour(oTable);
+            },
+
+            onWaypointListSelectionChange: function(oEvent) {
+                let sClickedPath = oEvent.getSource().getSelectedContextPaths()[0];
+                let oItem = this.getModel("local").getProperty(sClickedPath); // TODO add center position to the item
+                let oPoi = this._getPoiById(oItem.fromPoi || oItem.toPoi);
+                this._getMap().setCenterPosition(`${oPoi.longitude};${oPoi.latitude}`);
+
+                debugger;
             }
             
         });

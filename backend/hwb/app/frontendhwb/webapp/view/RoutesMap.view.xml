@@ -232,6 +232,8 @@
                         id="idRoutesWayPointList"
                         growingScrollToLoad="true"
                         items="{local>/oSelectedTour/path}"
+                        selectionChange="onWaypointListSelectionChange"
+                        mode="SingleSelectMaster"
                     >
                         <StandardListItem
                             wrapping="true"
