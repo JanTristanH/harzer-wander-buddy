@@ -433,11 +433,9 @@ sap.ui.define([
 
             onWaypointListSelectionChange: function(oEvent) {
                 let sClickedPath = oEvent.getSource().getSelectedContextPaths()[0];
-                let oItem = this.getModel("local").getProperty(sClickedPath); // TODO add center position to the item
+                let oItem = this.getModel("local").getProperty(sClickedPath);
                 let oPoi = this._getPoiById(oItem.fromPoi || oItem.toPoi);
                 this._getMap().setCenterPosition(`${oPoi.longitude};${oPoi.latitude}`);
-
-                debugger;
             }
             
         });
