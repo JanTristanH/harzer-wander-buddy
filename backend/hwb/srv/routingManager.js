@@ -1,7 +1,7 @@
 const cds = require('@sap/cds/lib')
 const {
     v4: uuidv4
-  } = require('uuid');
+} = require('uuid');
 
 async function loadSubTree(ID) {
     const visited = new Set(); // A set to keep track of visited nodes
@@ -78,53 +78,55 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
 
             visited.add(poi);
             const neighbors = adjacencyList.get(poi);
-            neighbors.forEach(neighbor => {
-                if (!path.map(p => p.poi).includes(neighbor.toPoi) || neighbor.toPoi === calculationParamsInner.startId) {
-                    let newDistance = distance;
-                    let newStampCount = stampCount;
+            if (!neighbors) {
+                neighbors.forEach(neighbor => {
+                    if (!path.map(p => p.poi).includes(neighbor.toPoi) || neighbor.toPoi === calculationParamsInner.startId) {
+                        let newDistance = distance;
+                        let newStampCount = stampCount;
 
-                    let calculationParamsInnerClone = { ...calculationParamsInner };
-                    // Increment distance only if travel mode is not 'drive'
-                    if (neighbor.travelMode !== 'drive') {
-                        newDistance += parseInt(neighbor.distanceMeters);
-                    } else if (canDrive) {
-                        //update car location to new parking space
-                        calculationParamsInnerClone.startId = neighbor.toPoi;
-                        calculationParamsInnerClone.pathLengthSinceCar = 0;
-                        canDrive = false;
-                    } else {
-                        // can not drive as car is parked at other space.
-                        // Path invalid and return
-                        return;
+                        let calculationParamsInnerClone = { ...calculationParamsInner };
+                        // Increment distance only if travel mode is not 'drive'
+                        if (neighbor.travelMode !== 'drive') {
+                            newDistance += parseInt(neighbor.distanceMeters);
+                        } else if (canDrive) {
+                            //update car location to new parking space
+                            calculationParamsInnerClone.startId = neighbor.toPoi;
+                            calculationParamsInnerClone.pathLengthSinceCar = 0;
+                            canDrive = false;
+                        } else {
+                            // can not drive as car is parked at other space.
+                            // Path invalid and return
+                            return;
+                        }
+                        calculationParamsInnerClone.pathLengthSinceCar++;
+
+                        // Increment stamp count if poi is of type 'stamp'
+                        if (neighbor.toPoiType === 'stamp'
+                            && !path.map(p => p.poi).includes(neighbor.toPoi)
+                            && !aStampsDoneByUser.includes(neighbor.toPoi)) {
+                            newStampCount++;
+                        }
+
+                        dfs(neighbor.toPoi,
+                            neighbor.toPoiType,
+                            path.concat({
+                                poi: neighbor.toPoi,
+                                id: neighbor.ID,
+                                name: neighbor.name,
+                                toPoiType: neighbor.toPoiType,
+                                travelMode: neighbor.travelMode,
+                                duration: neighbor.durationSeconds,
+                                distance: neighbor.distanceMeters
+                            }),
+                            duration + parseInt(neighbor.durationSeconds),
+                            newDistance,
+                            depth + 1,
+                            newStampCount,
+                            canDrive,
+                            calculationParamsInnerClone);
                     }
-                    calculationParamsInnerClone.pathLengthSinceCar++;
-
-                    // Increment stamp count if poi is of type 'stamp'
-                    if (neighbor.toPoiType === 'stamp'
-                        && !path.map(p => p.poi).includes(neighbor.toPoi)
-                        && !aStampsDoneByUser.includes(neighbor.toPoi)) {
-                        newStampCount++;
-                    }
-
-                    dfs(neighbor.toPoi,
-                        neighbor.toPoiType,
-                        path.concat({
-                            poi: neighbor.toPoi,
-                            id: neighbor.ID,
-                            name: neighbor.name,
-                            toPoiType: neighbor.toPoiType,
-                            travelMode: neighbor.travelMode,
-                            duration: neighbor.durationSeconds,
-                            distance: neighbor.distanceMeters
-                        }),
-                        duration + parseInt(neighbor.durationSeconds),
-                        newDistance,
-                        depth + 1,
-                        newStampCount,
-                        canDrive,
-                        calculationParamsInnerClone);
-                }
-            });
+                });
+            }
 
             if (poi !== calculationParamsInner.startId) {
                 visited.delete(poi);
@@ -174,7 +176,7 @@ function addPositionStrings(aRoutes) {
 
         // Format UUIDs for SQL query (ensure each UUID is surrounded by single quotes)
         let formattedIds = uniqueIds.map(id => `'${id}'`).join(',');
-        if(formattedIds == ''){
+        if (formattedIds == '') {
             resolve([]);
             return;
         }

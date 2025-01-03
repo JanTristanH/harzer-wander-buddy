@@ -2,7 +2,8 @@ namespace hwb.db;
 
 using {
     temporal,
-    cuid
+    cuid,
+    managed
 } from '@sap/cds/common';
 
 type User : String(255);
@@ -81,12 +82,20 @@ entity Stampings : cuid {
 }
 
 @cds.autoexpose
-entity Tours : cuid {
+entity Tours : cuid, managed {
     name: String;
+    /** distance in meters */
     distance: Integer64;
+    /** duration in seconds */
     duration: Integer64;
+    /** stamp count independent from users stamps */
     stampCount: Int32;
+    /** id list of travel times, can be used to describe the path of a tour */
     idListTravelTimes: LargeString;
+    /** path as many ranked travel times.
+     *  Each travel time has a from and a to.
+     *  To get the pois of this tour, we need to look at all n toPois and the first from POI. 
+     */
     path: Association to many Tour2TravelTime on path.tour = $self;
 }
 

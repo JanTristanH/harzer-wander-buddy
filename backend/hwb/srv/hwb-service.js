@@ -75,7 +75,7 @@ function upsertTourDetailsById(req, entities) {
   const { Tour2TravelTime } = entities;
   //TODO recalculate Details of distance & duration
   const aTravelTimeIds = req.idListTravelTimes.split(";");
-  let rank = 32767;
+  let rank = 32768;
   let aTour2TravelTime = aTravelTimeIds.map(travelTime_ID => {
     rank--;
     return {
@@ -160,7 +160,7 @@ async function updateTourByPOIList(req) {
     }
   });
 
-  // Step 3: Calculate missing travel times (pseudo-code)
+  // Step 3: Calculate missing travel times
   let aNeededTravelTimes = [];
   for (let pair of aMissingTravelTimes) {
     // Assuming you have a method to calculate travel time
@@ -181,15 +181,16 @@ async function updateTourByPOIList(req) {
 
     let travelMode = toPoi.type == toPoi.type == "parking" ? "drive" : "walk";
     let calculatedTravelTime = await getTravelTimes(fromPoi, [toPoi], travelMode);
+    calculatedTravelTime = calculatedTravelTime[0];
 
     // Add the calculated travel time to the array of needed travel times
     aNeededTravelTimes.push({
       ID: uuidv4(),
       fromPoi: pair.fromPoi,
       toPoi: pair.toPoi,
-      durationSeconds: calculatedTravelTime.duration,
-      distanceMeters: calculatedTravelTime.distance,
-      travelMode: calculatedTravelTime.mode,
+      durationSeconds: calculatedTravelTime.durationSeconds,
+      distanceMeters: calculatedTravelTime.distanceMeters,
+      travelMode: calculatedTravelTime.travelMode,
       positionString: calculatedTravelTime.positionString
     });
   }
@@ -206,12 +207,13 @@ async function updateTourByPOIList(req) {
     rankMap[id] = index + 1;  // Assign ranks based on the position in aPois
   });
 
-  let rank = 32767;
+  let rank = 32768;
   let aTour2TravelTime = aTravelTimesWithPositionString
     // Sort by the rank determined by aPois
     .sort((a, b) => rankMap[a.ID] - rankMap[b.ID])
     // Then map to include rank decrementing for each item
     .map(tt => {
+      //rank = rank / 2;
       return {
         travelTime_ID: tt.ID,
         tour_ID: id,
@@ -313,6 +315,14 @@ async function getTourByIdListTravelTimes(req) {
   });
 
   let distance = 0, duration = 0, stampCount = 0;
+  if(aTravelTimesWithPositionString.length == 0) {
+    return {    
+      stampCount: 0,
+      distance: 0,
+      duration: 0,
+      id : "notFound",
+      path: []};
+  }
   // TODO refactor to make first entry meaningful
   distance -= aTravelTimesWithPositionString[0].distanceMeters; // we do not need to travel to the start
   for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
@@ -562,7 +572,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
       if (neighbor.distanceKm == 0) {
         continue;
       }
-      console.info(`Calculating Route from ${box} to ${neighbor}`);
+      console.info(`Calculating Route from ${JSON.stringify(box)} to ${JSON.stringify(neighbor)}`);
       let oRoute = await calculateRoute(box, neighbor, travelMode);
 
       if (oRoute && oRoute.routes && oRoute.routes[0]) {
@@ -577,7 +587,9 @@ function getTravelTimes(box, neighborPois, travelMode) {
           positionString: mapPolyLineToPositionString(oRoute.routes[0].polyline.geoJsonLinestring.coordinates)
         });
       } else if (oRoute != "Quota per Request exceeded!") {
-        console.error("Error Calculating Route, received: " + JSON.stringify(oRoute));
+        const oError = JSON.stringify(oRoute);
+        console.error("Error Calculating Route, received: " + oError);
+        reject(oRoute);
       }
 
     }
@@ -662,7 +674,13 @@ function calculateRoute(pointA, pointB, travelMode) {
       "method": "POST"
     }).then(r => r.json())
       .then(j => {
-        console.log("computeRoutes: " + j);
+        console.log("computeRoutes: " + JSON.stringify(j));
+        if(!j.routes || j.routes?.length == 0) {
+          console.error("No Route found!");
+          console.error("Request: " + JSON.stringify(body));
+          console.error("Response: " + JSON.stringify(j));
+          reject(j);
+        }
         resolve(j);
       }
       );

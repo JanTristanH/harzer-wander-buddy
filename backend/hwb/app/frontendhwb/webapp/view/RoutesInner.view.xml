@@ -41,7 +41,13 @@
                                     </Toolbar>
                                     <List
                                         id="idTourList"
-                                        items="{/Tours}"
+                                        items="{
+                                            path: '/Tours',
+                                            sorter: {
+                                                path: 'createdAt',
+                                                descending: true
+                                            }
+                                        }"
                                         selectionChange="onToursListSelectionChange"
                                         mode="SingleSelectMaster"
                                     >
