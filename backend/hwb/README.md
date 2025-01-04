@@ -68,24 +68,29 @@ This project is configured to run with a postgres.
 - basic tour planning
   - clicking a poi should move it to the center of the map ✔️
   - start navigation from tour view ✔️
+  - stamp from tour view
+- are you sure when deleting stampings
 - nice illustrated message on initial routes view -> show list of tours ✔️
 - have map start near me if possible & keep viewport on reload ✔️
-- Profile page
-  - saved tours
-  - overview achievements
+- add elevation to travel times
+- make website installable
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
 - upgrade developer to production key
 - minimum authority
   - admin role
   - only edit my own tours
 - look into problem with 24 remaining routes
+- Filtering on Map view -> Goethe weg usw.
 
 ## MVP 2
 
 - fix handler to be normally performant: this.after('READ', `Stampboxes`
 - add images & descriptions to stamps
 - Update color schema of app to match background of mascot
-- Profile: timeline for stampings (allow change of date)
+- Profile page
+  - saved tours
+  - overview achievements
+  - timeline for stampings (allow change of date)
 - optional: generate AI descriptions for routes
 - open individual travel time in maps or hiking app like komoot
 - card based view of routes
@@ -94,7 +99,6 @@ This project is configured to run with a postgres.
 - allow manual changes to routes
 - paid parking info
 - shareability for routes
-- images for routes & spots
 - cute mascot ✔️
 - compliant map server
 - Friends feature (plan route together & notification)
@@ -114,8 +118,6 @@ This project is configured to run with a postgres.
 - link to park for night parking
 - score for completing area
 - score where walking from other side would be easier
-- Filtering on Map view -> Goethe weg usw.
-- Object Page for POIs
 - Admin Master data app -> new Stamps & moving
 - Deal with legacy Stamps & check for deviation on HWN site
 - History view for changed stamps
