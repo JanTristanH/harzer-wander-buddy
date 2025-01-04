@@ -4,7 +4,7 @@ const {
 } = require('uuid');
 
 const fetch = require('node-fetch');
-const routingManager = require('./routingManager')
+const routingManager = require('./routingManager');
 
 const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MAX_REQUESTS_PER_CALL : 1000;
 // 40.000 free 
@@ -75,9 +75,9 @@ function upsertTourDetailsById(req, entities) {
   const { Tour2TravelTime } = entities;
   //TODO recalculate Details of distance & duration
   const aTravelTimeIds = req.idListTravelTimes.split(";");
-  let rank = 32768;
+  let rank = 0;
   let aTour2TravelTime = aTravelTimeIds.map(travelTime_ID => {
-    rank--;
+    rank = rank + 512;
     return {
       travelTime_ID,
       tour_ID: req.ID,
@@ -163,8 +163,6 @@ async function updateTourByPOIList(req) {
   // Step 3: Calculate missing travel times
   let aNeededTravelTimes = [];
   for (let pair of aMissingTravelTimes) {
-    // Assuming you have a method to calculate travel time
-    // let calculatedTravelTime = await calculateTravelTime(pair.fromPoi, pair.toPoi);
     let fromPoi = oStampBoxById[pair.fromPoi];
     if (!fromPoi) {
       fromPoi = oParkingSpotsById[pair.fromPoi] || {};
@@ -197,29 +195,12 @@ async function updateTourByPOIList(req) {
   // save the new travel times to the database
   if (aNeededTravelTimes.length > 0) {
     await INSERT(aNeededTravelTimes).into(TravelTimes);
+    aTravelTimesWithPositionString = aTravelTimesWithPositionString.concat(aNeededTravelTimes);
   }
 
   // Update Tour TravelTimes
+  let aTour2TravelTime = getRankedTour2TravelTimes(aTravelTimesWithPositionString, aPois, id);
 
-  aTravelTimesWithPositionString = aTravelTimesWithPositionString.concat(aNeededTravelTimes);
-  let rankMap = {};
-  aPois.forEach((id, index) => {
-    rankMap[id] = index + 1;  // Assign ranks based on the position in aPois
-  });
-
-  let rank = 32768;
-  let aTour2TravelTime = aTravelTimesWithPositionString
-    // Sort by the rank determined by aPois
-    .sort((a, b) => rankMap[a.ID] - rankMap[b.ID])
-    // Then map to include rank decrementing for each item
-    .map(tt => {
-      //rank = rank / 2;
-      return {
-        travelTime_ID: tt.ID,
-        tour_ID: id,
-        rank: rank--
-      };
-    });
   await DELETE.from(Tour2TravelTime).where({ tour_ID: id });
   await INSERT(aTour2TravelTime).into(Tour2TravelTime);
 
@@ -245,9 +226,33 @@ async function updateTourByPOIList(req) {
   }
   await UPSERT(oTour).into(Tours);
 
-  oTour.idListTravelTimes = aTour2TravelTime.map( tt => tt.travelTime_ID).join(";") 
+  oTour.idListTravelTimes = aTour2TravelTime.map(tt => tt.travelTime_ID).join(";")
   oTour.path = aTour2TravelTime;
   return oTour;
+
+  function getRankedTour2TravelTimes(aRelevantTravelTimes, aPois, tourId) {
+    let oRankMap = new Map();
+    aRelevantTravelTimes.forEach((tt) => {
+      oRankMap.set(`${tt.fromPoi};${tt.toPoi}`, tt);
+    });
+
+    let aTour2TravelTime = [];
+    let rank = 0;
+    for (let i = 0; i < aPois.length - 1; i++) {
+      let fromPoi = aPois[i];
+      let toPoi = aPois[i + 1];
+      let tt = oRankMap.get(`${fromPoi};${toPoi}`);
+      if (tt) {
+        rank = rank + 512;
+        aTour2TravelTime.push({
+          travelTime_ID: tt.ID,
+          tour_ID: tourId,
+          rank: rank
+        });
+      }
+    }
+    return aTour2TravelTime;
+  }
 }
 
 function getUniqueRoutes(routes) {
@@ -267,29 +272,9 @@ function getUniqueRoutes(routes) {
   return Object.values(uniqueRoutes);
 }
 
-// Example of a method to calculate travel time (needs to be implemented)
-async function calculateTravelTime(fromPoi, toPoi) {
-  console.log(`calculating TravelTime from ${fromPoi} to ${toPoi}`);
-
-  // Placeholder logic to simulate travel time calculation
-  return {
-    duration: Math.random() * 3600, // Duration in seconds
-    distance: Math.random() * 10000, // Distance in meters
-    positionString: "10.674580599999999;51.749002399999995",
-    mode: "car" // Travel mode
-  };
-  const { AllPointsOfInterest } = this.api.entities;
-  await SELECT
-    .columns('ID', 'fromPoi', 'toPoi', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
-    .from(AllPointsOfInterest)
-    .where(`${conditionString}`);
-  return getTravelTimes(fromPoi, toPoi, "walk");
-}
-
-
 async function getTourByIdListTravelTimes(req) {
   let id = req.data.idListTravelTimes;
-  if(!id) {
+  if (!id) {
     return {};
   }
   const { TravelTimes, Stampboxes, Stampings } = this.entities('hwb.db');
@@ -315,13 +300,14 @@ async function getTourByIdListTravelTimes(req) {
   });
 
   let distance = 0, duration = 0, stampCount = 0;
-  if(aTravelTimesWithPositionString.length == 0) {
-    return {    
+  if (aTravelTimesWithPositionString.length == 0) {
+    return {
       stampCount: 0,
       distance: 0,
       duration: 0,
-      id : "notFound",
-      path: []};
+      id: "notFound",
+      path: []
+    };
   }
   for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
     const oTravelTime = aTravelTimesWithPositionString[i];
@@ -345,7 +331,7 @@ async function getTourByIdListTravelTimes(req) {
 
   for (let i = 0; i < aPathIds.length; i++) {
     let id = aPathIds[i].replaceAll("'", "");
-    if(oTravelTimesById[id]){
+    if (oTravelTimesById[id]) {
       path.push(oTravelTimesById[id]);
     }
   }
@@ -570,7 +556,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
       if (neighbor.distanceKm == 0) {
         continue;
       }
-      console.info(`Calculating Route from ${JSON.stringify(box)} to ${JSON.stringify(neighbor)}`);
+      console.info(`Calculating Route from ${box.name}(${box.ID}) to ${neighbor.name}(${neighbor.ID})`);
       let oRoute = await calculateRoute(box, neighbor, travelMode);
 
       if (oRoute && oRoute.routes && oRoute.routes[0]) {
@@ -672,8 +658,9 @@ function calculateRoute(pointA, pointB, travelMode) {
       "method": "POST"
     }).then(r => r.json())
       .then(j => {
-        console.log("computeRoutes: " + JSON.stringify(j));
-        if(!j.routes || j.routes?.length == 0) {
+        // omit the polyline for logging
+        console.info("computeRoutes: " + JSON.stringify(j.routes.map(r => { return { duration: r.duration, distanceMeters: r.distanceMeters } })));
+        if (!j.routes || j.routes?.length == 0) {
           console.error("No Route found!");
           console.error("Request: " + JSON.stringify(body));
           console.error("Response: " + JSON.stringify(j));
