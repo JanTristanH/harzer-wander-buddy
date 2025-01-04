@@ -220,7 +220,7 @@ sap.ui.define([
                             this.getModel().read(`/Tour2TravelTime`, {
                                 urlParameters: {
                                     "$expand": "travelTime",
-                                    "$orderby": "rank desc"
+                                    "$orderby": "rank asc"
                                 },
                                 filters: [
                                     new Filter("tour_ID", FilterOperator.EQ, sTourID)

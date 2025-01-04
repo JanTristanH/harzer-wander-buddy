@@ -323,8 +323,6 @@ async function getTourByIdListTravelTimes(req) {
       id : "notFound",
       path: []};
   }
-  // TODO refactor to make first entry meaningful
-  distance -= aTravelTimesWithPositionString[0].distanceMeters; // we do not need to travel to the start
   for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
     const oTravelTime = aTravelTimesWithPositionString[i];
     distance += parseInt(oTravelTime.distanceMeters);
