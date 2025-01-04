@@ -66,7 +66,8 @@ This project is configured to run with a postgres.
 - refactor routes to use joined travel time key (-> persist later, can recalculate dynamically) ✔️
 - badge progress overview ✔️
 - basic tour planning
-  - clicking a poi should move it to the center of the map
+  - clicking a poi should move it to the center of the map ✔️
+  - start navigation from tour view ✔️
 - nice illustrated message on initial routes view -> show list of tours ✔️
 - have map start near me if possible & keep viewport on reload ✔️
 - Profile page
@@ -74,6 +75,9 @@ This project is configured to run with a postgres.
   - overview achievements
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
 - upgrade developer to production key
+- minimum authority
+  - admin role
+  - only edit my own tours
 - look into problem with 24 remaining routes
 
 ## MVP 2

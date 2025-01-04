@@ -135,16 +135,27 @@
                             suggestionItems="{/AllPointsOfInterest}"
                             value="{local>name}"
                         >
-                        <suggestionItems>
-                            <core:Item text="{name}">
-                                <core:customData>
-                                    <core:CustomData key="ID" value="{ID}" />
-                                </core:customData>
-                            </core:Item>
-                        </suggestionItems>
+                            <suggestionItems>
+                                <core:Item text="{name}">
+                                    <core:customData>
+                                        <core:CustomData
+                                            key="ID"
+                                            value="{ID}"
+                                        />
+                                    </core:customData>
+                                </core:Item>
+                            </suggestionItems>
                         </Input>
-                        <Button icon="sap-icon://up" type="Transparent" press="onUpButtonPress"/>
-                        <Button icon="sap-icon://down" type="Transparent" press="onDownButtonPress"/>
+                        <Button
+                            icon="sap-icon://up"
+                            type="Transparent"
+                            press="onUpButtonPress"
+                        />
+                        <Button
+                            icon="sap-icon://down"
+                            type="Transparent"
+                            press="onDownButtonPress"
+                        />
                         <Button
                             icon="sap-icon://delete"
                             type="Transparent"
@@ -235,12 +246,57 @@
                         selectionChange="onWaypointListSelectionChange"
                         mode="SingleSelectMaster"
                     >
-                        <StandardListItem
-                            wrapping="true"
-                            title="{local>name}"
-                            description="{parts: [{path: 'local>duration'}, {path: 'local>distance'}], formatter: '.formatDescription'}"
-                            icon="{path: 'local>travelMode', formatter: '.onFormatTravelModeIcon'}"
-                        />
+                        <CustomListItem>
+                            <HBox class="sapUiTinyMargin">
+                                <FlexBox
+                                    alignItems="Center"
+                                    justifyContent="Center"
+                                >
+                                    <core:Icon
+                                        src="{path: 'local>travelMode', formatter: '.onFormatTravelModeIcon'}"
+                                        color="#758ca4"
+                                        class="sapUiSmallMarginEnd size1"
+                                    />
+                                </FlexBox>
+                                <FlexBox
+                                    alignItems="Start"
+                                    justifyContent="SpaceBetween"
+                                    width="100%"
+                                >
+                                    <VBox
+                                        class="sapUiSmallMarginEnd"
+                                        justifyContent="Center"
+                                    >
+                                        <Text
+                                            text="{local>name}"
+                                            class="sapUiTinyMarginTopBottom sapMTextBold"
+                                        />
+                                        <Label
+                                            text="{parts: [{path: 'local>duration'}, {path: 'local>distance'}], formatter: '.formatDescription'}"
+                                            visible="{= !!${local>duration} }"
+                                        />
+                                    </VBox>
+                                    <FlexBox
+                                        alignItems="Center"
+                                        justifyContent="Center"
+                                        height="100%"
+                                    >
+                                        <Button
+                                            icon="sap-icon://forward"
+                                            press="onButtonOpenWithMapsAppPress"
+                                        >
+                                                <customData>
+                                                    <core:CustomData
+                                                        key="ID"
+                                                        value="{local>toPoi}"
+                                                        writeToDom="true"
+                                                    />
+                                                </customData>
+                                            </Button>
+                                    </FlexBox>
+                                </FlexBox>
+                            </HBox>
+                        </CustomListItem>
                     </List>
                 </ScrollContainer>
             </Panel>

@@ -12,3 +12,7 @@
     overflow-y: hidden; /* Enable horizontal scrolling */
     overflow-x: scroll; /* Enable horizontal scrolling */
 }
+
+.size1 {
+	font-size : 1.5rem;
+}

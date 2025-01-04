@@ -450,10 +450,7 @@ sap.ui.define([
                 const sLocation = this.getModel("local").getProperty("/sSelectedSpotLocation");
                 const lat = sLocation.split(";")[1];
                 const long = sLocation.split(";")[0];
-                if /* if we're on iOS, open in Apple Maps */
-                    (/iPad|iPhone|iPod/.test(navigator.userAgent))
-                    window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`); else /* else use Google */
-                    window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
+                this.openMapsApp(lat, long);
             },
 
             onButtonClosePress: function (oEvent) {

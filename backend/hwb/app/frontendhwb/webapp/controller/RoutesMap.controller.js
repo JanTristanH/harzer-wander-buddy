@@ -342,7 +342,6 @@ sap.ui.define([
                     aCustomData.forEach(function (oCustomData) {
                         if (oCustomData.getKey() === "ID") {
                             var sID = oCustomData.getValue();
-                            console.log("Selected ID:", sID);
 
                             aRoutes = aRoutes.map(r => {
                                 if (r.ID == sChangedRouteId) {
@@ -436,7 +435,13 @@ sap.ui.define([
                 let oItem = this.getModel("local").getProperty(sClickedPath);
                 let oPoi = this._getPoiById(oItem.fromPoi || oItem.toPoi);
                 this._getMap().setCenterPosition(`${oPoi.longitude};${oPoi.latitude}`);
-            }
+            },
+
+		onButtonOpenWithMapsAppPress: function(oEvent) {
+            const poi = this._getPoiById(oEvent.getSource().getCustomData()[0].getValue());
+
+            this.openMapsApp(poi.latitude, poi.longitude);
+		}
             
         });
     });
