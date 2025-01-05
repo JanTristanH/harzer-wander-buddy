@@ -16,11 +16,11 @@ let aTravelTimesGlobal = [];
 module.exports = class api extends cds.ApplicationService {
   init() {
 
-    this.after('READ', `Stampboxes`, (stampBoxes, req) => {
+    this.after('READ', `Stampboxes`, async(stampBoxes, req) => {
+      const Stampings = this.entities('hwb.db').Stampings;
+      const stampings = await SELECT.from(Stampings).where({ createdBy: req.user.id });
       return stampBoxes.map(box => {
-        if (box.Stampings) {
-          box.Stampings = box.Stampings.filter(s => s.createdBy == req.user.id);
-        }
+        box.hasVisited = !!stampings.find(s => s.stamp_ID == box.ID);
         return box;
       });
     })
@@ -588,6 +588,10 @@ function mapPolyLineToPositionString(aCoordinates) {
 }
 
 function calculateRoute(pointA, pointB, travelMode) {
+  if(!pointA || !pointB){
+    console.error("Point A or B is missing");
+    Promise.reject("Point A or B is missing");
+  }
   if (countRequest >= MAX_REQUESTS_PER_CALL) {
     return Promise.resolve("Quota per Request exceeded!");
   }
@@ -659,7 +663,7 @@ function calculateRoute(pointA, pointB, travelMode) {
     }).then(r => r.json())
       .then(j => {
         // omit the polyline for logging
-        console.info("computeRoutes: " + JSON.stringify(j.routes.map(r => { return { duration: r.duration, distanceMeters: r.distanceMeters } })));
+        console.info("computeRoutes: " + JSON.stringify(j?.routes?.map(r => { return { duration: r.duration, distanceMeters: r.distanceMeters } })));
         if (!j.routes || j.routes?.length == 0) {
           console.error("No Route found!");
           console.error("Request: " + JSON.stringify(body));

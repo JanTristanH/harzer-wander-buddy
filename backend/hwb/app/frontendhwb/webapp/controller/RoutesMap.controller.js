@@ -356,15 +356,15 @@ sap.ui.define([
                     this._persistTour(this.byId("idEditRouteTable"));
                 }
             },
-            
+
             onUpButtonPress: function (oEvent) {
                 this._moveItem(oEvent, -1);
             },
-            
+
             onDownButtonPress: function (oEvent) {
                 this._moveItem(oEvent, 1);
             },
-            
+
             _moveItem: function (oEvent, direction) {
                 let oItemPressed = oEvent.getSource().getParent();
                 oItemPressed.rank = oItemPressed.getCells()[0].getText();
@@ -372,40 +372,40 @@ sap.ui.define([
                 const oTable = this.byId("idEditRouteTable");
                 let aItems = oTable.getItems();
                 let oSwitchingItem = this._getSwitchingItem(aItems, oItemPressed, direction);
-            
+
                 if (!oSwitchingItem) {
                     return;
                 }
-            
+
                 oSwitchingItem.rank = oSwitchingItem.getCells()[0].getText();
                 oSwitchingItem.ID = oSwitchingItem.getCells()[1].getText();
-            
+
                 // Swap ranks
                 this._swapRanks(oItemPressed, oSwitchingItem);
-            
+
                 // Update the model with the new ranks
                 this._updateModel(oItemPressed, oSwitchingItem);
-            
+
                 // Reapply the sorter to trigger refresh of the table
                 this._refreshTable(oTable);
             },
-            
+
             _getSwitchingItem: function (aItems, oItemPressed, direction) {
                 const currentIndex = aItems.findIndex(item => item.rank == oItemPressed.rank);
                 const targetIndex = currentIndex + direction;
-            
+
                 if (targetIndex >= 0 && targetIndex < aItems.length) {
                     return aItems[targetIndex];
                 }
                 return null;
             },
-            
+
             _swapRanks: function (oItem1, oItem2) {
                 let tempRank = oItem1.rank;
                 oItem1.rank = oItem2.rank;
                 oItem2.rank = tempRank;
             },
-            
+
             _updateModel: function (oItem1, oItem2) {
                 const oLocalModel = this.getModel("local");
                 let aUpdatedRoutes = oLocalModel.getProperty('/oSelectedTour/path').map(r => {
@@ -419,7 +419,7 @@ sap.ui.define([
                 });
                 oLocalModel.setProperty(`/oSelectedTour/path`, aUpdatedRoutes);
             },
-            
+
             _refreshTable: function (oTable) {
                 const oBinding = oTable.getBinding("items");
                 const oSorter = new sap.ui.model.Sorter({
@@ -430,18 +430,56 @@ sap.ui.define([
                 this._persistTour(oTable);
             },
 
-            onWaypointListSelectionChange: function(oEvent) {
+            onWaypointListSelectionChange: function (oEvent) {
                 let sClickedPath = oEvent.getSource().getSelectedContextPaths()[0];
                 let oItem = this.getModel("local").getProperty(sClickedPath);
-                let oPoi = this._getPoiById(oItem.fromPoi || oItem.toPoi);
+                debugger
+                let oPoi = this._getPoiById(oItem.toPoi || oItem.fromPoi);
                 this._getMap().setCenterPosition(`${oPoi.longitude};${oPoi.latitude}`);
             },
 
-		onButtonOpenWithMapsAppPress: function(oEvent) {
-            const poi = this._getPoiById(oEvent.getSource().getCustomData()[0].getValue());
+            formatStampButtonIcon: function (sID) {
+                let hasVisited = this.getModel().getProperty(`/Stampboxes(guid'${sID}')/hasVisited`);
+                if (hasVisited) {
+                    return "sap-icon://checklist-item-2";
+                } else {
+                    return "sap-icon://checklist-item";
+                }
+            },
+            formatStampButtonEnabled: function (sID) {
+                return !this.getModel().getProperty(`/Stampboxes(guid'${sID}')/hasVisited`);
+            },
 
-            this.openMapsApp(poi.latitude, poi.longitude);
-		}
-            
+            formatStampButtonVisible: function (sID) {
+                return !!this.getModel().getProperty(`/Stampboxes(guid'${sID}')`);
+            },
+
+            onButtonStampPress: function (oEvent) {
+                let oModel = this.getModel();
+                let ID = oEvent.getSource().getCustomData()[0].getValue();
+                let mParameters = {
+                    success: () => {
+                        oEvent.getSource().setIcon("sap-icon://checklist-item-2");
+                        oEvent.getSource().setEnabled(false);
+                        MessageToast.show(this.getText("savedStamping"));
+                        oModel.refresh();
+                    },
+                    // give message and reset ui to keep it consistent with backend
+                    error: () => MessageToast.show(this.getText("error"))
+                }
+                oModel.create("/Stampings", {
+                    "stamp": {
+                        ID
+                    }
+                }, mParameters);
+
+            },
+
+            onButtonOpenWithMapsAppPress: function (oEvent) {
+                const poi = this._getPoiById(oEvent.getSource().getCustomData()[0].getValue());
+
+                this.openMapsApp(poi.latitude, poi.longitude);
+            }
+
         });
     });

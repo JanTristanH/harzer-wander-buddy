@@ -282,6 +282,22 @@
                                         height="100%"
                                     >
                                         <Button
+                                            icon="{path: 'local>toPoi', formatter: '.formatStampButtonIcon'}"
+                                            visible="{path: 'local>toPoi', formatter: '.formatStampButtonVisible'}"
+                                            enabled="{path: 'local>toPoi', formatter: '.formatStampButtonEnabled'}"
+                                            type="Transparent"
+                                            press="onButtonStampPress"
+                                            class="sapUiTinyMarginEnd"
+                                        >
+                                            <customData>
+                                                <core:CustomData
+                                                    key="ID"
+                                                    value="{local>toPoi}"
+                                                    writeToDom="true"
+                                                />
+                                            </customData>
+                                        </Button>
+                                        <Button
                                             icon="sap-icon://forward"
                                             press="onButtonOpenWithMapsAppPress"
                                         >

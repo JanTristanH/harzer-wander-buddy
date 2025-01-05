@@ -24,6 +24,7 @@ entity Stampboxes : cuid, temporal, PointOfInterest {
     isKidFriendly          : Boolean;
     isElderlyFriendly      : Boolean;
     isStrollerFriendly     : Boolean;
+    hasVisited             : Boolean; /**populated by READ handler */
     hasToilet              : Boolean;
     hasFood                : Boolean;
     // parkingSpot            : Composition of many ParkingSpots

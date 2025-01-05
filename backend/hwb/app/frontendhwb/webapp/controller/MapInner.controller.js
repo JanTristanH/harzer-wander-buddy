@@ -433,7 +433,7 @@ sap.ui.define([
                     success: () => {
                         oEvent.getSource().setIcon("sap-icon://checklist-item-2");
                         oEvent.getSource().setEnabled(false);
-                        MessageToast.show("Saved Stamping");
+                        MessageToast.show(this.getText("savedStamping"));
                         oModel.refresh();
                     },
                     // give message and reset ui to keep it consistent with backend
