@@ -72,6 +72,11 @@ entity TravelTimes : cuid {
     distanceMeters  : Integer64;
     travelMode      : String(128);
     positionString  : LargeString;
+    elevationGain : Int16;
+    elevationLoss : Int16;
+    maxElevation : Int16;
+    minElevation : Int16;
+    elevationProfile : LargeString;
     tours : Association to many Tour2TravelTime on tours.travelTime = $self;
 }
 

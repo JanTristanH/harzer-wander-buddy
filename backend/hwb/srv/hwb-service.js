@@ -16,7 +16,7 @@ let aTravelTimesGlobal = [];
 module.exports = class api extends cds.ApplicationService {
   init() {
 
-    this.after('READ', `Stampboxes`, async(stampBoxes, req) => {
+    this.after('READ', `Stampboxes`, async (stampBoxes, req) => {
       const Stampings = this.entities('hwb.db').Stampings;
       const stampings = await SELECT.from(Stampings).where({ createdBy: req.user.id });
       return stampBoxes.map(box => {
@@ -66,6 +66,8 @@ module.exports = class api extends cds.ApplicationService {
 
       return typedTravelTimes;
     });
+
+    this.on('addElevationToAllTravelTimes', addElevationToAllTravelTimes)
 
     return super.init()
   }
@@ -577,7 +579,13 @@ function getTravelTimes(box, neighborPois, travelMode) {
       }
 
     }
-    resolve(result)
+    if (travelMode == "walk") {
+      // TODO test
+      let aPromises = result.map(addElevationProfileToTravelTime);
+      Promise.all(aPromises).then(r => resolve(result));
+    } else {
+      resolve(result);
+    }
   });
 }
 
@@ -588,7 +596,7 @@ function mapPolyLineToPositionString(aCoordinates) {
 }
 
 function calculateRoute(pointA, pointB, travelMode) {
-  if(!pointA || !pointB){
+  if (!pointA || !pointB) {
     console.error("Point A or B is missing");
     Promise.reject("Point A or B is missing");
   }
@@ -671,6 +679,92 @@ function calculateRoute(pointA, pointB, travelMode) {
           reject(j);
         }
         resolve(j);
+      }
+      );
+  });
+}
+
+async function addElevationToAllTravelTimes(req) {
+  const { TravelTimes } = this.entities('hwb.db');
+  let aTravelTimes = await SELECT.from(TravelTimes).limit(100)
+    .where({ elevationProfile: null, travelMode: "walk" });
+  let aPromises = aTravelTimes.map(addElevationProfileToTravelTime);
+  let aResults = await Promise.all(aPromises);
+  // persist the results
+  await UPSERT(aResults).into(TravelTimes);
+  return `Updated ${aResults.length} TravelTimes; Max 100`;
+}
+
+function addElevationProfileToTravelTime(oTravalTime) {
+  return new Promise((resolve, reject) => {
+    aLocations = oTravalTime.positionString.split(";0;");
+    aLocations.pop();
+    // map from  "<longitude>;<latitude>" to lat lng
+    aLocations = aLocations.map(location => location.split(";").reverse().join(","));
+
+    // keep a max of 512 locations
+    // sort out inner points
+    const maxLocations = 128;
+    if (aLocations.length > maxLocations) {
+      let aNewLocations = [];
+      for (let i = 0; i < aLocations.length; i += Math.ceil(aLocations.length / maxLocations)) {
+        aNewLocations.push(aLocations[i]);
+      }
+      aLocations = aNewLocations
+    }
+
+    fetch(`https://maps.googleapis.com/maps/api/elevation/json?locations=${aLocations.join("|")}&key=${process.env.GOOLGE_MAPS_API_KEY}`)
+      .then(r => r.json())
+      .then(j => {
+        if (j.status != "OK") {
+          console.error("Error getting Elevation Profile");
+          reject(j);
+        }
+        // expected result:
+        // {
+        //   "results":
+        //   [
+        //     {
+        //       "elevation": 1608.637939453125,
+        //       "location": { "lat": 39.7391536, "lng": -104.9847034 },
+        //       "resolution": 4.771975994110107,
+        //     },
+        //   ],
+        // "status": "OK",
+        // }
+        // determine max and min elevation as well as the total elevation gain and loss
+        let lastElevation = j.results[0].elevation;
+        let maxElevation = j.results[0].elevation;
+        let minElevation = j.results[0].elevation;
+        let elevationGain = 0;
+        let elevationLoss = 0;
+        let elevationProfile = [];
+        j.results.forEach(location => {
+          elevationProfile.push(location.elevation);
+          let elevation = location.elevation;
+          if (elevation > maxElevation) {
+            maxElevation = elevation;
+          }
+          if (elevation < minElevation) {
+            minElevation = elevation;
+          }
+          // at least 1m difference
+          if (elevation > lastElevation + 1 || elevation < lastElevation - 1) {
+            if (elevation > lastElevation) {
+              elevationGain += elevation - lastElevation;
+            } else if (elevation < lastElevation) {
+              elevationLoss += lastElevation - elevation;
+            }
+          }
+          lastElevation = elevation;
+        });
+
+        oTravalTime.elevationGain = elevationGain;
+        oTravalTime.elevationLoss = elevationLoss;
+        oTravalTime.maxElevation = maxElevation;
+        oTravalTime.minElevation = minElevation;
+        oTravalTime.elevationProfile = elevationProfile.join(";");
+        resolve(oTravalTime);
       }
       );
   });

@@ -6,6 +6,8 @@ service api @(requires: 'authenticated-user') {
 
     function getMissingTravelTimesCount(n : Integer) returns Integer;
 
+    function addElevationToAllTravelTimes() returns String;
+
     entity HikingRoute {
         Points         : Composition of many TravelTimes;
         totalDistance  : Integer;
