@@ -2,13 +2,11 @@ sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     "sap/m/ColumnListItem",
     "sap/m/MessageToast",
-    "sap/ui/model/Filter",
-    "sap/ui/model/FilterOperator"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, ColumnListItem, MessageToast, Filter, FilterOperator) {
+    function (Controller, ColumnListItem, MessageToast) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
@@ -62,7 +60,15 @@ sap.ui.define([
                 }
                 var formattedDuration = this.formatSecondsToTime(duration);
                 var formattedDistance = this.formatMetersToKilometers(distance);
-                return formattedDuration + " - " + formattedDistance + " - 0 HM";
+                return formattedDuration + " - " + formattedDistance; 
+            },
+
+            formatElevationDescription: function (elevationGain, elevationLoss) {
+                return `↑ ${this.formatCleanMeter(elevationGain)} - ↓ ${this.formatCleanMeter(elevationLoss)}`;
+            },
+
+            formatCleanMeter: function (meters) {
+                return `${parseInt(meters)}m`;
             },
 
             onButtonShareTourPress: function (oEvent) {
@@ -221,36 +227,9 @@ sap.ui.define([
                             let oTour = oData.updateTourByPOIList;
                             oTour.name = sNameBefore;
                             oLocalModel.setProperty("/oSelectedTour", oTour);
-                            this.getModel().read(`/Tour2TravelTime`, {
-                                urlParameters: {
-                                    "$expand": "travelTime",
-                                    "$orderby": "rank asc"
-                                },
-                                filters: [
-                                    new Filter("tour_ID", FilterOperator.EQ, sTourID)
-                                ],
-                                success: function (oRelatedData, oResponse) {
-                                    // Set the related data in the local model or handle as needed
-                                    oData.path = oRelatedData.results
-                                        .map(path => {
-                                            const tt = path.travelTime;
-                                            if (tt) {
-                                                const poi = this._getPoiById(tt.toPoi);
-                                                tt.name = poi ? poi.name : this.getText("start");
-                                                tt.duration = tt.durationSeconds;
-                                                tt.distance = tt.distanceMeters;
-                                            }
-                                            return tt;
-                                        })
-                                        .filter(p => !!p);
-
-                                    oLocalModel.setProperty(`/oSelectedTour/path`, this._mapTravelTimeToPOIList(oData.path));
-                                }.bind(this),
-                                error: function (oError) {
-                                    MessageToast.show("Error loading deferred entity!");
-                                    console.error(oError);
-                                }
-                            });
+                            this.loadTourTravelTime(sTourID, function (travelTimeData) {
+                                oLocalModel.setProperty(`/oSelectedTour/path`, this._mapTravelTimeToPOIList(travelTimeData));
+                            }.bind(this));                            
                         }.bind(this),
                         error: function (oError) {
                             // Handle errors here
@@ -416,7 +395,6 @@ sap.ui.define([
             onWaypointListSelectionChange: function (oEvent) {
                 let sClickedPath = oEvent.getSource().getSelectedContextPaths()[0];
                 let oItem = this.getModel("local").getProperty(sClickedPath);
-                debugger
                 let oPoi = this._getPoiById(oItem.toPoi || oItem.fromPoi);
                 this._getMap().setCenterPosition(`${oPoi.longitude};${oPoi.latitude}`);
             },

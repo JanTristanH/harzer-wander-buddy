@@ -68,19 +68,23 @@ This project is configured to run with a postgres.
 - basic tour planning
   - clicking a poi should move it to the center of the map ✔️
   - start navigation from tour view ✔️
-  - stamp from tour view
+  - stamp from tour view ✔️
+  - quick add poi from map to end of tour
 - are you sure when deleting stampings
 - nice illustrated message on initial routes view -> show list of tours ✔️
 - have map start near me if possible & keep viewport on reload ✔️
 - add elevation to travel times
 - make website installable
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
+- maintain cookie policy
 - upgrade developer to production key
 - minimum authority
   - admin role
   - only edit my own tours
 - look into problem with 24 remaining routes
 - Filtering on Map view -> Goethe weg usw.
+- set up social media
+- set up jeykell pages for seo
 
 ## MVP 2
 

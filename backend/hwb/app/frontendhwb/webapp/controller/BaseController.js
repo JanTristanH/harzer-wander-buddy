@@ -1,8 +1,11 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "sap/ui/core/routing/History",
-    "sap/ui/core/UIComponent"
-], function (Controller, History, UIComponent) {
+    "sap/ui/core/UIComponent",
+    "sap/m/MessageToast",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
+], function (Controller, History, UIComponent, MessageToast, Filter, FilterOperator) {
 
     "use strict";
     return Controller.extend("hwb.frontendhwb.controller.BaseController", {
@@ -15,11 +18,11 @@ sap.ui.define([
 
         onButtonSharePress: function () {
             navigator
-            .share({
-                title: document.title,
-                text: 'Harzer Wander Buddy',
-                url: window.location.href
-            })
+                .share({
+                    title: document.title,
+                    text: 'Harzer Wander Buddy',
+                    url: window.location.href
+                })
         },
 
         getRouter: function () {
@@ -30,12 +33,12 @@ sap.ui.define([
             return this.getView().getModel(sName);
         },
 
-        getText: function(sKey) {
+        getText: function (sKey) {
             //get the i18n resource bundle from core
             return this.getOwnerComponent().getModel("i18n").getResourceBundle().getText(sKey);
         },
 
-        _getPoiById: function(ID) {
+        _getPoiById: function (ID) {
             let oModel = this.getModel();
             let oStamp = oModel.getProperty(`/Stampboxes(guid'${ID}')`);
             let oParking = oModel.getProperty(`/ParkingSpots(guid'${ID}')`);
@@ -44,7 +47,7 @@ sap.ui.define([
 
         getStampByNumber: function (sNumber) {
             let aData = Object.values(this.getModel().oData);
-            return aData.filter( e => e.number == sNumber).pop();
+            return aData.filter(e => e.number == sNumber).pop();
         },
 
         onNavBack: function () {
@@ -147,6 +150,46 @@ sap.ui.define([
                 (/iPad|iPhone|iPod/.test(navigator.userAgent))
                 window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`); else /* else use Google */
                 window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
+        },
+
+        loadTourTravelTime: function (sTourId, successCallback) {
+            this.getModel().read(`/Tour2TravelTime`, {
+                urlParameters: {
+                    "$expand": "travelTime",
+                    "$orderby": "rank asc"
+                },
+                filters: [
+                    new Filter("tour_ID", FilterOperator.EQ, sTourId)
+                ],
+                success: function (oRelatedData, oResponse) {
+                    const travelTimeData = oRelatedData.results
+                        .map(path => {
+                            const tt = path.travelTime;
+                            if (tt) {
+                                const poi = this._getPoiById(tt.toPoi);
+                                tt.name = poi ? poi.name : this.getText("start");
+                                tt.duration = tt.durationSeconds;
+                                tt.distance = tt.distanceMeters;
+                                if(tt.elevationProfile) {
+                                    let aElevationProfile = tt.elevationProfile.split(";");
+                                    for (let i = 0; i < aElevationProfile.length; i++) {
+                                        aElevationProfile[i] = { x: i, y: parseFloat(aElevationProfile[i]) };
+                                    }
+                                    tt.elevationProfile = aElevationProfile;
+                                }
+                            }
+                            return tt;
+                        })
+                        .filter(p => !!p);
+
+                    // Call the provided success callback with processed data
+                    successCallback(travelTimeData);
+                }.bind(this),
+                error: function (oError) {
+                    MessageToast.show("Error loading deferred entity!");
+                    console.error(oError);
+                }
+            });
         }
 
     });

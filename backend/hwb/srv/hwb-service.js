@@ -180,22 +180,11 @@ async function updateTourByPOIList(req) {
       toPoi.type = "parking"
     }
 
-    toPoi.distanceKm = 2; // Temporary
-
     let travelMode = toPoi.type == toPoi.type == "parking" ? "drive" : "walk";
     let calculatedTravelTime = await getTravelTimes(fromPoi, [toPoi], travelMode);
     calculatedTravelTime = calculatedTravelTime[0];
-
     // Add the calculated travel time to the array of needed travel times
-    aNeededTravelTimes.push({
-      ID: uuidv4(),
-      fromPoi: pair.fromPoi,
-      toPoi: pair.toPoi,
-      durationSeconds: calculatedTravelTime.durationSeconds,
-      distanceMeters: calculatedTravelTime.distanceMeters,
-      travelMode: calculatedTravelTime.travelMode,
-      positionString: calculatedTravelTime.positionString
-    });
+    aNeededTravelTimes.push(calculatedTravelTime);
   }
   // save the new travel times to the database
   if (aNeededTravelTimes.length > 0) {

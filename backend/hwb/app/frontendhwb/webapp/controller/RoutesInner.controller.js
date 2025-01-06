@@ -94,39 +94,11 @@ sap.ui.define([
                             // Check if the deferred entity needs to be loaded separately
                             // load in two steps as expand is currently broken
                             if (oData.path && oData.path.__deferred) {
-                                this.getModel().read(`/Tour2TravelTime`, {
-                                    urlParameters: {
-                                        "$expand": "travelTime",
-                                        "$orderby": "rank asc"
-                                    },
-                                    filters: [
-                                        new Filter("tour_ID", FilterOperator.EQ, sTourId)
-                                    ],
-                                    success: function (oRelatedData, oResponse) {
-                                        // Set the related data in the local model or handle as needed
-                                        oData.path = oRelatedData.results
-                                            .map(path => {
-                                                const tt = path.travelTime;
-                                                if (tt) {
-                                                    const poi = this._getPoiById(tt.toPoi);
-                                                    tt.name = poi ? poi.name : this.getText("start");
-                                                    tt.duration = tt.durationSeconds;
-                                                    tt.distance = tt.distanceMeters;
-                                                }
-                                                return tt;
-                                            })
-                                            .filter(p => !!p);
-
-                                        oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
-
-                                        // Show details for the main entity
-                                        this._showDetailViewForIdList(oData.ID);
-                                    }.bind(this),
-                                    error: function (oError) {
-                                        MessageToast.show("Error loading deferred entity!");
-                                        console.error(oError);
-                                    }
-                                });
+                                this.loadTourTravelTime(sTourId, function (travelTimeData) {
+                                    oData.path = travelTimeData;
+                                    oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
+                                    this._showDetailViewForIdList(oData.ID);
+                                }.bind(this));                                
                             }
                         }.bind(this),
                         error: function (oError) {
