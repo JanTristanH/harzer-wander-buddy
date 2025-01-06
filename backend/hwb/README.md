@@ -70,6 +70,7 @@ This project is configured to run with a postgres.
   - start navigation from tour view ✔️
   - stamp from tour view ✔️
   - quick add poi from map to end of tour
+  - show personalized stamp count in addition to total
 - are you sure when deleting stampings
 - nice illustrated message on initial routes view -> show list of tours ✔️
 - have map start near me if possible & keep viewport on reload ✔️
@@ -88,6 +89,7 @@ This project is configured to run with a postgres.
 
 ## MVP 2
 
+- look into sapui5 vs openui5
 - fix handler to be normally performant: this.after('READ', `Stampboxes`
 - add images & descriptions to stamps
 - Update color schema of app to match background of mascot

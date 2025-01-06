@@ -18,9 +18,9 @@ module.exports = class api extends cds.ApplicationService {
 
     this.after('READ', `Stampboxes`, async (stampBoxes, req) => {
       const Stampings = this.entities('hwb.db').Stampings;
-      const stampings = await SELECT.from(Stampings).where({ createdBy: req.user.id });
+      const aStampings = await SELECT.from(Stampings).where({ createdBy: req.user.id });
       return stampBoxes.map(box => {
-        box.hasVisited = !!stampings.find(s => s.stamp_ID == box.ID);
+        box.hasVisited = !!aStampings.find(s => s.stamp_ID == box.ID);
         return box;
       });
     })
