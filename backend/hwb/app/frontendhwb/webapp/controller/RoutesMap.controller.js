@@ -202,7 +202,11 @@ sap.ui.define([
                     });
                     // send list to backend and refresh
                     aRoutesSortedByRank = aRoutesSortedByRank.map(r => r.toPoi);
-                    const sPOIList = aRoutesSortedByRank.join(";");
+                    const sPOIList = aRoutesSortedByRank.filter(p => !!p).join(";");
+                    if (!sPOIList.includes(";")) {
+                        // only one POI in list, no calculation needed
+                        return;
+                    }
                     const sTourID = this.getModel("local").getProperty("/oSelectedTour/ID");
                     this.getModel().callFunction("/updateTourByPOIList", {
                         method: "POST",
@@ -247,27 +251,6 @@ sap.ui.define([
                                     console.error(oError);
                                 }
                             });
-                            // this.getModel().callFunction("/getTourByIdListTravelTimes", {
-                            //     method: "GET",
-                            //     urlParameters: { idListTravelTimes: oTour.idListTravelTimes },
-                            //     success: function (oData) {
-                            //         // todo harmonize in backend
-                            //         oTour.path = oData.getTourByIdListTravelTimes.path.map(obj => ({
-                            //             ID: obj.ID,
-                            //             fromPoi: obj.fromPoi,
-                            //             name: obj.name,
-                            //             poi: obj.toPoi,
-                            //             duration: obj.durationSeconds,
-                            //             distance: obj.distanceMeters,
-                            //             travelMode: obj.travelMode,
-                            //             toPoiType: obj.toPoiType,
-                            //             positionString: obj.positionString
-                            //         }));
-                            //         oLocalModel.setProperty("/oSelectedTour/path", this._mapTravelTimeToPOIList(oTour.path));
-                            //     }.bind(this)
-                            // });
-
-
                         }.bind(this),
                         error: function (oError) {
                             // Handle errors here

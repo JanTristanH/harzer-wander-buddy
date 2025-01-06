@@ -109,7 +109,10 @@ async function updateTourByPOIList(req) {
   const { typedTravelTimes } = this.api.entities;
   const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours } = this.entities('hwb.db');
 
-  let aPois = poiList.split(";");
+  let aPois = poiList.split(";").filter(p => !!p);
+  if(aPois.length < 2){
+    throw new Error("At least 2 POIs are required to create a tour");
+  }
   let aPoiPairs = [];
   let aParkingSpots = await SELECT.from(ParkingSpots);
   let oParkingSpotsById = {};
@@ -558,6 +561,10 @@ function getTravelTimes(box, neighborPois, travelMode) {
       if (neighbor.distanceKm == 0) {
         continue;
       }
+      if(!neighbor){
+        console.error("Neighbor is missing");
+        continue;
+      }
       console.info(`Calculating Route from ${box.name}(${box.ID}) to ${neighbor.name}(${neighbor.ID})`);
       let oRoute = await calculateRoute(box, neighbor, travelMode);
 
@@ -565,7 +572,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
         result.push({
           ID: uuidv4(),
           fromPoi: box.ID,
-          toPoi: neighbor.NeighborsID,
+          toPoi: neighbor.ID || neighbor.NeighborsID,
           durationSeconds: oRoute.routes[0].duration.split('s')[0],
           distanceMeters: oRoute.routes[0].distanceMeters,
           travelMode,
