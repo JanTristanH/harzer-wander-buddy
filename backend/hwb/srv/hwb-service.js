@@ -686,13 +686,13 @@ function calculateRoute(pointA, pointB, travelMode) {
 
 async function addElevationToAllTravelTimes(req) {
   const { TravelTimes } = this.entities('hwb.db');
-  let aTravelTimes = await SELECT.from(TravelTimes).limit(100)
+  let aTravelTimes = await SELECT.from(TravelTimes).limit(1000)
     .where({ elevationProfile: null, travelMode: "walk" });
   let aPromises = aTravelTimes.map(addElevationProfileToTravelTime);
   let aResults = await Promise.all(aPromises);
   // persist the results
   await UPSERT(aResults).into(TravelTimes);
-  return `Updated ${aResults.length} TravelTimes; Max 100`;
+  return `Updated ${aResults.length} TravelTimes; Max 1000`;
 }
 
 function addElevationProfileToTravelTime(oTravalTime) {
