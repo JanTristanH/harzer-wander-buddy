@@ -224,7 +224,7 @@
                     class="sapUiMediumMarginEnd"
                 >
                     <core:Icon src="sap-icon://trend-up" />
-                    <Text text="-" />
+                    <Text text="{path: 'local>/oSelectedTour/totalElevationGain', formatter: '.formatCleanMeter'}" />
                 </VBox>
             </FlexBox>
             <Panel

@@ -67,10 +67,6 @@ sap.ui.define([
                 return `↑ ${this.formatCleanMeter(elevationGain)} - ↓ ${this.formatCleanMeter(elevationLoss)}`;
             },
 
-            formatCleanMeter: function (meters) {
-                return `${parseInt(meters)}m`;
-            },
-
             onButtonShareTourPress: function (oEvent) {
                 navigator
                     .share({

@@ -50,6 +50,10 @@ sap.ui.define([
             return aData.filter(e => e.number == sNumber).pop();
         },
 
+        formatCleanMeter: function (meters) {
+            return `${parseInt(meters)}m`;
+        },
+
         onNavBack: function () {
             var oHistory, sPreviousHash;
             oHistory = History.getInstance();

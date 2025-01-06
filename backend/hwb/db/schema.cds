@@ -102,6 +102,8 @@ entity Tours : cuid, managed {
      *  Each travel time has a from and a to.
      *  To get the pois of this tour, we need to look at all n toPois and the first from POI. 
      */
+    totalElevationLoss: Int16;
+    totalElevationGain: Int16;
     path: Association to many Tour2TravelTime on path.tour = $self;
 }
 

@@ -198,15 +198,22 @@ async function updateTourByPOIList(req) {
   await DELETE.from(Tour2TravelTime).where({ tour_ID: id });
   await INSERT(aTour2TravelTime).into(Tour2TravelTime);
 
-  let distance = 0, duration = 0, stampCount = 0, idListTravelTimes = "";
+  let distance = 0, duration = 0, stampCount = 0, idListTravelTimes = "", totalElevationGain = 0, totalElevationLoss = 0;
   for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
     const oTravelTime = aTravelTimesWithPositionString[i];
     distance += parseInt(oTravelTime.distanceMeters) || 0;
     duration += parseInt(oTravelTime.durationSeconds) || 0;
+    totalElevationGain += parseInt(oTravelTime.elevationGain) || 0;
+    totalElevationLoss += parseInt(oTravelTime.elevationLoss) || 0;
     idListTravelTimes = idListTravelTimes + aTravelTimesWithPositionString.ID
 
     if (oStampBoxById[oTravelTime.toPoi]) {
       oStampBoxById[oTravelTime.toPoi] = null;
+      stampCount++;
+    }
+
+    if (i == 0 && oStampBoxById[oTravelTime.fromPoi]) {
+      oStampBoxById[oTravelTime.fromPoi] = null;
       stampCount++;
     }
   }
@@ -216,7 +223,9 @@ async function updateTourByPOIList(req) {
     distance,
     duration,
     stampCount,
-    idListTravelTimes
+    idListTravelTimes,
+    totalElevationGain,
+    totalElevationLoss
   }
   await UPSERT(oTour).into(Tours);
 
@@ -691,9 +700,9 @@ async function addElevationToAllTravelTimes(req) {
   return `Updated ${aResults.length} TravelTimes; Max 1000`;
 }
 
-function addElevationProfileToTravelTime(oTravalTime) {
+function addElevationProfileToTravelTime(oTravelTime) {
   return new Promise((resolve, reject) => {
-    aLocations = oTravalTime.positionString.split(";0;");
+    aLocations = oTravelTime.positionString.split(";0;");
     aLocations.pop();
     // map from  "<longitude>;<latitude>" to lat lng
     aLocations = aLocations.map(location => location.split(";").reverse().join(","));
@@ -728,6 +737,11 @@ function addElevationProfileToTravelTime(oTravalTime) {
         //   ],
         // "status": "OK",
         // }
+
+        if(j.results.length == 0){
+          resolve(oTravelTime);
+          return;
+        }
         // determine max and min elevation as well as the total elevation gain and loss
         let lastElevation = j.results[0].elevation;
         let maxElevation = j.results[0].elevation;
@@ -755,12 +769,12 @@ function addElevationProfileToTravelTime(oTravalTime) {
           lastElevation = elevation;
         });
 
-        oTravalTime.elevationGain = elevationGain;
-        oTravalTime.elevationLoss = elevationLoss;
-        oTravalTime.maxElevation = maxElevation;
-        oTravalTime.minElevation = minElevation;
-        oTravalTime.elevationProfile = elevationProfile.join(";");
-        resolve(oTravalTime);
+        oTravelTime.elevationGain = elevationGain;
+        oTravelTime.elevationLoss = elevationLoss;
+        oTravelTime.maxElevation = maxElevation;
+        oTravelTime.minElevation = minElevation;
+        oTravelTime.elevationProfile = elevationProfile.join(";");
+        resolve(oTravelTime);
       }
       );
   });
