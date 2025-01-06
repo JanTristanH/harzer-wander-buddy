@@ -27,6 +27,7 @@ sap.ui.define([
                 this.setModel(models.createDeviceModel(), "device");
 
                 let oModel = this.getModel();
+                oModel.setSizeLimit(1000);
                 oModel.read("/Stampboxes", {
                     urlParameters: { "$top": 500 }
                 });

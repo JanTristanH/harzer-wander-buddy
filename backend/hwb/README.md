@@ -69,7 +69,7 @@ This project is configured to run with a postgres.
   - clicking a poi should move it to the center of the map ✔️
   - start navigation from tour view ✔️
   - stamp from tour view ✔️
-  - quick add poi from map to end of tour
+  - quick add poi from map to end of tour ✔️
   - show personalized stamp count in addition to total
 - are you sure when deleting stampings
 - nice illustrated message on initial routes view -> show list of tours ✔️

@@ -4,13 +4,14 @@ sap.ui.define([
     "sap/ui/core/mvc/XMLView",
     "sap/f/library",
     "sap/m/MessageToast",
-    "sap/ui/model/Filter",
-    "sap/ui/model/FilterOperator"
+    "sap/ui/unified/Menu",
+    "sap/ui/unified/MenuItem",
+    "sap/ui/core/Popup"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, XMLView, fioriLibrary, MessageToast, Filter, FilterOperator) {
+    function (Controller, JSONModel, XMLView, fioriLibrary, MessageToast, Menu, MenuItem, Popup) {
         "use strict";
         var autocomplete; //inspired by https://github.com/costa-satsati/addressautocomplete/
         var LayoutType = fioriLibrary.LayoutType;
@@ -98,7 +99,7 @@ sap.ui.define([
                                     oData.path = travelTimeData;
                                     oLocalModel.setProperty(`/Tours(${oData.ID})`, oData);
                                     this._showDetailViewForIdList(oData.ID);
-                                }.bind(this));                                
+                                }.bind(this));
                             }
                         }.bind(this),
                         error: function (oError) {
@@ -276,7 +277,7 @@ sap.ui.define([
             onToursListSelectionChange: function (oEvent) {
                 let oSelectedItem = oEvent.getParameter("listItem");
                 let TourId = oSelectedItem.getCustomData().find(data => data.getKey() === "ID").getValue();
-                
+
                 this.getRouter().navTo("RoutesDetail", {
                     TourId
                 });
@@ -306,6 +307,18 @@ sap.ui.define([
                         let oNestedController = sap.ui.getCore().byId("midView--RoutesMapId").getController()
                         oNestedController.onSpotClick = () => { };
                         oNestedController.onSpotContextMenu = () => { };
+                        oNestedController.onButtonOpenExternalPress = () => { };
+
+                        // attach to each spot events
+                        let oSpots = sap.ui.getCore().byId("midView--RoutesMapId--idAllPointsOfInterestsSpots").getItems();
+                        let oParking = sap.ui.getCore().byId("midView--RoutesMapId--idParkingSpotsSpots").getItems();
+                        oSpots.concat(oParking).forEach(oSpot => {
+                            oSpot.attachClick(this.onClickSpot.bind(this));
+                            oSpot.attachContextMenu(this.onContextMenuSpot.bind(this));
+                        });
+
+
+
                     } else if (sCenterPosition) {
                         setTimeout(() => {
                             //TODO attach to fitting event
@@ -314,6 +327,103 @@ sap.ui.define([
                     }
                 }.bind(this));
             },
+
+            onClickSpot: function (oEvent) {
+                if (this.getModel("local").getProperty("/edit")) {
+                    var oMenu = new Menu();
+                    oMenu.addItem(
+                        new MenuItem({
+                            text: this.getModel("i18n").getProperty("addToEndOfTour"),
+                            select: function (oMenuEvent) {
+                                this.onAddToEndOfTour(oEvent.getSource().data().id);
+                            }.bind(this)
+                        })
+                    );
+
+                    //TODO this works on mobile but not on desktop
+                    oMenu.open(false, oEvent.getSource(), Popup.Dock.CenterCenter, Popup.Dock.CenterCenter);
+                }
+            },
+
+            onContextMenuSpot: function (oEvent) {  
+                if (this.getModel("local").getProperty("/edit")) {
+                    if (oEvent.getParameter("menu")) {
+                        var oMenu = oEvent.getParameter("menu");
+                        if (oMenu.getItems().length == 0) {
+                            oMenu.addItem(
+                                new MenuItem({
+                                    text: this.getModel("i18n").getProperty("addToEndOfTour"),
+                                    select: function (oMenuEvent) {
+                                        this.onAddToEndOfTour(oEvent.getSource().data().id);
+                                    }.bind(this)
+                                })
+                            );
+                        }
+                        oEvent.getSource().openContextMenu(oMenu);
+                    }
+                }
+            },
+
+            onAddToEndOfTour: function (sId) {
+                this._persistTourCopy(sId);
+            },
+
+            _persistTourCopy: function (sId) {
+                const sNameBefore = this.getModel("local").getProperty("/oSelectedTour/name");
+                let aRoutesSortedByRank = this.getModel("local").getProperty("/oSelectedTour/path")
+                    .filter(r => !!r.ID)
+                    .sort((a, b) => {
+                        return b.rank - a.rank;  // This will sort in descending order
+                    });
+                if (aRoutesSortedByRank.length > 0) {
+
+                    // create sensible POI list
+                    let aResultListPois = [];
+                    aResultListPois.push(aRoutesSortedByRank[0].fromPoi);
+                    aRoutesSortedByRank.forEach(r => {
+                        aResultListPois.push(r.toPoi);
+                    });
+
+
+                    // send list to backend and refresh
+                    aRoutesSortedByRank = aRoutesSortedByRank.map(r => r.toPoi);
+                    // ADD NEW POI
+                    aRoutesSortedByRank.push(sId);
+                    // END CHANGE
+                    const sPOIList = aRoutesSortedByRank.filter(p => !!p).join(";");
+                    if (!sPOIList.includes(";")) {
+                        // only one POI in list, no calculation needed
+                        return;
+                    }
+                    const sTourID = this.getModel("local").getProperty("/oSelectedTour/ID");
+                    this.getModel().callFunction("/updateTourByPOIList", {
+                        method: "POST",
+                        urlParameters: {
+                            POIList: sPOIList,
+                            TourID: sTourID
+                        },
+                        success: function (oData, response) {
+                            // Handle the successful response here
+                            MessageToast.show(this.getText("tourSaved"));
+                            const oLocalModel = this.getModel("local");
+                            let oTour = oData.updateTourByPOIList;
+                            oTour.name = sNameBefore;
+                            oLocalModel.setProperty("/oSelectedTour", oTour);
+                            this.loadTourTravelTime(sTourID, function (travelTimeData) {
+                                oLocalModel.setProperty(`/oSelectedTour/path`, this._mapTravelTimeToPOIList(travelTimeData));
+                            }.bind(this));
+                        }.bind(this),
+                        error: function (oError) {
+                            // Handle errors here
+                            MessageToast.show("Error fetching POI List.");
+                            console.error(oError);
+                        }
+                    });
+                } else {
+                    console.info("no calculation needed");
+                }
+            },
+
             // Helper function to manage the lazy loading of views
             _loadView: function (options) {
                 var mViews = this._mViews = this._mViews || Object.create(null);
