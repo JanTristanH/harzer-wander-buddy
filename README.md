@@ -18,9 +18,17 @@ Plan a tour including known parking locations within the Harzer Wander Buddy.
 
 Have tow hours to spare and don't know which tour you could do? No worries, our automatic tour planning is here to save the day! 
 
+### Overview map
+
+The Harzer Wander Buddy offers an easy to use map, that displays the stamps in a way you can actually use. With their numbers and if you have visited it.
+
 ### Badge progress overview
 
 Get an overview of the progress of your badges. Even the more complicated ones, requiring specific places to be visited are tracked down easily"
+
+### Friends (planned)
+
+Plan and share tours with your friends in a way, you can keep track the progress of each one of you.  
 
 ## Docker image
 
