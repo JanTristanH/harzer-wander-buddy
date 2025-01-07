@@ -70,8 +70,9 @@
                                                                 justifyContent="SpaceAround"
                                                                 alignItems="Center"
                                                                 class="sapUiSmallMarginTop sapUiSmallMarginBottom"
-                                                                width="100%"
+                                                                width="24rem"
                                                             >
+                                                            <!-- 
                                                                 <Image
                                                                     src="images/placeholder/MapPlaceholder.png"
                                                                     mode="Background"
@@ -85,6 +86,7 @@
                                                                     height="10rem"
                                                                     width="10rem"
                                                                 />
+                                                            -->
                                                             </HBox>
                                                             <!-- hard facts bar below -->
                                                             <FlexBox
@@ -145,7 +147,7 @@
                                                                         src="sap-icon://trend-up"
                                                                     />
                                                                     <Text
-                                                                        text="{path: 'local>/oSelectedTour/totalElevationGain', formatter: '.formatCleanMeter'}"
+                                                                        text="{path: 'totalElevationGain', formatter: '.formatCleanMeter'}"
                                                                     />
                                                                 </VBox>
                                                             </FlexBox>

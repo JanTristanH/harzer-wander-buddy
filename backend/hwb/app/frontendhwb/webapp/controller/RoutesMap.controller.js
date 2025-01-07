@@ -391,7 +391,9 @@ sap.ui.define([
             onWaypointListSelectionChange: function (oEvent) {
                 let sClickedPath = oEvent.getSource().getSelectedContextPaths()[0];
                 let oItem = this.getModel("local").getProperty(sClickedPath);
-                let oPoi = this._getPoiById(oItem.toPoi || oItem.fromPoi);
+                let oPoi = this._getPoiById(oItem.toPoi || oItem.fromPoi 
+                    || oItem.poi // calculated routes
+                );
                 this._getMap().setCenterPosition(`${oPoi.longitude};${oPoi.latitude}`);
             },
 

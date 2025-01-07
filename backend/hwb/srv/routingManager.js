@@ -78,7 +78,7 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
 
             visited.add(poi);
             const neighbors = adjacencyList.get(poi);
-            if (!neighbors) {
+            if (!!neighbors) {
                 neighbors.forEach(neighbor => {
                     if (!path.map(p => p.poi).includes(neighbor.toPoi) || neighbor.toPoi === calculationParamsInner.startId) {
                         let newDistance = distance;
