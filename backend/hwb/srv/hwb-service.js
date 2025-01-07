@@ -142,7 +142,7 @@ async function updateTourByPOIList(req) {
 
   // Step 1: Load applicable travel times for the given POI pairs
   let aTravelTimesWithPositionString = await SELECT
-    .columns('ID', 'fromPoi', 'toPoi', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
+    .columns('ID', 'fromPoi', 'toPoi', 'durationSeconds', 'distanceMeters', 'travelMode', 'name', 'elevationLoss', 'elevationGain')
     .from(typedTravelTimes)
     .where(`${conditionString}`);
   aTravelTimesWithPositionString = getUniqueRoutes(aTravelTimesWithPositionString);

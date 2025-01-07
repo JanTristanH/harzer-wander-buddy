@@ -252,6 +252,8 @@ entity typedTravelTimes
            TravelTimes.durationSeconds,
            TravelTimes.distanceMeters,
            TravelTimes.travelMode,
+           TravelTimes.elevationGain,
+           TravelTimes.elevationLoss,
            ParkingSpots.name,
            'parking' as toPoiType: String
        }
@@ -265,6 +267,8 @@ entity typedTravelTimes
            TravelTimes.durationSeconds,
            TravelTimes.distanceMeters,
            TravelTimes.travelMode,
+           TravelTimes.elevationGain,
+           TravelTimes.elevationLoss,
            Stampboxes.name,
            'stamp' as toPoiType: String
        };
