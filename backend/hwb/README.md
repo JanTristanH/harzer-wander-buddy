@@ -88,6 +88,7 @@ This project is configured to run with a postgres.
 - set up social media
 - set up jeykell pages for seo
 - UI overhaul II -> fix up design
+- trackability total users / users active in the last x days
 
 ## MVP 2
 
@@ -107,6 +108,7 @@ This project is configured to run with a postgres.
   - saved tours
   - overview achievements
   - timeline for stampings (allow change of date)
+- monetization strategy ads from 5th login on?
 - optional: generate AI descriptions for routes
 - card based view of routes ✔️
   - highlight selected travel on map ✔️
