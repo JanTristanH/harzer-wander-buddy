@@ -45,7 +45,7 @@ This project is configured to run with a postgres.
     - show used parking spaces on route view ✔️
     - show user location on map ✔️
     - allow parking toggling ✔️
-    - enhance List / route handling
+    - enhance List / route handling ✔️
       - different map routes (dotted for walking) ✔️
     - fix map label toggling combined with zoom ✔️
 - Redirect to Login from webapp ✔️ (use /app/...)
@@ -65,66 +65,71 @@ This project is configured to run with a postgres.
   - fix user experience on mobile for this view -> pull up card ✔️
 - refactor routes to use joined travel time key (-> persist later, can recalculate dynamically) ✔️
 - badge progress overview ✔️
-- basic tour planning
+- basic tour planning ✔️
   - clicking a poi should move it to the center of the map ✔️
   - start navigation from tour view ✔️
   - stamp from tour view ✔️
   - quick add poi from map to end of tour ✔️
-  - show personalized stamp count in addition to total
+- Verify automatic tours are working
+- make website installable
 - are you sure when deleting stampings
+- Filtering on Map view -> Goethe weg usw.
 - nice illustrated message on initial routes view -> show list of tours ✔️
 - have map start near me if possible & keep viewport on reload ✔️
-- add elevation to travel times
-- make website installable
+- add elevation to travel times ✔️
+- verify deploy works without deleting prod data
+- call `addElevationToAllTravelTimes` on live system
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website
 - maintain cookie policy
 - upgrade developer to production key
 - minimum authority
   - admin role
   - only edit my own tours
-- look into problem with 24 remaining routes
-- Filtering on Map view -> Goethe weg usw.
 - set up social media
 - set up jeykell pages for seo
+- UI overhaul II -> fix up design
 
 ## MVP 2
 
-- look into sapui5 vs openui5
-- fix handler to be normally performant: this.after('READ', `Stampboxes`
+- support maps.me navigation
+- open individual travel time in maps or hiking app like komoot
 - add images & descriptions to stamps
+- show personalized stamp count in addition to total on tour page
+- refactor starting algorithm
+  - nearest
+  - from stamp
+  - from my location
 - Update color schema of app to match background of mascot
+- look into sapui5 vs openui5 (openUi5 does not have GeoMap)
+- look into problem with 24 remaining routes
+- fix handler to be normally performant: this.after('READ', `Stampboxes`
 - Profile page
   - saved tours
   - overview achievements
   - timeline for stampings (allow change of date)
 - optional: generate AI descriptions for routes
-- open individual travel time in maps or hiking app like komoot
-- card based view of routes
-  - highlight selected travel on map
+- card based view of routes ✔️
+  - highlight selected travel on map ✔️
 - update demo data from live system
-- allow manual changes to routes
+- allow manual changes to routes ✔️
 - paid parking info
-- shareability for routes
+- shareability for routes ✔️
 - cute mascot ✔️
 - compliant map server
 - Friends feature (plan route together & notification)
-- refactor starting algorithm
-  - nearest
-  - from stamp
-  - from my location
 - Comments on Stamps to mark missing / broken ones
 - support for multi book management
-- support maps.me navigation
 
 ## Backlog
 
 - add maps api key from env to index file
 - save some hand picked default routes
-- save height profile for routes
+- save height profile for routes ✔️
 - link to park for night parking
 - score for completing area
 - score where walking from other side would be easier
 - Admin Master data app -> new Stamps & moving
+- Admin Master data app -> update path of a TravelTime
 - Deal with legacy Stamps & check for deviation on HWN site
 - History view for changed stamps
 
