@@ -71,7 +71,7 @@ sap.ui.define([
                 navigator
                     .share({
                         title: document.title,
-                        text: 'Harzer Wander Buddy',
+                        text: 'Harzer Wanderbuddy',
                         url: window.location.href
                     })
             },

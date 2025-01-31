@@ -39,7 +39,7 @@ sap.ui.define([
 							"tiles": [{
 								"tileType": "sap.ushell.ui.tile.StaticTile",
 								"properties": {
-									"title": "Harzer Wander Buddy",
+									"title": "Harzer Wanderbuddy",
 									"targetURL": "#hwbfrontendhwb-display"
 								}
 							}]
@@ -54,8 +54,8 @@ sap.ui.define([
 							"hwbfrontendhwb-display": {
 								"semanticObject": "hwbfrontendhwb",
 								"action": "display",
-								"description": "Your Harzer Wander Buddy",
-								"title": "Harzer Wander Buddy",
+								"description": "Your Harzer Wanderbuddy",
+								"title": "Harzer Wanderbuddy",
 								"signature": {
 									"parameters": {}
 								},

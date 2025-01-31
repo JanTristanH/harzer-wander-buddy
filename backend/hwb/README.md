@@ -70,25 +70,26 @@ This project is configured to run with a postgres.
   - start navigation from tour view ✔️
   - stamp from tour view ✔️
   - quick add poi from map to end of tour ✔️
-- Verify automatic tours are working
-- make website installable
-- are you sure when deleting stampings
-- Filtering on Map view -> Goethe weg usw.
+- Verify automatic tours are working ✔️
+- make website installable ✔️ (https://maskable.app/editor -> for icon edit)
 - nice illustrated message on initial routes view -> show list of tours ✔️
 - have map start near me if possible & keep viewport on reload ✔️
 - add elevation to travel times ✔️
-- verify deploy works without deleting prod data
-- call `addElevationToAllTravelTimes` on live system
-- /policies/terms-of-service & /policies/privacy-policy => maintain on website
-- maintain cookie policy
+- verify deploy works without deleting prod data ✔️
+- call `addElevationToAllTravelTimes` on live system ✔️
+- /policies/terms-of-service & /policies/privacy-policy => maintain on website ✔️
+- maintain cookie policy (currently only tecnical cookie, so not needed ✔️)
+- are you sure when deleting stampings
+- Filtering on Map view -> Goethe weg usw.
 - upgrade developer to production key
 - minimum authority
   - admin role
   - only edit my own tours
-- set up social media
-- set up jeykell pages for seo
+- show user profile picture
+- set up social media ✔️
+- set up jeykell pages for seo ✔️
+- trackability total users / users active in the last x days (✔️ Good enough for start on auth0)
 - UI overhaul II -> fix up design
-- trackability total users / users active in the last x days
 
 ## MVP 2
 
