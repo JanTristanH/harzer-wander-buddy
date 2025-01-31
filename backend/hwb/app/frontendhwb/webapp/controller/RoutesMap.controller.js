@@ -229,7 +229,7 @@ sap.ui.define([
                         }.bind(this),
                         error: function (oError) {
                             // Handle errors here
-                            MessageToast.show("Error fetching POI List.");
+                            MessageToast.show(this.getText("error"));
                             console.error(oError);
                         }
                     });
