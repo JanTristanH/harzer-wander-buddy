@@ -1,18 +1,17 @@
 const CACHE_NAME = "harzer-wander-buddy-cache-v1";
 const APP_SHELL_FILES = [
     "/", // Root
-    "/frontendhwb/webapp/index.html",
     "/index.html",
     "/manifest.json",
     "/service-worker.js",
     "/images/BuddyWithMap.webp",
-    "/images/BuddyWithMap-192.webp",
-    "/images/BuddyWithMap-512.webp",
+    "/images/icons/BuddyWithMap-192.webp",
+    "/images/icons/BuddyWithMap-512.webp",
     "/css/style.css",
     "/js/app.js",
     "/js/init.js",
     "https://openui5.hana.ondemand.com/resources/sap-ui-core.js"
-];
+].map( e => e.startsWith("h") ? e : "/frontendhwb/webapp" + e);
 
 // Install event - Caches important files for offline use
 self.addEventListener("install", event => {

@@ -7,19 +7,19 @@
         
         <title>Harzer Wanderbuddy</title>
         <meta name="description" content="Sage lästiger Routenplanung lebewohl. Die App für die Harzer Wandernadel mit allen Stempelstellen auf einer Karte."" />
-        <meta name="theme-color" content="#4CAF50"> <!-- Adjust color to match your branding -->
+        <meta name="theme-color" content="#e6e7dd">
         
         <!-- Open Graph (OG) for social sharing -->
         <meta property="og:title" content="Harzer Wanderbuddy" />
         <meta property="og:description" content="Sage lästiger Routenplanung lebewohl. Die App für die Harzer Wandernadel mit allen Stempelstellen auf einer Karte."" />
         <meta property="og:url" content="https://www.harzer-wander-buddy.de/" />
-        <meta property="og:image" content="./images/BuddyWithMap.webp" />
+        <meta property="og:image" content="./images/icons/BuddyWithMap.webp" />
         <meta property="og:type" content="website" />
     
         <!-- PWA Essentials -->
         <link rel="manifest" href=".//manifest.json"> <!-- Web App Manifest -->
-        <link rel="icon" type="image/webp" href="./images/BuddyWithMap.webp">
-        <link rel="apple-touch-icon" href="./images/BuddyWithMap.webp">
+        <link rel="icon" type="image/webp" href="./images/icons/BuddyWithMap.webp">
+        <link rel="apple-touch-icon" href="./images/icons/BuddyWithMap.webp">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -35,39 +35,39 @@
 
             let deferredPrompt;
 
-window.addEventListener("beforeinstallprompt", (event) => {
-    // Prevent default behavior
-    event.preventDefault();
-    deferredPrompt = event;
+            window.addEventListener("beforeinstallprompt", (event) => {
+                // Prevent default behavior
+                event.preventDefault();
+                deferredPrompt = event;
 
-    console.log("PWA install prompt is ready!");
+                console.log("PWA install prompt is ready!");
 
-    // Optionally show an install button
-    document.getElementById("installBtn").style.display = "block";
-});
+                // Optionally show an install button
+                document.getElementById("installBtn").style.display = "block";
+            });
 
-// Function to trigger the install prompt when the user clicks a button
-function installPWA() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === "accepted") {
-                console.log("User accepted the install prompt");
-            } else {
-                console.log("User dismissed the install prompt");
+            // Function to trigger the install prompt when the user clicks a button
+            function installPWA() {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then((choiceResult) => {
+                        if (choiceResult.outcome === "accepted") {
+                            console.log("User accepted the install prompt");
+                        } else {
+                            console.log("User dismissed the install prompt");
+                        }
+                        deferredPrompt = null;
+                    });
+                }
             }
-            deferredPrompt = null;
-        });
-    }
-}
 
-// Add event listener to an install button
-document.addEventListener("DOMContentLoaded", () => {
-    const installButton = document.getElementById("installBtn");
-    if (installButton) {
-        installButton.addEventListener("click", installPWA);
-    }
-});
+            // Add event listener to an install button
+            document.addEventListener("DOMContentLoaded", () => {
+                const installButton = document.getElementById("installBtn");
+                if (installButton) {
+                    installButton.addEventListener("click", installPWA);
+                }
+            });
 
         </script>
         <style>
