@@ -10,7 +10,7 @@
 - The profiles `memory`, `development` and `production` are available and can be selected using the `--profile` flag
   - `development` is selected as default with a persistent database
   - to get dummy data, rename the folder `DoNotDeploy-data` to `data` and run `cds deploy`
-  - to configure `production` the postgres location, you can use the `.cdsrc.json` file. `postgres.cdsrc.json` contains the connection details if a container is run from the `pg.yml` file. 
+  - to configure `production` the postgres location, you can use the `.cdsrc.json` file. `postgres.cdsrc.json` contains the connection details if a container is run from the `pg.yml` file. (`docker-compose -f pg.yml up -d`)
 - building and publishing the final docker container is handled via github actions via tags
 
 ## Needed Environment variables

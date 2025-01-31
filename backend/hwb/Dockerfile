@@ -13,6 +13,9 @@ COPY . .
 RUN npm i @sap/cds -g \
     && npm install
 
+# ensure no data is in db/data directory
+RUN rm -rf db/data
+
 # Build ui5 app
 
 WORKDIR app/frontendhwb

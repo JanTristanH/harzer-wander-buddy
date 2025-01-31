@@ -72,10 +72,10 @@ entity TravelTimes : cuid {
     distanceMeters  : Integer64;
     travelMode      : String(128);
     positionString  : LargeString;
-    elevationGain : Int16;
-    elevationLoss : Int16;
-    maxElevation : Int16;
-    minElevation : Int16;
+    elevationGain : Double;
+    elevationLoss : Double;
+    maxElevation : Double;
+    minElevation : Double;
     elevationProfile : LargeString;
     tours : Association to many Tour2TravelTime on tours.travelTime = $self;
 }
@@ -102,8 +102,8 @@ entity Tours : cuid, managed {
      *  Each travel time has a from and a to.
      *  To get the pois of this tour, we need to look at all n toPois and the first from POI. 
      */
-    totalElevationLoss: Int16;
-    totalElevationGain: Int16;
+    totalElevationLoss: Double;
+    totalElevationGain: Double;
     path: Association to many Tour2TravelTime on path.tour = $self;
 }
 

@@ -587,7 +587,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
     if (travelMode == "walk") {
       // TODO test
       let aPromises = result.map(addElevationProfileToTravelTime);
-      Promise.all(aPromises).then(r => resolve(result));
+      Promise.all(aPromises).then(r => resolve(r));
     } else {
       resolve(result);
     }
