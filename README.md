@@ -1,7 +1,7 @@
 # Harzer-Wander-Buddy
 
 
-|Harzer Wander Buddy for stamp collecting|![Logo](https://raw.githubusercontent.com/JanTristanH/harzer-wander-buddy-website/main/images/BuddyWithMap.webp)|
+|Harzer Wanderbuddy for stamp collecting|![Logo](https://raw.githubusercontent.com/JanTristanH/harzer-wander-buddy-website/main/images/BuddyWithMap.webp)|
 |-----|-----|
 
 ## Purpose
@@ -12,7 +12,7 @@ This app is intended to help plan your route and collect all 222 stamps.
 
 ### Tour planning
 
-Plan a tour including known parking locations within the Harzer Wander Buddy.
+Plan a tour including known parking locations within the Harzer Wanderbuddy.
 
 ### Automatic tour planning
 
@@ -20,7 +20,7 @@ Have tow hours to spare and don't know which tour you could do? No worries, our 
 
 ### Overview map
 
-The Harzer Wander Buddy offers an easy to use map, that displays the stamps in a way you can actually use. With their numbers and if you have visited it.
+The Harzer Wanderbuddy offers an easy to use map, that displays the stamps in a way you can actually use. With their numbers and if you have visited it.
 
 ### Badge progress overview
 

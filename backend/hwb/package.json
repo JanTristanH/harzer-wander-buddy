@@ -54,7 +54,7 @@
         }
       },
       "auth": {
-        "[development]": {
+        "[production]": {
           "kind": "basic-auth",
           "users": {
             "Tris": {
@@ -78,7 +78,7 @@
             "*": false
           }
         },
-        "[production]": {
+        "[productiony]": {
           "impl": "srv/auth.js"
         }
       }

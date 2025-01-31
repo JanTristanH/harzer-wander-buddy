@@ -1,4 +1,23 @@
 {
+    "name": "Harzer Wanderbuddy",
+    "short_name": "Wanderbuddy",
+    "description": "Sage lästiger Routenplanung lebewohl",
+    "start_url": "/frontendhwb/webapp/index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4CAF50",
+    "icons": [
+        {
+            "src": "./images/BuddyWithMap-192.webp",
+            "sizes": "192x192",
+            "type": "image/webp"
+        },
+        {
+            "src": "./images/BuddyWithMap-512.webp",
+            "sizes": "512x512",
+            "type": "image/webp"
+        }
+    ],
     "_version": "1.40.0",
     "sap.app": {
         "id": "hwb.frontendhwb",
