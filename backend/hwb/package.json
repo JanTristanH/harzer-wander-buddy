@@ -1,6 +1,6 @@
 {
   "name": "hwb",
-  "version": "0.0.22",
+  "version": "0.0.24",
   "description": "A simple CAP project.",
   "repository": "<Add your repository here>",
   "license": "UNLICENSED",
@@ -54,7 +54,7 @@
         }
       },
       "auth": {
-        "[production]": {
+        "[development]": {
           "kind": "basic-auth",
           "users": {
             "Tris": {
@@ -78,7 +78,7 @@
             "*": false
           }
         },
-        "[productiony]": {
+        "[production]": {
           "impl": "srv/auth.js"
         }
       }
