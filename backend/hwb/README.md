@@ -78,13 +78,14 @@ This project is configured to run with a postgres.
 - verify deploy works without deleting prod data ✔️
 - call `addElevationToAllTravelTimes` on live system ✔️
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website ✔️
+- maintain cookie policy (currently only tecnical cookie, so not needed ✔️)
 - are you sure when deleting stampings
 - Filtering on Map view -> Goethe weg usw.
-- maintain cookie policy (currently only tecnical cookie)
 - upgrade developer to production key
 - minimum authority
   - admin role
   - only edit my own tours
+- show user profile picture
 - set up social media ✔️
 - set up jeykell pages for seo ✔️
 - trackability total users / users active in the last x days (✔️ Good enough for start on auth0)
