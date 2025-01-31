@@ -38,6 +38,11 @@ service api @(requires: 'authenticated-user') {
     @readonly
     entity RouteCalculationRequest as projection on db.RouteCalculationRequest;
 
+    @restrict: [
+        { grant: 'READ' },
+        { grant: 'WRITE', to: 'authenticated-user' },
+        { grant: 'UPDATE', where: 'createdBy = $user' }
+    ]
     entity Tours as projection on db.Tours;
 
     @readonly
