@@ -71,7 +71,7 @@ This project is configured to run with a postgres.
   - stamp from tour view ✔️
   - quick add poi from map to end of tour ✔️
 - Verify automatic tours are working ✔️
-- make website installable ✔️
+- make website installable ✔️ (https://maskable.app/editor -> for icon edit)
 - nice illustrated message on initial routes view -> show list of tours ✔️
 - have map start near me if possible & keep viewport on reload ✔️
 - add elevation to travel times ✔️
