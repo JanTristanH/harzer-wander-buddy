@@ -1,73 +1,73 @@
 {
-    "name": "Harzer Wanderbuddy",
-    "short_name": "Harzer Wanderbuddy",
-    "description": "Sage lästiger Routenplanung lebewohl",
-    "start_url": "/frontendhwb/webapp/index.html",
-    "display": "standalone",
-    "background_color": "#f4f4f4",
-    "theme_color": "#e6e7dd",
-    "icons": [
-        {
-          "purpose": "any",
-          "sizes": "48x48",
-          "src": "./images/icons/maskable_icon_x48.png",
-          "type": "image/png"
-        },
-        {
-          "purpose": "any",
-          "sizes": "72x72",
-          "src": "./images/icons/maskable_icon_x72.png",
-          "type": "image/png"
-        },
-        {
-          "purpose": "any",
-          "sizes": "96x96",
-          "src": "./images/icons/maskable_icon_x96.png",
-          "type": "image/png"
-        },
-        {
-          "purpose": "any",
-          "sizes": "128x128",
-          "src": "./images/icons/maskable_icon_x128.png",
-          "type": "image/png"
-        },
-        {
-            "purpose": "any",
-            "sizes": "144x144",
-            "src": "./images/icons/maskable_icon_x144.png",
-            "type": "image/png"
-          },
-        {
-          "purpose": "any",
-          "sizes": "192x192",
-          "src": "./images/icons/maskable_icon_x192.png",
-          "type": "image/png"
-        },
-        {
-          "purpose": "any",
-          "sizes": "384x384",
-          "src": "./images/icons/maskable_icon_x384.png",
-          "type": "image/png"
-        },
-        {
-          "purpose": "any",
-          "sizes": "512x512",
-          "src": "./images/icons/maskable_icon_x512.png",
-          "type": "image/png"
-        }
-      ],
-    "screenshots": [
-        {
-        "src": "./images/icons/screenshot-mobile-ugly.png",
-        "sizes": "1080x1920",
-        "type": "image/png",
-        "form_factor": "narrow"
-        },
-        {
-        "src": "./images/icons/screenshot-desktop-ugly.png",
-        "sizes": "1920x1080",
-        "type": "image/png",
-        "form_factor": "wide"
-        }
-    ]
+  "name": "Harzer Wanderbuddy",
+  "short_name": "Harzer Wanderbuddy",
+  "description": "Sage lästiger Routenplanung lebewohl",
+  "start_url": "/app/frontendhwb/webapp/index.html",
+  "display": "standalone",
+  "background_color": "#e6e7dd",
+  "theme_color": "#e6e7dd",
+  "icons": [
+    {
+      "purpose": "maskable",
+      "sizes": "48x48",
+      "src": "/pbc/images/icons/maskable_icon_x48-removebg.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "72x72",
+      "src": "/pbc/images/icons/maskable_icon_x72-removebg.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "96x96",
+      "src": "/pbc/images/icons/maskable_icon_x96-removebg.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "128x128",
+      "src": "/pbc/images/icons/maskable_icon_x128-removebg.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "144x144",
+      "src": "/pbc/images/icons/maskable_icon_x144-removebg.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "192x192",
+      "src": "/pbc/images/icons/maskable_icon_x192-removebg.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "384x384",
+      "src": "/pbc/images/icons/maskable_icon_x384-removebg.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "/pbc/images/icons/maskable_icon_x512-removebg.png",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/pbc/images/icons/screenshot-mobile-ugly.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/pbc/images/icons/screenshot-desktop-ugly.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
 }
