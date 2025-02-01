@@ -11,7 +11,7 @@ const APP_SHELL_FILES = [
     "/js/app.js",
     "/js/init.js",
     "https://openui5.hana.ondemand.com/resources/sap-ui-core.js"
-].map( e => e.startsWith("h") ? e : "/frontendhwb/webapp" + e);
+].map( e => e.startsWith("h") ? e : "/frontendhwb/dist" + e);
 
 // Install event - Caches important files for offline use
 self.addEventListener("install", event => {

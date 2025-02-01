@@ -23,9 +23,13 @@ const config = {
 // };
 
 cds.on("bootstrap", (app) => {
-    // initialize openid-connect with auth0 configuration
+    // ✅ Serve manifest.json publicly before authentication middleware
+    app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));
+
+
     app.use(auth(config));
-    app.use('/app', requiresAuth(), express.static(__dirname + '/../app'));
+    
+    app.use('/app/frontendhwb', requiresAuth(), express.static(__dirname + '/../app/frontendhwb'));
 
     // rewrite ui5 dist path
     app.use((req, res, next) => {
