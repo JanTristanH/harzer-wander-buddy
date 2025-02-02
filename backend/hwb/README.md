@@ -29,7 +29,7 @@ This project is configured to run with a postgres.
 - implement DFS to suggest routes ✔️
 - UI für suggested routes -> General route planning & viewing ✔️
 - dev deploy on domain ✔️
-- Too many parking spaces obscure the relevant neighbor travel times.
+- Too many parking spaces obscure the relevant neighbor travel times. ✔️
   - admin ui for adding and removing spots ✔️
   - recalculate routes button ✔️
   - display routes for spot ✔️
@@ -40,7 +40,7 @@ This project is configured to run with a postgres.
 - enhance data quality, parking spaces & routes ✔️ (ongoing)
 - route calculation broken -> starting parking spaces not correct (fixed itself) ✔️
 - link spot to external search ✔️
-- Mobile optimization & UI overhaul with mobile optimization	
+- Mobile optimization & UI overhaul with mobile optimization	✔️
     - better units in dialog ✔️
     - show used parking spaces on route view ✔️
     - show user location on map ✔️
@@ -83,20 +83,28 @@ This project is configured to run with a postgres.
 - Filtering on Map view -> Goethe weg usw.
 - upgrade developer to production key
 - minimum authority
-  - admin role
-  - only edit my own tours
+  - admin role ✔️
+  - only edit my own tours ❓
+  - add new audience to prod docker
 - show user profile picture
 - set up social media ✔️
 - set up jeykell pages for seo ✔️
 - trackability total users / users active in the last x days (✔️ Good enough for start on auth0)
 - UI overhaul II -> fix up design
 
+# Last stretch before rewrite 
+- support maps.me navigation
+- show personalized stamp count in addition to total on tour page
+- Friends feature
+  - show group status on map
+  - send and accept friend requests
+  - display stamp list of friend and mine
+  - display stamping state of group member on tour (detail) page
+
 ## MVP 2
 
-- support maps.me navigation
 - open individual travel time in maps or hiking app like komoot
 - add images & descriptions to stamps
-- show personalized stamp count in addition to total on tour page
 - refactor starting algorithm
   - nearest
   - from stamp
@@ -119,7 +127,6 @@ This project is configured to run with a postgres.
 - shareability for routes ✔️
 - cute mascot ✔️
 - compliant map server
-- Friends feature (plan route together & notification)
 - Comments on Stamps to mark missing / broken ones
 - support for multi book management
 
@@ -141,3 +148,31 @@ This project is configured to run with a postgres.
 - run `docker build . -t hwb`
 - connect to Github registry via VS Code extension
 - push all lowercase
+
+
+## Nice Blog
+
+- Authentication (createdBy) https://community.sap.com/t5/technology-blogs-by-members/cap-demystify-user-authentication/ba-p/13488676
+
+## Role related setup in auth0
+
+- add role `admin` to user
+- add permission to role
+- add Application -> API (for audience)
+- enable RBAC
+- add again manually
+  - Action -> Triggers -> Post Login
+    - create custom:
+````js
+exports.onExecutePostLogin = async (event, api) => {
+  const namespace = "https://app.harzer-wander-buddy.de/"; // Use a custom namespace -> same as audience
+  
+  // Get assigned roles
+  const assignedRoles = event.authorization.roles || [];
+
+  // Add roles to the token
+  api.idToken.setCustomClaim(`${namespace}roles`, assignedRoles);
+  api.accessToken.setCustomClaim(`${namespace}roles`, assignedRoles);
+};
+````
+    - move into flow on the left
