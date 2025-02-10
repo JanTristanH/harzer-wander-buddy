@@ -16,6 +16,21 @@ aspect PointOfInterest {
     image       : String(2048); //LargeBinary @Core.MediaType : 'image/png';
 }
 
+entity ExternalUsers : cuid {
+    principal: User @assert.unique;
+    email: String(255) @assert.unique;
+    email_verified: Boolean;
+    family_name: String(255);
+    given_name: String(255);
+    name: String(255);
+    nickname: String(255);
+    picture: String(255);
+    sid: String(255);
+    sub: String(255);
+    updated_at_iso_string: String(255);
+    updated_at: Timestamp @cds.on.insert : $now;
+}
+
 @assert.integrity: false
 entity Stampboxes : cuid, temporal, PointOfInterest {
     number                 : String(40); // to allow Sonderstempel via name
@@ -113,7 +128,16 @@ entity Tour2TravelTime @cds.autoexpose {
     rank: Int16;
 }
 
-// Todo save commen stamps as suggested routed
+entity Friendships {
+    key fromUser : Association to ExternalUsers;
+    key toUser : Association to ExternalUsers;
+    confirmed: Boolean;
+}
+
+entity PendingFriendshipRequests : cuid {
+    key fromUser : Association to ExternalUsers;
+    key toUser : Association to ExternalUsers;    
+}
 
 // Input start any poi -> gps guess & Max driving time
 // Check adjecent stamps -> could also be generic -> load eg 20 km radius/box -> salesman trump

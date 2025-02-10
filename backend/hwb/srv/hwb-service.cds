@@ -46,6 +46,20 @@ service api @(requires: 'authenticated-user') {
     entity TravelTimes             as projection on db.TravelTimes;
 
     @readonly
+    entity Users as projection on db.ExternalUsers {
+        ID,
+        principal,
+        name,
+        picture
+    };
+    @restrict: [
+        { grant: 'READ', to: 'authenticated-user' },
+        { grant: 'WRITE', to: 'authenticated-user' }
+    ]    entity Friendships as projection on db.Friendships;
+    @readonly
+    entity PendingFriendshipRequests as projection on db.PendingFriendshipRequests;
+
+    @readonly
     entity RouteCalculationRequest as projection on db.RouteCalculationRequest;
 
     @restrict: [
