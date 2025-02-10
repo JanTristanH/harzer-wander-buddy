@@ -2,11 +2,17 @@ using {hwb.db as db} from '../db/schema';
 
 service api @(requires: 'authenticated-user') {
 
+    @requires: 'admin'
     function calculateTravelTimesNNearestNeighbors(n : Integer) returns Integer;
 
+    @requires: 'admin'
     function getMissingTravelTimesCount(n : Integer) returns Integer;
 
+    @requires: 'admin'
     function addElevationToAllTravelTimes() returns String;
+
+    @requires: 'admin'
+    action DeleteSpotWithRoutes (SpotId: UUID) returns String;
 
     entity HikingRoute {
         Points         : Composition of many TravelTimes;
@@ -27,12 +33,16 @@ service api @(requires: 'authenticated-user') {
 
     action updateTourByPOIList(TourID: UUID, POIList: String) returns String;
 
+    @requires: 'admin'
     function updateOrderBy() returns String;
 
     @cds.redirection.target
+    @readonly
     entity Stampboxes              as projection on db.Stampboxes;
 
+    @readonly
     entity ParkingSpots            as projection on db.ParkingSpots;
+    @readonly
     entity TravelTimes             as projection on db.TravelTimes;
 
     @readonly
@@ -72,9 +82,6 @@ service api @(requires: 'authenticated-user') {
         {grant: 'WRITE'}
     ])                             as projection on db.Stampings;
 
-    //action route (statingStampID:Integer, targetNumberOfStamps: Integer) returns Integer;
-
-    action DeleteSpotWithRoutes (SpotId: UUID) returns String;
 
     // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
     // TODO set up read restrictions from external

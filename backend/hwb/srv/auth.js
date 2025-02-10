@@ -26,12 +26,13 @@ function capAuth0(req, res, next) {
     _roles: ["authenticated-user"],
   };
 
-//   // retrieve permissions
-//   let jwtDecoded = jsonwebtoken.decode(req.oidc.accessToken.access_token);
 
-//   if (jwtDecoded.permissions) {
-//     capUser._roles.push(...jwtDecoded.permissions);
-//   }
+  // retrieve permissions
+  let jwtDecoded = jsonwebtoken.decode(req.oidc.accessToken?.access_token);
+  if (jwtDecoded) {
+    let roles = jwtDecoded[process.env.AUDIENCE + "roles"] || [];
+    capUser._roles.push(...roles);
+  }
 
   req.user = new Auth0User(capUser);
 
