@@ -59,6 +59,8 @@ service api @(requires: 'authenticated-user') {
     @readonly
     entity PendingFriendshipRequests as projection on db.PendingFriendshipRequests;
 
+    action acceptPendingFriendshipRequest (FriendshipID: UUID) returns String;
+
     @readonly
     entity RouteCalculationRequest as projection on db.RouteCalculationRequest;
 

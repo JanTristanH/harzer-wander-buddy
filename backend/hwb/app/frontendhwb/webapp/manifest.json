@@ -149,6 +149,13 @@
                 ]
             },
             {
+                "name": "FriendsList",
+                "pattern": "friends",
+                "target": [
+                    "TargetFriendsList"
+                ]
+            },
+            {
                 "name": "Admin",
                 "pattern": "admin",
                 "target": [
@@ -183,6 +190,13 @@
                     "transition": "show",
                     "clearControlAggregation": false,
                     "viewId": "Routes"
+                },
+                "TargetFriendsList": {
+                    "viewName": "FriendsList",
+                    "viewType": "XML",
+                    "transition": "show",
+                    "clearControlAggregation": false,
+                    "viewId": "FriendsList"
                 },
                 "TargetAdmin": {
                     "viewName": "Admin",

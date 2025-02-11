@@ -131,12 +131,12 @@ entity Tour2TravelTime @cds.autoexpose {
 entity Friendships {
     key fromUser : Association to ExternalUsers;
     key toUser : Association to ExternalUsers;
-    confirmed: Boolean;
+    confirmed: Boolean default false;
 }
 
 entity PendingFriendshipRequests : cuid {
-    key fromUser : Association to ExternalUsers;
-    key toUser : Association to ExternalUsers;    
+    fromUser : Association to ExternalUsers;
+    toUser : Association to ExternalUsers;    
 }
 
 // Input start any poi -> gps guess & Max driving time

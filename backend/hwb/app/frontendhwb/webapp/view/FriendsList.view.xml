@@ -1,0 +1,58 @@
+<mvc:View
+	controllerName="hwb.frontendhwb.controller.FriendsList"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	xmlns:c="sap.ui.core"
+	displayBlock="true"
+	height="100%"
+	busyIndicatorDelay="0"
+>
+    <Page
+        title="{i18n>friendListTitle}"
+        showNavButton="true"
+        navButtonPress="onNavBack"
+    >
+        <content>
+        <Button press="onCreateDummyFriendship" text="Create Dummy friendship"/>
+            <!-- PendingFriendshipRequests of user-->
+            <List
+                items="{path: '/PendingFriendshipRequests', parameters: {expand: 'fromUser,toUser'}}"
+                headerText="{i18n>pendingFriendshipRequestsHeader}"
+                noDataText="{i18n>pendingFriendshipRequestsNoData}"
+            >
+                <items>
+                    <StandardListItem
+                        title="{fromUser/name}"
+                        description="{toUser/name}"
+                        icon="sap-icon://person-placeholder"
+                        type="Active"
+                        press="onAcceptPendingFriendshipRequest"
+                    />
+                </items>
+            </List>
+
+            <!-- friends of User -->
+            <List
+                items="{
+                    path: '/Friendships',
+                    parameters: {
+                        expand: 'fromUser,toUser'
+                    }
+                }"
+                headerText="{i18n>friendListHeader}"
+                noDataText="{i18n>friendListNoData}"
+            >
+                <items>
+                    <StandardListItem
+                        title="{fromUser/name}"
+                        description="{toUser/name}"
+                        icon="sap-icon://person-placeholder"
+                        type="Active"
+                        press="onSelect"
+                    />
+                </items>
+            </List>
+        </content>
+    </Page>
+
+</mvc:View>
