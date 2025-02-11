@@ -13,7 +13,7 @@ const onAfterFriendshipCreate = async (req) => {
         fromUser: {ID : req.toUser_ID},
         toUser: {ID: req.fromUser_ID},
     };
-    await INSERT(pendingFriendshipRequest).into(PendingFriendshipRequests);
+    await INSERT.into(PendingFriendshipRequests).entries(pendingFriendshipRequest);
     return req;
 }
 
