@@ -3,7 +3,7 @@ const {
   v4: uuidv4
 } = require('uuid');
 
-const {onAfterFriendshipCreate, acceptPendingFriendshipRequest} = require('./friendships');
+const {onAfterFriendshipCreate, acceptPendingFriendshipRequest, onBeforeFriendshipCreate} = require('./friendships');
 
 const fetch = require('node-fetch');
 const routingManager = require('./routingManager');
@@ -71,6 +71,8 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('addElevationToAllTravelTimes', addElevationToAllTravelTimes)
 
+    this.before('CREATE', 'Friendships', onBeforeFriendshipCreate);
+    
     this.after('CREATE', 'Friendships', onAfterFriendshipCreate);
 
     this.on('acceptPendingFriendshipRequest', acceptPendingFriendshipRequest);

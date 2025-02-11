@@ -8,7 +8,7 @@ sap.ui.define([
     return Controller.extend("hwb.frontendhwb.controller.FriendsList", {
         onCreateDummyFriendship: function() {
             const oModel = this.getView().getModel();
-            let dummyID = "66e7278f-a6cd-407d-ac74-d015a66bc095";
+            let dummyID = "576fb3a8-a62c-4fb4-ba2a-2a59fce0767a";
             oModel.create("/Friendships", {
                 fromUser: { "ID": dummyID},
                 toUser: {"ID": dummyID}
@@ -22,7 +22,7 @@ sap.ui.define([
             oModel.callFunction("/acceptPendingFriendshipRequest", {
                 method: "POST",
                 urlParameters: {
-                    ID
+                    FriendshipID: ID
                 },
                 success: function() {
                     this.getView().getModel().refresh();

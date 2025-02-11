@@ -17,25 +17,24 @@ aspect PointOfInterest {
 }
 
 entity ExternalUsers : cuid {
-    principal: User @assert.unique;
-    email: String(255) @assert.unique;
-    email_verified: Boolean;
-    family_name: String(255);
-    given_name: String(255);
-    name: String(255);
-    nickname: String(255);
-    picture: String(255);
-    sid: String(255);
-    sub: String(255);
-    updated_at_iso_string: String(255);
-    updated_at: Timestamp @cds.on.insert : $now;
+    principal             : User        @assert.unique;
+    email                 : String(255) @assert.unique;
+    email_verified        : Boolean;
+    family_name           : String(255);
+    given_name            : String(255);
+    name                  : String(255);
+    nickname              : String(255);
+    picture               : String(255);
+    sid                   : String(255);
+    sub                   : String(255);
+    updated_at_iso_string : String(255);
+    updated_at            : Timestamp   @cds.on.insert: $now;
 }
 
 @assert.integrity: false
 entity Stampboxes : cuid, temporal, PointOfInterest {
     number                 : String(40); // to allow Sonderstempel via name
     orderBy                : String(40);
-
     isKidFriendly          : Boolean;
     isElderlyFriendly      : Boolean;
     isStrollerFriendly     : Boolean;
@@ -72,8 +71,8 @@ entity ParkingSpots : cuid, PointOfInterest {
 }
 
 entity RouteCalculationRequest : cuid {
-    longitude   : String(40);
-    latitude    : String(40);
+    longitude : String(40);
+    latitude  : String(40);
     createdAt : Timestamp @cds.on.insert: $now;
     createdBy : User      @cds.on.insert: $user;
 }
@@ -81,18 +80,19 @@ entity RouteCalculationRequest : cuid {
 @assert.integrity: false
 @cds.autoexpose
 entity TravelTimes : cuid {
-    fromPoi         : UUID;
-    toPoi           : UUID;
-    durationSeconds : Integer64;
-    distanceMeters  : Integer64;
-    travelMode      : String(128);
-    positionString  : LargeString;
-    elevationGain : Double;
-    elevationLoss : Double;
-    maxElevation : Double;
-    minElevation : Double;
+    fromPoi          : UUID;
+    toPoi            : UUID;
+    durationSeconds  : Integer64;
+    distanceMeters   : Integer64;
+    travelMode       : String(128);
+    positionString   : LargeString;
+    elevationGain    : Double;
+    elevationLoss    : Double;
+    maxElevation     : Double;
+    minElevation     : Double;
     elevationProfile : LargeString;
-    tours : Association to many Tour2TravelTime on tours.travelTime = $self;
+    tours            : Association to many Tour2TravelTime
+                           on tours.travelTime = $self;
 }
 
 @assert.integrity: false
@@ -104,39 +104,41 @@ entity Stampings : cuid {
 
 @cds.autoexpose
 entity Tours : cuid, managed {
-    name: String;
+    name               : String;
     /** distance in meters */
-    distance: Integer64;
+    distance           : Integer64;
     /** duration in seconds */
-    duration: Integer64;
+    duration           : Integer64;
     /** stamp count independent from users stamps */
-    stampCount: Int32;
+    stampCount         : Int32;
     /** id list of travel times, can be used to describe the path of a tour */
-    idListTravelTimes: LargeString;
+    idListTravelTimes  : LargeString;
     /** path as many ranked travel times.
      *  Each travel time has a from and a to.
-     *  To get the pois of this tour, we need to look at all n toPois and the first from POI. 
+     *  To get the pois of this tour, we need to look at all n toPois and the first from POI.
      */
-    totalElevationLoss: Double;
-    totalElevationGain: Double;
-    path: Association to many Tour2TravelTime on path.tour = $self;
+    totalElevationLoss : Double;
+    totalElevationGain : Double;
+    path               : Association to many Tour2TravelTime
+                             on path.tour = $self;
 }
 
 entity Tour2TravelTime @cds.autoexpose {
-    key tour : Association to Tours;
+    key tour       : Association to Tours;
     key travelTime : Association to TravelTimes;
-    rank: Int16;
+        rank       : Int16;
 }
 
-entity Friendships {
-    key fromUser : Association to ExternalUsers;
-    key toUser : Association to ExternalUsers;
-    confirmed: Boolean default false;
+entity Friendships : cuid {
+    fromUser  : Association to ExternalUsers;
+    toUser    : Association to ExternalUsers;
+        confirmed : Boolean default false;
 }
 
 entity PendingFriendshipRequests : cuid {
     fromUser : Association to ExternalUsers;
-    toUser : Association to ExternalUsers;    
+    toUser   : Association to ExternalUsers;
+    outgoingFriendship : Association to Friendships;
 }
 
 // Input start any poi -> gps guess & Max driving time
