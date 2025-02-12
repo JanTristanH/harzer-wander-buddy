@@ -4,13 +4,49 @@ sap.ui.define([
     "sap/ui/core/UIComponent",
     "sap/m/MessageToast",
     "sap/ui/model/Filter",
-    "sap/ui/model/FilterOperator"
-], function (Controller, History, UIComponent, MessageToast, Filter, FilterOperator) {
+    "sap/ui/model/FilterOperator",
+    "sap/ui/core/Fragment"
+], function (Controller, History, UIComponent, MessageToast, Filter, FilterOperator, Fragment) {
 
     "use strict";
     return Controller.extend("hwb.frontendhwb.controller.BaseController", {
 
         fallBackCords: "10.615779999999972;51.80054",
+        onInit: function () {
+            this.oMyAvatar = this.getView().byId("idMyAvatar");
+            this._oPopover = Fragment.load({
+                id: this.getView().getId(),
+                name: "hwb.frontendhwb.fragment.userMenuPopover",
+                controller: this
+            }).then(function (oPopover) {
+                this.getView().addDependent(oPopover);
+                this._oPopover = oPopover;
+            }.bind(this));
+        },
+        onMyAvatarPress: function (oEvent) {
+            var oEventSource = oEvent.getSource();
+            this.oMyAvatar = oEventSource;
+            var bActive = this.oMyAvatar.getActive();
+
+            this.oMyAvatar.setActive(!bActive);
+
+            if (bActive) {
+                this._oPopover.close();
+            } else {
+                this._oPopover.openBy(oEventSource);
+            }
+        },
+        onPopoverClose: function () {
+            this.oMyAvatar.setActive(false);
+        },
+        onUserMenuListItemPress: function () {
+            this.oMyAvatar.setActive(false);
+            this._oPopover.close();
+        },
+
+        onLogoutPress: function () {
+            window.location.href = "/logout";
+        },
 
         stringToBoolean: function (str) {
             return str === "true";
@@ -178,7 +214,7 @@ sap.ui.define([
                                 tt.name = poi ? poi.name : this.getText("start");
                                 tt.duration = tt.durationSeconds;
                                 tt.distance = tt.distanceMeters;
-                                if(tt.elevationProfile) {
+                                if (tt.elevationProfile) {
                                     let aElevationProfile = tt.elevationProfile.split(";");
                                     for (let i = 0; i < aElevationProfile.length; i++) {
                                         aElevationProfile[i] = { x: i, y: parseFloat(aElevationProfile[i]) };

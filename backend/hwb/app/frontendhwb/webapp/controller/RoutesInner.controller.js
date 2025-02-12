@@ -21,6 +21,8 @@ sap.ui.define([
             _oMap: {},
 
             onInit: function () {
+                Controller.prototype.onInit.apply(this, arguments);
+
                 this.getView().setModel(new JSONModel(), "local");
 
                 this.oFlexibleColumnLayout = this.byId("fcl");

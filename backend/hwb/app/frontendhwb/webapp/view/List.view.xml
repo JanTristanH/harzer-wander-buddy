@@ -8,10 +8,9 @@
     <App id="app">
         <Page title="{i18n>title}">
             <headerContent>
-                <Button
-                    text="{i18n>logout}"
-                    press="onLogoutPress"
-                    icon="sap-icon://log"
+                <core:Fragment
+                    fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
+                    type="XML"
                 />
             </headerContent>
             <content>

@@ -12,6 +12,7 @@ sap.ui.define([
 
         return Controller.extend("hwb.frontendhwb.controller.List", {
             onInit: function () {
+                Controller.prototype.onInit.apply(this, arguments);
                 this.disableSelectAll();
             },
             onAfterRendering: function () {
@@ -84,9 +85,6 @@ sap.ui.define([
                     }
                 });
                 return table
-            },
-            onLogoutPress: function () {
-                window.location.href = "/logout";
             },
 
             onShowBagdesButtonPress: function (oEvent) {

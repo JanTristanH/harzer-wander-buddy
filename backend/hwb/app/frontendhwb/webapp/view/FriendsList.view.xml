@@ -7,19 +7,11 @@
     height="100%"
     busyIndicatorDelay="0"
 >
-    <Page title="{i18n>friends}">
+    <Page title="{i18n>friends}" class="sapUiResponsiveContentPadding">
         <headerContent>
-            <Avatar
-                src="{app>/currentUser/picture}"
-                displaySize="XS"
-                press=".onAvatarPressed"
-                tooltip="[i18n>profile}"
-                showBorder="true"
-            />
-            <Button
-                text="{i18n>logout}"
-                press="onLogoutPress"
-                icon="sap-icon://log"
+            <core:Fragment
+                fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
+                type="XML"
             />
         </headerContent>
         <content>

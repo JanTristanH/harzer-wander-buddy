@@ -22,6 +22,8 @@ sap.ui.define([
 
             _oMap: {},
             onInit: function () {
+                Controller.prototype.onInit.apply(this, arguments);
+
                 this._oMap = this.byId("map");
                 if(!this._oMap){
                     return;

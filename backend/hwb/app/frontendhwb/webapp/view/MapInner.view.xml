@@ -17,6 +17,10 @@
                 icon="sap-icon://menu2"
                 press="onPressOpenFiltersMenu"
             />
+            <core:Fragment
+                fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
+                type="XML"
+            />
         </headerContent>
         <subHeader>
             <OverflowToolbar>

@@ -17,6 +17,12 @@
                 title="{i18n>title}"
                 backgroundDesign="Transparent"
             >
+                <headerContent>
+                    <core:Fragment
+                        fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
+                        type="XML"
+                    />
+                </headerContent>
                 <content>
                     <HBox
                         height="100%"
