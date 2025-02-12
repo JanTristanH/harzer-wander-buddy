@@ -75,6 +75,10 @@ sap.ui.define([
             this.getRouter().navTo("Main");
         },
 
+        onNavToFriends: function (params) {
+            this.getRouter().navTo("FriendsList");
+        },
+
         onButtonAdminMapPress: function () {
             this.getRouter().navTo("Admin");
         },

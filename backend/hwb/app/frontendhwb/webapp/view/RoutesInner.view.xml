@@ -25,6 +25,7 @@
                         <IconTabBar
                             id="idIconTabBarMulti"
                             class="sapUiResponsiveContentPadding"
+                            expandable="false"
                         >
                             <items>
                                 <IconTabFilter

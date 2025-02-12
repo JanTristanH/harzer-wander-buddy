@@ -75,6 +75,12 @@ module.exports = class api extends cds.ApplicationService {
     
     this.after('CREATE', 'Friendships', onAfterFriendshipCreate);
 
+    this.on('getCurrentUser', async (req) => { 
+      const ExternalUsers = this.entities('hwb.db').ExternalUsers;
+      const currentUser = await SELECT.from(ExternalUsers).where({ principal: req.user.id });
+      return currentUser;
+    });
+
     this.on('acceptPendingFriendshipRequest', acceptPendingFriendshipRequest);
 
     return super.init()

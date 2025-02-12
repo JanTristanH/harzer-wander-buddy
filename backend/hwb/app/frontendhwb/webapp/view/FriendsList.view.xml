@@ -1,58 +1,96 @@
 <mvc:View
-	controllerName="hwb.frontendhwb.controller.FriendsList"
-	xmlns:mvc="sap.ui.core.mvc"
-	xmlns="sap.m"
-	xmlns:c="sap.ui.core"
-	displayBlock="true"
-	height="100%"
-	busyIndicatorDelay="0"
+    controllerName="hwb.frontendhwb.controller.FriendsList"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    displayBlock="true"
+    height="100%"
+    busyIndicatorDelay="0"
 >
-    <Page
-        title="{i18n>friendListTitle}"
-        showNavButton="true"
-        navButtonPress="onNavBack"
-    >
+    <Page title="{i18n>friends}">
+        <headerContent>
+            <Avatar
+                src="{app>/currentUser/picture}"
+                displaySize="XS"
+                press=".onAvatarPressed"
+                tooltip="[i18n>profile}"
+                showBorder="true"
+            />
+            <Button
+                text="{i18n>logout}"
+                press="onLogoutPress"
+                icon="sap-icon://log"
+            />
+        </headerContent>
         <content>
-        <Button press="onCreateDummyFriendship" text="Create Dummy friendship"/>
-            <!-- PendingFriendshipRequests of user-->
-            <List
-                items="{path: '/PendingFriendshipRequests', parameters: {expand: 'fromUser,toUser'}}"
-                headerText="{i18n>pendingFriendshipRequestsHeader}"
-                noDataText="{i18n>pendingFriendshipRequestsNoData}"
-            >
+            <IconTabBar expandable="false">
                 <items>
-                    <StandardListItem
-                        title="{fromUser/name}"
-                        description="{toUser/name}"
-                        icon="sap-icon://person-placeholder"
-                        type="Active"
-                        press="onAcceptPendingFriendshipRequest"
-                    />
+                    <IconTabFilter
+                        key="friends"
+                        text="{i18n>friends}"
+                    >
+                        <SearchField
+                            id="idUserSearchField"
+                            showSearchButton="false"
+                            enableSuggestions="true"
+                            search=".onSearchFieldSearch"
+                            suggest=".onSearchFieldSuggest"
+                            suggestionItems="{local>/suggestionItems}"
+                        >
+                            <SuggestionItem />
+                        </SearchField>
+                        <Button
+                            press="onCreateDummyFriendship"
+                            text="Create Dummy friendship"
+                        />
+                        <!-- friends of User -->
+                        <List
+                            id="idFriendsList"
+                            items="{
+                                path: '/MyFriends'
+                            }"
+                            headerText="{i18n>friendListHeader}"
+                            noDataText="{i18n>friendListNoData}"
+                        >
+                            <items>
+                                <StandardListItem
+                                    title="{name}"
+                                    description="{toUser/name}"
+                                    icon="{picture}"
+                                    type="Detail"
+                                    press="onSelect"
+                                />
+                            </items>
+                        </List>
+                    </IconTabFilter>
+                    <IconTabFilter
+                        key="pendingFriendshipRequests"
+                        text="{i18n>pendingFriendshipRequests}"
+                    >
+                        <!-- PendingFriendshipRequests of user-->
+                        <List
+                            items="{path: '/PendingFriendshipRequests', parameters: {expand: 'fromUser,toUser'}}"
+                            noDataText="{i18n>pendingFriendshipRequestsNoData}"
+                        >
+                            <items>
+                                <StandardListItem
+                                    title="{fromUser/name}"
+                                    description="{toUser/name}"
+                                    icon="{toUser/picture}"
+                                    type="Active"
+                                    press="onAcceptPendingFriendshipRequest"
+                                />
+                            </items>
+                        </List>
+                    </IconTabFilter>
                 </items>
-            </List>
-
-            <!-- friends of User -->
-            <List
-                items="{
-                    path: '/Friendships',
-                    parameters: {
-                        expand: 'fromUser,toUser'
-                    }
-                }"
-                headerText="{i18n>friendListHeader}"
-                noDataText="{i18n>friendListNoData}"
-            >
-                <items>
-                    <StandardListItem
-                        title="{fromUser/name}"
-                        description="{toUser/name}"
-                        icon="sap-icon://person-placeholder"
-                        type="Active"
-                        press="onSelect"
-                    />
-                </items>
-            </List>
+            </IconTabBar>
         </content>
+        <footer>
+            <core:Fragment
+                fragmentName="hwb.frontendhwb.fragment.Toolbar"
+                type="XML"
+            />
+        </footer>
     </Page>
-
 </mvc:View>

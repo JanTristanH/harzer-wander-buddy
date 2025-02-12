@@ -11,7 +11,7 @@ const onBeforeFriendshipCreate = async (req) => {
         fromUser_ID: req.data.fromUser_ID,
         toUser_ID: req.data.toUser_ID
     });
-    if (friendshipExists) {
+    if (friendshipExists.length > 0) {
         req.error(400, 'Friendship already exists');
         return;
     }

@@ -83,6 +83,9 @@
             },
             "mapConfig": {
                 "dataSource": "mapConfig"
+            },
+            "app" : {
+                "type": "sap.ui.model.json.JSONModel"
             }
         },
         "resources": {
