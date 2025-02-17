@@ -45,9 +45,8 @@
                                 />
                                 <Label
                                     id="selectedCount"
-                                    text="Selected: 0"
+                                    text="{i18n>visitedStampms}: {app>/selectedCount}"
                                 />
-                                <!-- Added Label for showing the count -->
                             </Toolbar>
                         </headerToolbar>
                         <columns>

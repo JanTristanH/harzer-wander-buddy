@@ -34,9 +34,8 @@ sap.ui.define([
 
             updateStampCount: function () {
                 var oTable = this.byId("StampingsTable");
-                var iSelectedCount = oTable.getSelectedItems().length;
-                var oSelectedCountLabel = this.byId("selectedCount");
-                oSelectedCountLabel.setText("Erwanderte Stempel: " + iSelectedCount); // Update the text of the label
+                var iSelectedCount = oTable.getSelectedItems().length ?? 0;
+                this.getModel("app").setProperty("/selectedCount", iSelectedCount);
             },
 
             onSelectionChange: function (oEvent) {

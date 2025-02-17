@@ -51,7 +51,8 @@ service api @(requires: 'authenticated-user') {
             ID,
             principal,
             name,
-            picture
+            picture,
+            false as isFriend : Boolean
         };
 
         function getCurrentUser() returns Users;
@@ -67,7 +68,9 @@ service api @(requires: 'authenticated-user') {
             toUser.principal as principal,
             toUser.name      as name,
             toUser.picture   as picture,
-            createdBy        as createdBy
+            createdBy        as createdBy,
+            ID              as FriendshipID,
+            true as isFriend : Boolean
         };
 
     @cds.redirection.target

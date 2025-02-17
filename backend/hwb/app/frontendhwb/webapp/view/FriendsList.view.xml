@@ -25,8 +25,7 @@
                             id="idUserSearchField"
                             showSearchButton="false"
                             enableSuggestions="true"
-                            search=".onSearchFieldSearch"
-                            suggest=".onSearchFieldSuggest"
+                            liveChange=".onSearchFieldLiveChange"
                             suggestionItems="{local>/suggestionItems}"
                         >
                             <SuggestionItem />
@@ -45,13 +44,46 @@
                             noDataText="{i18n>friendListNoData}"
                         >
                             <items>
-                                <StandardListItem
-                                    title="{name}"
-                                    description="{toUser/name}"
-                                    icon="{picture}"
-                                    type="Detail"
-                                    press="onSelect"
-                                />
+                                <CustomListItem>
+                                    <HBox
+                                        justifyContent="SpaceBetween"
+                                        alignItems="Center"
+                                        width="100%"
+                                        class="sapUiTinyMargin"
+                                    >
+                                        <!-- Friend Info: Avatar + Name -->
+                                        <HBox alignItems="Center">
+                                            <Avatar
+                                                src="{picture}"
+                                                displaySize="S"
+                                                class="sapUiSmallMarginEnd"
+                                            />
+                                            <Text
+                                                text="{name}"
+                                                class="sapUiTinyMargin"
+                                            />
+                                        </HBox>
+                                        <!-- Friend Action Buttons -->
+                                        <HBox>
+                                            <!-- Add Friend Button (visible when not friends) -->
+                                            <Button
+                                                icon="sap-icon://add"
+                                                type="Transparent"
+                                                visible="{= !${isFriend} }"
+                                                press="onAddFriend"
+                                                class="sapUiSmallMarginEnd"
+                                            />
+                                            <!-- Remove Friend Button (visible when already friends) -->
+                                            <Button
+                                                icon="sap-icon://delete"
+                                                type="Transparent"
+                                                visible="{isFriend}"
+                                                press="onRemoveFriend"
+                                                class="sapUiSmallMarginEnd"
+                                            />
+                                        </HBox>
+                                    </HBox>
+                                </CustomListItem>
                             </items>
                         </List>
                     </IconTabFilter>

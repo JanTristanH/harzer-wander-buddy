@@ -7,6 +7,7 @@ const {onAfterFriendshipCreate, acceptPendingFriendshipRequest, onBeforeFriendsh
 
 const fetch = require('node-fetch');
 const routingManager = require('./routingManager');
+const { add } = require('@sap/cds/lib/srv/middlewares');
 
 const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MAX_REQUESTS_PER_CALL : 1000;
 // 40.000 free 
@@ -83,8 +84,20 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('acceptPendingFriendshipRequest', acceptPendingFriendshipRequest);
 
+    this.after('READ', 'Users', addIsFriend.bind(this));
+
     return super.init()
   }
+}
+
+async function addIsFriend(users) {
+  const { MyFriends } = this.api.entities;
+  const aFriendships = await SELECT.from(MyFriends);
+  const aFriendIds = aFriendships.map(f => f.ID);
+  return users.map(user => {
+    user.isFriend = aFriendIds.includes(user.ID);
+    return user;
+  });
 }
 
 function upsertTourDetailsById(req, entities) {
