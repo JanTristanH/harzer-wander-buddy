@@ -21,7 +21,7 @@ sap.ui.define([
                 this._oFriendTemplate = oList.getItems()[0].clone();
             }
         },
-        
+
         onAfterRendering: function () {
             this.getView().byId("navButtonFriendsId").setType("Emphasized");
         },
@@ -47,15 +47,15 @@ sap.ui.define([
         },
 
         onAddFriend: function (oEvent) {
-			var oButton = oEvent.getSource();
-			var oContext = oButton.getBindingContext();
-			if (!oContext) {
-				MessageToast.show("No friend context found.");
-				return;
-			}
+            var oButton = oEvent.getSource();
+            var oContext = oButton.getBindingContext();
+            if (!oContext) {
+                MessageToast.show("No friend context found.");
+                return;
+            }
 
-			// Retrieve the friend data and prepare the payload.
-			var oFriendData = oContext.getObject();
+            // Retrieve the friend data and prepare the payload.
+            var oFriendData = oContext.getObject();
             let currentUser = this.getModel("app").getProperty("/currentUser");
             let currentUserID = currentUser.ID;
 
@@ -74,31 +74,31 @@ sap.ui.define([
                     console.error("Error creating friendship:", oError);
                 }.bind(this)
             });
-		},
+        },
 
         onRemoveFriend: function (oEvent) {
-			var oButton = oEvent.getSource();
-			var oContext = oButton.getBindingContext();
-			if (!oContext) {
-				MessageToast.show("No friend context found.");
-				return;
-			}
+            var oButton = oEvent.getSource();
+            var oContext = oButton.getBindingContext();
+            if (!oContext) {
+                MessageToast.show("No friend context found.");
+                return;
+            }
 
-			// Get the binding path for the selected friend.
-			var sFriendshipId = oContext.getObject().FriendshipID;
+            // Get the binding path for the selected friend.
+            var sFriendshipId = oContext.getObject().FriendshipID;
 
-			// Access the model and remove the entity.
-			var oModel = this.getView().getModel();
-			oModel.remove(`/Friendships(${sFriendshipId})`, {
-				success: function () {
-					MessageToast.show(this.getText("friendRemoved"));
+            // Access the model and remove the entity.
+            var oModel = this.getView().getModel();
+            oModel.remove(`/Friendships(${sFriendshipId})`, {
+                success: function () {
+                    MessageToast.show(this.getText("friendRemoved"));
                     this.getModel().refresh();
-				}.bind(this),
-				error: function (oError) {
-					MessageToast.show(this.getText("errorRemovingFriend"));
-				}
-			});
-		},
+                }.bind(this),
+                error: function (oError) {
+                    MessageToast.show(this.getText("errorRemovingFriend"));
+                }
+            });
+        },
 
         onAcceptPendingFriendshipRequest: function (oEvent) {
             const oModel = this.getView().getModel();
@@ -125,7 +125,7 @@ sap.ui.define([
             // Determine the binding path based on the search value.
             let sPath = sValue === "" ? "/MyFriends" : "/Users";
             let sTitle = sValue === "" ? this.getText("friendListHeader") : this.getText("wanderbuddies");
-            
+
             oList.setHeaderText(sTitle);
             // Rebind the aggregation with a factory function.
             oList.bindAggregation("items", {
@@ -145,7 +145,7 @@ sap.ui.define([
                         alignItems: "Center",
                         items: [oAvatar, oNameText]
                     });
-                    
+
                     // Create Add Friend button.
                     var oAddFriendButton = new sap.m.Button({
                         icon: "sap-icon://add",
@@ -168,7 +168,7 @@ sap.ui.define([
                             return !bIsFriend;
                         }
                     });
-                    
+
                     // Create Remove Friend button.
                     var oRemoveFriendButton = new sap.m.Button({
                         icon: "sap-icon://delete",
@@ -192,11 +192,11 @@ sap.ui.define([
                             return !!bIsFriend;
                         }
                     });
-                    
+
                     var oButtonsHBox = new sap.m.HBox({
                         items: [oAddFriendButton, oRemoveFriendButton]
                     });
-                    
+
                     // Create the main HBox that contains the friend info and the buttons.
                     var oMainHBox = new sap.m.HBox({
                         justifyContent: "SpaceBetween",
@@ -204,13 +204,13 @@ sap.ui.define([
                         width: "100%",
                         items: [oInfoHBox, oButtonsHBox]
                     });
-                    
+
                     return new sap.m.CustomListItem(sId, {
                         content: oMainHBox
                     });
                 }.bind(this)
             });
-            
+
             // Apply the filter only when there is a search value.
             if (sValue !== "") {
                 var oBinding = oList.getBinding("items");
@@ -221,6 +221,6 @@ sap.ui.define([
                 }
             }
         }
-        
+
     });
 });
