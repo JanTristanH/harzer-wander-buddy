@@ -30,10 +30,6 @@
                         >
                             <SuggestionItem />
                         </SearchField>
-                        <Button
-                            press="onCreateDummyFriendship"
-                            text="Create Dummy friendship"
-                        />
                         <!-- friends of User -->
                         <List
                             id="idFriendsList"

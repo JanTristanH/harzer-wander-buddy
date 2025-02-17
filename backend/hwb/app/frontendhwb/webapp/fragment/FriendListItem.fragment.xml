@@ -1,0 +1,37 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+    <CustomListItem>
+        <HBox
+            justifyContent="SpaceBetween"
+            alignItems="Center"
+            width="100%"
+            class="sapUiTinyMargin">
+            <!-- Friend Info: Avatar + Name -->
+            <HBox alignItems="Center">
+                <Avatar
+                    src="{picture}"
+                    displaySize="S"
+                    class="sapUiSmallMarginEnd" />
+                <Text
+                    text="{name}"
+                    class="sapUiTinyMargin" />
+            </HBox>
+            <!-- Friend Action Buttons -->
+            <HBox>
+                <!-- Add Friend Button (visible when not friends) -->
+                <Button
+                    icon="sap-icon://add"
+                    type="Transparent"
+                    visible="{= !${isFriend} }"
+                    press="onAddFriend"
+                    class="sapUiSmallMarginEnd" />
+                <!-- Remove Friend Button (visible when already friends) -->
+                <Button
+                    icon="sap-icon://delete"
+                    type="Transparent"
+                    visible="{isFriend}"
+                    press="onRemoveFriend"
+                    class="sapUiSmallMarginEnd" />
+            </HBox>
+        </HBox>
+    </CustomListItem>
+</core:FragmentDefinition>
