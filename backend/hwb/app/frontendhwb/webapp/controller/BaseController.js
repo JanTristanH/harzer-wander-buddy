@@ -12,6 +12,7 @@ sap.ui.define([
     return Controller.extend("hwb.frontendhwb.controller.BaseController", {
 
         fallBackCords: "10.615779999999972;51.80054",
+
         onInit: function () {
             this.oMyAvatar = this.getView().byId("idMyAvatar");
             this._oPopover = Fragment.load({
@@ -23,6 +24,7 @@ sap.ui.define([
                 this._oPopover = oPopover;
             }.bind(this));
         },
+
         onMyAvatarPress: function (oEvent) {
             var oEventSource = oEvent.getSource();
             this.oMyAvatar = oEventSource;
@@ -36,9 +38,11 @@ sap.ui.define([
                 this._oPopover.openBy(oEventSource);
             }
         },
+
         onPopoverClose: function () {
             this.oMyAvatar.setActive(false);
         },
+
         onUserMenuListItemPress: function () {
             this.oMyAvatar.setActive(false);
             this._oPopover.close();
@@ -46,6 +50,16 @@ sap.ui.define([
 
         onLogoutPress: function () {
             window.location.href = "/logout";
+        },
+
+        onSelectionFinish: function(oEvent) {
+            const aSelectedGroup = oEvent.getParameter("selectedItems")
+                                    .map(i => i.getBindingContext().getObject());
+
+            let currentUser = this.getModel("app").getProperty("/currentUser");
+            aSelectedGroup.push(currentUser);
+            this.getModel("app").setProperty("/aSelectedGroup", aSelectedGroup);
+            this.getModel("app").setProperty("/aSelectedGroupIds", aSelectedGroup.map(m => m.ID));
         },
 
         stringToBoolean: function (str) {

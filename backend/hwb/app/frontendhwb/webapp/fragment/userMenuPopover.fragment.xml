@@ -9,10 +9,26 @@
 		titleAlignment="Center"
 		placement="Bottom"
 		afterClose="onPopoverClose">
+		<VBox class="sapUiSmallMargin">
+			<!-- ComboBox for Friends -->
+			<MultiComboBox
+				placeholder="{i18n>chooseGroup}"
+				selectedKeys="{app>/aSelectedGroupIds}"
+				selectionFinish="onSelectionFinish"
+				items="{/MyFriends}">
+				<core:Item key="{ID}" text="{name}"/>
+			</MultiComboBox>
+			<!-- Existing List with Logout Item -->
+			<HBox height="2rem"></HBox>
 			<List>
-		<items>
-			<StandardListItem icon="sap-icon://log" title="{i18n>logout}" type="Active" press="onLogoutPress" />
-		</items>
-	</List>
+				<items>
+					<StandardListItem
+						icon="sap-icon://log"
+						title="{i18n>logout}"
+						type="Active"
+						press="onLogoutPress" />
+				</items>
+			</List>
+		</VBox>
 	</Popover>
 </core:FragmentDefinition>
