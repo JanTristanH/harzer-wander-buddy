@@ -37,7 +37,14 @@ service api @(requires: 'authenticated-user') {
 
     @cds.redirection.target
     @readonly
-    entity Stampboxes                         as projection on db.Stampboxes;
+    entity Stampboxes                         as
+        projection on db.Stampboxes {
+            *,
+            '' as groupFilterStampings : String,
+            0 as groupSize : Integer,
+            0 as totalGroupStampings: Integer,
+            '' as stampedUserIds: String
+        };
 
     @readonly
     entity ParkingSpots                       as projection on db.ParkingSpots;
@@ -55,13 +62,12 @@ service api @(requires: 'authenticated-user') {
             false as isFriend : Boolean
         };
 
-        function getCurrentUser() returns Users;
-    @restrict: [
-        {
-            grant: 'READ',
-            where: 'createdBy = $user'
-        }
-    ]
+    function getCurrentUser()                                       returns Users;
+
+    @restrict: [{
+        grant: 'READ',
+        where: 'createdBy = $user'
+    }]
     entity MyFriends                          as
         projection on db.Friendships {
             toUser.ID        as ID,
@@ -69,8 +75,8 @@ service api @(requires: 'authenticated-user') {
             toUser.name      as name,
             toUser.picture   as picture,
             createdBy        as createdBy,
-            ID              as FriendshipID,
-            true as isFriend : Boolean
+            ID               as FriendshipID,
+            true             as isFriend : Boolean
         };
 
     @cds.redirection.target

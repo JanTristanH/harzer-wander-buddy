@@ -19,14 +19,7 @@ let aTravelTimesGlobal = [];
 module.exports = class api extends cds.ApplicationService {
   init() {
 
-    this.after('READ', `Stampboxes`, async (stampBoxes, req) => {
-      const Stampings = this.entities('hwb.db').Stampings;
-      const aStampings = await SELECT.from(Stampings).where({ createdBy: req.user.id });
-      return stampBoxes.map(box => {
-        box.hasVisited = !!aStampings.find(s => s.stamp_ID == box.ID);
-        return box;
-      });
-    })
+    this.on('READ', `Stampboxes`, afterStampboxesRead.bind(this))
 
     this.after('CREATE', 'Tours', async (req) => {
       return upsertTourDetailsById(req, this.entities('hwb.db'));
@@ -88,6 +81,78 @@ module.exports = class api extends cds.ApplicationService {
 
     return super.init()
   }
+}
+async function afterStampboxesRead(req) {const db = this.entities('hwb.db');
+
+  // Retrieve the original WHERE conditions array from the query.
+  const whereConditions = req.query.SELECT.where || [];
+
+  // Find the index of the condition that targets groupFilterStampings.
+  const index = whereConditions.findIndex(
+    cond => cond.ref && cond.ref[0] === 'groupFilterStampings'
+  );
+  let groupFilterStampings = "";
+  if (index !== -1) {
+    // Capture the filter value.
+    groupFilterStampings = whereConditions[index + 2].val || "";
+    // Remove the found condition and the following two conditions.
+    whereConditions.splice(index, 3);
+  }
+
+  // Update the query's WHERE clause.
+  req.query.SELECT.where = whereConditions;
+
+  // Retrieve stampboxes using the cleaned-up query.
+  const stampBoxes = await SELECT.from(db.Stampboxes).where(req.query.SELECT.where);
+
+  // Extract the comma-separated list of user IDs from the filter in the WHERE clause.
+  // (Assumes extractFilters is a helper that pulls out custom filters from the where clause.)
+  // const groupFilterStampings = extractFilters(req.query.SELECT.where);
+  const groupUserIds =
+    groupFilterStampings && groupFilterStampings.trim().length > 0
+      ? groupFilterStampings.split(',').map(u => u.trim())
+      : [req.user.id];
+
+  // Query stampings where createdBy is in the provided group.
+  const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
+
+  // Enhance each stampbox with the additional fields.
+  return stampBoxes.map(box => {
+    // Filter stampings that belong to this particular stampbox.
+    const boxStampings = aStampings.filter(s => s.stamp_ID == box.ID);
+    // Get unique user IDs who stamped this box.
+    const stampedUserIds = [...new Set(boxStampings.map(s => s.createdBy))];
+
+    // Populate the custom fields:
+    box.hasVisited = stampedUserIds.includes(req.user.id);
+    box.groupSize = groupUserIds.length;
+    box.totalGroupStampings = stampedUserIds.length;
+    box.stampedUserIds = stampedUserIds;
+
+    return box;
+  });
+}
+
+
+function extractFilters(filters) {
+  if(!filters) {
+    return null;
+  }
+  let result = {};
+  for (let i = 0; i < filters.length; i++) {
+      if (filters[i].ref) {
+          // Extract the reference
+          let ref = filters[i].ref[0];
+          // Check if the next element is '=' and the element after that has a value
+          if (filters[i + 1] === "=" && filters[i + 2] && filters[i + 2].val) {
+              // Store the reference and its value
+              result[ref] = filters[i + 2].val;
+              // Skip the next two elements
+              i += 2;
+          }
+      }
+  }
+  return result;
 }
 
 async function addIsFriend(users) {

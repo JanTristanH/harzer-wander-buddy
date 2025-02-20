@@ -16,7 +16,7 @@
         </vbm:Routes>
 
         <vbm:Spots id ="idAllPointsOfInterestsSpots" items="{ path: '/Stampboxes', parameters:{expand : 'Stampings'} }">
-            <vbm:Spot id="inner" position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" app:labelTextHidden="{name}" tooltip="{name}" labelPos="5" type="{ path: 'Stampings', formatter: '.onFormatBoxType'}" 
+            <vbm:Spot id="inner" position="{longitude};{latitude}" text="{number}" labelType="Default" labelText="{name}" app:labelTextHidden="{name}" tooltip="{name}" labelPos="5" type="{ path: '', formatter: '.onFormatBoxType'}" 
                 contextMenu="onSpotContextMenu" click="onSpotClick" app:id="{ID}" app:stamp="true" app:description="{description}"/>
         </vbm:Spots>
 

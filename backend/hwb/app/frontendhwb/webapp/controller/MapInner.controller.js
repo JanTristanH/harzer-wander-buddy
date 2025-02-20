@@ -57,7 +57,29 @@ sap.ui.define([
 
             onAfterRendering: function () {
                 this.getView().getModel().setSizeLimit(1000);
+                this.attachGroupChange();
             },
+
+            attachGroupChange: function() {
+                this.getModel("app").attachPropertyChange("/aSelectedGroup", (oEvent) => {
+                  // Delay to allow the model to update
+                  setTimeout(() => {
+                    // Retrieve the updated property from the model
+                    const aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroup") || [];
+                    const aSelectedGroupIds = aSelectedGroup.map(u => u.principal);
+                    const oSpots = this.byId("idAllPointsOfInterestsSpots");
+              
+                    // Create binding filter for selected groups
+                    let oFilter = new Filter("groupFilterStampings", FilterOperator.EQ, aSelectedGroupIds.join(','));
+              
+                    // Apply filter to binding
+                    const oBinding = oSpots.getBinding("items");
+                    if (oBinding) {
+                      oBinding.filter(aSelectedGroupIds.length ? oFilter : null);
+                    }
+                  }, 0);
+                });
+              },              
 
             onGeoMapZoomChanged: function (oEvent) {
                 let nZoomLevel = oEvent.getParameter("zoomLevel");
@@ -240,11 +262,14 @@ sap.ui.define([
                 }
             },
 
-            onFormatBoxType: function (oStampings) {
-                if (oStampings.length) {
+            onFormatBoxType: function (oBox) {
+                if (oBox.groupSize == oBox.totalGroupStampings) {
                     return 'Success';
+                } else if (oBox.totalGroupStampings == 0){
+                    return 'Error';
+                } else {
+                    return 'Warning';
                 }
-                return 'Error';
             },
 
             onSpotContextMenu: function (oEvent) {
