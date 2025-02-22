@@ -16,7 +16,7 @@
 				selectedKeys="{app>/aSelectedGroupIds}"
 				selectionFinish="onSelectionFinish"
 				items="{/MyFriends}">
-				<core:Item key="{ID}" text="{name}"/>
+				<core:Item key="{principal}" text="{name}"/>
 			</MultiComboBox>
 			<!-- Existing List with Logout Item -->
 			<HBox height="2rem"></HBox>

@@ -52,15 +52,6 @@ sap.ui.define([
             window.location.href = "/logout";
         },
 
-        onSelectionFinish: function(oEvent) {
-            const aSelectedGroup = oEvent.getParameter("selectedItems")
-                                    .map(i => i.getBindingContext().getObject());
-
-            let currentUser = this.getModel("app").getProperty("/currentUser");
-            aSelectedGroup.push(currentUser);
-            this.getModel("app").setProperty("/aSelectedGroup", aSelectedGroup);
-            this.getModel("app").setProperty("/aSelectedGroupIds", aSelectedGroup.map(m => m.ID));
-        },
 
         stringToBoolean: function (str) {
             return str === "true";

@@ -25,7 +25,7 @@ sap.ui.define([
                 Controller.prototype.onInit.apply(this, arguments);
 
                 this._oMap = this.byId("map");
-                if(!this._oMap){
+                if (!this._oMap) {
                     return;
                 }
                 if (!this.getModel("local")) {
@@ -45,7 +45,7 @@ sap.ui.define([
                 if (sLastCenterPosition) {
                     this._oMap.setCenterPosition(sLastCenterPosition);
                     let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? 16;
-                    this._oMap.setZoomlevel(parseInt( sLastZoomLevel, 10));
+                    this._oMap.setZoomlevel(parseInt(sLastZoomLevel, 10));
                     //wait for map to render
                     setTimeout(() => this.onToggleLables(parseInt(sLastZoomLevel, 10) >= 16), 1000);
                     // create current location marker
@@ -60,26 +60,28 @@ sap.ui.define([
                 this.attachGroupChange();
             },
 
-            attachGroupChange: function() {
-                this.getModel("app").attachPropertyChange("/aSelectedGroup", (oEvent) => {
-                  // Delay to allow the model to update
-                  setTimeout(() => {
-                    // Retrieve the updated property from the model
-                    const aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroup") || [];
-                    const aSelectedGroupIds = aSelectedGroup.map(u => u.principal);
-                    const oSpots = this.byId("idAllPointsOfInterestsSpots");
-              
-                    // Create binding filter for selected groups
-                    let oFilter = new Filter("groupFilterStampings", FilterOperator.EQ, aSelectedGroupIds.join(','));
-              
-                    // Apply filter to binding
-                    const oBinding = oSpots.getBinding("items");
-                    if (oBinding) {
-                      oBinding.filter(aSelectedGroupIds.length ? oFilter : null);
+            attachGroupChange: function () {
+                this.getModel("app").attachPropertyChange((oEvent) => {
+                    if (oEvent.getParameter("path") == "/aSelectedGroupIds") {
+                        // Retrieve the updated property from the model
+                        let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+                        aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup)); // create copy
+                        let currentUser = this.getModel("app").getProperty("/currentUser");
+                        aSelectedGroup.push(currentUser.principal);
+                        // aSelectedGroup.push(currentUser.principal);
+
+
+                        // Create binding filter for selected groups
+                        let oFilter = new Filter("groupFilterStampings", FilterOperator.EQ, aSelectedGroup.join(','));
+
+                        // Apply filter to binding
+                        const oBinding = this.byId("idAllPointsOfInterestsSpots").getBinding("items");
+                        if (oBinding) {
+                            oBinding.filter(aSelectedGroup.length ? oFilter : null);
+                        }
                     }
-                  }, 0);
                 });
-              },              
+            },
 
             onGeoMapZoomChanged: function (oEvent) {
                 let nZoomLevel = oEvent.getParameter("zoomLevel");
@@ -241,7 +243,7 @@ sap.ui.define([
                                 lat: position.coords.latitude,
                                 lng: position.coords.longitude
                             };
-                            if(oUserLocation.lat == 0 && oUserLocation.lng == 0){
+                            if (oUserLocation.lat == 0 && oUserLocation.lng == 0) {
                                 MessageToast.show(this.getText("errorLocateMe"));
                                 return;
                             }
@@ -265,7 +267,7 @@ sap.ui.define([
             onFormatBoxType: function (oBox) {
                 if (oBox.groupSize == oBox.totalGroupStampings) {
                     return 'Success';
-                } else if (oBox.totalGroupStampings == 0){
+                } else if (oBox.totalGroupStampings == 0) {
                     return 'Error';
                 } else {
                     return 'Warning';
