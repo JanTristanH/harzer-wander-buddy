@@ -115,6 +115,7 @@ async function afterStampboxesRead(req) {const db = this.entities('hwb.db');
 
   // Query stampings where createdBy is in the provided group.
   const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
+  const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
 
   // Enhance each stampbox with the additional fields.
   return stampBoxes.map(box => {
@@ -128,6 +129,7 @@ async function afterStampboxesRead(req) {const db = this.entities('hwb.db');
     box.groupSize = groupUserIds.length;
     box.totalGroupStampings = stampedUserIds.length;
     box.stampedUserIds = stampedUserIds;
+    box.stampedUsers = aUsers.filter( u => stampedUserIds.includes(u.principal));
 
     return box;
   });

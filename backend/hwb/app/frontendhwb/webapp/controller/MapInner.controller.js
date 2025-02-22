@@ -372,6 +372,7 @@ sap.ui.define([
                 localModel.setProperty("/bStampingVisible", this.stringToBoolean(oSpot.data("stamp")));
                 localModel.setProperty("/bStampingEnabled", oSpot.getType() == "Error");
                 localModel.setProperty("/sSelectedSpotLocation", oSpot.getPosition());
+                localModel.setProperty("/oCurrentSpot", this._getPoiById(sCurrentSpotId));
 
                 this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
 

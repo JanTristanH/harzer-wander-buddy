@@ -43,7 +43,8 @@ service api @(requires: 'authenticated-user') {
             '' as groupFilterStampings : String,
             0 as groupSize : Integer,
             0 as totalGroupStampings: Integer,
-            '' as stampedUserIds: String
+            '' as stampedUserIds: String, // actually an array
+            '' as stampedUsers  : String // actually an array
         };
 
     @readonly
