@@ -52,6 +52,11 @@ sap.ui.define([
             window.location.href = "/logout";
         },
 
+        onMyProfilePress: function () {
+            this.getRouter().navTo("Profile", {
+                userId: this.getModel("app").getProperty("/currentUser/ID")
+            });
+        },
 
         stringToBoolean: function (str) {
             return str === "true";

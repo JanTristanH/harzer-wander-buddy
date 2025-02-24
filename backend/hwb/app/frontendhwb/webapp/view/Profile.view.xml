@@ -1,0 +1,74 @@
+<mvc:View
+    controllerName="hwb.frontendhwb.controller.Profile"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    displayBlock="true"
+    height="100%"
+    busyIndicatorDelay="0"
+>
+    <Page
+        title="{i18n>profile}"
+        class="sapUiResponsiveContentPadding"
+    >
+        <headerContent>
+            <core:Fragment
+                fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
+                type="XML"
+            />
+        </headerContent>
+        <content>
+            <VBox
+                justifyContent="Center"
+                alignItems="Center"
+                width="100%"
+                height="50%"
+            >
+                <VBox>
+                    <Avatar
+                        id="idProfileAvatar"
+                        src="{picture}"
+                        displaySize="XL"
+                    />
+                    <FlexBox
+                        justifyContent="Center"
+                        visible="{= ${ID} === ${app>/currentUser/ID} }"
+                    >
+                        <Button
+                            icon="sap-icon://upload-to-cloud"
+                            type="Transparent"
+                            press="onUploadImageDialog"
+                        />
+                        <Button
+                            icon="sap-icon://delete"
+                            type="Transparent"
+                            press="onDeleteProfileImage"
+                        />
+                    </FlexBox>
+                </VBox>
+                <VBox class="sapUiSmallMargin">
+                    <HBox
+                        justifyContent="Center"
+                        alignItems="Center"
+                    >
+                        <Label
+                            text="{i18n>name}:"
+                            class="sapUiSmallMarginEnd sapUiTinyMarginTop"
+                        />
+                        <Input
+                            value="{name}"
+                            enabled="{= ${ID} === ${app>/currentUser/ID} }"
+                            change="onNameChange"
+                        />
+                    </HBox>
+                </VBox>
+            </VBox>
+        </content>
+        <footer>
+            <core:Fragment
+                fragmentName="hwb.frontendhwb.fragment.Toolbar"
+                type="XML"
+            />
+        </footer>
+    </Page>
+</mvc:View>

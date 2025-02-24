@@ -54,7 +54,16 @@ service api @(requires: 'authenticated-user') {
     @readonly
     entity TravelTimes                        as projection on db.TravelTimes;
 
-    @readonly
+@restrict: [
+        {
+            grant: 'READ',
+            to   : 'authenticated-user'
+        },
+        {
+            grant: 'WRITE',
+            where: 'principal = $user'
+        }
+    ]
     entity Users                              as
         projection on db.ExternalUsers {
             ID,

@@ -79,7 +79,10 @@
             "": {
                 "dataSource": "mainService",
                 "preload": true,
-                "settings": {}
+                "settings": {
+                    "defaultBindingMode": "TwoWay",
+					"useBatch": true
+                }
             },
             "mapConfig": {
                 "dataSource": "mapConfig"
@@ -159,6 +162,13 @@
                 ]
             },
             {
+                "name": "Profile",
+                "pattern": "profile/{userId}",
+                "target": [
+                    "TargetProfile"
+                ]
+            },
+            {
                 "name": "Admin",
                 "pattern": "admin",
                 "target": [
@@ -200,6 +210,13 @@
                     "transition": "show",
                     "clearControlAggregation": false,
                     "viewId": "FriendsList"
+                },
+                "TargetProfile": {
+                    "viewName": "Profile",
+                    "viewType": "XML",
+                    "transition": "show",
+                    "clearControlAggregation": false,
+                    "viewId": "Profile"
                 },
                 "TargetAdmin": {
                     "viewName": "Admin",
