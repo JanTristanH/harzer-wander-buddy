@@ -49,6 +49,13 @@ entity Stampboxes : cuid, temporal, PointOfInterest {
                                  on targetForAdjacentStamp.second = $self;
     Stampings              : Composition of many Stampings
                                  on Stampings.stamp = $self;
+
+    // dummy fields
+    groupFilterStampings   : String;
+    groupSize              : Integer;
+    totalGroupStampings    : Integer;
+    stampedUserIds         : String;
+    stampedUsers           : String;
 }
 
 @assert.integrity: false
@@ -104,25 +111,25 @@ entity Stampings : cuid {
 
 @cds.autoexpose
 entity Tours : cuid, managed {
-    name               : String;
+    name                  : String;
     /** distance in meters */
-    distance           : Integer64;
+    distance              : Integer64;
     /** duration in seconds */
-    duration           : Integer64;
+    duration              : Integer64;
     /** stamp count independent from users stamps */
-    stampCount         : Int32;
+    stampCount            : Int32;
     /** id list of travel times, can be used to describe the path of a tour */
-    idListTravelTimes  : LargeString;
+    idListTravelTimes     : LargeString;
     /** path as many ranked travel times.
      *  Each travel time has a from and a to.
      *  To get the pois of this tour, we need to look at all n toPois and the first from POI.
      */
-    totalElevationLoss : Double;
-    totalElevationGain : Double;
-    groupFilterStampings: String; // dummy field to filter for group stampings
-    AverageGroupStampings: Double; // dummy field to calculate average group stampings
-    path               : Association to many Tour2TravelTime
-                             on path.tour = $self;
+    totalElevationLoss    : Double;
+    totalElevationGain    : Double;
+    groupFilterStampings  : String; // dummy field to filter for group stampings
+    AverageGroupStampings : Double; // dummy field to calculate average group stampings
+    path                  : Association to many Tour2TravelTime
+                                on path.tour = $self;
 }
 
 entity Tour2TravelTime @cds.autoexpose {
@@ -135,12 +142,12 @@ entity Friendships : cuid {
     fromUser  : Association to ExternalUsers;
     toUser    : Association to ExternalUsers;
     confirmed : Boolean default false;
-    createdBy : User    @cds.on.insert: $user;
+    createdBy : User @cds.on.insert: $user;
 }
 
 entity PendingFriendshipRequests : cuid {
-    fromUser : Association to ExternalUsers;
-    toUser   : Association to ExternalUsers;
+    fromUser           : Association to ExternalUsers;
+    toUser             : Association to ExternalUsers;
     outgoingFriendship : Association to Friendships;
 }
 

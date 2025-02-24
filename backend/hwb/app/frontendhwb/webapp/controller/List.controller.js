@@ -71,7 +71,7 @@ sap.ui.define([
             },
 
             onStampingsUpdateFinished: function (event) {
-                this.selectWhere(context => context.getProperty('Stampings')?.length);
+                this.selectWhere(context => context.getProperty('hasVisited'));
                 this.updateStampCount()
             },
 

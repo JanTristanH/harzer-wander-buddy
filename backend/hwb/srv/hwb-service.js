@@ -110,7 +110,7 @@ async function onTourRead(req, next) {
   const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
 
   const result = await Promise.all(
-    tours.map(tour => {
+    tours?.map(tour => {
       return new Promise(async (resolve, reject) => {
         try {
           const tourId = tour.ID;
@@ -163,47 +163,30 @@ function getStampingByUsers(stampings, users) {
   return result;
 }
 
-async function onStampboxesRead(req) {
+async function onStampboxesRead(req, next) {
   const db = this.entities('hwb.db');
 
-  // Retrieve the original WHERE conditions array from the query.
-  const whereConditions = req.query.SELECT.where || [];
+  let bReturnOnlyFirst = false;
+  const stampBoxes = await next();
 
-  // Find the index of the condition that targets groupFilterStampings.
-  const index = whereConditions.findIndex(
-    cond => cond.ref && cond.ref[0] === 'groupFilterStampings'
-  );
-  let groupFilterStampings = "";
-  if (index !== -1) {
-    // Capture the filter value.
-    groupFilterStampings = whereConditions[index + 2].val || "";
-    // Remove the found condition and the following two conditions.
-    whereConditions.splice(index, 3);
+  if(stampBoxes?.ID) {
+    bReturnOnlyFirst = true;
+    stampBoxes = [stampBoxes];
   }
 
-  // Update the query's WHERE clause.
-  req.query.SELECT.where = whereConditions;
+  const whereConditions = req.query.SELECT.where || [];
+  const groupFilterStampings = extractFilters(whereConditions, "!=").groupFilterStampings;
 
-  // Retrieve stampboxes using the cleaned-up query.
-  const stampBoxes = await SELECT.from(db.Stampboxes).where(req.query.SELECT.where);
-
-  // Extract the comma-separated list of user IDs from the filter in the WHERE clause.
-  // (Assumes extractFilters is a helper that pulls out custom filters from the where clause.)
-  // const groupFilterStampings = extractFilters(req.query.SELECT.where);
   const groupUserIds =
     groupFilterStampings && groupFilterStampings.trim().length > 0
       ? groupFilterStampings.split(',').map(u => u.trim())
       : [req.user.id];
 
-  // Query stampings where createdBy is in the provided group.
   const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
   const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
 
-  // Enhance each stampbox with the additional fields.
-  return stampBoxes.map(box => {
-    // Filter stampings that belong to this particular stampbox.
+  const result =  stampBoxes.map(box => {
     const boxStampings = aStampings.filter(s => s.stamp_ID == box.ID);
-    // Get unique user IDs who stamped this box.
     const stampedUserIds = [...new Set(boxStampings.map(s => s.createdBy))];
 
     // Populate the custom fields:
@@ -215,6 +198,7 @@ async function onStampboxesRead(req) {
 
     return box;
   });
+  return bReturnOnlyFirst ? result[0] : result;
 }
 
 

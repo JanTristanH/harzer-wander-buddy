@@ -72,7 +72,7 @@ sap.ui.define([
 
 
                         // Create binding filter for selected groups
-                        let oFilter = new Filter("groupFilterStampings", FilterOperator.EQ, aSelectedGroup.join(','));
+                        let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
 
                         // Apply filter to binding
                         const oBinding = this.byId("idAllPointsOfInterestsSpots").getBinding("items");
