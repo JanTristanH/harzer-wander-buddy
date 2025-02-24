@@ -89,6 +89,7 @@
                     >
                         <!-- PendingFriendshipRequests of user-->
                         <List
+                            id="idPendingFriendshipRequestsList"
                             items="{path: '/PendingFriendshipRequests', parameters: {expand: 'fromUser,toUser'}}"
                             noDataText="{i18n>pendingFriendshipRequestsNoData}"
                         >

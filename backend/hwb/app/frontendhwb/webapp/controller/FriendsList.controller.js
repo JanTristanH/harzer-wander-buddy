@@ -21,14 +21,21 @@ sap.ui.define([
             if (!this._oFriendListItemTemplate) {
                 this._oFriendListItemTemplate = Fragment.load({
                     id: this.getView().getId(),
-                    name: "hwb.frontendhwb.fragment.FriendListItem", // Adjust the namespace/path accordingly
+                    name: "hwb.frontendhwb.fragment.FriendListItem",
                     controller: this
                 });
             }
         },
-
+    
         onAfterRendering: function () {
             this.getView().byId("navButtonFriendsId").setType("Emphasized");
+    
+            var oList = this.byId("idPendingFriendshipRequestsList");
+            var oBinding = oList.getBinding("items");
+    
+            var sCurrentUserPrincipal = this.getModel("app").getProperty("/currentUser/ID");
+            var oFilter = new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserPrincipal);
+            oBinding.filter([oFilter]);
         },
 
         onAddFriend: function (oEvent) {
