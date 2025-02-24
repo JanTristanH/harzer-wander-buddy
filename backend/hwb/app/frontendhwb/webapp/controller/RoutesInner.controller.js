@@ -184,7 +184,8 @@ sap.ui.define([
                                 distance: obj.distanceMeters,
                                 travelMode: obj.travelMode,
                                 toPoiType: obj.toPoiType,
-                                positionString: obj.positionString
+                                positionString: obj.positionString,
+                                AverageGroupStampings: obj.AverageGroupStampings ?? 0,
                             }));
                             oLocalModel.setProperty(`/Tours(${sIdListTravelTimes})`, oData.getTourByIdListTravelTimes);
                             this._showDetailViewForIdList(sIdListTravelTimes);
@@ -262,6 +263,11 @@ sap.ui.define([
                 var oModel = this.getView().getModel(); // Get the OData model
                 var oDialogModel = this.pDialog.getModel();
 
+                let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+                aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup)); // create copy
+                let currentUser = this.getModel("app").getProperty("/currentUser");
+                aSelectedGroup.push(currentUser.principal);
+
                 // Define the function import URL and parameters
                 var sFunctionName = "/calculateHikingRoute";
                 var oParams = {
@@ -271,8 +277,10 @@ sap.ui.define([
                     latitudeStart: oDialogModel.getProperty("/latitudeStart"),
                     longitudeStart: oDialogModel.getProperty("/longitudeStart"),
                     allowDriveInRoute: oDialogModel.getProperty("/allowDriveInRoute"),
-                    minStampCount: oDialogModel.getProperty("/minStampCount")
+                    minStampCount: oDialogModel.getProperty("/minStampCount"),
+                    groupFilterStampings: aSelectedGroup.join(',')
                 };
+
                 oParams.maxDuration = Math.round(oParams.maxDuration.getTime() / 1000) + 3600; //TODO timezone
                 // Call the function import
                 oModel.callFunction(sFunctionName, {
@@ -299,17 +307,17 @@ sap.ui.define([
                                 idListTravelTimes: oInitiallySelectedTour.id
                             });
                         } else {
-                            sap.m.MessageToast.show(this.getModel("i18n").getProperty("noRoutesFound"));
+                            MessageToast.show(this.getText("noRoutesFound"));
                         }
                     }.bind(this),
                     error: function (oError) {
-                        sap.m.MessageToast.show(this.getModel("i18n").getProperty("someThingWentWrong"));
-                        // Additional error handling
+                        MessageToast.show(this.getText("someThingWentWrong"));
                         this.pDialog.close();
-                    }
+                    }.bind(this)
                 });
             },
             _writeHikingRoutesAsToursToModel: function (aHikingRoutes, oModel) {
+                debugger
                 for (let oRoute of aHikingRoutes) {
                     oModel.setProperty(`/Tours(${oRoute.id})`, oRoute);
                 }

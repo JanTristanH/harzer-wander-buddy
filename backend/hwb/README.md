@@ -97,7 +97,7 @@ This project is configured to run with a postgres.
 - show personalized stamp count in addition to total on tour page ✔️
 - Friends feature
   - show group status on map ✔️
-  - show group status on transient tour
+  - show group status on transient tour ✔️ (semi polished)
   - send and accept friend requests ✔️
   - display stamping state of group member on tour (detail) page ✔️
   - Profile Page (with edit for my User)

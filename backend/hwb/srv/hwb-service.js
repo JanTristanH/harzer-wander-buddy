@@ -89,11 +89,10 @@ async function onTourRead(req, next) {
   let bReturnOnlyFirst = false;
   let tours = await next();
 
-  if(tours?.ID) {
+  if (tours?.ID) {
     bReturnOnlyFirst = true;
     tours = [tours];
   }
-
 
   const db = this.entities('hwb.db');
   const whereConditions = req.query.SELECT.where || [];
@@ -104,38 +103,59 @@ async function onTourRead(req, next) {
       ? groupFilterStampings.split(',').map(u => u.trim())
       : [req.user.id];
 
-  // Query stampings where createdBy is in the provided group.
-  const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
-  const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
-  const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
+  const result = await addGroupDetailsToTours(db, tours, groupUserIds);
 
-  const result = await Promise.all(
-    tours?.map(tour => {
-      return new Promise(async (resolve, reject) => {
-        try {
-          const tourId = tour.ID;
-          const ttt = await SELECT
-            .from(db.Tour2TravelTime)
-            .where({ tour_ID: tourId });
-          const tt = await SELECT
-            .from(db.TravelTimes)
-            .where({ ID: { in: ttt.map(t => t.travelTime_ID) } });
-          const toPois = tt.map(t => t.toPoi);
-          
-          const nAverageGroupStampings = getTotalStampings(aStampingsByUser, toPois) / groupUserIds.length;
-    
-          // Populate the custom fields:
-          tour.groupSize = groupUserIds.length;
-          tour.AverageGroupStampings = nAverageGroupStampings;
-    
-          resolve(tour);
-        } catch (error) {
-          reject(error);
-        }
-      });
-    })
-  );
   return bReturnOnlyFirst ? result[0] : result;
+}
+
+function addGroupDetailsToTours(db, tours, groupUserIds) {
+  if (!tours) {
+    return Promise.resolve([]);
+  }
+
+  return new Promise(async (resolve, reject) => {
+    // Query stampings where createdBy is in the provided group.
+    const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
+    const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
+    const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
+
+    const result = await Promise.all(
+      tours?.map(tour => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            tour.groupSize = groupUserIds.length;
+            const tourId = tour.ID;
+            let toPois;
+            if (tourId) {
+              const ttt = await SELECT
+                .from(db.Tour2TravelTime)
+                .where({ tour_ID: tourId });
+              const tt = await SELECT
+                .from(db.TravelTimes)
+                .where({ ID: { in: ttt.map(t => t.travelTime_ID) } });
+              toPois = tt.map(t => t.toPoi);
+            } else {
+              toPois = tour.path?.map(p => p.poi)
+            }
+            if (!toPois) {
+              tour.AverageGroupStampings = 0;
+              resolve(tour);
+              return;
+            }
+            const nAverageGroupStampings = getTotalStampings(aStampingsByUser, toPois) / groupUserIds.length;
+
+            // Populate the custom fields:
+            tour.AverageGroupStampings = nAverageGroupStampings;
+
+            resolve(tour);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      })
+    );
+    resolve(result);
+  });
 }
 
 function getTotalStampings(stampings, toPois) {
@@ -169,7 +189,7 @@ async function onStampboxesRead(req, next) {
   let bReturnOnlyFirst = false;
   const stampBoxes = await next();
 
-  if(stampBoxes?.ID) {
+  if (stampBoxes?.ID) {
     bReturnOnlyFirst = true;
     stampBoxes = [stampBoxes];
   }
@@ -185,7 +205,7 @@ async function onStampboxesRead(req, next) {
   const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
   const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
 
-  const result =  stampBoxes.map(box => {
+  const result = stampBoxes.map(box => {
     const boxStampings = aStampings.filter(s => s.stamp_ID == box.ID);
     const stampedUserIds = [...new Set(boxStampings.map(s => s.createdBy))];
 
@@ -206,7 +226,7 @@ function extractFilters(filters, operator) {
   if (!filters) {
     return null;
   }
-  if(filters[0]?.xpr){
+  if (filters[0]?.xpr) {
     filters = filters[0].xpr;
   }
   let result = {};
@@ -502,17 +522,19 @@ async function getTourByIdListTravelTimes(req) {
     }
   }
 
-  const result = await routingManager.addPositionStrings([{
+  let result = await routingManager.addPositionStrings([{
     stampCount,
     distance,
     duration,
     id,
     path
   }]);
+  result = await addGroupDetailsToTours(this.entities('hwb.db'), result, [req.user.id]);
   return result[0];
 }
 
 async function calculateHikingRoute(req) {
+  const db = this.entities('hwb.db');
   // req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
   console.log(req.data);
   const { typedTravelTimes, Stampboxes, Stampings } = this.api.entities;
@@ -537,6 +559,17 @@ async function calculateHikingRoute(req) {
     let newRoutes = await routingManager.calculateHikingRoutes(req.data, aTravelTimesGlobal, aStampsDoneByUser);
     results = results.concat(newRoutes);
   }
+
+  if (results.length > 0) {
+    const groupFilterStampings = req.data.groupFilterStampings;
+    const groupUserIds =
+      groupFilterStampings && groupFilterStampings.trim().length > 0
+        ? groupFilterStampings.split(',').map(u => u.trim())
+        : [req.user.id];
+
+    results = await addGroupDetailsToTours(db, results, groupUserIds);
+  }
+
   return { results }
 
   return {

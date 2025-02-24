@@ -27,7 +27,8 @@ service api @(requires: 'authenticated-user') {
                                   minStampCount : Integer, //TODO implement
                                   allowDriveInRoute : Boolean,
                                   latitudeStart : String,
-                                  longitudeStart : String)          returns String;
+                                  longitudeStart : String,
+                                  groupFilterStampings: String)          returns String;
 
     function getTourByIdListTravelTimes(idListTravelTimes : String) returns String;
     action   updateTourByPOIList(TourID : UUID, POIList : String)   returns String;
