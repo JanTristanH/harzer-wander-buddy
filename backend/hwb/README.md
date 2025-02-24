@@ -84,7 +84,7 @@ This project is configured to run with a postgres.
 - upgrade developer to production key
 - minimum authority
   - admin role ✔️
-  - only edit my own tours ❓
+  - only edit my own tours ❌
   - add new audience to prod docker
 - show user profile picture
 - set up social media ✔️
@@ -94,15 +94,19 @@ This project is configured to run with a postgres.
 
 # Last stretch before rewrite 
 - support maps.me navigation
-- show personalized stamp count in addition to total on tour page
+- show personalized stamp count in addition to total on tour page ✔️
 - Friends feature
-  - show group status on map
-  - send and accept friend requests
+  - show group status on map ✔️
+  - show group status on transient tour
+  - send and accept friend requests ✔️
+  - display stamping state of group member on tour (detail) page ✔️
+  - Profile Page (with edit for my User)
   - display stamp list of friend and mine
-  - display stamping state of group member on tour (detail) page
 
 ## MVP 2
 
+- share tour with preselected group?
+- badges on profile page
 - open individual travel time in maps or hiking app like komoot
 - add images & descriptions to stamps
 - refactor starting algorithm
@@ -112,7 +116,7 @@ This project is configured to run with a postgres.
 - Update color schema of app to match background of mascot
 - look into sapui5 vs openui5 (openUi5 does not have GeoMap)
 - look into problem with 24 remaining routes
-- fix handler to be normally performant: this.after('READ', `Stampboxes`
+- fix handler to be normally performant: this.after('READ', `Stampboxes` -> use joins to load only needed group information
 - Profile page
   - saved tours
   - overview achievements
