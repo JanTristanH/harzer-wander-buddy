@@ -6,12 +6,14 @@ sap.ui.define([
     "sap/m/MessageToast",
     "sap/ui/unified/Menu",
     "sap/ui/unified/MenuItem",
-    "sap/ui/core/Popup"
+    "sap/ui/core/Popup",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, XMLView, fioriLibrary, MessageToast, Menu, MenuItem, Popup) {
+    function (Controller, JSONModel, XMLView, fioriLibrary, MessageToast, Menu, MenuItem, Popup, Filter, FilterOperator) {
         "use strict";
         var autocomplete; //inspired by https://github.com/costa-satsati/addressautocomplete/
         var LayoutType = fioriLibrary.LayoutType;
@@ -32,6 +34,45 @@ sap.ui.define([
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onDetailRouteEditMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRoutePersistedMatched, this);
             },
+            onAfterRendering: function () {
+                this.getView().getModel().setSizeLimit(1000);
+                this.attachGroupChange();
+            },
+
+            attachGroupChange: function () {
+                this.getModel("app").attachPropertyChange((oEvent) => {
+                    if (oEvent.getParameter("path") == "/aSelectedGroupIds") {
+                        // Retrieve the updated property from the model
+                        let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+                        aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup));
+                        let currentUser = this.getModel("app").getProperty("/currentUser");
+                        aSelectedGroup.push(currentUser.principal);
+
+                        // Create binding filter for selected groups
+                        let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
+
+                        // Apply filter to binding
+                        const oBinding = this.byId("idTourList").getBinding("items");
+                        if (oBinding) {
+                            oBinding.filter(aSelectedGroup.length ? oFilter : null);
+
+                            oBinding.attachDataReceived((oEvent) => {
+                                const updatedTours = oEvent.getParameter("data").results
+                                // update localModel with AverageGroupStampings
+                                let oLocalModel = this.getView().getModel("local");
+                                updatedTours.forEach(tour => {
+                                    let oTour = oLocalModel.getProperty(`/Tours(${tour.ID})`);
+                                    if (oTour) {
+                                        oTour.AverageGroupStampings = tour.AverageGroupStampings;
+                                        oLocalModel.setProperty(`/Tours(${tour.ID})`, oTour);
+                                    }
+                                });
+                            });
+                        }
+                    }
+                });
+            },
+
             onDetailRoutePersistedMatched: function (oEvent) {
                 let oModel = this.getView().getModel();
                 let oLocalModel = this.getView().getModel("local");
@@ -178,9 +219,6 @@ sap.ui.define([
             setList: function () {
                 this.oFlexibleColumnLayout.setLayout(LayoutType.OneColumn);
             },
-            onAfterRendering: function () {
-                this.getView().getModel().setSizeLimit(1000);
-            },
 
             onOpenRoutingDialog: async function () {
                 var oView = this.getView();
@@ -318,8 +356,6 @@ sap.ui.define([
                             oSpot.attachClick(this.onClickSpot.bind(this));
                             oSpot.attachContextMenu(this.onContextMenuSpot.bind(this));
                         });
-
-
 
                     } else if (sCenterPosition) {
                         setTimeout(() => {

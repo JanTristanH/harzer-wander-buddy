@@ -139,7 +139,7 @@
                                                                         src="sap-icon://toaster-top"
                                                                     />
                                                                     <Text
-                                                                        text="{stampCount}"
+                                                                        text="{AverageGroupStampings} / {stampCount}"
                                                                     />
                                                                 </VBox>
                                                                 <Text

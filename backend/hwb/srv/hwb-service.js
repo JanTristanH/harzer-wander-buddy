@@ -3,7 +3,7 @@ const {
   v4: uuidv4
 } = require('uuid');
 
-const {onAfterFriendshipCreate, acceptPendingFriendshipRequest, onBeforeFriendshipCreate} = require('./friendships');
+const { onAfterFriendshipCreate, acceptPendingFriendshipRequest, onBeforeFriendshipCreate } = require('./friendships');
 
 const fetch = require('node-fetch');
 const routingManager = require('./routingManager');
@@ -19,7 +19,9 @@ let aTravelTimesGlobal = [];
 module.exports = class api extends cds.ApplicationService {
   init() {
 
-    this.on('READ', `Stampboxes`, afterStampboxesRead.bind(this))
+    this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
+
+    this.on('READ', 'Tours', onTourRead.bind(this));
 
     this.after('CREATE', 'Tours', async (req) => {
       return upsertTourDetailsById(req, this.entities('hwb.db'));
@@ -66,10 +68,10 @@ module.exports = class api extends cds.ApplicationService {
     this.on('addElevationToAllTravelTimes', addElevationToAllTravelTimes)
 
     this.before('CREATE', 'Friendships', onBeforeFriendshipCreate);
-    
+
     this.after('CREATE', 'Friendships', onAfterFriendshipCreate);
 
-    this.on('getCurrentUser', async (req) => { 
+    this.on('getCurrentUser', async (req) => {
       const ExternalUsers = this.entities('hwb.db').ExternalUsers;
       const currentUser = await SELECT.from(ExternalUsers).where({ principal: req.user.id });
       return currentUser;
@@ -82,7 +84,80 @@ module.exports = class api extends cds.ApplicationService {
     return super.init()
   }
 }
-async function afterStampboxesRead(req) {const db = this.entities('hwb.db');
+
+async function onTourRead(req) {
+  const db = this.entities('hwb.db');
+  const whereConditions = req.query.SELECT.where || [];
+  const groupFilterStampings = extractFilters(whereConditions, "!=").groupFilterStampings;
+
+  const tours = await SELECT.from(db.Tours)
+  // .where(req.query.SELECT.where);
+
+  const groupUserIds =
+    groupFilterStampings && groupFilterStampings.trim().length > 0
+      ? groupFilterStampings.split(',').map(u => u.trim())
+      : [req.user.id];
+
+  // Query stampings where createdBy is in the provided group.
+  const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
+  const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
+  const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
+
+  return await Promise.all(
+    tours.map(tour => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const tourId = tour.ID;
+          const ttt = await SELECT
+            .from(db.Tour2TravelTime)
+            .where({ tour_ID: tourId });
+          const tt = await SELECT
+            .from(db.TravelTimes)
+            .where({ ID: { in: ttt.map(t => t.travelTime_ID) } });
+          const toPois = tt.map(t => t.toPoi);
+          
+          const nAverageGroupStampings = getTotalStampings(aStampingsByUser, toPois) / groupUserIds.length;
+    
+          // Populate the custom fields:
+          tour.groupSize = groupUserIds.length;
+          tour.AverageGroupStampings = nAverageGroupStampings;
+    
+          resolve(tour);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    })
+  );  
+}
+
+function getTotalStampings(stampings, toPois) {
+  let aStampCount = [];
+  for (let i = 0; i < toPois.length; i++) {
+    const poi = toPois[i];
+    const aStampings = stampings.filter(s => s.stamping.stamp_ID == poi);
+    aStampCount.push(aStampings.length);
+  }
+  return aStampCount.reduce((p, c) => p + c, 0);
+}
+
+function getStampingByUsers(stampings, users) {
+  let result = [];
+  for (let i = 0; i < stampings.length; i++) {
+    let stamping = stampings[i];
+    let user = users.find(u => u.principal == stamping.createdBy);
+    if (user) {
+      result.push({
+        user: user,
+        stamping: stamping
+      });
+    }
+  }
+  return result;
+}
+
+async function onStampboxesRead(req) {
+  const db = this.entities('hwb.db');
 
   // Retrieve the original WHERE conditions array from the query.
   const whereConditions = req.query.SELECT.where || [];
@@ -129,30 +204,30 @@ async function afterStampboxesRead(req) {const db = this.entities('hwb.db');
     box.groupSize = groupUserIds.length;
     box.totalGroupStampings = stampedUserIds.length;
     box.stampedUserIds = stampedUserIds;
-    box.stampedUsers = aUsers.filter( u => stampedUserIds.includes(u.principal));
+    box.stampedUsers = aUsers.filter(u => stampedUserIds.includes(u.principal));
 
     return box;
   });
 }
 
 
-function extractFilters(filters) {
-  if(!filters) {
+function extractFilters(filters, operator) {
+  if (!filters) {
     return null;
   }
   let result = {};
   for (let i = 0; i < filters.length; i++) {
-      if (filters[i].ref) {
-          // Extract the reference
-          let ref = filters[i].ref[0];
-          // Check if the next element is '=' and the element after that has a value
-          if (filters[i + 1] === "=" && filters[i + 2] && filters[i + 2].val) {
-              // Store the reference and its value
-              result[ref] = filters[i + 2].val;
-              // Skip the next two elements
-              i += 2;
-          }
+    if (filters[i].ref) {
+      // Extract the reference
+      let ref = filters[i].ref[0];
+      // Check if the next element is '=' and the element after that has a value
+      if (filters[i + 1] === operator && filters[i + 2] && filters[i + 2].val) {
+        // Store the reference and its value
+        result[ref] = filters[i + 2].val;
+        // Skip the next two elements
+        i += 2;
       }
+    }
   }
   return result;
 }
@@ -204,7 +279,7 @@ async function updateTourByPOIList(req) {
   const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours } = this.entities('hwb.db');
 
   let aPois = poiList.split(";").filter(p => !!p);
-  if(aPois.length < 2){
+  if (aPois.length < 2) {
     throw new Error("At least 2 POIs are required to create a tour");
   }
   let aPoiPairs = [];
@@ -653,7 +728,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
       if (neighbor.distanceKm == 0) {
         continue;
       }
-      if(!neighbor){
+      if (!neighbor) {
         console.error("Neighbor is missing");
         continue;
       }
@@ -833,7 +908,7 @@ function addElevationProfileToTravelTime(oTravelTime) {
         // "status": "OK",
         // }
 
-        if(j.results.length == 0){
+        if (j.results.length == 0) {
           resolve(oTravelTime);
           return;
         }

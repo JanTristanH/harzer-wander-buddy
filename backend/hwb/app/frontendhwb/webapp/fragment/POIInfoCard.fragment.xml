@@ -26,7 +26,10 @@
                 class="sapUiSmallMargin"
                 justifyContent="SpaceBetween"
             >
-                <HBox width="80%" class="scrollableHbox">
+                <HBox
+                    width="80%"
+                    class="scrollableHbox"
+                >
                     <Button
                         text="{i18n>navigate}"
                         icon="sap-icon://forward"
@@ -62,21 +65,25 @@
                 <VBox
                     class="sapUiSmallMarginTop"
                     width="95%"
-visible="{= (${app>/aSelectedGroupIds} &amp;&amp; ${app>/aSelectedGroupIds}.length > 0) &amp;&amp; (${local>/oCurrentSpot/stampedUsers} &amp;&amp; ${local>/oCurrentSpot/stampedUsers}.length > 0) ? true : false }"
-
+                    visible="{= (${app>/aSelectedGroupIds} 
+                                &amp;&amp; ${app>/aSelectedGroupIds}.length > 0) 
+                                &amp;&amp; (${local>/oCurrentSpot/stampedUsers} 
+                                &amp;&amp; ${local>/oCurrentSpot/stampedUsers}.length > 0) ? true : false }"
                 >
- 					<Title text="{i18n>stampedBy}" />
-					<f:AvatarGroup
-						id="avatarGroup"
-						groupType="Individual"
-						avatarDisplaySize="S"
-						items="{local>/oCurrentSpot/stampedUsers}">
-							<f:AvatarGroupItem
-							initials="{local>name}"
-							fallbackIcon="sap-icon://person-placeholder"
-							src="{local>picture}"
-							tooltip= "{local>name}"/>
-					</f:AvatarGroup>
+                    <Title text="{i18n>stampedBy}" />
+                    <f:AvatarGroup
+                        id="avatarGroup"
+                        groupType="Individual"
+                        avatarDisplaySize="S"
+                        items="{local>/oCurrentSpot/stampedUsers}"
+                    >
+                        <f:AvatarGroupItem
+                            initials="{local>name}"
+                            fallbackIcon="sap-icon://person-placeholder"
+                            src="{local>picture}"
+                            tooltip="{local>name}"
+                        />
+                    </f:AvatarGroup>
                 </VBox>
                 <HBox
                     class="sapUiSmallMarginTop"

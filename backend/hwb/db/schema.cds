@@ -119,6 +119,7 @@ entity Tours : cuid, managed {
      */
     totalElevationLoss : Double;
     totalElevationGain : Double;
+    groupFilterStampings: String; // dummy field to filter for group stampings
     path               : Association to many Tour2TravelTime
                              on path.tour = $self;
 }

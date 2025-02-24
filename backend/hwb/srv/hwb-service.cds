@@ -41,10 +41,10 @@ service api @(requires: 'authenticated-user') {
         projection on db.Stampboxes {
             *,
             '' as groupFilterStampings : String,
-            0 as groupSize : Integer,
-            0 as totalGroupStampings: Integer,
-            '' as stampedUserIds: String, // actually an array
-            '' as stampedUsers  : String // actually an array
+            0  as groupSize            : Integer,
+            0  as totalGroupStampings  : Integer,
+            '' as stampedUserIds       : String, // actually an array
+            '' as stampedUsers         : String // actually an array
         };
 
     @readonly
@@ -113,7 +113,12 @@ service api @(requires: 'authenticated-user') {
             where: 'createdBy = $user'
         }
     ]
-    entity Tours                              as projection on db.Tours;
+    entity Tours                              as
+        projection on db.Tours {
+            *,
+            '' as groupFilterStampings     : String,
+            0  as AverageGroupStampings : Integer
+        };
 
     @readonly
     entity AllPointsOfInterest                as

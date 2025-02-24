@@ -92,7 +92,7 @@ sap.ui.define([
         },
 
         formatCleanMeter: function (meters) {
-            return `${parseInt(meters)}m`;
+            return `${parseInt(meters)} m`;
         },
 
         onNavBack: function () {
@@ -137,7 +137,7 @@ sap.ui.define([
             }
 
             var kilometers = iMeters / 1000;
-            return kilometers.toFixed(2) + "km"; // Show 2 decimal places
+            return kilometers.toFixed(2) + " km"; // Show 2 decimal places
         },
 
         formatSecondsToTime: function (iSeconds) {
@@ -152,11 +152,11 @@ sap.ui.define([
             var formattedTime = "";
 
             if (hours > 0) {
-                formattedTime += hours + "h ";
+                formattedTime += hours + " h ";
             }
 
             if (minutes > 0 || hours > 0) { // Include minutes if there are hours
-                formattedTime += minutes + "min ";
+                formattedTime += minutes + " min ";
             }
 
             return formattedTime.trim(); // Remove any trailing whitespace
