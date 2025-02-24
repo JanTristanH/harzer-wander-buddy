@@ -191,6 +191,22 @@ sap.ui.define([
                 return p;
             });
             aPath.reverse();
+            aPath = this._addStampedUsers(aPath);
+            return aPath;
+        },
+
+        _addStampedUsers: function (aPath) {
+            let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+            aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup));
+            let currentUser = this.getModel("app").getProperty("/currentUser");
+            aSelectedGroup.push(currentUser.principal);
+
+            aPath.forEach(p => {
+                const poi = this._getPoiById(p.toPoi);
+                if (poi && poi.stampedUsers) {
+                    p.stampedUsers = poi.stampedUsers.filter(u => aSelectedGroup.includes(u.principal));
+                }
+            });
             return aPath;
         },
 

@@ -85,13 +85,19 @@ module.exports = class api extends cds.ApplicationService {
   }
 }
 
-async function onTourRead(req) {
+async function onTourRead(req, next) {
+  let bReturnOnlyFirst = false;
+  let tours = await next();
+
+  if(tours?.ID) {
+    bReturnOnlyFirst = true;
+    tours = [tours];
+  }
+
+
   const db = this.entities('hwb.db');
   const whereConditions = req.query.SELECT.where || [];
   const groupFilterStampings = extractFilters(whereConditions, "!=").groupFilterStampings;
-
-  const tours = await SELECT.from(db.Tours)
-  // .where(req.query.SELECT.where);
 
   const groupUserIds =
     groupFilterStampings && groupFilterStampings.trim().length > 0
@@ -103,7 +109,7 @@ async function onTourRead(req) {
   const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
   const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
 
-  return await Promise.all(
+  const result = await Promise.all(
     tours.map(tour => {
       return new Promise(async (resolve, reject) => {
         try {
@@ -128,7 +134,8 @@ async function onTourRead(req) {
         }
       });
     })
-  );  
+  );
+  return bReturnOnlyFirst ? result[0] : result;
 }
 
 function getTotalStampings(stampings, toPois) {
@@ -214,6 +221,9 @@ async function onStampboxesRead(req) {
 function extractFilters(filters, operator) {
   if (!filters) {
     return null;
+  }
+  if(filters[0]?.xpr){
+    filters = filters[0].xpr;
   }
   let result = {};
   for (let i = 0; i < filters.length; i++) {

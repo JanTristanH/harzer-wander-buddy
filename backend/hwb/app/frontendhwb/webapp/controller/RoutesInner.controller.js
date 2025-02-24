@@ -64,6 +64,7 @@ sap.ui.define([
                                     let oTour = oLocalModel.getProperty(`/Tours(${tour.ID})`);
                                     if (oTour) {
                                         oTour.AverageGroupStampings = tour.AverageGroupStampings;
+                                        oTour.path = this._addStampedUsers(oTour.path);
                                         oLocalModel.setProperty(`/Tours(${tour.ID})`, oTour);
                                     }
                                 });
@@ -133,7 +134,7 @@ sap.ui.define([
                 if (sTourId && oLocalModel.getProperty(`/Tours(${sTourId})`)) {
                     this._showDetailViewForIdList(sTourId);
                 } else {
-                    this.getModel().read(`/Tours(${sTourId})`, {
+                    this.getModel().read(`/Tours(guid'${sTourId}')`, {
                         success: function (oData, response) {
                             // Check if the deferred entity needs to be loaded separately
                             // load in two steps as expand is currently broken
@@ -146,9 +147,9 @@ sap.ui.define([
                             }
                         }.bind(this),
                         error: function (oError) {
-                            MessageToast.show("Error saving the tour!");
+                            MessageToast.show(this.getText("errorLoadingTour"));
                             console.error(oError);
-                        }
+                        }.bind(this)
                     });
                 }
                 this.getModel("local").setProperty("/sIdListTravelTimes", sTourId);
@@ -336,6 +337,7 @@ sap.ui.define([
                     viewName: "hwb.frontendhwb.view.RoutesMap"
                 }).then(function (detailView) {
                     let oLocalModel = this.getView().getModel("local");
+                    // TODO friends: navigating into a tour does not show icons correctly
                     oLocalModel.setProperty("/edit", false);
                     detailView.setModel("local", oLocalModel);
                     //get global Id via debugging for example in locate me function

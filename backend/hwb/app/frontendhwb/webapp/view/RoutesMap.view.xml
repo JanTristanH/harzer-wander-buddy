@@ -6,6 +6,7 @@
     xmlns:l="sap.ui.layout"
     xmlns:dnd="sap.ui.core.dnd"
     xmlns:chart="sap.suite.ui.microchart"
+    xmlns:f="sap.f"
     displayBlock="true"
     height="100%"
     busyIndicatorDelay="0"
@@ -280,7 +281,6 @@
                                             text="{parts: [{path: 'local>elevationGain'}, {path: 'local>elevationLoss'}], formatter: '.formatElevationDescription'}"
                                             visible="{= !!${local>duration} &amp;&amp; !!${local>maxElevation} }"
                                         />
-                                        <!-- TODO friends: add stamped by -->
                                         <chart:AreaMicroChart
                                             size="S"
                                             view="Wide"
@@ -323,6 +323,25 @@
                                             </chart:minThreshold>
                                         </chart:AreaMicroChart>
                                     </VBox>
+                                    <FlexBox
+                                        alignItems="Center"
+                                        justifyContent="Center"
+                                        height="100%"
+                                    >
+                                        <f:AvatarGroup
+                                            id="avatarGroupTravelTime"
+                                            groupType="Individual"
+                                            avatarDisplaySize="S"
+                                            items="{local>stampedUsers}"
+                                        > 
+                                            <f:AvatarGroupItem
+                                                initials="{local>name}"
+                                                fallbackIcon="sap-icon://person-placeholder"
+                                                src="{local>picture}"
+                                                tooltip="{local>name}"
+                                            />
+                                        </f:AvatarGroup>
+                                    </FlexBox>
                                     <FlexBox
                                         alignItems="Center"
                                         justifyContent="Center"

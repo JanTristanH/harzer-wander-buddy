@@ -438,7 +438,22 @@ sap.ui.define([
                 const poi = this._getPoiById(oEvent.getSource().getCustomData()[0].getValue());
 
                 this.openMapsApp(poi.latitude, poi.longitude);
-            }
+            },
+
+            formatAvatarGroupItems: function (aUsers) {
+                if (!aUsers || !Array.isArray(aUsers)) {
+                    return [];
+                }
+            
+                return aUsers.map(user => {
+                    return new sap.f.AvatarGroupItem({
+                        initials: user.name ? user.name.charAt(0) : "",
+                        fallbackIcon: "sap-icon://person-placeholder",
+                        src: user.picture || "",
+                        tooltip: user.name || "Unknown"
+                    });
+                });
+            }            
 
         });
     });
