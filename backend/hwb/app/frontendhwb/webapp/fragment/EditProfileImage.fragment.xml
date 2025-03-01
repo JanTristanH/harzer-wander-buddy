@@ -1,0 +1,60 @@
+<core:FragmentDefinition
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:unified="sap.ui.unified"
+    xmlns:layout="sap.ui.layout"
+>
+    <Dialog
+        id="idUserAvatarDialog"
+        title="{i18n>UserAvatarUploadTitle}"
+        contentWidth="380px"
+    >
+        <content>
+            <FlexBox
+                alignItems="Center"
+                justifyContent="Center"
+                class="sapUiTinyMargin"
+            >
+                <layout:VerticalLayout class="sapUiTinyMargin">
+                    <Label text="{i18n>selectImage}" />
+                    <unified:FileUploader
+                        id="fileUploader"
+                        httpRequestMethod="Put"
+                        name="file"
+                        sendXHR="true"
+                        useMultipart="false"
+                        uploadUrl="{app>/backendUrl}/odata/v2/api/Attachments/{app>/MediaID}/content"
+                        change="onUploadValueChange"
+                        uploadComplete="onUploadComplete"
+                        uploadStart="onUploadStart"
+                        typeMissmatch="onTypeMissMatch"
+                        uploadProgress="onUploadProgress"
+                        fileType="jpeg,jpg,png,webp"
+                        maximumFileSize="{appState>/maxProfileImageSizeInMB}"
+                        fileSizeExceed="onFileSizeExceed"
+                    >
+                        <unified:parameters>
+                            <unified:FileUploaderParameter
+                                name="userId"
+                                value="{Id}"
+                            />
+                        </unified:parameters>
+                    </unified:FileUploader>
+                </layout:VerticalLayout>
+            </FlexBox>
+        </content>
+        <buttons>
+            <Button
+                text="{i18n>upload}"
+                tooltip="{i18n>uploadImage}"
+                type="Emphasized"
+                press="onUploadPress"
+            />
+            <Button
+                text="{i18n>cancel}"
+                tooltip="{i18n>cancel}"
+                press="onCloseImageUploadDialog"
+            />
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>

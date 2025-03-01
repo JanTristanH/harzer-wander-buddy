@@ -6,6 +6,8 @@ using {
     managed
 } from '@sap/cds/common';
 
+using { Attachments } from '@cap-js/attachments';
+
 type User : String(255);
 
 aspect PointOfInterest {
@@ -29,6 +31,10 @@ entity ExternalUsers : cuid {
     sub                   : String(255);
     updated_at_iso_string : String(255);
     updated_at            : Timestamp   @cds.on.insert: $now;
+}
+
+entity Attachments_local : Attachments {
+    
 }
 
 @assert.integrity: false

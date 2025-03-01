@@ -14,12 +14,6 @@ service api @(requires: 'authenticated-user') {
     @requires: 'admin'
     action   DeleteSpotWithRoutes(SpotId : UUID)                    returns String;
 
-    entity HikingRoute {
-        Points         : Composition of many TravelTimes;
-        totalDistance  : Integer;
-        totalDuration  : Integer;
-        totalNewStamps : Integer;
-    }
 
     function calculateHikingRoute(maxDepth : Integer,
                                   maxDuration : Integer,
@@ -28,7 +22,7 @@ service api @(requires: 'authenticated-user') {
                                   allowDriveInRoute : Boolean,
                                   latitudeStart : String,
                                   longitudeStart : String,
-                                  groupFilterStampings: String)          returns String;
+                                  groupFilterStampings : String)    returns String;
 
     function getTourByIdListTravelTimes(idListTravelTimes : String) returns String;
     action   updateTourByPOIList(TourID : UUID, POIList : String)   returns String;
@@ -54,7 +48,7 @@ service api @(requires: 'authenticated-user') {
     @readonly
     entity TravelTimes                        as projection on db.TravelTimes;
 
-@restrict: [
+    @restrict: [
         {
             grant: 'READ',
             to   : 'authenticated-user'
@@ -75,6 +69,22 @@ service api @(requires: 'authenticated-user') {
 
     function getCurrentUser()                                       returns Users;
 
+    @restrict: [
+        {
+            grant: 'READ',
+            to   : 'authenticated-user'
+        },
+        {
+            grant: 'WRITE',
+            to   : 'authenticated-user'
+        },
+        {
+            grant: 'UPDATE',
+            where: 'createdBy = $user'
+        }
+    ]
+    entity Attachments as projection on db.Attachments_local;
+ 
     @restrict: [{
         grant: 'READ',
         where: 'createdBy = $user'
@@ -126,7 +136,7 @@ service api @(requires: 'authenticated-user') {
     entity Tours                              as
         projection on db.Tours {
             *,
-            '' as groupFilterStampings     : String,
+            '' as groupFilterStampings  : String,
             0  as AverageGroupStampings : Integer
         };
 
@@ -167,8 +177,8 @@ service api @(requires: 'authenticated-user') {
         join db.Stampboxes as NeighborsBox
             on Stampboxes.ID != NeighborsBox.ID
         {
-            Stampboxes.ID,
-            NeighborsBox.ID     as NeighborsID,
+            key Stampboxes.ID,
+            key NeighborsBox.ID     as NeighborsID,
             Stampboxes.number,
             NeighborsBox.number as NeighborsNumber,
             NeighborsBox.latitude,
@@ -202,8 +212,8 @@ service api @(requires: 'authenticated-user') {
         join db.ParkingSpots as Neighbors
             on Stampboxes.ID != Neighbors.ID
         {
-            Stampboxes.ID,
-            Neighbors.ID as NeighborsID,
+            key Stampboxes.ID,
+            key Neighbors.ID as NeighborsID,
             Stampboxes.number,
             Neighbors.latitude,
             Neighbors.longitude,
@@ -232,8 +242,8 @@ service api @(requires: 'authenticated-user') {
         join db.Stampboxes as NeighborsBox
             on Parking.ID != NeighborsBox.ID
         {
-            Parking.ID,
-            NeighborsBox.ID     as NeighborsID,
+            key Parking.ID,
+            key NeighborsBox.ID     as NeighborsID,
             NeighborsBox.number as NeighborsNumber,
             NeighborsBox.latitude,
             NeighborsBox.longitude,
@@ -264,8 +274,8 @@ service api @(requires: 'authenticated-user') {
         join db.ParkingSpots as Neighbors
             on Parking.ID != Neighbors.ID
         {
-            Parking.ID,
-            Neighbors.ID as NeighborsID,
+            key Parking.ID,
+            key Neighbors.ID as NeighborsID,
             Neighbors.latitude,
             Neighbors.longitude,
             SQRT(
@@ -293,8 +303,8 @@ service api @(requires: 'authenticated-user') {
         join db.ParkingSpots as Neighbors
             on CalculationRequest.ID != Neighbors.ID
         {
-            CalculationRequest.ID,
-            Neighbors.ID as NeighborsID,
+            key CalculationRequest.ID,
+            key Neighbors.ID as NeighborsID,
             cast(
                 CalculationRequest.longitude as             Double
             )            as CalculationRequestLongitude,
@@ -338,7 +348,7 @@ service api @(requires: 'authenticated-user') {
             select from db.TravelTimes as TravelTimes {
                 fromPoi,
                 toPoi,
-                ID,
+                key ID,
                 fromPoi as rootPoiID
             }
         union all
@@ -348,7 +358,7 @@ service api @(requires: 'authenticated-user') {
             {
                 tree.fromPoi,
                 tree.toPoi,
-                tree.ID,
+                key tree.ID,
                 '' as rootPoiID
 
             };
