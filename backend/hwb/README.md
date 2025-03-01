@@ -100,8 +100,10 @@ This project is configured to run with a postgres.
   - show group status on transient tour ✔️ (semi polished)
   - send and accept friend requests ✔️
   - display stamping state of group member on tour (detail) page ✔️
-  - Profile Page (with edit for my User)
+  - Profile Page (with edit for my User) ✔️
+  - navigation to other person
   - display stamp list of friend and mine
+  - initials for empty picture formatter
 
 ## MVP 2
 
