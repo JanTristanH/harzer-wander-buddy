@@ -54,24 +54,100 @@
                                 minScreenWidth="Tablet"
                                 demandPopin="true"
                                 popinDisplay="Inline"
-                                width="auto"
+                                width="5rem"
                             >
-                                <Text text="Stempelstelle" />
+                                <Text text="{i18n>number}" />
                             </Column>
                             <Column
                                 minScreenWidth="Tablet"
                                 demandPopin="true"
                                 popinDisplay="Inline"
-                                width="auto"
+                                width="5rem"
+                                visible="{ parts: [{value:'0'}, 'app>/aSelectedGroupIds'], 
+                                            formatter: '.onFormatColumnVisibility' }"
                             >
-                                <Text text="Nummer" />
+                                <Text text="{app>/userName0}" />
+                            </Column>
+                            <Column
+                                minScreenWidth="Tablet"
+                                demandPopin="true"
+                                popinDisplay="Inline"
+                                width="5rem"
+                                visible="{ parts: [{value:'1'}, 'app>/aSelectedGroupIds'], 
+                                            formatter: '.onFormatColumnVisibility' }"
+                            >
+                                <Text text="{app>/userName1}" />
+                            </Column>
+                            <Column
+                                minScreenWidth="Tablet"
+                                demandPopin="true"
+                                popinDisplay="Inline"
+                                width="5rem"
+                                visible="{ parts: [{value:'2'}, 'app>/aSelectedGroupIds'], 
+                                            formatter: '.onFormatColumnVisibility' }"
+                            >
+                                <Text text="{app>/userName2}" />
+                            </Column>
+                            <Column
+                                minScreenWidth="Tablet"
+                                demandPopin="true"
+                                popinDisplay="Inline"
+                                width="5rem"
+                                visible="{ parts: [{value:'3'}, 'app>/aSelectedGroupIds'], 
+                                            formatter: '.onFormatColumnVisibility' }"
+                            >
+                                <Text text="{app>/userName3}" />
+                            </Column>
+                            <Column
+                                minScreenWidth="Tablet"
+                                demandPopin="true"
+                                popinDisplay="Inline"
+                                width="5rem"
+                                visible="{ parts: [{value:'4'}, 'app>/aSelectedGroupIds'], 
+                                            formatter: '.onFormatColumnVisibility' }"
+                            >
+                                <Text text="{app>/userName4}" />
+                            </Column>
+                            <Column
+                                minScreenWidth="Tablet"
+                                demandPopin="true"
+                                popinDisplay="WithoutHeader"
+                                width="auto"
+                                importance="High"
+                            >
+                                <Text text="{i18n>stampPoint}" />
                             </Column>
                         </columns>
                         <items>
                             <ColumnListItem type="Active">
                                 <cells>
-                                    <ObjectIdentifier title="{name}" />
                                     <Text text="{number}" />
+                                    <CheckBox
+                                        enabled="false"
+                                        selected="{ parts: [{value:'0'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                                    formatter: '.onFormatGroupSelected' }"
+                                    />
+                                    <CheckBox
+                                        enabled="false"
+                                        selected="{ parts: [{value:'1'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                                    formatter: '.onFormatGroupSelected' }"
+                                    />
+                                    <CheckBox
+                                        enabled="false"
+                                        selected="{ parts: [{value:'2'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                                    formatter: '.onFormatGroupSelected' }"
+                                    />
+                                    <CheckBox
+                                        enabled="false"
+                                        selected="{ parts: [{value:'3'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                                    formatter: '.onFormatGroupSelected' }"
+                                    />
+                                    <CheckBox
+                                        enabled="false"
+                                        selected="{ parts: [{value:'4'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                                    formatter: '.onFormatGroupSelected' }"
+                                    />
+                                    <ObjectIdentifier title="{name}" />
                                 </cells>
                             </ColumnListItem>
                         </items>

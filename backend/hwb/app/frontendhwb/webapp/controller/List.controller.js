@@ -2,12 +2,14 @@ sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     'sap/m/MessageToast',
     "sap/ui/core/Fragment",
-    "sap/ui/model/json/JSONModel"
+    "sap/ui/model/json/JSONModel",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, MessageToast, Fragment, JSONModel) {
+    function (Controller, MessageToast, Fragment, JSONModel, Filter, FilterOperator) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.List", {
@@ -17,7 +19,30 @@ sap.ui.define([
             },
             onAfterRendering: function () {
                 this.getView().byId("navButtonListId").setType("Emphasized");
+                this.attachGroupChange();
             },
+
+            attachGroupChange: function () {
+                this.getModel("app").attachPropertyChange((oEvent) => {
+                    if (oEvent.getParameter("path") == "/aSelectedGroupIds") {
+                        // Retrieve the updated property from the model
+                        let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+                        aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup)); // create copy
+                        let currentUser = this.getModel("app").getProperty("/currentUser");
+                        aSelectedGroup.push(currentUser.principal);
+
+                        // Create binding filter for selected groups
+                        let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
+
+                        // Apply filter to binding
+                        const oBinding = this.byId("StampingsTable").getBinding("items");
+                        if (oBinding) {
+                            oBinding.filter(aSelectedGroup.length ? oFilter : null);
+                        }
+                    }
+                });
+            },
+
             disableSelectAll() {
                 // hacky workaround, use custom control later:
                 //https://stackoverflow.com/questions/51324035/how-to-hide-select-all-checkbox-from-table
@@ -167,7 +192,7 @@ sap.ui.define([
             getWitchTrailPercentage: function (aStampedNumbers) {
                 let aWitchTrailRequiredStampsWithoutSpecific = this.aWitchTrailRequiredStamps.filter(s => s != "69" && s != "140");
                 const applicableStampings = aStampedNumbers
-                    
+
                     .filter(stamped => aWitchTrailRequiredStampsWithoutSpecific.includes(stamped));
 
                 let sStampedForRequiredCount = Math.min(applicableStampings.length, 9);
@@ -249,7 +274,37 @@ sap.ui.define([
             onStampNavigatePress: function (oEvent) {
                 const sId = oEvent.getSource().data("ID");
                 this.getRouter().navTo("MapWithPOI", { idPOI: sId });
-            }
+            },
 
+            onFormatColumnVisibility: function (nIndex, aSelectedGroupIds) {
+                const result = aSelectedGroupIds?.length >= nIndex + 1;
+                if (result) {
+                    const sPrincipal = aSelectedGroupIds[nIndex];
+                    this.addColumnName(nIndex, sPrincipal);
+                }
+                return result;
+            },
+
+            addColumnName: function (nIndex, sPrincipal) {
+                const aFilters = [new Filter("principal", FilterOperator.EQ, sPrincipal)];
+                this.getModel().read("/Users", {
+                    filters: aFilters,
+                    success: function (oData) {
+                        this.getModel("app").setProperty("/userName" + nIndex, oData.results[0].name);
+                    }.bind(this),
+                    error: function (oError) {
+                        MessageToast.show(this.getText("error"));
+                    }
+                });
+            },
+
+            onFormatGroupSelected: function (index, aSelectedGroupIds, number, stampedUserIds, stampedUsers) {
+                //console.log(`index: ${index}, number: ${number}, aSelectedGroupIds: ${JSON.stringify(aSelectedGroupIds)}, stampedUserIds: ${JSON.stringify(stampedUserIds)}, stampedUsers: ${JSON.stringify(stampedUsers)}`);
+                if (!aSelectedGroupIds || !aSelectedGroupIds.length) {
+                    return false;
+                }
+                const sPrincipal = aSelectedGroupIds[index];
+                return stampedUserIds.includes(sPrincipal);
+            },
         });
     });
