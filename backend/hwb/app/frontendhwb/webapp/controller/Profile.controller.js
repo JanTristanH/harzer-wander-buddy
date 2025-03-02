@@ -1,11 +1,15 @@
 sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     "sap/m/MessageToast",
-    "sap/ui/core/Fragment"
+    "sap/ui/core/Fragment",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
 ], function (
     Controller,
     MessageToast,
-    Fragment
+    Fragment,
+    Filter,
+    FilterOperator
 ) {
     "use strict";
 
@@ -20,7 +24,35 @@ sap.ui.define([
             this.getModel("app").setProperty("/backendUrl", window.location.origin);
             const sUserID = oEvent.getParameter("arguments").userId;
             this.sPath = "/Users(guid'" + sUserID + "')";
-            this.getView().bindElement(this.sPath);
+            this.sUserID = sUserID;
+            this.getView().bindElement({
+                path: this.sPath,
+                events: {
+                    dataReceived: function () {
+                        this.updateTableFilters();
+                    }.bind(this)
+                }
+            });
+
+            if (this.getModel().getProperty(this.sPath + "/principal")) {
+                // data received event is not triggered if data is already loaded
+                this.updateTableFilters();
+            }
+
+        },
+
+        updateTableFilters: function () {
+            const currentUser = this.getModel("app").getProperty("/currentUser");
+            const aSelectedGroup = [currentUser.principal, this.getModel().getProperty(this.sPath + "/principal")];
+
+            // Create binding filter for selected groups
+            let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
+
+            // Apply filter to binding
+            const oBinding = this.byId("idStampingsProfileTable").getBinding("items");
+            if (oBinding) {
+                oBinding.filter(aSelectedGroup.length ? oFilter : null);
+            }
         },
 
         onNameChange: function (oEvent) {
@@ -89,8 +121,8 @@ sap.ui.define([
             // create new entity as a put target
             this.getModel().createEntry("/Attachments", {
                 properties: {
-                    filename : oFileUploader.getValue(),
-                    mimeType : oFileUploader.getMimeType()
+                    filename: oFileUploader.getValue(),
+                    mimeType: oFileUploader.getMimeType()
                 },
                 success: function (oData) {
                     this.getModel("app").setProperty("/MediaID", oData.ID);
@@ -116,7 +148,38 @@ sap.ui.define([
                     MessageToast.show(this.getText("error"));
                 }.bind(this)
             });
-        }
+        },
+
+        // Table relevant methods
+        onStampNavigatePress: function (oEvent) {
+            const sId = oEvent.getSource().data("ID");
+            this.getRouter().navTo("MapWithPOI", { idPOI: sId });
+        },
+
+        onStampingsTableUpdateFinished: function (oEvent) {
+            const sPrincipal = this.getModel().getProperty(this.sPath + "/principal");
+            let count = 0;
+            const aItems = oEvent.getSource().getItems();
+            for (let i = 0; i < aItems.length; i++) {
+                if (aItems[i].getBindingContext().getProperty("stampedUserIds").includes(sPrincipal)) {
+                    count++;
+                }
+            }
+            this.getModel("app").setProperty("/stampedCount", count);
+
+        },
+
+        onFormatSelectedForUser: function (aSelectedGroupIds, sPrincipal) {
+            const oContext = this.getView().getBindingContext();
+            if (!oContext) {
+                return false;
+            }
+            sPrincipal = sPrincipal ?? oContext.getProperty("principal");
+            if (!aSelectedGroupIds || !aSelectedGroupIds.length) {
+                return false;
+            }
+            return aSelectedGroupIds.includes(sPrincipal);
+        },
 
     });
 });

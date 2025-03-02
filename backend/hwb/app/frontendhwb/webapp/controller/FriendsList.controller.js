@@ -79,7 +79,6 @@ sap.ui.define([
             // Get the binding path for the selected friend.
             var sFriendshipId = oContext.getObject().FriendshipID;
 
-            // Access the model and remove the entity.
             var oModel = this.getView().getModel();
             oModel.remove(`/Friendships(${sFriendshipId})`, {
                 success: function () {
@@ -90,6 +89,17 @@ sap.ui.define([
                     MessageToast.show(this.getText("errorRemovingFriend"));
                 }
             });
+        },
+
+        onNavToFriendPress: function (oEvent) {
+            var oContext = oEvent.getSource().getBindingContext();
+            if (!oContext) {
+                MessageToast.show("No friend context found.");
+                return;
+            }
+
+            const userId = oContext.getObject().ID;
+            this.getRouter().navTo("Profile", { userId });
         },
 
         onAcceptPendingFriendshipRequest: function (oEvent) {

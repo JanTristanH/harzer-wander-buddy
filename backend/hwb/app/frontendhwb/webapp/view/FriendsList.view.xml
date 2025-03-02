@@ -47,7 +47,6 @@
                                         width="100%"
                                         class="sapUiTinyMargin"
                                     >
-                                        <!-- Friend Info: Avatar + Name -->
                                         <HBox alignItems="Center">
                                             <Avatar
                                                 src="{picture}"
@@ -59,9 +58,13 @@
                                                 class="sapUiTinyMargin"
                                             />
                                         </HBox>
-                                        <!-- Friend Action Buttons -->
                                         <HBox>
-                                            <!-- Add Friend Button (visible when not friends) -->
+                                            <Button
+                                                icon="sap-icon://navigation-right-arrow"
+                                                type="Transparent"
+                                                press="onNavToFriendPress"
+                                                class="sapUiSmallMarginEnd"
+                                            />
                                             <Button
                                                 icon="sap-icon://add"
                                                 type="Transparent"
@@ -69,7 +72,6 @@
                                                 press="onAddFriend"
                                                 class="sapUiSmallMarginEnd"
                                             />
-                                            <!-- Remove Friend Button (visible when already friends) -->
                                             <Button
                                                 icon="sap-icon://delete"
                                                 type="Transparent"

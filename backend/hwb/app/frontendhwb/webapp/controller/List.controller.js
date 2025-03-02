@@ -298,7 +298,7 @@ sap.ui.define([
                 });
             },
 
-            onFormatGroupSelected: function (index, aSelectedGroupIds, number, stampedUserIds, stampedUsers) {
+            onFormatGroupSelected: function (index, aSelectedGroupIds, stampedUserIds) {
                 //console.log(`index: ${index}, number: ${number}, aSelectedGroupIds: ${JSON.stringify(aSelectedGroupIds)}, stampedUserIds: ${JSON.stringify(stampedUserIds)}, stampedUsers: ${JSON.stringify(stampedUsers)}`);
                 if (!aSelectedGroupIds || !aSelectedGroupIds.length) {
                     return false;

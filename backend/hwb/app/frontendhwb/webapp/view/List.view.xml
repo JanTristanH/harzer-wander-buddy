@@ -144,7 +144,7 @@
                                     />
                                     <CheckBox
                                         enabled="false"
-                                        selected="{ parts: [{value:'4'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                        selected="{ parts: [{value:'4'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
                                                     formatter: '.onFormatGroupSelected' }"
                                     />
                                     <ObjectIdentifier title="{name}" />
