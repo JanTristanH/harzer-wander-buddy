@@ -147,6 +147,7 @@ service api @(requires: 'authenticated-user') {
                     longitude,
                     latitude,
                     name,
+                    orderBy,
                     description,
                     'stamp' as poiType   : String
             }
@@ -156,6 +157,7 @@ service api @(requires: 'authenticated-user') {
                     longitude,
                     latitude,
                     name,
+                    '999' as orderBy,
                     description,
                     'parking' as poiType : String
             };

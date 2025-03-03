@@ -4,12 +4,13 @@ sap.ui.define([
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
     "sap/m/MessageToast",
-    "sap/ui/model/json/JSONModel"
+    "sap/ui/model/json/JSONModel",
+    "sap/ui/model/Sorter"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel) {
+    function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel, Sorter) {
         "use strict";
         const unstampedType = "Error";
         const stampedType = "Success";
@@ -212,7 +213,6 @@ sap.ui.define([
                 for (const sWord of sValue.split(" ")) {
                     aFilters.push(new Filter("name", FilterOperator.Contains, sWord));
                     aFilters.push(new Filter("name", FilterOperator.Contains, sWord.charAt(0).toUpperCase() + sWord.slice(1)));
-
                 }
                 const oFinalFilter = new Filter({
                     filters: aFilters,
@@ -221,7 +221,8 @@ sap.ui.define([
 
                 this.getModel().read("/AllPointsOfInterest", {
                     filters: [oFinalFilter],
-                    success: function (oData) {
+                    sorters: [new Sorter('orderBy')],
+                        success: function (oData) {
                         this.getModel("local").setProperty("/suggestionItems", oData.results.slice(0, 10));
                         oSearchField.suggest();
                     }.bind(this),
