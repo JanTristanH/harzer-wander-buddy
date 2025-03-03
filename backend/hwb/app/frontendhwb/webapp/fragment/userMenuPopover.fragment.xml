@@ -12,6 +12,7 @@
 		<VBox class="sapUiSmallMargin">
 			<!-- ComboBox for Friends -->
 			<MultiComboBox
+				id="idGroupsMultiComboBox"
 				placeholder="{i18n>chooseGroup}"
 				selectedKeys="{app>/aSelectedGroupIds}"
 				selectionFinish="onSelectionFinish"

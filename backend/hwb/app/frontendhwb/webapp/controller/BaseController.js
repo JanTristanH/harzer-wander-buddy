@@ -26,7 +26,7 @@ sap.ui.define([
         },
 
         onMyAvatarPress: function (oEvent) {
-            var oEventSource = oEvent.getSource();
+            var oEventSource = oEvent?.getSource() ?? this.oMyAvatar;
             this.oMyAvatar = oEventSource;
             var bActive = this.oMyAvatar.getActive();
 
@@ -220,10 +220,6 @@ sap.ui.define([
                 (/iPad|iPhone|iPod/.test(navigator.userAgent))
                 window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`); else /* else use Google */
                 window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
-        },
-
-        onOpenGroupManagement: function() {
-
         },
 
         loadTourTravelTime: function (sTourId, successCallback) {

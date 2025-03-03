@@ -18,6 +18,7 @@
                 press="onPressOpenFiltersMenu"
             />
             <core:Fragment
+                id="idCurrentUserAvatarMapInner"
                 fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
                 type="XML"
             />
@@ -38,7 +39,7 @@
                         key="{local>longitude};{local>latitude}"
                     />
                 </SearchField>
-                <Button icon="sap-icon://company-view" press=".onOpenGroupManagement" text="chooseGroup" class="sapUiSmallMargin"/>
+                <Button icon="sap-icon://company-view" press=".onOpenGroupManagement" text="{i18n>group}" class="sapUiSmallMargin"/>
             </Toolbar>
         </subHeader>
         <content>

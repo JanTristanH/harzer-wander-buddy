@@ -422,6 +422,11 @@ sap.ui.define([
             onGeoMapCenterChanged: function (oEvent) {
                 //set last center position in local storage
                 sessionStorage.setItem("lastCenterPosition", oEvent.getParameter("centerPoint"));
+            },
+
+            onOpenGroupManagement: function() {
+                this.oMyAvatar = this.byId("idCurrentUserAvatarMapInner--idMyAvatar");
+                this.onMyAvatarPress();
             }
         });
     });
