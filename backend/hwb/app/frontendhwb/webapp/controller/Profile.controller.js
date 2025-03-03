@@ -25,6 +25,7 @@ sap.ui.define([
             const sUserID = oEvent.getParameter("arguments").userId;
             this.sPath = "/Users(guid'" + sUserID + "')";
             this.sUserID = sUserID;
+            this.getModel().invalidateEntityType("api.Stampboxes"); // force refresh of list
             this.getView().bindElement({
                 path: this.sPath,
                 events: {
@@ -33,11 +34,6 @@ sap.ui.define([
                     }.bind(this)
                 }
             });
-
-            if (this.getModel().getProperty(this.sPath + "/principal")) {
-                // data received event is not triggered if data is already loaded
-                this.updateTableFilters();
-            }
 
         },
 
@@ -65,6 +61,9 @@ sap.ui.define([
         },
 
         onUploadImageDialog: function () {
+            if(this.sUserID != this.getModel("app").getProperty("/currentUser/ID")) {
+                return;
+            }
             if (!this._oDialogImageUpload) {
                 this._pDialogImageUpload = Fragment.load({
                     id: this.getView().getId(),

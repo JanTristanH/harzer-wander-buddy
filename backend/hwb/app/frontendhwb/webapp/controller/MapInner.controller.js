@@ -58,6 +58,7 @@ sap.ui.define([
             onAfterRendering: function () {
                 this.getView().getModel().setSizeLimit(1000);
                 this.attachGroupChange();
+                this.getModel().invalidateEntityType("api.Stampboxes"); // force refresh of list
             },
 
             attachGroupChange: function () {

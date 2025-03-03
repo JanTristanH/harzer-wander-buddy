@@ -101,14 +101,17 @@ This project is configured to run with a postgres.
   - send and accept friend requests ✔️
   - display stamping state of group member on tour (detail) page ✔️
   - Profile Page (with edit for my User) ✔️
-  - navigation to other person
-  - display stamp list of friend and mine
+  - navigation to other Users Profile ✔️
+  - display stamp list of friend and mine ✔️
   - initials for empty picture formatter
 
 ## MVP 2
 
 - share tour with preselected group?
 - badges on profile page
+- last staped on profile
+- authorize friend to stamp for me
+- stamp tour with one button and stamp for whole group
 - open individual travel time in maps or hiking app like komoot
 - add images & descriptions to stamps
 - refactor starting algorithm

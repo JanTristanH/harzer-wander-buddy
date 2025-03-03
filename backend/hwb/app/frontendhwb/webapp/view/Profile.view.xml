@@ -41,6 +41,7 @@
                                             id="idProfileAvatar"
                                             src="{picture}"
                                             displaySize="XL"
+                                            press="onUploadImageDialog"
                                         />
                                         <FlexBox
                                             justifyContent="Center"
@@ -82,7 +83,7 @@
                     <!-- shared stamps -->
                     <uxap:ObjectPageSection
                         titleUppercase="false"
-                        title="{i18n>visitedStamps}"
+                        title="{i18n>stampPoints}"
                     >
                         <uxap:subSections>
                             <uxap:ObjectPageSubSection>
