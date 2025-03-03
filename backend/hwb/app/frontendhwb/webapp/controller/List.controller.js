@@ -20,6 +20,8 @@ sap.ui.define([
             onAfterRendering: function () {
                 this.getView().byId("navButtonListId").setType("Emphasized");
                 this.attachGroupChange();
+                this.getModel().invalidateEntityType("api.Stampboxes"); // force refresh of list
+                this.getModel().refresh();
             },
 
             attachGroupChange: function () {

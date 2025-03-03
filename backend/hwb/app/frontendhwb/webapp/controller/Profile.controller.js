@@ -37,7 +37,8 @@ sap.ui.define([
                     }.bind(this)
                 }
             });
-
+            this.getModel().refresh();
+            
         },
 
         updateTableFilters: function () {
