@@ -13,6 +13,7 @@ sap.ui.define([
         "use strict";
         const unstampedType = "Error";
         const stampedType = "Success";
+        const nZoomLevelLabelThreshold = 16;
 
         return Controller.extend("hwb.frontendhwb.controller.MapInner", {
             itemCache: [],
@@ -23,6 +24,8 @@ sap.ui.define([
             _oMap: {},
             onInit: function () {
                 Controller.prototype.onInit.apply(this, arguments);
+                this.getModel().setSizeLimit(1000);
+                this.initializeAppModel();
 
                 this._oMap = this.byId("map");
                 if (!this._oMap) {
@@ -44,10 +47,6 @@ sap.ui.define([
                 let sLastCenterPosition = sessionStorage.getItem("lastCenterPosition");
                 if (sLastCenterPosition) {
                     this._oMap.setCenterPosition(sLastCenterPosition);
-                    let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? 16;
-                    this._oMap.setZoomlevel(parseInt(sLastZoomLevel, 10));
-                    //wait for map to render
-                    setTimeout(() => this.onToggleLables(parseInt(sLastZoomLevel, 10) >= 16), 1000);
                     // create current location marker
                     this.onLocateMePress(null, false);
                 } else {
@@ -55,8 +54,16 @@ sap.ui.define([
                 }
             },
 
+            initializeAppModel: function () {
+                let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? nZoomLevelLabelThreshold;
+                this.getModel("app").setProperty("/zoomlevel", parseInt(sLastZoomLevel));
+                this.getModel("app").setProperty("/bShowLabels", true);
+                this.getModel("app").setProperty("/bShowParkingSpots", true);
+                this.getModel("app").setProperty("/bShowStampedSpots", true);
+                this.getModel("app").setProperty("/bShowUnStampedSpots", true);
+            },
+
             onAfterRendering: function () {
-                this.getView().getModel().setSizeLimit(1000);
                 this.attachGroupChange();
                 this.getModel().invalidateEntityType("api.Stampboxes"); // force refresh of list
             },
@@ -84,7 +91,7 @@ sap.ui.define([
 
             onGeoMapZoomChanged: function (oEvent) {
                 let nZoomLevel = oEvent.getParameter("zoomLevel");
-                this.onToggleLables(nZoomLevel >= 16);
+                this.getModel("app").setProperty("/zoomlevel", parseInt(nZoomLevel, 10));
                 // save zoom level in session storage
                 sessionStorage.setItem("lastZoomLevel", nZoomLevel);
             },
@@ -109,96 +116,11 @@ sap.ui.define([
                 });
             },
 
-            onToggleLabelsCheckBox: function (oEvent) {
-                this.onToggleLables(oEvent.getSource().getSelected());
-            },
-
-            onNotVisitedStampsCheckkBoxSelect: function (oEvent) {
-                this.toggleUnStampedVisibility(oEvent.getSource().getSelected());
-            },
-
-            onVisitedStampsCheckkBoxSelect: function (oEvent) {
-                this.toggleStampedVisibility(oEvent.getSource().getSelected());
-            },
-            onToggleLables: function (bVisible) {
-
-                let aItems = [...this.byId("idAllPointsOfInterestsSpots").getItems()];
-                const oParkingSpots = this.byId("idParkingSpotsSpots");
-                oParkingSpots ? aItems.push(...oParkingSpots.getItems()) : null;
-
-                aItems.forEach(e => {
-                    let sText = e.getProperty("labelText");
-                    sText = bVisible ? e.data("labelTextHidden") : "";
-                    e.setProperty("labelText", sText);
-                });
-            },
-            _createInitialItemCache: function () {
-                //TODO this has to be reset on model Change urgh
-                this.itemCache = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
-            },
-            _getItemCache: function () {
-                return this.itemCache;
-            },
-            _clearItemCache: function () {
-                this.itemCache = [];
-            },
-            _resetItemsForSpots: function (spots) {
-                spots.removeAllItems();
-                this._getItemCache().forEach(item => {
-                    spots.addItem(item);
-                });
-            },
-            onToggleStampedSpots: function () {
-                //create item cache with unmodified items if not existent
-                this._getItemCache().length ? true : this._createInitialItemCache();
-
-                let spots = this.getView().byId("idAllPointsOfInterestsSpots");
-                this._resetItemsForSpots(spots);
-                spots.getItems()
-                    .filter(e => e.getProperty("type") !== unstampedType)
-                    .map(e => spots.removeItem(e))
-                //TODO reset items from global model
-            },
-            onShowGreens: function () {
-                //create item cache with unmodified items if not existent
-                this._getItemCache().length ? true : this._createInitialItemCache();
-
-                let spots = this.getView().byId("idAllPointsOfInterestsSpots")
-                this._resetItemsForSpots(spots);
-                spots.getItems()
-                    .filter(e => e.getProperty("type") === unstampedType)
-                    .map(e => spots.removeItem(e))
-                //TODO reset items from global model
-            },
             onShowAllPress: function () {
-                this.byId("idToggleLabelCheckBox").setSelected(true);
-                this.byId("idToggleStampedCheckBox").setSelected(true);
-                this.byId("idToggleUnstampedCheckBox").setSelected(true);
-                this.byId("idParkingSpaceCheckBox").setSelected(true);
-                this.onToggleLables(true);
-                this.toggleStampedVisibility(true);
-                this.toggleUnStampedVisibility(true);
-                this.toggleParkingSpaceVisibility(true);
-            },
-
-            onParkingSpaceCheckBox: function (oEvent) {
-                this.toggleParkingSpaceVisibility(oEvent.getSource().getSelected());
-            },
-
-            toggleParkingSpaceVisibility: function (bVisible) {
-                let oSpots = this.byId("idParkingSpotsSpots");
-                //create cache with unmodified items if not existent
-                if (this._aParkingSpaceCache.length == 0) {
-                    this._aParkingSpaceCache = oSpots.getItems();
-                }
-
-                if (bVisible) {
-                    //show parking
-                    this._aParkingSpaceCache.forEach(item => oSpots.addItem(item));
-                } else {
-                    //hide parking spaces
-                    oSpots.getItems().forEach(e => oSpots.removeItem(e));
-                }
+                this.getModel("app").setProperty("bShowLabels", true);
+                this.getModel("app").setProperty("bShowParkingSpots", true);
+                this.getModel("app").setProperty("/bShowStampedSpots", true);
+                this.getModel("app").setProperty("/bShowUnStampedSpots", true);
             },
 
             toggleStampedVisibility: function (bVisible) {
@@ -214,22 +136,6 @@ sap.ui.define([
                 } else {
                     //hide stamped
                     oSpots.getItems().filter(e => e.getProperty("type") === stampedType).forEach(e => oSpots.removeItem(e));
-                }
-            },
-
-            toggleUnStampedVisibility: function (bVisible) {
-                let oSpots = this.getView().byId("idAllPointsOfInterestsSpots");
-                //create cache with unmodified items if not existent
-                if (this._aUnStampedCache.length == 0) {
-                    this._aUnStampedCache = oSpots.getItems().filter(e => e.getProperty("type") === unstampedType);
-                }
-
-                if (bVisible) {
-                    //show stamped
-                    this._aUnStampedCache.forEach(item => oSpots.addItem(item));
-                } else {
-                    //hide stamped
-                    oSpots.getItems().filter(e => e.getProperty("type") === unstampedType).forEach(e => oSpots.removeItem(e));
                 }
             },
 
@@ -263,7 +169,11 @@ sap.ui.define([
                 }
             },
 
-            onFormatBoxType: function (oBox) {
+            onFormatBoxType: function (oBox, bShowStampedSpots, bShowUnStampedSpots, hasVisited) {
+                const bShouldDisplayByFilter = (hasVisited && bShowStampedSpots) || (!hasVisited && bShowUnStampedSpots);
+                if (!bShouldDisplayByFilter) {
+                    return 'Hidden'
+                }
                 if (oBox.groupSize == oBox.totalGroupStampings) {
                     return 'Success';
                 } else if (oBox.totalGroupStampings == 0) {
@@ -271,6 +181,23 @@ sap.ui.define([
                 } else {
                     return 'Warning';
                 }
+            },
+
+            onFormatLabelText: function (sName, nZoomLevel, bShowLabels, bShowSpot) {
+                return bShowSpot && bShowLabels && nZoomLevel >= 16 ? sName : "";
+            },
+
+            onFormatStampLabelText: function (sName, nZoomLevel, bShowLabels, bShowStampedSpots, bShowUnStampedSpots, hasVisited) {
+                const bShouldDisplayByFilter = (hasVisited && bShowStampedSpots) || (!hasVisited && bShowUnStampedSpots);
+                return bShouldDisplayByFilter && bShowLabels && nZoomLevel >= 16 ? sName : "";
+            },
+
+            onFormatBooleanToSemanticType: function (bVisible) {
+                return bVisible ? 'Default' : 'Hidden';
+            },
+
+            onFormatBooleanToSemanticType: function (bVisible) {
+                return bVisible ? 'Default' : 'Hidden';
             },
 
             onSpotContextMenu: function (oEvent) {

@@ -23,7 +23,7 @@
             />
         </headerContent>
         <subHeader>
-            <OverflowToolbar>
+            <Toolbar>
                 <SearchField
                     id="idMapSearchField"
                     showSearchButton="false"
@@ -31,13 +31,15 @@
                     search=".onSearchFieldSearch"
                     suggest=".onSearchFieldSuggest"
                     suggestionItems="{local>/suggestionItems}"
+                    class="sapUiSmallMargin"
                 >
                     <SuggestionItem
                         description="{local>name}"
                         key="{local>longitude};{local>latitude}"
                     />
                 </SearchField>
-            </OverflowToolbar>
+                <Button icon="sap-icon://company-view" press=".onOpenGroupManagement" text="chooseGroup" class="sapUiSmallMargin"/>
+            </Toolbar>
         </subHeader>
         <content>
             <l:FixFlex class="fixFlexVertical">

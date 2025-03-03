@@ -76,7 +76,7 @@ sap.ui.define([
         },
 
         getModel: function (sName) {
-            return this.getView().getModel(sName);
+            return this.getView().getModel(sName) ?? this.getOwnerComponent().getModel(sName);
         },
 
         getText: function (sKey) {
@@ -220,6 +220,10 @@ sap.ui.define([
                 (/iPad|iPhone|iPod/.test(navigator.userAgent))
                 window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`); else /* else use Google */
                 window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
+        },
+
+        onOpenGroupManagement: function() {
+
         },
 
         loadTourTravelTime: function (sTourId, successCallback) {
