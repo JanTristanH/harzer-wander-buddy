@@ -79,23 +79,22 @@ This project is configured to run with a postgres.
 - call `addElevationToAllTravelTimes` on live system ✔️
 - /policies/terms-of-service & /policies/privacy-policy => maintain on website ✔️
 - maintain cookie policy (currently only tecnical cookie, so not needed ✔️)
-- are you sure when deleting stampings
-- Filtering on Map view -> Goethe weg usw.
-- upgrade developer to production key
+- Filtering on Map view -> Goethe weg usw. ❌
+- upgrade developer to production key ❌
 - minimum authority
   - admin role ✔️
-  - only edit my own tours ❌
-  - add new audience to prod docker
-- show user profile picture
+  - only edit my own tours ✔️
+  - add new audience to prod docker ?❌?
+- show user profile picture ✔️
 - set up social media ✔️
-- set up jeykell pages for seo ✔️
+- set up jeykell pages for seo ✔️ -> indexing does not work as intended
 - trackability total users / users active in the last x days (✔️ Good enough for start on auth0)
 - UI overhaul II -> fix up design
+  - mainly tour handling
 
 # Last stretch before rewrite 
-- support maps.me navigation
 - show personalized stamp count in addition to total on tour page ✔️
-- Friends feature
+- Friends feature ✔️
   - show group status on map ✔️
   - show group status on transient tour ✔️ (semi polished)
   - send and accept friend requests ✔️
@@ -103,14 +102,21 @@ This project is configured to run with a postgres.
   - Profile Page (with edit for my User) ✔️
   - navigation to other Users Profile ✔️
   - display stamp list of friend and mine ✔️
-  - initials for empty picture formatter
+  - initials for empty picture formatter ✔️
+- remove event handler in tour view
+- are you sure when deleting stampings
+- support maps.me navigation
+  - navigation on desktop
+- refactor scroll container on POI card / nearby stamps
 
 ## MVP 2
 
+- authorize friend to stamp for me
+- friends can edit my tour + edit as own tour
+- more graceful failing of edit tour and don't allow in the first place 
 - share tour with preselected group?
 - badges on profile page
-- last staped on profile
-- authorize friend to stamp for me
+- last stamped on profile
 - stamp tour with one button and stamp for whole group
 - open individual travel time in maps or hiking app like komoot
 - add images & descriptions to stamps

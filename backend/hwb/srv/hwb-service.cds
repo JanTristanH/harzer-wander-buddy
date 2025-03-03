@@ -49,7 +49,7 @@ service api @(requires: 'authenticated-user') {
         },
         {
             grant: '*',
-            to: 'admin'
+            to   : 'admin'
         }
     ]
     entity ParkingSpots                       as projection on db.ParkingSpots;
@@ -74,7 +74,7 @@ service api @(requires: 'authenticated-user') {
             name,
             picture,
             false as isFriend : Boolean,
-            '[]' as roles: String
+            '[]'  as roles    : String
         };
 
     function getCurrentUser()                                       returns Users;
@@ -85,7 +85,7 @@ service api @(requires: 'authenticated-user') {
             to   : 'authenticated-user'
         },
         {
-            grant: 'WRITE',
+            grant: 'CREATE',
             to   : 'authenticated-user'
         },
         {
@@ -93,8 +93,8 @@ service api @(requires: 'authenticated-user') {
             where: 'createdBy = $user'
         }
     ]
-    entity Attachments as projection on db.Attachments_local;
- 
+    entity Attachments                        as projection on db.Attachments_local;
+
     @restrict: [{
         grant: 'READ',
         where: 'createdBy = $user'
@@ -133,13 +133,17 @@ service api @(requires: 'authenticated-user') {
     entity RouteCalculationRequest            as projection on db.RouteCalculationRequest;
 
     @restrict: [
-        {grant: 'READ'},
+        {grant: 'READ'}, // Allow all authenticated users to read
         {
-            grant: 'WRITE',
+            grant: 'CREATE',
             to   : 'authenticated-user'
         },
         {
             grant: 'UPDATE',
+            where: 'createdBy = $user'
+        },
+        {
+            grant: 'DELETE',
             where: 'createdBy = $user'
         }
     ]
@@ -167,7 +171,7 @@ service api @(requires: 'authenticated-user') {
                     longitude,
                     latitude,
                     name,
-                    '999' as orderBy,
+                    '999'     as orderBy,
                     description,
                     'parking' as poiType : String
             };
@@ -191,25 +195,25 @@ service api @(requires: 'authenticated-user') {
         {
             key Stampboxes.ID,
             key NeighborsBox.ID     as NeighborsID,
-            Stampboxes.number,
-            NeighborsBox.number as NeighborsNumber,
-            NeighborsBox.latitude,
-            NeighborsBox.longitude,
-            cast(
-                SQRT(
-                    POW(
-                        111.2 * (
-                            NeighborsBox.latitude - Stampboxes.latitude
-                        ), 2
-                    )+POW(
-                        111.2 * (
-                            Stampboxes.longitude - NeighborsBox.longitude
-                        ) * COS(
-                            NeighborsBox.latitude / 57.3
-                        ), 2
-                    )
-                ) as                            Double
-            )                   as distanceKm : Double
+                Stampboxes.number,
+                NeighborsBox.number as NeighborsNumber,
+                NeighborsBox.latitude,
+                NeighborsBox.longitude,
+                cast(
+                    SQRT(
+                        POW(
+                            111.2 * (
+                                NeighborsBox.latitude - Stampboxes.latitude
+                            ), 2
+                        )+POW(
+                            111.2 * (
+                                Stampboxes.longitude - NeighborsBox.longitude
+                            ) * COS(
+                                NeighborsBox.latitude / 57.3
+                            ), 2
+                        )
+                    ) as                            Double
+                )                   as distanceKm : Double
 
         }
         // where
@@ -226,22 +230,22 @@ service api @(requires: 'authenticated-user') {
         {
             key Stampboxes.ID,
             key Neighbors.ID as NeighborsID,
-            Stampboxes.number,
-            Neighbors.latitude,
-            Neighbors.longitude,
-            SQRT(
-                POW(
-                    111.2 * (
-                        Neighbors.latitude - Stampboxes.latitude
-                    ), 2
-                )+POW(
-                    111.2 * (
-                        Stampboxes.longitude - Neighbors.longitude
-                    ) * COS(
-                        Neighbors.latitude / 57.3
-                    ), 2
-                )
-            )            as distanceKm : Double
+                Stampboxes.number,
+                Neighbors.latitude,
+                Neighbors.longitude,
+                SQRT(
+                    POW(
+                        111.2 * (
+                            Neighbors.latitude - Stampboxes.latitude
+                        ), 2
+                    )+POW(
+                        111.2 * (
+                            Stampboxes.longitude - Neighbors.longitude
+                        ) * COS(
+                            Neighbors.latitude / 57.3
+                        ), 2
+                    )
+                )            as distanceKm : Double
 
         }
         order by
@@ -256,22 +260,22 @@ service api @(requires: 'authenticated-user') {
         {
             key Parking.ID,
             key NeighborsBox.ID     as NeighborsID,
-            NeighborsBox.number as NeighborsNumber,
-            NeighborsBox.latitude,
-            NeighborsBox.longitude,
-            SQRT(
-                POW(
-                    111.2 * (
-                        NeighborsBox.latitude - Parking.latitude
-                    ), 2
-                )+POW(
-                    111.2 * (
-                        Parking.longitude - NeighborsBox.longitude
-                    ) * COS(
-                        NeighborsBox.latitude / 57.3
-                    ), 2
-                )
-            )                   as distanceKm : Double
+                NeighborsBox.number as NeighborsNumber,
+                NeighborsBox.latitude,
+                NeighborsBox.longitude,
+                SQRT(
+                    POW(
+                        111.2 * (
+                            NeighborsBox.latitude - Parking.latitude
+                        ), 2
+                    )+POW(
+                        111.2 * (
+                            Parking.longitude - NeighborsBox.longitude
+                        ) * COS(
+                            NeighborsBox.latitude / 57.3
+                        ), 2
+                    )
+                )                   as distanceKm : Double
 
         }
         // where
@@ -288,21 +292,21 @@ service api @(requires: 'authenticated-user') {
         {
             key Parking.ID,
             key Neighbors.ID as NeighborsID,
-            Neighbors.latitude,
-            Neighbors.longitude,
-            SQRT(
-                POW(
-                    111.2 * (
-                        Neighbors.latitude - Parking.latitude
-                    ), 2
-                )+POW(
-                    111.2 * (
-                        Parking.longitude - Neighbors.longitude
-                    ) * COS(
-                        Neighbors.latitude / 57.3
-                    ), 2
-                )
-            )            as distanceKm : Double
+                Neighbors.latitude,
+                Neighbors.longitude,
+                SQRT(
+                    POW(
+                        111.2 * (
+                            Neighbors.latitude - Parking.latitude
+                        ), 2
+                    )+POW(
+                        111.2 * (
+                            Parking.longitude - Neighbors.longitude
+                        ) * COS(
+                            Neighbors.latitude / 57.3
+                        ), 2
+                    )
+                )            as distanceKm : Double
 
         }
         order by
@@ -317,37 +321,37 @@ service api @(requires: 'authenticated-user') {
         {
             key CalculationRequest.ID,
             key Neighbors.ID as NeighborsID,
-            cast(
-                CalculationRequest.longitude as             Double
-            )            as CalculationRequestLongitude,
-            cast(
-                CalculationRequest.latitude as              Double
-            )            as CalculationRequestLatitude,
-            Neighbors.latitude,
-            Neighbors.longitude,
-            SQRT(
-                POW(
-                    111.2 * (
-                        cast(
-                            Neighbors.latitude as           Double
-                        )-cast(
-                            CalculationRequest.latitude as  Double
-                        )
-                    ), 2
-                )+POW(
-                    111.2 * (
-                        cast(
-                            CalculationRequest.longitude as Double
-                        )-cast(
-                            Neighbors.longitude as          Double
-                        )
-                    ) * COS(
-                        cast(
-                            Neighbors.latitude as           Double
-                        ) / 57.3
-                    ), 2
-                )
-            )            as distanceKm :                    Double
+                cast(
+                    CalculationRequest.longitude as             Double
+                )            as CalculationRequestLongitude,
+                cast(
+                    CalculationRequest.latitude as              Double
+                )            as CalculationRequestLatitude,
+                Neighbors.latitude,
+                Neighbors.longitude,
+                SQRT(
+                    POW(
+                        111.2 * (
+                            cast(
+                                Neighbors.latitude as           Double
+                            )-cast(
+                                CalculationRequest.latitude as  Double
+                            )
+                        ), 2
+                    )+POW(
+                        111.2 * (
+                            cast(
+                                CalculationRequest.longitude as Double
+                            )-cast(
+                                Neighbors.longitude as          Double
+                            )
+                        ) * COS(
+                            cast(
+                                Neighbors.latitude as           Double
+                            ) / 57.3
+                        ), 2
+                    )
+                )            as distanceKm :                    Double
 
         }
         order by
@@ -358,20 +362,20 @@ service api @(requires: 'authenticated-user') {
 
     entity tree                               as
             select from db.TravelTimes as TravelTimes {
-                fromPoi,
-                toPoi,
+                    fromPoi,
+                    toPoi,
                 key ID,
-                fromPoi as rootPoiID
+                    fromPoi as rootPoiID
             }
         union all
             select from db.TravelTimes as TravelTimes
             inner join db.TravelTimes as tree
                 on TravelTimes.toPoi = tree.fromPoi
             {
-                tree.fromPoi,
-                tree.toPoi,
+                    tree.fromPoi,
+                    tree.toPoi,
                 key tree.ID,
-                '' as rootPoiID
+                    '' as rootPoiID
 
             };
 
