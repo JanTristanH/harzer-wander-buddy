@@ -24,6 +24,14 @@
 			<List>
 				<items>
 				<StandardListItem
+						icon="sap-icon://key-user-settings"
+						title="{i18n>AdminMap}"
+						type="Active"
+						class="sapUiTinyMarginBottom"
+						visible="{parts: ['app>/currentUser/roles'], formatter: '.isAdmin'}"
+						press="onOpenAdminPanelPress" />
+
+				<StandardListItem
 						icon="sap-icon://person-placeholder"
 						title="{i18n>myProfile}"
 						type="Active"

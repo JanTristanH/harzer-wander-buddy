@@ -42,7 +42,16 @@ service api @(requires: 'authenticated-user') {
             '' as stampedUsers         : String // actually an array
         };
 
-    @readonly
+    @restrict: [
+        {
+            grant: 'READ',
+            to   : 'authenticated-user'
+        },
+        {
+            grant: '*',
+            to: 'admin'
+        }
+    ]
     entity ParkingSpots                       as projection on db.ParkingSpots;
 
     @readonly
@@ -64,7 +73,8 @@ service api @(requires: 'authenticated-user') {
             principal,
             name,
             picture,
-            false as isFriend : Boolean
+            false as isFriend : Boolean,
+            '[]' as roles: String
         };
 
     function getCurrentUser()                                       returns Users;

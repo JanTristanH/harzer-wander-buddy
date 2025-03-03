@@ -56,6 +56,12 @@ sap.ui.define([
             this.getRouter().navTo("Profile", {
                 userId: this.getModel("app").getProperty("/currentUser/ID")
             });
+            this._oPopover.close();
+        },
+
+        onOpenAdminPanelPress: function () {
+            this.getRouter().navTo("Admin");
+            this._oPopover.close();
         },
 
         stringToBoolean: function (str) {
@@ -270,7 +276,15 @@ sap.ui.define([
                 return sName;
             }
             return sName.split(' ').map(s => s.charAt(0).toUpperCase()).join("").substring(0,3);
-        }
+        },
+
+        isAdmin: function(roles) {
+            if (!roles) return false;
+            if (Array.isArray(roles)) {
+                return roles.includes("admin");
+            }
+            return roles.split(",").map(role => role.trim()).includes("admin");
+        }        
 
     });
 });
