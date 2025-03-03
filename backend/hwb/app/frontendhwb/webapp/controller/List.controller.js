@@ -42,7 +42,7 @@ sap.ui.define([
                 let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
 
                 // Apply filter to binding
-                const oBinding = this.byId("idAllPointsOfInterestsSpots").getBinding("items");
+                const oBinding = this.byId("StampingsTable").getBinding("items");
                 if (oBinding) {
                     oBinding.filter(aSelectedGroup.length > 1 ? oFilter : null);
                 }
@@ -304,7 +304,6 @@ sap.ui.define([
             },
 
             onFormatGroupSelected: function (index, aSelectedGroupIds, stampedUserIds) {
-                //console.log(`index: ${index}, number: ${number}, aSelectedGroupIds: ${JSON.stringify(aSelectedGroupIds)}, stampedUserIds: ${JSON.stringify(stampedUserIds)}, stampedUsers: ${JSON.stringify(stampedUsers)}`);
                 if (!aSelectedGroupIds || !aSelectedGroupIds.length) {
                     return false;
                 }

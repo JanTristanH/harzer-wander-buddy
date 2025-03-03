@@ -124,22 +124,22 @@
                                     <Text text="{number}" />
                                     <CheckBox
                                         enabled="false"
-                                        selected="{ parts: [{value:'0'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                        selected="{ parts: [{value:'0'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
                                                     formatter: '.onFormatGroupSelected' }"
                                     />
                                     <CheckBox
                                         enabled="false"
-                                        selected="{ parts: [{value:'1'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                        selected="{ parts: [{value:'1'}, 'app>/aSelectedGroupIds','stampedUserIds'], 
                                                     formatter: '.onFormatGroupSelected' }"
                                     />
                                     <CheckBox
                                         enabled="false"
-                                        selected="{ parts: [{value:'2'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                        selected="{ parts: [{value:'2'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
                                                     formatter: '.onFormatGroupSelected' }"
                                     />
                                     <CheckBox
                                         enabled="false"
-                                        selected="{ parts: [{value:'3'}, 'app>/aSelectedGroupIds', 'number', 'stampedUserIds', 'stampedUsers'], 
+                                        selected="{ parts: [{value:'3'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
                                                     formatter: '.onFormatGroupSelected' }"
                                     />
                                     <CheckBox
