@@ -159,7 +159,7 @@ sap.ui.define([
                             oLocalModel.setProperty("/UserLocationLng", oUserLocation.lng);
                             if (bMoveToLocation) {
                                 oLocalModel.setProperty("/centerPosition", `${oUserLocation.lng};${oUserLocation.lat}`);
-                                this._oMap.setCenterPosition(`${oUserLocation.lng};${oUserLocation.lat}`);
+                                this._oMap.zoomToGeoPosition(oUserLocation.lng, oUserLocation.lat, nZoomLevelLabelThreshold);
                             }
                         }.bind(this),
                         function (oError) {
@@ -222,7 +222,7 @@ sap.ui.define([
                 this.getModel().read("/AllPointsOfInterest", {
                     filters: [oFinalFilter],
                     sorters: [new Sorter('orderBy')],
-                        success: function (oData) {
+                    success: function (oData) {
                         this.getModel("local").setProperty("/suggestionItems", oData.results.slice(0, 10));
                         oSearchField.suggest();
                     }.bind(this),
@@ -232,7 +232,8 @@ sap.ui.define([
             onSearchFieldSearch: function (oEvent) {
                 var oItem = oEvent.getParameter("suggestionItem");
                 if (oItem) {
-                    this._oMap.setCenterPosition(oItem.getKey());
+                    const aCords = oItem.getKey().split(";");
+                    this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nZoomLevelLabelThreshold);
                 } else {
                     MessageToast.show("Bitte einen Ort aus der Liste auswählen!");
                 }
@@ -265,7 +266,8 @@ sap.ui.define([
 
             onSpotClick: function (oEvent, bSuppressNavigation) {
                 const oSpot = oEvent.getSource();
-                this._oMap.setCenterPosition(oSpot.getPosition());
+                const aCords = oSpot.getPosition().split(";");
+                this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nZoomLevelLabelThreshold);
 
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
                 if (!oSplitter) return;
@@ -292,14 +294,15 @@ sap.ui.define([
                     });
                 }
 
-                let sCurrentSpotId = oSpot.data("id");
                 let localModel = this.getModel("local");
+                const oPoiObject = oSpot.getBindingContext().getObject();
+                let sCurrentSpotId = oPoiObject.ID;
                 localModel.setProperty("/sCurrentSpotId", sCurrentSpotId);
-                localModel.setProperty("/title", oSpot.data("labelTextHidden"));
-                localModel.setProperty("/description", oSpot.data("description"));
-                localModel.setProperty("/bStampingVisible", this.stringToBoolean(oSpot.data("stamp")));
-                localModel.setProperty("/bStampingEnabled", oSpot.getType() == "Error");
-                localModel.setProperty("/sSelectedSpotLocation", oSpot.getPosition());
+                localModel.setProperty("/title", oPoiObject.name);
+                localModel.setProperty("/description", oPoiObject.description);
+                localModel.setProperty("/bStampingVisible", !!oPoiObject.number);
+                localModel.setProperty("/bStampingEnabled", !oPoiObject.hasVisited);
+                localModel.setProperty("/sSelectedSpotLocation", `${oPoiObject.longitude};${oPoiObject.latitude}`);
                 localModel.setProperty("/oCurrentSpot", this._getPoiById(sCurrentSpotId));
 
                 this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
@@ -426,7 +429,7 @@ sap.ui.define([
                 sessionStorage.setItem("lastCenterPosition", oEvent.getParameter("centerPoint"));
             },
 
-            onOpenGroupManagement: function() {
+            onOpenGroupManagement: function () {
                 this.oMyAvatar = this.byId("idCurrentUserAvatarMapInner--idMyAvatar");
                 this._oPopover.openBy(this.oMyAvatar);
             }
