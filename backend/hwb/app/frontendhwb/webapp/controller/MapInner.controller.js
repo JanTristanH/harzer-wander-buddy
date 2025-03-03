@@ -66,6 +66,7 @@ sap.ui.define([
             onAfterRendering: function () {
                 this.attachGroupChange();
                 this.getModel().invalidateEntityType("api.Stampboxes"); // force refresh of list
+                this.getModel().refresh();
             },
 
             attachGroupChange: function () {
