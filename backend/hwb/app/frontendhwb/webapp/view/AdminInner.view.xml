@@ -14,7 +14,7 @@
     >
         <headerContent>
             <Button
-                icon="sap-icon://menu2"
+                icon="sap-icon://filter"
                 press="onPressOpenFiltersMenu"
             />
         </headerContent>
