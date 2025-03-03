@@ -75,6 +75,13 @@
                                             />
                                         </HBox>
                                     </VBox>
+                                    <Button
+                                        icon="sap-icon://company-view"
+                                        press=".onAddToGroupSelection"
+                                        text="{i18n>addToGroup}"
+                                        class="sapUiSmallMargin"
+                                        visible="{= ${ID} !== ${app>/currentUser/ID} &amp;&amp; !${app>/aSelectedGroupIds}.includes(${principal}) }"
+                                    />
                                 </VBox>
                             </uxap:ObjectPageSubSection>
                         </uxap:subSections>

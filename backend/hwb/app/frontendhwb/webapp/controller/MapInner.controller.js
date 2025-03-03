@@ -426,7 +426,7 @@ sap.ui.define([
 
             onOpenGroupManagement: function() {
                 this.oMyAvatar = this.byId("idCurrentUserAvatarMapInner--idMyAvatar");
-                this.onMyAvatarPress();
+                this._oPopover.openBy(this.oMyAvatar);
             }
         });
     });

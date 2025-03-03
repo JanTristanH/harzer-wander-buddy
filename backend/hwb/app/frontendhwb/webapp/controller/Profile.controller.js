@@ -18,6 +18,9 @@ sap.ui.define([
         onInit: function () {
             Controller.prototype.onInit.apply(this, arguments);
             this.getRouter().getRoute("Profile").attachPatternMatched(this._onRouteMatched, this);
+            if (!this.getModel("app").getProperty("/aSelectedGroupIds")) {
+                this.getModel("app").setProperty("/aSelectedGroupIds", []);
+            }
         },
 
         _onRouteMatched: function (oEvent) {
@@ -61,7 +64,7 @@ sap.ui.define([
         },
 
         onUploadImageDialog: function () {
-            if(this.sUserID != this.getModel("app").getProperty("/currentUser/ID")) {
+            if (this.sUserID != this.getModel("app").getProperty("/currentUser/ID")) {
                 return;
             }
             if (!this._oDialogImageUpload) {
@@ -165,7 +168,6 @@ sap.ui.define([
                 }
             }
             this.getModel("app").setProperty("/stampedCount", count);
-
         },
 
         onFormatSelectedForUser: function (aSelectedGroupIds, sPrincipal) {
@@ -179,6 +181,21 @@ sap.ui.define([
 
             return aSelectedGroupIds.includes(sPrincipal);
         },
+
+        onFormatAddToGroupVisible: function () {
+            const aGroup = this.getModel("app").getProperty("/aSelectedGroupIds");
+            const sPrincipal = this.getModel().getProperty(this.sPath + "/principal");
+            return !aGroup.includes(sPrincipal);
+        },
+
+        onAddToGroupSelection: function () {
+            const sPrincipal = this.getModel().getProperty(this.sPath + "/principal");
+            this.oMyAvatar = this.byId("container-hwb.frontendhwb---Profile--idMyAvatar");
+
+            this._oPopover.openBy(this.oMyAvatar);
+            const oComboBox = this.byId("container-hwb.frontendhwb---Profile--idGroupsMultiComboBox");
+            oComboBox.addSelectedKeys([sPrincipal])
+        }
 
     });
 });
