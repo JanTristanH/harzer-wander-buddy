@@ -10,8 +10,6 @@ sap.ui.define([
         return Controller.extend("hwb.frontendhwb.controller.Routes", {
             onAfterRendering: function () {
                 this.getView().byId("navButtonRoutesId").setType("Emphasized");
-                this.getModel().invalidateEntityType("api.Stampboxes"); // force refresh of list
-                this.getModel().refresh();
             }
         });
     });

@@ -54,7 +54,7 @@ sap.ui.define([
                         // Apply filter to binding
                         const oBinding = this.byId("idTourList").getBinding("items");
                         if (oBinding) {
-                            oBinding.filter(aSelectedGroup.length ? oFilter : null);
+                            oBinding.filter(aSelectedGroup.length > 1 ? oFilter : null);
 
                             oBinding.attachDataReceived((oEvent) => {
                                 const updatedTours = oEvent.getParameter("data").results

@@ -51,7 +51,7 @@ sap.ui.define([
             // Apply filter to binding
             const oBinding = this.byId("idStampingsProfileTable").getBinding("items");
             if (oBinding) {
-                oBinding.filter(aSelectedGroup.length ? oFilter : null);
+                oBinding.filter(aSelectedGroup.length > 1 ?  oFilter : null);
             }
         },
 
