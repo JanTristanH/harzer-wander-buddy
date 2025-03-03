@@ -338,7 +338,7 @@
                                             items="{local>stampedUsers}"
                                         > 
                                             <f:AvatarGroupItem
-                                                initials="{local>name}"
+                                                initials="{parts: ['local>name'], formatter: '.onFormatInitialsByName'}"
                                                 fallbackIcon="sap-icon://person-placeholder"
                                                 src="{local>picture}"
                                                 tooltip="{local>name}"

@@ -260,6 +260,16 @@ sap.ui.define([
                     console.error(oError);
                 }
             });
+        },
+
+        onFormatInitialsByName: function(sName){
+            if(!sName) {
+                return sName;
+            }
+            if(sName.length <= 3) {
+                return sName;
+            }
+            return sName.split(' ').map(s => s.charAt(0).toUpperCase()).join("").substring(0,3);
         }
 
     });

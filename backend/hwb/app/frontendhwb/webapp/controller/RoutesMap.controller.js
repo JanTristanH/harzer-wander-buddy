@@ -2,11 +2,12 @@ sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     "sap/m/ColumnListItem",
     "sap/m/MessageToast",
+    "sap/f/AvatarGroupItem"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, ColumnListItem, MessageToast) {
+    function (Controller, ColumnListItem, MessageToast, AvatarGroupItem) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
@@ -446,8 +447,8 @@ sap.ui.define([
                 }
             
                 return aUsers.map(user => {
-                    return new sap.f.AvatarGroupItem({
-                        initials: user.name ? user.name.charAt(0) : "",
+                    return new AvatarGroupItem({
+                        initials: this.onFormatInitialsByName(user.name),
                         fallbackIcon: "sap-icon://person-placeholder",
                         src: user.picture || "",
                         tooltip: user.name || "Unknown"

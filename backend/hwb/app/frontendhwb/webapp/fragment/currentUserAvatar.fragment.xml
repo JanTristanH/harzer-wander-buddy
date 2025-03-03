@@ -4,6 +4,7 @@
                 <Avatar
                 id="idMyAvatar"
                 src="{app>/currentUser/picture}"
+                initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
                 displaySize="XS"
                 press=".onMyAvatarPress"
                 tooltip="{i18n>profile}"

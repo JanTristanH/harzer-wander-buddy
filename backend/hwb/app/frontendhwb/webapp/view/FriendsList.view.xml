@@ -52,6 +52,7 @@
                                                 src="{picture}"
                                                 displaySize="S"
                                                 class="sapUiSmallMarginEnd"
+                                                initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
                                             />
                                             <Text
                                                 text="{name}"

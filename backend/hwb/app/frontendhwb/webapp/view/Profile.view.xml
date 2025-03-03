@@ -42,6 +42,7 @@
                                             src="{picture}"
                                             displaySize="XL"
                                             press="onUploadImageDialog"
+                                            initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
                                         />
                                         <FlexBox
                                             justifyContent="Center"

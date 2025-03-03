@@ -78,7 +78,7 @@
                         items="{local>/oCurrentSpot/stampedUsers}"
                     >
                         <f:AvatarGroupItem
-                            initials="{local>name}"
+                            initials="{path: 'local>name', formatter: '.onFormatInitialsByName'}"
                             fallbackIcon="sap-icon://person-placeholder"
                             src="{local>picture}"
                             tooltip="{local>name}"
