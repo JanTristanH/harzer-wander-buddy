@@ -12,9 +12,8 @@ sap.ui.define([
      */
     function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel, Sorter) {
         "use strict";
-        const unstampedType = "Error";
-        const stampedType = "Success";
         const nZoomLevelLabelThreshold = 16;
+        const nZoomLevelClickThreshold = 11;
 
         return Controller.extend("hwb.frontendhwb.controller.MapInner", {
             itemCache: [],
@@ -250,7 +249,9 @@ sap.ui.define([
             onSpotClick: function (oEvent, bSuppressNavigation) {
                 const oSpot = oEvent.getSource();
                 const aCords = oSpot.getPosition().split(";");
-                this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nZoomLevelLabelThreshold);
+                const nCurrentZoomLevel = this.getModel("app").getProperty("/zoomlevel")
+                const nNewZoomLevel = nCurrentZoomLevel <= nZoomLevelClickThreshold ? nZoomLevelClickThreshold + 3 : nCurrentZoomLevel;
+                this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nNewZoomLevel);
 
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
                 if (!oSplitter) return;

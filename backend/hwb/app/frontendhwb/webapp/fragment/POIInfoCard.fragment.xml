@@ -67,7 +67,7 @@
                     width="95%"
                     visible="{= (${app>/aSelectedGroupIds} 
                                 &amp;&amp; ${app>/aSelectedGroupIds}.length > 0) 
-                                &amp;&amp; (${local>/oCurrentSpot/stampedUsers} 
+                                &amp;&amp; (${local>/oCurrentSpot/stampedUsers}
                                 &amp;&amp; ${local>/oCurrentSpot/stampedUsers}.length > 0) ? true : false }"
                 >
                     <Title text="{i18n>stampedBy}" />
