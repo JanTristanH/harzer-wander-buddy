@@ -169,14 +169,14 @@ sap.ui.define([
         },
 
         onFormatSelectedForUser: function (aSelectedGroupIds, sPrincipal) {
-            const oContext = this.getView().getBindingContext();
-            if (!oContext) {
+            if (!sPrincipal) {
+                const oContext = this.getView().getBindingContext();
+                sPrincipal = oContext?.getProperty("principal");
+            }
+            if (!sPrincipal || !Array.isArray(aSelectedGroupIds) || aSelectedGroupIds.length === 0) {
                 return false;
             }
-            sPrincipal = sPrincipal ?? oContext.getProperty("principal");
-            if (!aSelectedGroupIds || !aSelectedGroupIds.length) {
-                return false;
-            }
+
             return aSelectedGroupIds.includes(sPrincipal);
         },
 

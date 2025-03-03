@@ -87,82 +87,80 @@
                     >
                         <uxap:subSections>
                             <uxap:ObjectPageSubSection>
-                    <Table
-                        id="idStampingsProfileTable"
-                        inset="false"
-                        growing="true"
-                        growingThreshold="250"
-                        items="{
+                                <Table
+                                    id="idStampingsProfileTable"
+                                    inset="false"
+                                    growing="true"
+                                    growingThreshold="250"
+                                    items="{
                             path: '/Stampboxes',
                             sorter: {
                                 path: 'orderBy'
                             }
                         }"
-                        updateFinished=".onStampingsTableUpdateFinished"
-                    >
-                        <headerToolbar>
-                            <Toolbar>
-                                <Title
-                                    text="{i18n>stamps}"
-                                    level="H2"
-                                />
-                                <ToolbarSpacer />
-                                <Label
-                                    text="{i18n>visitedStampms}: {app>/stampedCount}"
-                                />
-                            </Toolbar>
-                        </headerToolbar>
-                        <columns>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="WithoutHeader"
-                                width="auto"
-                                importance="High"
-                            >
-                                <Text text="{i18n>stampPoint}" />
-                            </Column>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="Inline"
-                                width="5rem"
-                                visible="{= ${ID} !== ${app>/currentUser/ID} }"
-                            >
-                                <Text text="{i18n>visitedBy} {name}" />
-                            </Column>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="Inline"
-                                width="5rem"
-                            >
-                                <Text text="{i18n>visitedByMe}" />
-                            </Column>
-                        </columns>
-                        <items>
-                            <ColumnListItem type="Active">
-                                <cells>
-                                    <ObjectIdentifier title="{name}" />
-                                    <CheckBox
-                                        enabled="false"
-                                        selected="{
-                                            parts: [
-                                                'stampedUserIds'
-                                            ], 
-                                            formatter: '.onFormatSelectedForUser'
-                                        }"
-                                    />
+                                    updateFinished=".onStampingsTableUpdateFinished"
+                                >
+                                    <headerToolbar>
+                                        <Toolbar>
+                                            <Title
+                                                text="{i18n>stamps}"
+                                                level="H2"
+                                            />
+                                            <ToolbarSpacer />
+                                            <Label
+                                                text="{i18n>visitedStampms}: {app>/stampedCount}"
+                                            />
+                                        </Toolbar>
+                                    </headerToolbar>
+                                    <columns>
+                                        <Column
+                                            minScreenWidth="Tablet"
+                                            demandPopin="true"
+                                            popinDisplay="WithoutHeader"
+                                            width="auto"
+                                            importance="High"
+                                        >
+                                            <Text text="{i18n>stampPoint}" />
+                                        </Column>
+                                        <Column
+                                            minScreenWidth="Tablet"
+                                            demandPopin="true"
+                                            popinDisplay="Inline"
+                                            width="5rem"
+                                            visible="{= ${ID} !== ${app>/currentUser/ID} }"
+                                        >
+                                            <Text
+                                                text="{i18n>visitedBy} {name}"
+                                            />
+                                        </Column>
+                                        <Column
+                                            minScreenWidth="Tablet"
+                                            demandPopin="true"
+                                            popinDisplay="Inline"
+                                            width="5rem"
+                                        >
+                                            <Text text="{i18n>visitedByMe}" />
+                                        </Column>
+                                    </columns>
+                                    <items>
+                                        <ColumnListItem type="Active">
+                                            <cells>
+                                                <ObjectIdentifier
+                                                    title="{name}"
+                                                />
+                                                <CheckBox
+                                                    enabled="false"
+                                                    selected="{ parts: ['stampedUserIds'], formatter: '.onFormatSelectedForUser'}"
+                                                />
 
-                                    <CheckBox
-                                        enabled="false"
-                                        selected="{ parts: ['stampedUserIds', 'app>/currentUser/principal'], 
-                                                    formatter: '.onFormatSelectedForUser' }"
-                                    />
-                                </cells>
-                            </ColumnListItem>
-                        </items>
-                    </Table>
+                                                <CheckBox
+                                                    enabled="false"
+                                                    selected="{ parts: ['stampedUserIds', 'app>/currentUser/principal'], formatter: '.onFormatSelectedForUser' }"
+                                                />
+                                            </cells>
+                                        </ColumnListItem>
+                                    </items>
+                                </Table>
                             </uxap:ObjectPageSubSection>
                         </uxap:subSections>
                     </uxap:ObjectPageSection>
