@@ -58,11 +58,11 @@
             <vbm:Spot
                 id="idParkingInnerSpot"
                 position="{longitude};{latitude}"
-                text="P"
+                text="{ parts: ['app>/zoomlevel', 'i18n>ParkingSpotText'], formatter: '.onFormatParkingText' }"
                 labelText="{ parts: ['name', 'app>/zoomlevel', 'app>/bShowLabels', 'app>/bShowParkingSpots'], formatter: '.onFormatLabelText'}"
                 tooltip="{name}"
                 labelPos="5"
-                type="{ parts: ['app>/bShowParkingSpots'], formatter: '.onFormatBooleanToSemanticType' }"
+                type="{ parts: ['app>/bShowParkingSpots', 'app>/zoomlevel'], formatter: '.onFormatBooleanToSemanticType' }"
                 app:labelTextHidden="{name}"
                 click="onSpotClick"
                 app:id="{ID}"

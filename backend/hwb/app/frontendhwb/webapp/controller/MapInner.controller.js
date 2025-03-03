@@ -124,22 +124,6 @@ sap.ui.define([
                 this.getModel("app").setProperty("/bShowUnStampedSpots", true);
             },
 
-            toggleStampedVisibility: function (bVisible) {
-                let oSpots = this.getView().byId("idAllPointsOfInterestsSpots");
-                //create cache with unmodified items if not existent
-                if (this._aStampedCache.length == 0) {
-                    this._aStampedCache = oSpots.getItems().filter(e => e.getProperty("type") === stampedType);
-                }
-
-                if (bVisible) {
-                    //show stamped
-                    this._aStampedCache.forEach(item => oSpots.addItem(item));
-                } else {
-                    //hide stamped
-                    oSpots.getItems().filter(e => e.getProperty("type") === stampedType).forEach(e => oSpots.removeItem(e));
-                }
-            },
-
             onLocateMePress: function (oEvent, bMoveToLocation = true) {
                 if (navigator.geolocation) {
                     MessageToast.show(this.getText("locatingMe"));
@@ -193,12 +177,12 @@ sap.ui.define([
                 return bShouldDisplayByFilter && bShowLabels && nZoomLevel >= 16 ? sName : "";
             },
 
-            onFormatBooleanToSemanticType: function (bVisible) {
-                return bVisible ? 'Default' : 'Hidden';
+            onFormatBooleanToSemanticType: function (bVisible, nZoomLevel) {
+                return bVisible && nZoomLevel >= 13 ? 'Default' : 'Hidden';
             },
 
-            onFormatBooleanToSemanticType: function (bVisible) {
-                return bVisible ? 'Default' : 'Hidden';
+            onFormatParkingText: function(nZoomLevel, sText){
+                return nZoomLevel >= 11 ? sText : '';
             },
 
             onSpotContextMenu: function (oEvent) {
