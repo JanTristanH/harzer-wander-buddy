@@ -116,6 +116,11 @@ sap.ui.define([
                 return table
             },
 
+            onListItemPress: function(oEvent) {
+                const sId = oEvent.getSource().getBindingContext().getProperty("ID")
+                this.getRouter().navTo("MapWithPOI", { idPOI: sId });
+            },
+
             onShowBagdesButtonPress: function (oEvent) {
                 const oView = this.getView();
 

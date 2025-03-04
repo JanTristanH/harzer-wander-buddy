@@ -119,7 +119,7 @@
                             </Column>
                         </columns>
                         <items>
-                            <ColumnListItem type="Active">
+                            <ColumnListItem type="Active" press="onListItemPress">
                                 <cells>
                                     <Text text="{number}" />
                                     <CheckBox
