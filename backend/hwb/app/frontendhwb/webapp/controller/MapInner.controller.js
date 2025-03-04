@@ -126,6 +126,7 @@ sap.ui.define([
                             let oLocalModel = this.getModel("local");
                             oLocalModel.setProperty("/UserLocationLat", oUserLocation.lat);
                             oLocalModel.setProperty("/UserLocationLng", oUserLocation.lng);
+                            this._oMap.setInitialPosition(`${oUserLocation.lng};${oUserLocation.lat};0`);
                             if (bMoveToLocation) {
                                 oLocalModel.setProperty("/centerPosition", `${oUserLocation.lng};${oUserLocation.lat}`);
                                 this._oMap.zoomToGeoPosition(oUserLocation.lng, oUserLocation.lat, this.nZoomLevelLabelThreshold);
