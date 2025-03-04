@@ -38,6 +38,14 @@
 						class="sapUiTinyMarginBottom"
 						press="onMyProfilePress" />
 
+				<StandardListItem
+						icon="sap-icon://download"
+						title="{i18n>install}"
+						type="Active"
+						class="sapUiTinyMarginBottom"
+						visible="{app>/isInstallable}"
+						press="onInstallPress" />
+
 					<StandardListItem
 						icon="sap-icon://log"
 						title="{i18n>logout}"

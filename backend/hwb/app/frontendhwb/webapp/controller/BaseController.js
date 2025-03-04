@@ -15,6 +15,9 @@ sap.ui.define([
         fallBackCords: "10.615779999999972;51.80054",
 
         onInit: function () {
+            const isPWAInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+            this.getModel("app").setProperty("/isInstallable", !isPWAInstalled);
             this.oMyAvatar = this.getView().byId("idMyAvatar");
             this._oPopover = Fragment.load({
                 id: this.getView().getId(),
@@ -38,6 +41,9 @@ sap.ui.define([
             } else {
                 this._oPopover.openBy(oEventSource);
             }
+        },
+        onInstallPress: function() {
+            installPWA();
         },
 
         onPopoverClose: function () {

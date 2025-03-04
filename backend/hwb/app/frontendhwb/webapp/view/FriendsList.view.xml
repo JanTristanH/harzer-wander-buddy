@@ -15,7 +15,7 @@
             />
         </headerContent>
         <content>
-            <IconTabBar expandable="false">
+            <IconTabBar expandable="false" width="80%">
                 <items>
                     <IconTabFilter
                         key="friends"
@@ -24,7 +24,7 @@
                         <SearchField
                             id="idUserSearchField"
                             showSearchButton="false"
-                            enableSuggestions="true"
+                            enableSuggestions="false"
                             liveChange=".onSearchFieldLiveChange"
                             suggestionItems="{local>/suggestionItems}"
                         >

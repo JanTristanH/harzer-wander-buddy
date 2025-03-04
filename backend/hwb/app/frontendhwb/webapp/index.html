@@ -34,6 +34,7 @@
             }
 
             let deferredPrompt;
+            let isInstallable = false;
 
             window.addEventListener("beforeinstallprompt", (event) => {
                 // Prevent default behavior
@@ -44,6 +45,7 @@
 
                 // Optionally show an install button
                 document.getElementById("installBtn").style.display = "block";
+                isInstallable=true;
             });
 
             // Function to trigger the install prompt when the user clicks a button
@@ -60,14 +62,6 @@
                     });
                 }
             }
-
-            // Add event listener to an install button
-            document.addEventListener("DOMContentLoaded", () => {
-                const installButton = document.getElementById("installBtn");
-                if (installButton) {
-                    installButton.addEventListener("click", installPWA);
-                }
-            });
 
         </script>
         <style>
@@ -112,8 +106,6 @@
         </style>
     </head>
     <body class="sapUiBody sapUiSizeCompact" id="content" style="background-color: #e6e7dd;">
-        <button id="installBtn" style="display:none;">Install App</button>
-
         <!-- Loading splash screen -->
         <div id="busyIndicator" style="text-align: center; font-family: Sans, Arial;">
             <!-- static header text -->
