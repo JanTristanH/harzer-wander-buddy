@@ -10,7 +10,8 @@ sap.ui.define([
 
     "use strict";
     return Controller.extend("hwb.frontendhwb.controller.BaseController", {
-
+        nZoomLevelLabelThreshold: 16,
+        nZoomLevelClickThreshold: 11,
         fallBackCords: "10.615779999999972;51.80054",
 
         onInit: function () {
@@ -65,7 +66,7 @@ sap.ui.define([
         },
 
         initializeAppModelForMap: function () {
-            let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? nZoomLevelLabelThreshold;
+            let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? this.nZoomLevelLabelThreshold;
             this.getModel("app").setProperty("/zoomlevel", parseInt(sLastZoomLevel));
             this.getModel("app").setProperty("/bShowLabels", true);
             this.getModel("app").setProperty("/bShowParkingSpots", true);

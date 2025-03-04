@@ -12,9 +12,6 @@ sap.ui.define([
      */
     function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel, Sorter) {
         "use strict";
-        const nZoomLevelLabelThreshold = 16;
-        const nZoomLevelClickThreshold = 11;
-
         return Controller.extend("hwb.frontendhwb.controller.MapInner", {
             itemCache: [],
             _aParkingSpaceCache: [],
@@ -131,7 +128,7 @@ sap.ui.define([
                             oLocalModel.setProperty("/UserLocationLng", oUserLocation.lng);
                             if (bMoveToLocation) {
                                 oLocalModel.setProperty("/centerPosition", `${oUserLocation.lng};${oUserLocation.lat}`);
-                                this._oMap.zoomToGeoPosition(oUserLocation.lng, oUserLocation.lat, nZoomLevelLabelThreshold);
+                                this._oMap.zoomToGeoPosition(oUserLocation.lng, oUserLocation.lat, this.nZoomLevelLabelThreshold);
                             }
                         }.bind(this),
                         function (oError) {
@@ -208,7 +205,7 @@ sap.ui.define([
                 var oItem = oEvent.getParameter("suggestionItem");
                 if (oItem) {
                     const aCords = oItem.getKey().split(";");
-                    this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nZoomLevelLabelThreshold);
+                    this._oMap.zoomToGeoPosition(aCords[0], aCords[1], this.nZoomLevelLabelThreshold);
                 } else {
                     MessageToast.show("Bitte einen Ort aus der Liste auswählen!");
                 }
@@ -246,7 +243,7 @@ sap.ui.define([
                 const oSpot = oEvent.getSource();
                 const aCords = oSpot.getPosition().split(";");
                 const nCurrentZoomLevel = this.getModel("app").getProperty("/zoomlevel")
-                const nNewZoomLevel = nCurrentZoomLevel <= nZoomLevelClickThreshold ? nZoomLevelClickThreshold + 3 : nCurrentZoomLevel;
+                const nNewZoomLevel = nCurrentZoomLevel <= this.nZoomLevelClickThreshold ? this.nZoomLevelClickThreshold + 3 : nCurrentZoomLevel;
                 this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nNewZoomLevel);
 
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
