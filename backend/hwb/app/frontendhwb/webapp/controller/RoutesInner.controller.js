@@ -24,6 +24,7 @@ sap.ui.define([
 
             onInit: function () {
                 Controller.prototype.onInit.apply(this, arguments);
+                this.initializeAppModelForMap();
 
                 this.getView().setModel(new JSONModel(), "local");
 

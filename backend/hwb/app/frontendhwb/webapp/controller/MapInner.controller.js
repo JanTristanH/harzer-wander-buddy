@@ -25,7 +25,7 @@ sap.ui.define([
             onInit: function () {
                 Controller.prototype.onInit.apply(this, arguments);
                 this.getModel().setSizeLimit(1000);
-                this.initializeAppModel();
+                this.initializeAppModelForMap();
 
                 this._oMap = this.byId("map");
                 if (!this._oMap) {
@@ -52,16 +52,6 @@ sap.ui.define([
                 } else {
                     this.onLocateMePress(null, true);
                 }
-            },
-
-            initializeAppModel: function () {
-                let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? nZoomLevelLabelThreshold;
-                this.getModel("app").setProperty("/zoomlevel", parseInt(sLastZoomLevel));
-                this.getModel("app").setProperty("/bShowLabels", true);
-                this.getModel("app").setProperty("/bShowParkingSpots", true);
-                this.getModel("app").setProperty("/bShowStampedSpots", true);
-                this.getModel("app").setProperty("/bShowUnStampedSpots", true);
-                this.attachGroupChange();
             },
 
             attachGroupChange: function () {
@@ -334,7 +324,7 @@ sap.ui.define([
                         let oList = this.byId("idTravelTimesList");
 
                         // Remove all current items before adding the new ones
-                        oList.removeAllItems();
+                        oList?.removeAllItems();
 
                         // Add items to the list manually using the addItem method
                         oData.results.forEach(oItemData => {

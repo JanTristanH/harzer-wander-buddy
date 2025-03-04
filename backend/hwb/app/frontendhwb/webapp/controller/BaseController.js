@@ -64,6 +64,16 @@ sap.ui.define([
             this._oPopover.close();
         },
 
+        initializeAppModelForMap: function () {
+            let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? nZoomLevelLabelThreshold;
+            this.getModel("app").setProperty("/zoomlevel", parseInt(sLastZoomLevel));
+            this.getModel("app").setProperty("/bShowLabels", true);
+            this.getModel("app").setProperty("/bShowParkingSpots", true);
+            this.getModel("app").setProperty("/bShowStampedSpots", true);
+            this.getModel("app").setProperty("/bShowUnStampedSpots", true);
+            this.attachGroupChange();
+        },
+
         stringToBoolean: function (str) {
             return str === "true";
         },
