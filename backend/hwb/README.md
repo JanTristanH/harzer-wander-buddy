@@ -103,10 +103,10 @@ This project is configured to run with a postgres.
   - navigation to other Users Profile ✔️
   - display stamp list of friend and mine ✔️
   - initials for empty picture formatter ✔️
-- remove event handler in tour view
+- remove event handler in tour view ✔️ (Workaround)
 - are you sure when deleting stampings
 - support maps.me navigation
-  - navigation on desktop
+  - handle navigation on desktop
 - refactor scroll container on POI card / nearby stamps
 
 ## MVP 2
