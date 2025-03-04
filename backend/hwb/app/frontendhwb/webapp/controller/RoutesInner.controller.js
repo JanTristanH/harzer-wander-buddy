@@ -394,7 +394,7 @@ sap.ui.define([
                 }
             },
 
-            onContextMenuSpot: function (oEvent) {  
+            onContextMenuSpot: function (oEvent) {
                 if (this.getModel("local").getProperty("/edit")) {
                     if (oEvent.getParameter("menu")) {
                         var oMenu = oEvent.getParameter("menu");

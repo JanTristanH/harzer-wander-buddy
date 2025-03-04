@@ -175,6 +175,9 @@ sap.ui.define([
             },
 
             onSpotContextMenu: function (oEvent) {
+                if(this.getRouter().getHashChanger().hash.includes("tour")) {
+                    return;
+                }
                 this.onButtonOpenExternalPress(oEvent);
             },
 
@@ -237,6 +240,9 @@ sap.ui.define([
             },
 
             onSpotClick: function (oEvent, bSuppressNavigation) {
+                if(this.getRouter().getHashChanger().hash.includes("tour")) {
+                    return;
+                }
                 const oSpot = oEvent.getSource();
                 const aCords = oSpot.getPosition().split(";");
                 const nCurrentZoomLevel = this.getModel("app").getProperty("/zoomlevel")
@@ -334,7 +340,7 @@ sap.ui.define([
                                 icon: "sap-icon://task"
                             });
 
-                            oList.addItem(oListItem);
+                            oList?.addItem(oListItem);
                         });
                     }.bind(this),
                     error: function (oError) {
