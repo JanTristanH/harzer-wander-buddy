@@ -37,8 +37,12 @@ sap.ui.define([
                     }.bind(this)
                 }
             });
-            this.getModel().refresh();
+
+            const oFilter = new Filter("fromUser_ID", FilterOperator.EQ, sUserID);
+            const oFriendListBinding = this.byId("idFriendsListProfile").getBinding("items");
+            oFriendListBinding.filter([oFilter]);
             
+            this.getModel().refresh();
         },
 
         updateTableFilters: function () {
@@ -196,7 +200,18 @@ sap.ui.define([
             this._oPopover.openBy(this.oMyAvatar);
             const oComboBox = this.byId("container-hwb.frontendhwb---Profile--idGroupsMultiComboBox");
             oComboBox.addSelectedKeys([sPrincipal])
-        }
+        },
+
+        onNavToFriendPress: function (oEvent) {
+            const oContext = oEvent.getSource().getBindingContext();
+            if (!oContext) {
+                MessageToast.show("No friend context found.");
+                return;
+            }
+
+            const userId = oContext.getObject().toUser_ID;
+            this.getRouter().navTo("Profile", { userId });
+        },
 
     });
 });

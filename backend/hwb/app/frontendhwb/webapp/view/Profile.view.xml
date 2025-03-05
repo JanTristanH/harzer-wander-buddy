@@ -101,11 +101,9 @@
                                     growing="true"
                                     growingThreshold="250"
                                     items="{
-                            path: '/Stampboxes',
-                            sorter: {
-                                path: 'orderBy'
-                            }
-                        }"
+                                        path: '/Stampboxes',
+                                        sorter: { path: 'orderBy' } 
+                                    }"
                                     updateFinished=".onStampingsTableUpdateFinished"
                                 >
                                     <headerToolbar>
@@ -169,6 +167,56 @@
                                         </ColumnListItem>
                                     </items>
                                 </Table>
+                            </uxap:ObjectPageSubSection>
+                        </uxap:subSections>
+                    </uxap:ObjectPageSection>
+
+                    <!-- friends of users -->
+                    <uxap:ObjectPageSection
+                        titleUppercase="false"
+                        title="{i18n>friends}"
+                    >
+                        <uxap:subSections>
+                            <uxap:ObjectPageSubSection>
+                                <List
+                                    id="idFriendsListProfile"
+                                    items="{
+                                        path: '/Friendships',
+                                        parameters: { expand: 'toUser' }
+                                    }"
+                                >
+                                    <items>
+                                        <CustomListItem>
+                                            <HBox
+                                                justifyContent="SpaceBetween"
+                                                alignItems="Center"
+                                                width="100%"
+                                                class="sapUiTinyMargin"
+                                            >
+                                                <HBox alignItems="Center">
+                                                    <Avatar
+                                                        src="{toUser/picture}"
+                                                        displaySize="S"
+                                                        class="sapUiSmallMarginEnd"
+                                                        initials="{parts: ['toUser/name'], formatter: '.onFormatInitialsByName'}"
+                                                    />
+                                                    <Text
+                                                        text="{toUser/name}"
+                                                        class="sapUiTinyMargin"
+                                                    />
+                                                </HBox>
+                                                <HBox>
+                                                    <Button
+                                                        icon="sap-icon://navigation-right-arrow"
+                                                        type="Transparent"
+                                                        press="onNavToFriendPress"
+                                                        class="sapUiSmallMarginEnd"
+                                                    />
+                                                </HBox>
+                                            </HBox>
+                                        </CustomListItem>
+                                    </items>
+                                </List>
                             </uxap:ObjectPageSubSection>
                         </uxap:subSections>
                     </uxap:ObjectPageSection>

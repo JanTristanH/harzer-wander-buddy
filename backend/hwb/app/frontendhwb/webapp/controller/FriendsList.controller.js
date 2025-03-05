@@ -28,13 +28,12 @@ sap.ui.define([
         },
     
         onAfterRendering: function () {
-            this.getView().byId("navButtonFriendsId").setType("Emphasized");
+            this.byId("navButtonFriendsId").setType("Emphasized");
     
-            var oList = this.byId("idPendingFriendshipRequestsList");
-            var oBinding = oList.getBinding("items");
-    
-            var sCurrentUserPrincipal = this.getModel("app").getProperty("/currentUser/ID");
-            var oFilter = new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserPrincipal);
+            const sCurrentUserPrincipal = this.getModel("app").getProperty("/currentUser/ID");
+            const oFilter = new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserPrincipal);
+
+            const oBinding = this.byId("idPendingFriendshipRequestsList").getBinding("items");
             oBinding.filter([oFilter]);
         },
 
@@ -92,7 +91,7 @@ sap.ui.define([
         },
 
         onNavToFriendPress: function (oEvent) {
-            var oContext = oEvent.getSource().getBindingContext();
+            const oContext = oEvent.getSource().getBindingContext();
             if (!oContext) {
                 MessageToast.show("No friend context found.");
                 return;

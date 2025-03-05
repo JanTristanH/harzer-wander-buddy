@@ -15,7 +15,7 @@
             />
         </headerContent>
         <content>
-            <IconTabBar expandable="false" width="80%">
+            <IconTabBar expandable="false">
                 <items>
                     <IconTabFilter
                         key="friends"
