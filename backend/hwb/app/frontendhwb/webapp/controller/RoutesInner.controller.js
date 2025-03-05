@@ -317,8 +317,8 @@ sap.ui.define([
                     }.bind(this)
                 });
             },
+
             _writeHikingRoutesAsToursToModel: function (aHikingRoutes, oModel) {
-                debugger
                 for (let oRoute of aHikingRoutes) {
                     oModel.setProperty(`/Tours(${oRoute.id})`, oRoute);
                 }
@@ -425,7 +425,6 @@ sap.ui.define([
                 path.push(oNewPathEntry);
 
                 this.getModel("local").setProperty("/oSelectedTour/path", path );
-                debugger
                 // this._persistTourCopy(sId);
                 this._persistTourCopy(sId);
             },

@@ -97,7 +97,7 @@
                 <HBox class="sapUiSmallMarginTop">
                     <ScrollContainer
                         width="100%"
-                        height="100%"
+                        height="300px"
                         vertical="true"
                     >
                         <List

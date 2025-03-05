@@ -8,7 +8,6 @@
     xmlns:chart="sap.suite.ui.microchart"
     xmlns:f="sap.f"
     displayBlock="true"
-    height="100%"
     busyIndicatorDelay="0"
 >
     <HBox justifyContent="SpaceBetween">

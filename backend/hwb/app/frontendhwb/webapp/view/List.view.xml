@@ -15,143 +15,145 @@
             </headerContent>
             <content>
                 <HBox class="sapUiResponsiveContentPadding">
-                    <Table
-                        id="StampingsTable"
-                        inset="false"
-                        growing="true"
-                        growingThreshold="250"
-                        mode="MultiSelect"
-                        selectionChange="onSelectionChange"
-                        items="{
-                            path: '/Stampboxes',
-                            sorter: {
-                                path: 'orderBy'
-                            },
-                            parameters:{expand : 'Stampings'}
-                        }"
-                        updateFinished=".onStampingsUpdateFinished"
-                    >
-                        <headerToolbar>
-                            <Toolbar>
-                                <Title
-                                    text="{i18n>stamps}"
-                                    level="H2"
-                                />
-                                <ToolbarSpacer />
-                                <Button
-                                    icon="sap-icon://badge"
-                                    press="onShowBagdesButtonPress"
-                                    text="{i18n>myBadges}"
-                                />
-                                <Label
-                                    id="selectedCount"
-                                    text="{i18n>visitedStampms}: {app>/selectedCount}"
-                                />
-                            </Toolbar>
-                        </headerToolbar>
-                        <columns>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="Inline"
-                                width="5rem"
-                            >
-                                <Text text="{i18n>number}" />
-                            </Column>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="Inline"
-                                width="5rem"
-                                visible="{ parts: [{value:'0'}, 'app>/aSelectedGroupIds'], 
-                                            formatter: '.onFormatColumnVisibility' }"
-                            >
-                                <Text text="{app>/userName0}" />
-                            </Column>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="Inline"
-                                width="5rem"
-                                visible="{ parts: [{value:'1'}, 'app>/aSelectedGroupIds'], 
-                                            formatter: '.onFormatColumnVisibility' }"
-                            >
-                                <Text text="{app>/userName1}" />
-                            </Column>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="Inline"
-                                width="5rem"
-                                visible="{ parts: [{value:'2'}, 'app>/aSelectedGroupIds'], 
-                                            formatter: '.onFormatColumnVisibility' }"
-                            >
-                                <Text text="{app>/userName2}" />
-                            </Column>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="Inline"
-                                width="5rem"
-                                visible="{ parts: [{value:'3'}, 'app>/aSelectedGroupIds'], 
-                                            formatter: '.onFormatColumnVisibility' }"
-                            >
-                                <Text text="{app>/userName3}" />
-                            </Column>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="Inline"
-                                width="5rem"
-                                visible="{ parts: [{value:'4'}, 'app>/aSelectedGroupIds'], 
-                                            formatter: '.onFormatColumnVisibility' }"
-                            >
-                                <Text text="{app>/userName4}" />
-                            </Column>
-                            <Column
-                                minScreenWidth="Tablet"
-                                demandPopin="true"
-                                popinDisplay="WithoutHeader"
-                                width="auto"
-                                importance="High"
-                            >
-                                <Text text="{i18n>stampPoint}" />
-                            </Column>
-                        </columns>
-                        <items>
-                            <ColumnListItem type="Active" press="onListItemPress">
-                                <cells>
-                                    <Text text="{number}" />
-                                    <CheckBox
-                                        enabled="false"
-                                        selected="{ parts: [{value:'0'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
-                                                    formatter: '.onFormatGroupSelected' }"
+                    <ScrollContainer height="90vh" vertical="true">
+                        <Table
+                            id="StampingsTable"
+                            inset="false"
+                            growing="true"
+                            growingThreshold="250"
+                            mode="MultiSelect"
+                            selectionChange="onSelectionChange"
+                            items="{
+                                path: '/Stampboxes',
+                                sorter: {
+                                    path: 'orderBy'
+                                },
+                                parameters:{expand : 'Stampings'}
+                            }"
+                            updateFinished=".onStampingsUpdateFinished"
+                        >
+                            <headerToolbar>
+                                <Toolbar>
+                                    <Title
+                                        text="{i18n>stamps}"
+                                        level="H2"
                                     />
-                                    <CheckBox
-                                        enabled="false"
-                                        selected="{ parts: [{value:'1'}, 'app>/aSelectedGroupIds','stampedUserIds'], 
-                                                    formatter: '.onFormatGroupSelected' }"
+                                    <ToolbarSpacer />
+                                    <Button
+                                        icon="sap-icon://badge"
+                                        press="onShowBagdesButtonPress"
+                                        text="{i18n>myBadges}"
                                     />
-                                    <CheckBox
-                                        enabled="false"
-                                        selected="{ parts: [{value:'2'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
-                                                    formatter: '.onFormatGroupSelected' }"
+                                    <Label
+                                        id="selectedCount"
+                                        text="{i18n>visitedStampms}: {app>/selectedCount}"
                                     />
-                                    <CheckBox
-                                        enabled="false"
-                                        selected="{ parts: [{value:'3'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
-                                                    formatter: '.onFormatGroupSelected' }"
-                                    />
-                                    <CheckBox
-                                        enabled="false"
-                                        selected="{ parts: [{value:'4'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
-                                                    formatter: '.onFormatGroupSelected' }"
-                                    />
-                                    <ObjectIdentifier title="{name}" />
-                                </cells>
-                            </ColumnListItem>
-                        </items>
-                    </Table>
+                                </Toolbar>
+                            </headerToolbar>
+                            <columns>
+                                <Column
+                                    minScreenWidth="Tablet"
+                                    demandPopin="true"
+                                    popinDisplay="Inline"
+                                    width="5rem"
+                                >
+                                    <Text text="{i18n>number}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="Tablet"
+                                    demandPopin="true"
+                                    popinDisplay="Inline"
+                                    width="5rem"
+                                    visible="{ parts: [{value:'0'}, 'app>/aSelectedGroupIds'], 
+                                                formatter: '.onFormatColumnVisibility' }"
+                                >
+                                    <Text text="{app>/userName0}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="Tablet"
+                                    demandPopin="true"
+                                    popinDisplay="Inline"
+                                    width="5rem"
+                                    visible="{ parts: [{value:'1'}, 'app>/aSelectedGroupIds'], 
+                                                formatter: '.onFormatColumnVisibility' }"
+                                >
+                                    <Text text="{app>/userName1}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="Tablet"
+                                    demandPopin="true"
+                                    popinDisplay="Inline"
+                                    width="5rem"
+                                    visible="{ parts: [{value:'2'}, 'app>/aSelectedGroupIds'], 
+                                                formatter: '.onFormatColumnVisibility' }"
+                                >
+                                    <Text text="{app>/userName2}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="Tablet"
+                                    demandPopin="true"
+                                    popinDisplay="Inline"
+                                    width="5rem"
+                                    visible="{ parts: [{value:'3'}, 'app>/aSelectedGroupIds'], 
+                                                formatter: '.onFormatColumnVisibility' }"
+                                >
+                                    <Text text="{app>/userName3}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="Tablet"
+                                    demandPopin="true"
+                                    popinDisplay="Inline"
+                                    width="5rem"
+                                    visible="{ parts: [{value:'4'}, 'app>/aSelectedGroupIds'], 
+                                                formatter: '.onFormatColumnVisibility' }"
+                                >
+                                    <Text text="{app>/userName4}" />
+                                </Column>
+                                <Column
+                                    minScreenWidth="Tablet"
+                                    demandPopin="true"
+                                    popinDisplay="WithoutHeader"
+                                    width="auto"
+                                    importance="High"
+                                >
+                                    <Text text="{i18n>stampPoint}" />
+                                </Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem type="Active" press="onListItemPress">
+                                    <cells>
+                                        <Text text="{number}" />
+                                        <CheckBox
+                                            enabled="false"
+                                            selected="{ parts: [{value:'0'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
+                                                        formatter: '.onFormatGroupSelected' }"
+                                        />
+                                        <CheckBox
+                                            enabled="false"
+                                            selected="{ parts: [{value:'1'}, 'app>/aSelectedGroupIds','stampedUserIds'], 
+                                                        formatter: '.onFormatGroupSelected' }"
+                                        />
+                                        <CheckBox
+                                            enabled="false"
+                                            selected="{ parts: [{value:'2'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
+                                                        formatter: '.onFormatGroupSelected' }"
+                                        />
+                                        <CheckBox
+                                            enabled="false"
+                                            selected="{ parts: [{value:'3'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
+                                                        formatter: '.onFormatGroupSelected' }"
+                                        />
+                                        <CheckBox
+                                            enabled="false"
+                                            selected="{ parts: [{value:'4'}, 'app>/aSelectedGroupIds', 'stampedUserIds'], 
+                                                        formatter: '.onFormatGroupSelected' }"
+                                        />
+                                        <ObjectIdentifier title="{name}" />
+                                    </cells>
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </ScrollContainer>
                 </HBox>
             </content>
             <footer>

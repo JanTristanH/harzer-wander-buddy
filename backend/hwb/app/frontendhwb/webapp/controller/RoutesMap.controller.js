@@ -38,7 +38,7 @@ sap.ui.define([
             },
 
             onSplitterRoutesDetailResize: function (oEvent) {
-                let nNewSize = oEvent.getParameters().newSizes[1] - 200;
+                let nNewSize = oEvent.getParameters().newSizes[1] - 225;
                 this.getModel("local").setProperty("/wayPointScrollContainerHeight", nNewSize + "px");
             },
 
