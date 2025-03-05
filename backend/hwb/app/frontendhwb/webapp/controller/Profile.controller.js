@@ -46,7 +46,7 @@ sap.ui.define([
             const aSelectedGroup = [currentUser.principal, this.getModel().getProperty(this.sPath + "/principal")];
 
             // Create binding filter for selected groups
-            let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
+            let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, [...new Set(aSelectedGroup)].join(','));
 
             // Apply filter to binding
             const oBinding = this.byId("idStampingsProfileTable").getBinding("items");
