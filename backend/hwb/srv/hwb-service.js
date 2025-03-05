@@ -296,6 +296,7 @@ async function updateTourByPOIList(req) {
   const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours } = this.entities('hwb.db');
 
   let aPois = poiList.split(";").filter(p => !!p);
+  aPois = removeAdjacentDuplicates(aPois);  
   if (aPois.length < 2) {
     throw new Error("At least 2 POIs are required to create a tour");
   }
@@ -442,6 +443,18 @@ async function updateTourByPOIList(req) {
     }
     return aTour2TravelTime;
   }
+}
+
+function removeAdjacentDuplicates(arr) {
+  const result = [];
+
+  for (let i = 0; i < arr.length; i++) {
+      if (result.length === 0 || result[result.length - 1] !== arr[i]) {
+          result.push(arr[i]);
+      }
+  }
+
+  return result;
 }
 
 function getUniqueRoutes(routes) {

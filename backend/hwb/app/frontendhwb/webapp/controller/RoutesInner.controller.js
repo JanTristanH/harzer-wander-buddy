@@ -414,6 +414,19 @@ sap.ui.define([
             },
 
             onAddToEndOfTour: function (sId) {
+                const path = this.getModel("local").getProperty("/oSelectedTour/path");
+                
+                const oNewPathEntry = {
+                    rank: path[path.length - 1]?.rank / 2 || 1024,
+                    ID: Math.floor(Math.random() * 1024) + 1,
+                    toPoi: sId,
+                    name: this._getPoiById(sId).name
+                };
+                path.push(oNewPathEntry);
+
+                this.getModel("local").setProperty("/oSelectedTour/path", path );
+                debugger
+                // this._persistTourCopy(sId);
                 this._persistTourCopy(sId);
             },
 
@@ -437,7 +450,9 @@ sap.ui.define([
                     // send list to backend and refresh
                     aRoutesSortedByRank = aRoutesSortedByRank.map(r => r.toPoi);
                     // ADD NEW POI
-                    aRoutesSortedByRank.push(sId);
+                    if(sId) {
+                        aRoutesSortedByRank.push(sId);
+                    }
                     // END CHANGE
                     const sPOIList = aRoutesSortedByRank.filter(p => !!p).join(";");
                     if (!sPOIList.includes(";")) {
