@@ -15,12 +15,17 @@ sap.ui.define([
             onInit: function () {
                 this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onRoutesDetailTransientRouteMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onRoutesDetailMatched, this);
+                this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onRoutesDetailEditMatched, this);
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("idRoutesWayPointList", "onListSelect", this.onListSelect, this);
             },
 
             _getMap() {
                 return this.byId("RoutesMapId").byId("map");
+            },
+
+            onRoutesDetailEditMatched: function() {
+                this.getModel("local").setProperty("/edit", true);
             },
 
             onRoutesDetailMatched: function () {
@@ -117,10 +122,11 @@ sap.ui.define([
                     });
                 }
             },
+
             onButtonSavePress: function () {
                 const oLocalModel = this.getView().getModel("local");
                 oLocalModel.setProperty("/edit", false);
-                this.getRouter().navTo("RoutesDetailEdit", {
+                this.getRouter().navTo("RoutesDetail", {
                     TourId: oLocalModel.getProperty("/sIdListTravelTimes")
                 });
             },
