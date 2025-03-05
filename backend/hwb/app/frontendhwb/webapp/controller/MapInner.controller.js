@@ -373,10 +373,9 @@ sap.ui.define([
                         oEvent.getSource().setIcon("sap-icon://checklist-item-2");
                         oEvent.getSource().setEnabled(false);
                         MessageToast.show(this.getText("savedStamping"));
-                        oModel.refresh();
+                        this.applyGroupFilter();
                     },
-                    // give message and reset ui to keep it consistent with backend
-                    error: () => MessageToast.show("An Error Occured")
+                    error: () => MessageToast.show(this.getText("error"))
                 }
                 oModel.create("/Stampings", {
                     "stamp": {
