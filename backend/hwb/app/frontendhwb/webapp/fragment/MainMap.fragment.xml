@@ -36,6 +36,7 @@
             <vbm:Spot
                 id="inner"
                 position="{longitude};{latitude}"
+                scale="{ parts:['ID','local>/sCurrentSpotId'], formatter: '.onFormatSpotScale'}"
                 text="{number}"
                 labelType="Default"
                 labelText="{ parts: ['name', 'app>/zoomlevel', 'app>/bShowLabels', 'app>/bShowStampedSpots', 'app>/bShowUnStampedSpots', 'hasVisited'], formatter: '.onFormatStampLabelText'}"
@@ -58,6 +59,7 @@
             <vbm:Spot
                 id="idParkingInnerSpot"
                 position="{longitude};{latitude}"
+                scale="{ parts:['ID','local>/sCurrentSpotId'], formatter: '.onFormatSpotScale'}"
                 text="{ parts: ['app>/zoomlevel', 'i18n>ParkingSpotText'], formatter: '.onFormatParkingText' }"
                 labelText="{ parts: ['name', 'app>/zoomlevel', 'app>/bShowLabels', 'app>/bShowParkingSpots'], formatter: '.onFormatLabelText'}"
                 tooltip="{name}"

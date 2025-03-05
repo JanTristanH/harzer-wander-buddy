@@ -40,6 +40,7 @@ sap.ui.define([
                     this._oMap.setCenterPosition(oModel.getProperty("/centerPosition"));
                 }
                 this.getRouter().getRoute("MapWithPOI").attachPatternMatched(this.onMapWithPOIRouteMatched, this);
+                this.getRouter().getRoute("Map").attachPatternMatched(this.onMapRouteMatched, this);
                 //check localstorage last center position and set it
                 let sLastCenterPosition = sessionStorage.getItem("lastCenterPosition");
                 if (sLastCenterPosition) {
@@ -172,6 +173,13 @@ sap.ui.define([
                 return nZoomLevel >= 11 ? sText : '';
             },
 
+            onFormatSpotScale: function (sSpotID, sSelectedID) {
+              if(sSpotID == sSelectedID) {
+                  return "1.4;1.4;1";
+                }
+                return "1;1;1";
+            },
+
             onSpotContextMenu: function (oEvent) {
                 if(this.getRouter().getHashChanger().hash.includes("tour")) {
                     return;
@@ -212,8 +220,13 @@ sap.ui.define([
                 }
             },
 
+            onMapRouteMatched: function(oEvent) {
+                this.getModel("local").setProperty("/sCurrentSpotId", "");
+            },
+
             onMapWithPOIRouteMatched: function (oEvent) {
                 let sCurrentSpotId = oEvent.getParameter("arguments").idPOI;
+                this.getModel("local").setProperty("/sCurrentSpotId", sCurrentSpotId);
 
                 // Define the callback function to handle the render event
                 const fnRenderHandler = () => {
