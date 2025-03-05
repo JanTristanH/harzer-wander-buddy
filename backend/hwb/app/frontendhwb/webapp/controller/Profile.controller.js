@@ -213,5 +213,33 @@ sap.ui.define([
             this.getRouter().navTo("Profile", { userId });
         },
 
+        onAddFriend: function (oEvent) {
+            const oContext = oEvent.getSource().getBindingContext();
+            if (!oContext) {
+                MessageToast.show(this.getText("error"));
+                return;
+            }
+
+            // Retrieve the friend data and prepare the payload.
+            var oFriendData = oContext.getObject();
+            let currentUser = this.getModel("app").getProperty("/currentUser");
+            let currentUserID = currentUser.ID;
+
+            this.getModel().create("/Friendships", {
+                fromUser: { "ID": currentUserID },
+                toUser: { "ID": oFriendData.ID }
+            }, {
+                success: function () {
+                    this.getModel().refresh();
+                    MessageToast.show(this.getText("friendshipCreated"));
+                    this.getModel().refresh();
+                }.bind(this),
+                error: function (oError) {
+                    // Handle error
+                    MessageToast.show(this.getText("errorCreatingFriendship"));
+                    console.error("Error creating friendship:", oError);
+                }.bind(this)
+            });
+        },
     });
 });

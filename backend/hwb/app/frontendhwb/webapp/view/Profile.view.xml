@@ -76,13 +76,24 @@
                                             />
                                         </HBox>
                                     </VBox>
+                                    <HBox 
+                                        visible="{= ${ID} !== ${app>/currentUser/ID} }"
+                                    >
                                     <Button
                                         icon="sap-icon://company-view"
                                         press=".onAddToGroupSelection"
                                         text="{i18n>addToGroup}"
+                                        enabled="{= !${app>/aSelectedGroupIds}.includes(${principal}) }"
                                         class="sapUiSmallMargin"
-                                        visible="{= ${ID} !== ${app>/currentUser/ID} &amp;&amp; !${app>/aSelectedGroupIds}.includes(${principal}) }"
                                     />
+                                    <Button
+                                        icon="sap-icon://add-employee"
+                                        press=".onAddFriend"
+                                        text="{i18n>addFriend}"
+                                        class="sapUiSmallMargin"
+                                        enabled="{= !${isFriend} }"
+                                    />
+                                    </HBox>
                                 </VBox>
                             </uxap:ObjectPageSubSection>
                         </uxap:subSections>
