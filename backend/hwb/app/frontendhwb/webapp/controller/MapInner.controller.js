@@ -222,6 +222,7 @@ sap.ui.define([
             },
 
             onMapRouteMatched: function (oEvent) {
+                this.applyGroupFilter();
                 this.getModel("local").setProperty("/sCurrentSpotId", "");
                 this.onButtonClosePress();
             },
