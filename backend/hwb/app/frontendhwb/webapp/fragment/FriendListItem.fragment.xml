@@ -38,14 +38,6 @@
                     press="onAddFriend"
                     class="sapUiSmallMarginEnd"
                 />
-                <!-- Remove Friend Button (visible when already friends) -->
-                <Button
-                    icon="sap-icon://delete"
-                    type="Transparent"
-                    visible="{isFriend}"
-                    press="onRemoveFriend"
-                    class="sapUiSmallMarginEnd"
-                />
             </HBox>
         </HBox>
     </CustomListItem>
