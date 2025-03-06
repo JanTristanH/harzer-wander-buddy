@@ -30,8 +30,11 @@ sap.ui.define([
         onAfterRendering: function () {
             this.byId("navButtonFriendsId").setType("Emphasized");
     
-            const sCurrentUserPrincipal = this.getModel("app").getProperty("/currentUser/ID");
-            const oFilter = new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserPrincipal);
+            const sCurrentUserID = this.getModel("app").getProperty("/currentUser/ID");
+            if(!sCurrentUserID) {
+                setTimeout(this.onAfterRendering.bind(this), 250);
+            }
+            const oFilter = new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserID);
 
             const oBinding = this.byId("idPendingFriendshipRequestsList").getBinding("items");
             oBinding.filter([oFilter]);
@@ -78,16 +81,22 @@ sap.ui.define([
             // Get the binding path for the selected friend.
             var sFriendshipId = oContext.getObject().FriendshipID;
 
-            var oModel = this.getView().getModel();
-            oModel.remove(`/Friendships(${sFriendshipId})`, {
-                success: function () {
-                    MessageToast.show(this.getText("friendRemoved"));
-                    this.getModel().refresh();
-                }.bind(this),
-                error: function (oError) {
-                    MessageToast.show(this.getText("errorRemovingFriend"));
-                }
-            });
+            if(sFriendshipId) {
+
+                var oModel = this.getView().getModel();
+                oModel.remove(`/Friendships(${sFriendshipId})`, {
+                    success: function () {
+                        MessageToast.show(this.getText("friendRemoved"));
+                        this.getModel().refresh();
+                    }.bind(this),
+                    error: function (oError) {
+                        MessageToast.show(this.getText("errorRemovingFriend"));
+                    }.bind(this)
+                });
+            } else {
+                debugger
+                MessageToast.show(this.getText("errorRemovingFriend"));
+            }
         },
 
         onNavToFriendPress: function (oEvent) {

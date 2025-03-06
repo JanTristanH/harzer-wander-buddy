@@ -11,7 +11,7 @@ const onBeforeFriendshipCreate = async (req) => {
         fromUser_ID: req.data.fromUser_ID,
         toUser_ID: req.data.toUser_ID
     });
-    if (friendshipExists.length > 0) {
+    if (friendshipExists.length > 0 || req.data.fromUser_ID == req.data.toUser_ID) {
         req.error(400, 'Friendship already exists');
         return;
     }
@@ -21,15 +21,25 @@ const onBeforeFriendshipCreate = async (req) => {
 const onAfterFriendshipCreate = async (req) => {
     const db = await cds.connect.to('db');
     // create pending PendingFriendshipRequests
-    const { PendingFriendshipRequests } = db.entities;
+    const { PendingFriendshipRequests, Friendships } = db.entities;
 
-    const pendingFriendshipRequest = {
-        ID: uuidv4(),
-        fromUser: { ID: req.toUser_ID },
-        toUser: { ID: req.fromUser_ID },
-        outgoingFriendship_ID: req.ID
-    };
-    await INSERT.into(PendingFriendshipRequests).entries(pendingFriendshipRequest);
+    await DELETE.from(PendingFriendshipRequests)
+      .where(`fromUser.ID =`, req.fromUser_ID, `and toUser.ID =`, req.toUser_ID);
+
+
+    // check if other person is already friend:
+    const friendshipExists = await SELECT.from(Friendships)
+    .where(`fromUser.ID =`, req.toUser_ID, `and toUser.ID =`, req.fromUser_ID);
+
+    if (friendshipExists.length == 0) {
+        const pendingFriendshipRequest = {
+            ID: uuidv4(),
+            fromUser: { ID: req.toUser_ID },
+            toUser: { ID: req.fromUser_ID },
+            outgoingFriendship_ID: req.ID
+        };
+        await INSERT.into(PendingFriendshipRequests).entries(pendingFriendshipRequest);
+    }
     return req;
 }
 
@@ -54,18 +64,12 @@ const acceptPendingFriendshipRequest = async (req) => {
     // Create the confirmed friendship using data from the pending request
     const friendship = {
       fromUser_ID: pendingRequest.fromUser_ID,
-      toUser_ID: pendingRequest.toUser_ID,
-      confirmed: true
+      toUser_ID: pendingRequest.toUser_ID
     };
     await INSERT.into(Friendships).entries(friendship);
   
     // Delete the pending friendship request now that it has been accepted
     await DELETE.from(PendingFriendshipRequests).where({ ID: pendingRequest.ID });
-  
-    // Update the original friendship request to mark it as confirmed
-    await UPDATE(Friendships)
-      .set({ confirmed: true })
-      .where({ ID: pendingRequest.outgoingFriendship_ID });
   
     return pendingRequest;
   };

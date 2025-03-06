@@ -98,8 +98,8 @@
                         >
                             <items>
                                 <StandardListItem
-                                    title="{fromUser/name}"
-                                    description="{toUser/name}"
+                                    title="{i18n>requestFrom}: {toUser/name}"
+                                    description="{i18n>clickToAccept}"
                                     icon="{toUser/picture}"
                                     type="Active"
                                     press="onAcceptPendingFriendshipRequest"

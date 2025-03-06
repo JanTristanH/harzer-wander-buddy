@@ -147,7 +147,6 @@ entity Tour2TravelTime @cds.autoexpose {
 entity Friendships : cuid {
     fromUser  : Association to ExternalUsers;
     toUser    : Association to ExternalUsers;
-    confirmed : Boolean default false;
     createdBy : User @cds.on.insert: $user;
 }
 
