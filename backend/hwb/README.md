@@ -105,6 +105,7 @@ This project is configured to run with a postgres.
   - initials for empty picture formatter ✔️
   - see friends of user and add via profile page ✔️
 - remove event handler in tour view ✔️ (Workaround)
+- authorize friend to stamp for me
 - are you sure when deleting stampings
 - support maps.me navigation
   - handle navigation on desktop
@@ -112,7 +113,6 @@ This project is configured to run with a postgres.
 
 ## MVP 2
 
-- authorize friend to stamp for me
 - friends can edit my tour + edit as own tour
 - more graceful failing of edit tour and don't allow in the first place 
 - share tour with preselected group?
@@ -128,6 +128,7 @@ This project is configured to run with a postgres.
 - Update color schema of app to match background of mascot
 - look into sapui5 vs openui5 (openUi5 does not have GeoMap)
 - look into problem with 24 remaining routes
+- export live data to dummy data
 - fix handler to be normally performant: this.after('READ', `Stampboxes` -> use joins to load only needed group information
 - Profile page
   - saved tours
