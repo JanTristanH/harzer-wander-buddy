@@ -37,7 +37,7 @@
                 >
                     <SuggestionItem
                         description="{local>name}"
-                        key="{local>longitude};{local>latitude}"
+                        key="{local>ID}"
                     />
                 </SearchField>
                 <Button icon="sap-icon://company-view" press=".onOpenGroupManagement" text="{i18n>group}" class="sapUiSmallMargin"/>

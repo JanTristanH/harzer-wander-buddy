@@ -10,7 +10,7 @@ sap.ui.define([
 
     "use strict";
     return Controller.extend("hwb.frontendhwb.controller.BaseController", {
-        nZoomLevelLabelThreshold: 16,
+        nZoomLevelLabelThreshold: 15,
         nZoomLevelClickThreshold: 11,
         fallBackCords: "10.615779999999972;51.80054",
 

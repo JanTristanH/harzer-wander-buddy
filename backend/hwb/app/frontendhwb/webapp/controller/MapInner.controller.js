@@ -60,7 +60,7 @@ sap.ui.define([
                 });
             },
 
-            applyGroupFilter: function() {
+            applyGroupFilter: function () {
                 // Retrieve the updated property from the model
                 let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
                 aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup)); // create copy
@@ -156,32 +156,34 @@ sap.ui.define([
                 }
             },
 
-            onFormatLabelText: function (sName, nZoomLevel, bShowLabels, bShowSpot) {
-                return bShowSpot && bShowLabels && nZoomLevel >= 16 ? sName : "";
+            onFormatLabelText: function (sName, nZoomLevel, bShowLabels, bShowSpot, sId, sSelectedId) {
+                const bShowText = sId == sSelectedId || (bShowSpot && bShowLabels && nZoomLevel >= 16);
+                return bShowText ? sName : "";
             },
 
-            onFormatStampLabelText: function (sName, nZoomLevel, bShowLabels, bShowStampedSpots, bShowUnStampedSpots, hasVisited) {
+            onFormatStampLabelText: function (sName, nZoomLevel, bShowLabels, bShowStampedSpots, bShowUnStampedSpots, hasVisited, sId, sSelectedId) {
                 const bShouldDisplayByFilter = (hasVisited && bShowStampedSpots) || (!hasVisited && bShowUnStampedSpots);
-                return bShouldDisplayByFilter && bShowLabels && nZoomLevel >= 16 ? sName : "";
+                const isSelected = sId == sSelectedId;
+                return isSelected || (bShouldDisplayByFilter && bShowLabels && nZoomLevel >= 16) ? sName : "";
             },
 
             onFormatBooleanToSemanticType: function (bVisible, nZoomLevel) {
                 return bVisible && nZoomLevel >= 13 ? 'Default' : 'Hidden';
             },
 
-            onFormatParkingText: function(nZoomLevel, sText){
+            onFormatParkingText: function (nZoomLevel, sText) {
                 return nZoomLevel >= 11 ? sText : '';
             },
 
             onFormatSpotScale: function (sSpotID, sSelectedID) {
-              if(sSpotID == sSelectedID) {
-                  return "1.4;1.4;1";
+                if (sSpotID == sSelectedID) {
+                    return "1.4;1.4;1";
                 }
                 return "1;1;1";
             },
 
             onSpotContextMenu: function (oEvent) {
-                if(this.getRouter().getHashChanger().hash.includes("tour")) {
+                if (this.getRouter().getHashChanger().hash.includes("tour")) {
                     return;
                 }
                 this.onButtonOpenExternalPress(oEvent);
@@ -213,15 +215,15 @@ sap.ui.define([
             onSearchFieldSearch: function (oEvent) {
                 var oItem = oEvent.getParameter("suggestionItem");
                 if (oItem) {
-                    const aCords = oItem.getKey().split(";");
-                    this._oMap.zoomToGeoPosition(aCords[0], aCords[1], this.nZoomLevelLabelThreshold);
+                    this.getRouter().navTo("MapWithPOI", { idPOI: oItem.getKey() });
                 } else {
                     MessageToast.show("Bitte einen Ort aus der Liste auswählen!");
                 }
             },
 
-            onMapRouteMatched: function(oEvent) {
+            onMapRouteMatched: function (oEvent) {
                 this.getModel("local").setProperty("/sCurrentSpotId", "");
+                this.onButtonClosePress();
             },
 
             onMapWithPOIRouteMatched: function (oEvent) {
@@ -251,7 +253,7 @@ sap.ui.define([
             },
 
             onSpotClick: function (oEvent, bSuppressNavigation) {
-                if(this.getRouter().getHashChanger().hash.includes("tour")) {
+                if (this.getRouter().getHashChanger().hash.includes("tour")) {
                     return;
                 }
                 const oSpot = oEvent.getSource();
@@ -348,8 +350,16 @@ sap.ui.define([
                             let oListItem = new sap.m.StandardListItem({
                                 title: this._getPoiById(oItemData.toPoi)?.name || "",
                                 description: `${this.formatMetersToKilometers(oItemData.distanceMeters)} - ${this.formatSecondsToTime(oItemData.durationSeconds)}`,
-                                icon: "sap-icon://task"
+                                icon: "sap-icon://task",
+                                type: "Navigation",
+                                press: this.onNearbyPress.bind(this)
                             });
+
+                            // Adding Custom Data
+                            oListItem.addCustomData(new sap.ui.core.CustomData({
+                                key: "poiId",
+                                value: oItemData.toPoi
+                            }));
 
                             oList?.addItem(oListItem);
                         });
@@ -407,11 +417,20 @@ sap.ui.define([
             onButtonClosePress: function (oEvent) {
                 this.getRouter().navTo("Map");
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
-                var oLastContentArea = oSplitter.getContentAreas().pop();
-                oSplitter.removeContentArea(oLastContentArea);
-                oLastContentArea.destroy();
-                this._pSPOIInforCard = null;
-                oSplitter.resetContentAreasSizes();
+                var aContentAreas = oSplitter.getContentAreas()
+                if (aContentAreas.length > 1) {
+
+                    var oLastContentArea = aContentAreas.pop();
+                    oSplitter.removeContentArea(oLastContentArea);
+                    oLastContentArea.destroy();
+                    this._pSPOIInforCard = null;
+                    oSplitter.resetContentAreasSizes();
+                }
+            },
+
+            onNearbyPress: function (oEvent) {
+                const idPOI = oEvent.getSource().data().poiId;
+                this.getRouter().navTo("MapWithPOI", { idPOI });
             },
 
             onGeoMapCenterChanged: function (oEvent) {

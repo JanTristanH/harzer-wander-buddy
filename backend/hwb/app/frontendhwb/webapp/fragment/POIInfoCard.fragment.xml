@@ -88,6 +88,7 @@
                 <HBox
                     class="sapUiSmallMarginTop"
                     width="95%"
+                    visible="false"
                 >
                     <ExpandableText
                         class="sapUiTinyMarginBottom sapUiTinyMarginTop"
@@ -105,11 +106,8 @@
                             headerText="{i18n>nearbyPois}"
                             items="{local>/TravelTimes}"
                         >
-                            <StandardListItem
-                                title="Stempel"
-                                description="{local>distanceMeters}m - {local>durationSeconds}s"
-                                icon="sap-icon://task"
-                            />
+                        <StandardListItem />
+                        <!-- populated by MapsInnerController-->
                         </List>
                     </ScrollContainer>
                 </HBox>
