@@ -335,12 +335,14 @@
                                             groupType="Individual"
                                             avatarDisplaySize="S"
                                             items="{local>stampedUsers}"
+                                            press="onAvatarGroupPress"
                                         > 
                                             <f:AvatarGroupItem
                                                 initials="{parts: ['local>name'], formatter: '.onFormatInitialsByName'}"
                                                 fallbackIcon="sap-icon://person-placeholder"
                                                 src="{local>picture}"
                                                 tooltip="{local>name}"
+                                                fieldGroupIds="{local>ID}"
                                             />
                                         </f:AvatarGroup>
                                     </FlexBox>

@@ -66,6 +66,13 @@ sap.ui.define([
             this._oPopover.close();
         },
 
+        onAvatarGroupPress: function(oEvent) {
+            const userId = oEvent.getParameter("eventSource").getFieldGroupIds()[0];
+            this.getRouter().navTo("Profile", {
+                userId
+            });
+        },
+
         onOpenAdminPanelPress: function () {
             this.getRouter().navTo("Admin");
             this._oPopover.close();

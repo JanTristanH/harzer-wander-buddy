@@ -38,11 +38,51 @@ sap.ui.define([
                 }
             });
 
+            this.initAccpetButton();
+
             const oFilter = new Filter("fromUser_ID", FilterOperator.EQ, sUserID);
             const oFriendListBinding = this.byId("idFriendsListProfile").getBinding("items");
             oFriendListBinding.filter([oFilter]);
-            
+
             this.getModel().refresh();
+        },
+
+        initAccpetButton: function () {
+            this.getModel("app").setProperty("/bHasPendingFriendshipRequests", false);
+            const sCurrentUserPrincipal = this.getModel("app").getProperty("/currentUser/ID");
+            this.getModel().read('/PendingFriendshipRequests',
+                {
+                    filters: [new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserPrincipal)],
+                    parameters: { expand: 'fromUser,toUser' },
+                    success: function (oData) {
+                        if(oData.results.length > 0) {
+                            this.getModel("app").setProperty("/bHasPendingFriendshipRequests", true);
+                            this.getModel("app").setProperty("/sPendingFriendshipRequestID", oData.results[0].ID);
+                        }
+                    }.bind(this)
+                }
+            )
+        },
+
+        onAcceptPendingFriendshipRequest: function (oEvent) {
+            const oModel = this.getView().getModel();
+            const ID = this.getModel("app").getProperty("/sPendingFriendshipRequestID");
+
+            oModel.callFunction("/acceptPendingFriendshipRequest", {
+                method: "POST",
+                urlParameters: {
+                    FriendshipID: ID
+                },
+                success: function () {
+                    this.initAccpetButton();
+                    this.getModel().refresh();
+                }.bind(this),
+                error: function (oError) {
+                    // Handle error
+                    MessageToast.show(this.getText("error"));
+                    console.error("Error accepting friendship request:", oError);
+                }
+            });
         },
 
         updateTableFilters: function () {
@@ -55,7 +95,7 @@ sap.ui.define([
             // Apply filter to binding
             const oBinding = this.byId("idStampingsProfileTable").getBinding("items");
             if (oBinding) {
-                oBinding.filter(aSelectedGroup.length > 1 ?  oFilter : null);
+                oBinding.filter(aSelectedGroup.length > 1 ? oFilter : null);
             }
         },
 

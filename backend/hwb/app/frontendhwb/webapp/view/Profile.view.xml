@@ -76,24 +76,35 @@
                                             />
                                         </HBox>
                                     </VBox>
-                                    <HBox 
+                                    <FlexBox
+                                        wrap="Wrap"
                                         visible="{= ${ID} !== ${app>/currentUser/ID} }"
+                                        justifyContent="Center"
                                     >
-                                    <Button
-                                        icon="sap-icon://company-view"
-                                        press=".onAddToGroupSelection"
-                                        text="{i18n>addToGroup}"
-                                        enabled="{= !${app>/aSelectedGroupIds}.includes(${principal}) &amp;&amp; ${isFriend} }"
-                                        class="sapUiSmallMargin"
-                                    />
-                                    <Button
-                                        icon="sap-icon://add-employee"
-                                        press=".onAddFriend"
-                                        text="{i18n>addFriend}"
-                                        class="sapUiSmallMargin"
-                                        enabled="{= !${isFriend} }"
-                                    />
-                                    </HBox>
+                                        <Button
+                                            icon="sap-icon://company-view"
+                                            press=".onAddToGroupSelection"
+                                            text="{i18n>addToGroup}"
+                                            enabled="{= !${app>/aSelectedGroupIds}.includes(${principal}) &amp;&amp; ${isFriend} }"
+                                            class="sapUiSmallMargin"
+                                        />
+                                        <Button
+                                            icon="sap-icon://add-employee"
+                                            press=".onAddFriend"
+                                            text="{i18n>addFriend}"
+                                            class="sapUiSmallMargin"
+                                            visible="{= !${app>/bHasPendingFriendshipRequests}}"
+                                            enabled="{= !${isFriend} }"
+                                        />
+                                        <Button
+                                            icon="sap-icon://add-employee"
+                                            type="Emphasized"
+                                            press=".onAcceptPendingFriendshipRequest"
+                                            text="{i18n>acceptPendingFriendshipRequests}"
+                                            class="sapUiSmallMargin"
+                                            visible="{app>/bHasPendingFriendshipRequests}"
+                                        />
+                                    </FlexBox>
                                 </VBox>
                             </uxap:ObjectPageSubSection>
                         </uxap:subSections>
