@@ -7,7 +7,6 @@ const { onAfterFriendshipCreate, acceptPendingFriendshipRequest, onBeforeFriends
 
 const fetch = require('node-fetch');
 const routingManager = require('./routingManager');
-const { add } = require('@sap/cds/lib/srv/middlewares');
 
 const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MAX_REQUESTS_PER_CALL : 1000;
 // 40.000 free 
@@ -249,9 +248,9 @@ function extractFilters(filters, operator) {
   return result;
 }
 
-async function addIsFriend(users) {
+async function addIsFriend(users, req) {
   const { MyFriends } = this.api.entities;
-  const aFriendships = await SELECT.from(MyFriends);
+  const aFriendships = await SELECT.from(MyFriends).where({createdBy: req.user.id});
   const aFriendIds = aFriendships.map(f => f.ID);
   return users.map(user => {
     user.isFriend = aFriendIds.includes(user.ID);

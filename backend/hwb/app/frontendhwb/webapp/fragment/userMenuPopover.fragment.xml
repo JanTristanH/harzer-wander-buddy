@@ -11,6 +11,8 @@
 		afterClose="onPopoverClose">
 		<VBox class="sapUiSmallMargin">
 			<!-- ComboBox for Friends -->
+			<HBox>
+			<Label text="{i18n>group}: " class="sapUiTinyMarginTop sapUiTinyMarginEnd" />
 			<MultiComboBox
 				id="idGroupsMultiComboBox"
 				placeholder="{i18n>chooseGroup}"
@@ -19,6 +21,7 @@
 				items="{/MyFriends}">
 				<core:Item key="{principal}" text="{name}"/>
 			</MultiComboBox>
+			</HBox>
 			<!-- Existing List with Logout Item -->
 			<HBox height="2rem"></HBox>
 			<List>
