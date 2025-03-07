@@ -2,11 +2,12 @@ sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     "sap/m/ColumnListItem",
     "sap/m/MessageToast",
+    "sap/f/AvatarGroupItem"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, ColumnListItem, MessageToast) {
+    function (Controller, ColumnListItem, MessageToast, AvatarGroupItem) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
@@ -14,12 +15,17 @@ sap.ui.define([
             onInit: function () {
                 this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onRoutesDetailTransientRouteMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onRoutesDetailMatched, this);
+                this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onRoutesDetailEditMatched, this);
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("idRoutesWayPointList", "onListSelect", this.onListSelect, this);
             },
 
             _getMap() {
                 return this.byId("RoutesMapId").byId("map");
+            },
+
+            onRoutesDetailEditMatched: function() {
+                this.getModel("local").setProperty("/edit", true);
             },
 
             onRoutesDetailMatched: function () {
@@ -32,7 +38,7 @@ sap.ui.define([
             },
 
             onSplitterRoutesDetailResize: function (oEvent) {
-                let nNewSize = oEvent.getParameters().newSizes[1] - 200;
+                let nNewSize = oEvent.getParameters().newSizes[1] - 225;
                 this.getModel("local").setProperty("/wayPointScrollContainerHeight", nNewSize + "px");
             },
 
@@ -116,10 +122,11 @@ sap.ui.define([
                     });
                 }
             },
+
             onButtonSavePress: function () {
                 const oLocalModel = this.getView().getModel("local");
                 oLocalModel.setProperty("/edit", false);
-                this.getRouter().navTo("RoutesDetailEdit", {
+                this.getRouter().navTo("RoutesDetail", {
                     TourId: oLocalModel.getProperty("/sIdListTravelTimes")
                 });
             },
@@ -438,7 +445,22 @@ sap.ui.define([
                 const poi = this._getPoiById(oEvent.getSource().getCustomData()[0].getValue());
 
                 this.openMapsApp(poi.latitude, poi.longitude);
-            }
+            },
+
+            formatAvatarGroupItems: function (aUsers) {
+                if (!aUsers || !Array.isArray(aUsers)) {
+                    return [];
+                }
+            
+                return aUsers.map(user => {
+                    return new AvatarGroupItem({
+                        initials: this.onFormatInitialsByName(user.name),
+                        fallbackIcon: "sap-icon://person-placeholder",
+                        src: user.picture || "",
+                        tooltip: user.name || "Unknown"
+                    });
+                });
+            }            
 
         });
     });

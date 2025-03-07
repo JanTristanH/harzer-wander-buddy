@@ -17,6 +17,12 @@
                 title="{i18n>title}"
                 backgroundDesign="Transparent"
             >
+                <headerContent>
+                    <core:Fragment
+                        fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
+                        type="XML"
+                    />
+                </headerContent>
                 <content>
                     <HBox
                         height="100%"
@@ -25,6 +31,7 @@
                         <IconTabBar
                             id="idIconTabBarMulti"
                             class="sapUiResponsiveContentPadding"
+                            expandable="false"
                         >
                             <items>
                                 <IconTabFilter
@@ -132,7 +139,7 @@
                                                                         src="sap-icon://toaster-top"
                                                                     />
                                                                     <Text
-                                                                        text="{stampCount}"
+                                                                        text="{AverageGroupStampings} / {stampCount}"
                                                                     />
                                                                 </VBox>
                                                                 <Text

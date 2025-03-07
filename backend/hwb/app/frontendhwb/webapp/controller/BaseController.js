@@ -4,13 +4,89 @@ sap.ui.define([
     "sap/ui/core/UIComponent",
     "sap/m/MessageToast",
     "sap/ui/model/Filter",
-    "sap/ui/model/FilterOperator"
-], function (Controller, History, UIComponent, MessageToast, Filter, FilterOperator) {
+    "sap/ui/model/FilterOperator",
+    "sap/ui/core/Fragment"
+], function (Controller, History, UIComponent, MessageToast, Filter, FilterOperator, Fragment) {
 
     "use strict";
     return Controller.extend("hwb.frontendhwb.controller.BaseController", {
-
+        nZoomLevelLabelThreshold: 15,
+        nZoomLevelClickThreshold: 0, // disabled with 0
         fallBackCords: "10.615779999999972;51.80054",
+
+        onInit: function () {
+            const isPWAInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+            this.getModel("app").setProperty("/isInstallable", !isPWAInstalled);
+            this.oMyAvatar = this.getView().byId("idMyAvatar");
+            this._oPopover = Fragment.load({
+                id: this.getView().getId(),
+                name: "hwb.frontendhwb.fragment.userMenuPopover",
+                controller: this
+            }).then(function (oPopover) {
+                this.getView().addDependent(oPopover);
+                this._oPopover = oPopover;
+            }.bind(this));
+        },
+
+        onMyAvatarPress: function (oEvent) {
+            var oEventSource = oEvent?.getSource() ?? this.oMyAvatar;
+            this.oMyAvatar = oEventSource;
+            var bActive = this.oMyAvatar.getActive();
+
+            this.oMyAvatar.setActive(!bActive);
+
+            if (bActive) {
+                this._oPopover.close();
+            } else {
+                this._oPopover.openBy(oEventSource);
+            }
+        },
+        onInstallPress: function() {
+            installPWA();
+        },
+
+        onPopoverClose: function () {
+            this.oMyAvatar.setActive(false);
+        },
+
+        onUserMenuListItemPress: function () {
+            this.oMyAvatar.setActive(false);
+            this._oPopover.close();
+        },
+
+        onLogoutPress: function () {
+            window.location.href = "/logout";
+        },
+
+        onMyProfilePress: function () {
+            this.getRouter().navTo("Profile", {
+                userId: this.getModel("app").getProperty("/currentUser/ID")
+            });
+            this._oPopover.close();
+        },
+
+        onAvatarGroupPress: function(oEvent) {
+            const userId = oEvent.getParameter("eventSource").getFieldGroupIds()[0];
+            this.getRouter().navTo("Profile", {
+                userId
+            });
+        },
+
+        onOpenAdminPanelPress: function () {
+            this.getRouter().navTo("Admin");
+            this._oPopover.close();
+        },
+
+        initializeAppModelForMap: function () {
+            let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? this.nZoomLevelLabelThreshold;
+            this.getModel("app").setProperty("/zoomlevel", parseInt(sLastZoomLevel));
+            this.getModel("app").setProperty("/bShowLabels", true);
+            this.getModel("app").setProperty("/bShowParkingSpots", true);
+            this.getModel("app").setProperty("/bShowStampedSpots", true);
+            this.getModel("app").setProperty("/bShowUnStampedSpots", true);
+            this.attachGroupChange();
+        },
 
         stringToBoolean: function (str) {
             return str === "true";
@@ -30,7 +106,7 @@ sap.ui.define([
         },
 
         getModel: function (sName) {
-            return this.getView().getModel(sName);
+            return this.getView().getModel(sName) ?? this.getOwnerComponent().getModel(sName);
         },
 
         getText: function (sKey) {
@@ -51,7 +127,7 @@ sap.ui.define([
         },
 
         formatCleanMeter: function (meters) {
-            return `${parseInt(meters)}m`;
+            return `${parseInt(meters)} m`;
         },
 
         onNavBack: function () {
@@ -75,6 +151,10 @@ sap.ui.define([
             this.getRouter().navTo("Main");
         },
 
+        onNavToFriends: function (params) {
+            this.getRouter().navTo("FriendsList");
+        },
+
         onButtonAdminMapPress: function () {
             this.getRouter().navTo("Admin");
         },
@@ -92,7 +172,7 @@ sap.ui.define([
             }
 
             var kilometers = iMeters / 1000;
-            return kilometers.toFixed(2) + "km"; // Show 2 decimal places
+            return kilometers.toFixed(2) + " km"; // Show 2 decimal places
         },
 
         formatSecondsToTime: function (iSeconds) {
@@ -107,11 +187,11 @@ sap.ui.define([
             var formattedTime = "";
 
             if (hours > 0) {
-                formattedTime += hours + "h ";
+                formattedTime += hours + " h ";
             }
 
             if (minutes > 0 || hours > 0) { // Include minutes if there are hours
-                formattedTime += minutes + "min ";
+                formattedTime += minutes + " min ";
             }
 
             return formattedTime.trim(); // Remove any trailing whitespace
@@ -146,6 +226,22 @@ sap.ui.define([
                 return p;
             });
             aPath.reverse();
+            aPath = this._addStampedUsers(aPath);
+            return aPath;
+        },
+
+        _addStampedUsers: function (aPath) {
+            let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+            aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup));
+            let currentUser = this.getModel("app").getProperty("/currentUser");
+            aSelectedGroup.push(currentUser.principal);
+
+            aPath.forEach(p => {
+                const poi = this._getPoiById(p.toPoi);
+                if (poi && poi.stampedUsers) {
+                    p.stampedUsers = poi.stampedUsers.filter(u => aSelectedGroup.includes(u.principal));
+                }
+            });
             return aPath;
         },
 
@@ -174,7 +270,7 @@ sap.ui.define([
                                 tt.name = poi ? poi.name : this.getText("start");
                                 tt.duration = tt.durationSeconds;
                                 tt.distance = tt.distanceMeters;
-                                if(tt.elevationProfile) {
+                                if (tt.elevationProfile) {
                                     let aElevationProfile = tt.elevationProfile.split(";");
                                     for (let i = 0; i < aElevationProfile.length; i++) {
                                         aElevationProfile[i] = { x: i, y: parseFloat(aElevationProfile[i]) };
@@ -194,7 +290,25 @@ sap.ui.define([
                     console.error(oError);
                 }
             });
-        }
+        },
+
+        onFormatInitialsByName: function(sName){
+            if(!sName) {
+                return sName;
+            }
+            if(sName.length <= 3) {
+                return sName;
+            }
+            return sName.split(' ').map(s => s.charAt(0).toUpperCase()).join("").substring(0,3);
+        },
+
+        isAdmin: function(roles) {
+            if (!roles) return false;
+            if (Array.isArray(roles)) {
+                return roles.includes("admin");
+            }
+            return roles.split(",").map(role => role.trim()).includes("admin");
+        }        
 
     });
 });

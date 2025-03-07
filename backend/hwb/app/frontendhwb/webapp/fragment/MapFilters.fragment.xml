@@ -9,10 +9,10 @@
         placement="Bottom"
     >
         <VBox>
-            <CheckBox id="idToggleLabelCheckBox" text="{i18n>toggleLabel}" select="onToggleLabelsCheckBox" selected="true" />
-            <CheckBox id="idToggleStampedCheckBox" text="{i18n>visitedStamps}" select="onVisitedStampsCheckkBoxSelect" selected="true" />
-            <CheckBox id="idToggleUnstampedCheckBox" text="{i18n>missingStamps}" select="onNotVisitedStampsCheckkBoxSelect" selected="true" />
-            <CheckBox id="idParkingSpaceCheckBox" text="{i18n>ParkingSpaces}" select="onParkingSpaceCheckBox" selected="true" />
+            <CheckBox text="{i18n>showName}" selected="{app>/bShowLabels}" />
+            <CheckBox text="{i18n>visitedStamps}" selected="{app>/bShowStampedSpots}" />
+            <CheckBox text="{i18n>missingStamps}" selected="{app>/bShowUnStampedSpots}" />
+            <CheckBox text="{i18n>ParkingSpaces}" selected="{app>/bShowParkingSpots}" />
             
             <Button press='onShowAllPress' text="{i18n>showAll}" class="sapUiTinyMargin" />
             <Button press='.onLocateMePress' text="{i18n>showCurrentLocation} 📍" class="sapUiTinyMarginBeginEnd sapUiTinyMarginBottom"/>

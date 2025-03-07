@@ -2,21 +2,52 @@ sap.ui.define([
     "hwb/frontendhwb/controller/BaseController",
     'sap/m/MessageToast',
     "sap/ui/core/Fragment",
-    "sap/ui/model/json/JSONModel"
+    "sap/ui/model/json/JSONModel",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, MessageToast, Fragment, JSONModel) {
+    function (Controller, MessageToast, Fragment, JSONModel, Filter, FilterOperator) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.List", {
             onInit: function () {
+                Controller.prototype.onInit.apply(this, arguments);
                 this.disableSelectAll();
+                this.attachGroupChange();
             },
+
             onAfterRendering: function () {
                 this.getView().byId("navButtonListId").setType("Emphasized");
             },
+
+            attachGroupChange: function () {
+                this.getModel("app").attachPropertyChange((oEvent) => {
+                    if (oEvent.getParameter("path") == "/aSelectedGroupIds") {
+                        this.applyGroupFilter();
+                    }
+                });
+            },
+
+            applyGroupFilter: function() {
+                // Retrieve the updated property from the model
+                let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+                aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup)); // create copy
+                let currentUser = this.getModel("app").getProperty("/currentUser");
+                aSelectedGroup.push(currentUser.principal);
+
+                // Create binding filter for selected groups
+                let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
+
+                // Apply filter to binding
+                const oBinding = this.byId("StampingsTable").getBinding("items");
+                if (oBinding) {
+                    oBinding.filter(aSelectedGroup.length > 1 ? oFilter : null);
+                }
+            },
+
             disableSelectAll() {
                 // hacky workaround, use custom control later:
                 //https://stackoverflow.com/questions/51324035/how-to-hide-select-all-checkbox-from-table
@@ -33,9 +64,8 @@ sap.ui.define([
 
             updateStampCount: function () {
                 var oTable = this.byId("StampingsTable");
-                var iSelectedCount = oTable.getSelectedItems().length;
-                var oSelectedCountLabel = this.byId("selectedCount");
-                oSelectedCountLabel.setText("Erwanderte Stempel: " + iSelectedCount); // Update the text of the label
+                var iSelectedCount = oTable.getSelectedItems().length ?? 0;
+                this.getModel("app").setProperty("/selectedCount", iSelectedCount);
             },
 
             onSelectionChange: function (oEvent) {
@@ -71,7 +101,7 @@ sap.ui.define([
             },
 
             onStampingsUpdateFinished: function (event) {
-                this.selectWhere(context => context.getProperty('Stampings').length);
+                this.selectWhere(context => context.getProperty('hasVisited'));
                 this.updateStampCount()
             },
 
@@ -85,8 +115,10 @@ sap.ui.define([
                 });
                 return table
             },
-            onLogoutPress: function () {
-                window.location.href = "/logout";
+
+            onListItemPress: function(oEvent) {
+                const sId = oEvent.getSource().getBindingContext().getProperty("ID")
+                this.getRouter().navTo("MapWithPOI", { idPOI: sId });
             },
 
             onShowBagdesButtonPress: function (oEvent) {
@@ -170,7 +202,7 @@ sap.ui.define([
             getWitchTrailPercentage: function (aStampedNumbers) {
                 let aWitchTrailRequiredStampsWithoutSpecific = this.aWitchTrailRequiredStamps.filter(s => s != "69" && s != "140");
                 const applicableStampings = aStampedNumbers
-                    
+
                     .filter(stamped => aWitchTrailRequiredStampsWithoutSpecific.includes(stamped));
 
                 let sStampedForRequiredCount = Math.min(applicableStampings.length, 9);
@@ -252,7 +284,36 @@ sap.ui.define([
             onStampNavigatePress: function (oEvent) {
                 const sId = oEvent.getSource().data("ID");
                 this.getRouter().navTo("MapWithPOI", { idPOI: sId });
-            }
+            },
 
+            onFormatColumnVisibility: function (nIndex, aSelectedGroupIds) {
+                const result = aSelectedGroupIds?.length >= nIndex + 1;
+                if (result) {
+                    const sPrincipal = aSelectedGroupIds[nIndex];
+                    this.addColumnName(nIndex, sPrincipal);
+                }
+                return result;
+            },
+
+            addColumnName: function (nIndex, sPrincipal) {
+                const aFilters = [new Filter("principal", FilterOperator.EQ, sPrincipal)];
+                this.getModel().read("/Users", {
+                    filters: aFilters,
+                    success: function (oData) {
+                        this.getModel("app").setProperty("/userName" + nIndex, oData.results[0].name);
+                    }.bind(this),
+                    error: function (oError) {
+                        MessageToast.show(this.getText("error"));
+                    }
+                });
+            },
+
+            onFormatGroupSelected: function (index, aSelectedGroupIds, stampedUserIds) {
+                if (!aSelectedGroupIds || !aSelectedGroupIds.length) {
+                    return false;
+                }
+                const sPrincipal = aSelectedGroupIds[index];
+                return stampedUserIds.includes(sPrincipal);
+            },
         });
     });

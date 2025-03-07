@@ -1,0 +1,61 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:f="sap.f"
+	xmlns:l="sap.ui.layout">
+	<Popover
+		id="idUserMenu"
+		title="{i18n>userMenu}"
+		titleAlignment="Center"
+		placement="Bottom"
+		afterClose="onPopoverClose">
+		<VBox class="sapUiSmallMargin">
+			<!-- ComboBox for Friends -->
+			<HBox>
+			<Label text="{i18n>group}: " class="sapUiTinyMarginTop sapUiTinyMarginEnd" />
+			<MultiComboBox
+				id="idGroupsMultiComboBox"
+				placeholder="{i18n>chooseGroup}"
+				selectedKeys="{app>/aSelectedGroupIds}"
+				selectionFinish="onSelectionFinish"
+				items="{/MyFriends}">
+				<core:Item key="{principal}" text="{name}"/>
+			</MultiComboBox>
+			</HBox>
+			<!-- Existing List with Logout Item -->
+			<HBox height="2rem"></HBox>
+			<List>
+				<items>
+				<StandardListItem
+						icon="sap-icon://key-user-settings"
+						title="{i18n>AdminMap}"
+						type="Active"
+						class="sapUiTinyMarginBottom"
+						visible="{parts: ['app>/currentUser/roles'], formatter: '.isAdmin'}"
+						press="onOpenAdminPanelPress" />
+
+				<StandardListItem
+						icon="sap-icon://person-placeholder"
+						title="{i18n>myProfile}"
+						type="Active"
+						class="sapUiTinyMarginBottom"
+						press="onMyProfilePress" />
+
+				<StandardListItem
+						icon="sap-icon://download"
+						title="{i18n>install}"
+						type="Active"
+						class="sapUiTinyMarginBottom"
+						visible="{app>/isInstallable}"
+						press="onInstallPress" />
+
+					<StandardListItem
+						icon="sap-icon://log"
+						title="{i18n>logout}"
+						type="Active"
+						press="onLogoutPress" />
+				</items>
+			</List>
+		</VBox>
+	</Popover>
+</core:FragmentDefinition>

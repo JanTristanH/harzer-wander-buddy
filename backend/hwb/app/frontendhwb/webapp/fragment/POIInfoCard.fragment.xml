@@ -26,7 +26,10 @@
                 class="sapUiSmallMargin"
                 justifyContent="SpaceBetween"
             >
-                <HBox width="80%" class="scrollableHbox">
+                <HBox
+                    width="80%"
+                    class="scrollableHbox"
+                >
                     <Button
                         text="{i18n>navigate}"
                         icon="sap-icon://forward"
@@ -59,9 +62,35 @@
                         class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
                     />
                 </HBox>
+                <VBox
+                    class="sapUiSmallMarginTop"
+                    width="95%"
+                    visible="{= (${app>/aSelectedGroupIds} 
+                                &amp;&amp; ${app>/aSelectedGroupIds}.length > 0) 
+                                &amp;&amp; (${local>/oCurrentSpot/stampedUsers}
+                                &amp;&amp; ${local>/oCurrentSpot/stampedUsers}.length > 0) ? true : false }"
+                >
+                    <Title text="{i18n>stampedBy}" />
+                    <f:AvatarGroup
+                        id="avatarGroup"
+                        groupType="Individual"
+                        avatarDisplaySize="S"
+                        press="onAvatarGroupPress"
+                        items="{local>/oCurrentSpot/stampedUsers}"
+                    >
+                        <f:AvatarGroupItem
+                            initials="{path: 'local>name', formatter: '.onFormatInitialsByName'}"
+                            fallbackIcon="sap-icon://person-placeholder"
+                            src="{local>picture}"
+                            tooltip="{local>name}"
+                            fieldGroupIds="{local>ID}"
+                        />
+                    </f:AvatarGroup>
+                </VBox>
                 <HBox
                     class="sapUiSmallMarginTop"
                     width="95%"
+                    visible="false"
                 >
                     <ExpandableText
                         class="sapUiTinyMarginBottom sapUiTinyMarginTop"
@@ -71,7 +100,7 @@
                 <HBox class="sapUiSmallMarginTop">
                     <ScrollContainer
                         width="100%"
-                        height="100%"
+                        height="300px"
                         vertical="true"
                     >
                         <List
@@ -79,11 +108,8 @@
                             headerText="{i18n>nearbyPois}"
                             items="{local>/TravelTimes}"
                         >
-                            <StandardListItem
-                                title="Stempel"
-                                description="{local>distanceMeters}m - {local>durationSeconds}s"
-                                icon="sap-icon://task"
-                            />
+                        <StandardListItem />
+                        <!-- populated by MapsInnerController-->
                         </List>
                     </ScrollContainer>
                 </HBox>

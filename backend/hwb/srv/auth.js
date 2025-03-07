@@ -9,7 +9,7 @@ const DEBUG = cds.debug("cds-auth0");
 const Auth0User = class extends cds.User {
   is(role) {
     DEBUG && DEBUG("Requested role: " + role);
-    return role === "any" || this._roles[role];
+    return role === "any" || this._roles.includes(role);
   }
 };
 
@@ -35,6 +35,11 @@ function capAuth0(req, res, next) {
   }
 
   req.user = new Auth0User(capUser);
+  // needed to satisfy default user.js; Auth0User.is is not called for some reason
+  req.user.roles = req.user._roles.reduce((acc, role) => {
+    acc[role] = true;
+    return acc;
+  }, {});
 
   DEBUG && DEBUG("capUser");
   DEBUG && DEBUG(capUser);

@@ -4,16 +4,14 @@ sap.ui.define([
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
     "sap/m/MessageToast",
-    "sap/ui/model/json/JSONModel"
+    "sap/ui/model/json/JSONModel",
+    "sap/ui/model/Sorter"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel) {
+    function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel, Sorter) {
         "use strict";
-        const unstampedType = "Error";
-        const stampedType = "Success";
-
         return Controller.extend("hwb.frontendhwb.controller.MapInner", {
             itemCache: [],
             _aParkingSpaceCache: [],
@@ -22,8 +20,12 @@ sap.ui.define([
 
             _oMap: {},
             onInit: function () {
+                Controller.prototype.onInit.apply(this, arguments);
+                this.getModel().setSizeLimit(1000);
+                this.initializeAppModelForMap();
+
                 this._oMap = this.byId("map");
-                if(!this._oMap){
+                if (!this._oMap) {
                     return;
                 }
                 if (!this.getModel("local")) {
@@ -38,14 +40,11 @@ sap.ui.define([
                     this._oMap.setCenterPosition(oModel.getProperty("/centerPosition"));
                 }
                 this.getRouter().getRoute("MapWithPOI").attachPatternMatched(this.onMapWithPOIRouteMatched, this);
+                this.getRouter().getRoute("Map").attachPatternMatched(this.onMapRouteMatched, this);
                 //check localstorage last center position and set it
                 let sLastCenterPosition = sessionStorage.getItem("lastCenterPosition");
                 if (sLastCenterPosition) {
                     this._oMap.setCenterPosition(sLastCenterPosition);
-                    let sLastZoomLevel = sessionStorage.getItem("lastZoomLevel") ?? 16;
-                    this._oMap.setZoomlevel(parseInt( sLastZoomLevel, 10));
-                    //wait for map to render
-                    setTimeout(() => this.onToggleLables(parseInt(sLastZoomLevel, 10) >= 16), 1000);
                     // create current location marker
                     this.onLocateMePress(null, false);
                 } else {
@@ -53,13 +52,34 @@ sap.ui.define([
                 }
             },
 
-            onAfterRendering: function () {
-                this.getView().getModel().setSizeLimit(1000);
+            attachGroupChange: function () {
+                this.getModel("app").attachPropertyChange((oEvent) => {
+                    if (oEvent.getParameter("path") == "/aSelectedGroupIds") {
+                        this.applyGroupFilter();
+                    }
+                });
+            },
+
+            applyGroupFilter: function () {
+                // Retrieve the updated property from the model
+                let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+                aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup)); // create copy
+                let currentUser = this.getModel("app").getProperty("/currentUser");
+                aSelectedGroup.push(currentUser.principal);
+
+                // Create binding filter for selected groups
+                let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
+
+                // Apply filter to binding
+                const oBinding = this.byId("idAllPointsOfInterestsSpots").getBinding("items");
+                if (oBinding) {
+                    oBinding.filter(aSelectedGroup.length > 1 ? oFilter : null);
+                }
             },
 
             onGeoMapZoomChanged: function (oEvent) {
                 let nZoomLevel = oEvent.getParameter("zoomLevel");
-                this.onToggleLables(nZoomLevel >= 16);
+                this.getModel("app").setProperty("/zoomlevel", parseInt(nZoomLevel, 10));
                 // save zoom level in session storage
                 sessionStorage.setItem("lastZoomLevel", nZoomLevel);
             },
@@ -84,128 +104,11 @@ sap.ui.define([
                 });
             },
 
-            onToggleLabelsCheckBox: function (oEvent) {
-                this.onToggleLables(oEvent.getSource().getSelected());
-            },
-
-            onNotVisitedStampsCheckkBoxSelect: function (oEvent) {
-                this.toggleUnStampedVisibility(oEvent.getSource().getSelected());
-            },
-
-            onVisitedStampsCheckkBoxSelect: function (oEvent) {
-                this.toggleStampedVisibility(oEvent.getSource().getSelected());
-            },
-            onToggleLables: function (bVisible) {
-
-                let aItems = [...this.byId("idAllPointsOfInterestsSpots").getItems()];
-                const oParkingSpots = this.byId("idParkingSpotsSpots");
-                oParkingSpots ? aItems.push(...oParkingSpots.getItems()) : null;
-
-                aItems.forEach(e => {
-                    let sText = e.getProperty("labelText");
-                    sText = bVisible ? e.data("labelTextHidden") : "";
-                    e.setProperty("labelText", sText);
-                });
-            },
-            _createInitialItemCache: function () {
-                //TODO this has to be reset on model Change urgh
-                this.itemCache = this.getView().byId("idAllPointsOfInterestsSpots").getItems();
-            },
-            _getItemCache: function () {
-                return this.itemCache;
-            },
-            _clearItemCache: function () {
-                this.itemCache = [];
-            },
-            _resetItemsForSpots: function (spots) {
-                spots.removeAllItems();
-                this._getItemCache().forEach(item => {
-                    spots.addItem(item);
-                });
-            },
-            onToggleStampedSpots: function () {
-                //create item cache with unmodified items if not existent
-                this._getItemCache().length ? true : this._createInitialItemCache();
-
-                let spots = this.getView().byId("idAllPointsOfInterestsSpots");
-                this._resetItemsForSpots(spots);
-                spots.getItems()
-                    .filter(e => e.getProperty("type") !== unstampedType)
-                    .map(e => spots.removeItem(e))
-                //TODO reset items from global model
-            },
-            onShowGreens: function () {
-                //create item cache with unmodified items if not existent
-                this._getItemCache().length ? true : this._createInitialItemCache();
-
-                let spots = this.getView().byId("idAllPointsOfInterestsSpots")
-                this._resetItemsForSpots(spots);
-                spots.getItems()
-                    .filter(e => e.getProperty("type") === unstampedType)
-                    .map(e => spots.removeItem(e))
-                //TODO reset items from global model
-            },
             onShowAllPress: function () {
-                this.byId("idToggleLabelCheckBox").setSelected(true);
-                this.byId("idToggleStampedCheckBox").setSelected(true);
-                this.byId("idToggleUnstampedCheckBox").setSelected(true);
-                this.byId("idParkingSpaceCheckBox").setSelected(true);
-                this.onToggleLables(true);
-                this.toggleStampedVisibility(true);
-                this.toggleUnStampedVisibility(true);
-                this.toggleParkingSpaceVisibility(true);
-            },
-
-            onParkingSpaceCheckBox: function (oEvent) {
-                this.toggleParkingSpaceVisibility(oEvent.getSource().getSelected());
-            },
-
-            toggleParkingSpaceVisibility: function (bVisible) {
-                let oSpots = this.byId("idParkingSpotsSpots");
-                //create cache with unmodified items if not existent
-                if (this._aParkingSpaceCache.length == 0) {
-                    this._aParkingSpaceCache = oSpots.getItems();
-                }
-
-                if (bVisible) {
-                    //show parking
-                    this._aParkingSpaceCache.forEach(item => oSpots.addItem(item));
-                } else {
-                    //hide parking spaces
-                    oSpots.getItems().forEach(e => oSpots.removeItem(e));
-                }
-            },
-
-            toggleStampedVisibility: function (bVisible) {
-                let oSpots = this.getView().byId("idAllPointsOfInterestsSpots");
-                //create cache with unmodified items if not existent
-                if (this._aStampedCache.length == 0) {
-                    this._aStampedCache = oSpots.getItems().filter(e => e.getProperty("type") === stampedType);
-                }
-
-                if (bVisible) {
-                    //show stamped
-                    this._aStampedCache.forEach(item => oSpots.addItem(item));
-                } else {
-                    //hide stamped
-                    oSpots.getItems().filter(e => e.getProperty("type") === stampedType).forEach(e => oSpots.removeItem(e));
-                }
-            },
-
-            toggleUnStampedVisibility: function (bVisible) {
-                let oSpots = this.getView().byId("idAllPointsOfInterestsSpots");
-                //create cache with unmodified items if not existent
-                if (this._aUnStampedCache.length == 0) {
-                    this._aUnStampedCache = oSpots.getItems().filter(e => e.getProperty("type") === unstampedType);
-                }
-
-                if (bVisible) {
-                    //show stamped
-                    this._aUnStampedCache.forEach(item => oSpots.addItem(item));
-                } else {
-                    //hide stamped
-                    oSpots.getItems().filter(e => e.getProperty("type") === unstampedType).forEach(e => oSpots.removeItem(e));
-                }
+                this.getModel("app").setProperty("bShowLabels", true);
+                this.getModel("app").setProperty("bShowParkingSpots", true);
+                this.getModel("app").setProperty("/bShowStampedSpots", true);
+                this.getModel("app").setProperty("/bShowUnStampedSpots", true);
             },
 
             onLocateMePress: function (oEvent, bMoveToLocation = true) {
@@ -217,16 +120,17 @@ sap.ui.define([
                                 lat: position.coords.latitude,
                                 lng: position.coords.longitude
                             };
-                            if(oUserLocation.lat == 0 && oUserLocation.lng == 0){
+                            if (oUserLocation.lat == 0 && oUserLocation.lng == 0) {
                                 MessageToast.show(this.getText("errorLocateMe"));
                                 return;
                             }
                             let oLocalModel = this.getModel("local");
                             oLocalModel.setProperty("/UserLocationLat", oUserLocation.lat);
                             oLocalModel.setProperty("/UserLocationLng", oUserLocation.lng);
+                            this._oMap.setInitialPosition(`${oUserLocation.lng};${oUserLocation.lat};0`);
                             if (bMoveToLocation) {
                                 oLocalModel.setProperty("/centerPosition", `${oUserLocation.lng};${oUserLocation.lat}`);
-                                this._oMap.setCenterPosition(`${oUserLocation.lng};${oUserLocation.lat}`);
+                                this._oMap.zoomToGeoPosition(oUserLocation.lng, oUserLocation.lat, this.nZoomLevelLabelThreshold);
                             }
                         }.bind(this),
                         function (oError) {
@@ -238,14 +142,50 @@ sap.ui.define([
                 }
             },
 
-            onFormatBoxType: function (oStampings) {
-                if (oStampings.length) {
-                    return 'Success';
+            onFormatBoxType: function (oBox, bShowStampedSpots, bShowUnStampedSpots, hasVisited) {
+                const bShouldDisplayByFilter = (hasVisited && bShowStampedSpots) || (!hasVisited && bShowUnStampedSpots);
+                if (!bShouldDisplayByFilter) {
+                    return 'Hidden'
                 }
-                return 'Error';
+                if (oBox.groupSize == oBox.totalGroupStampings) {
+                    return 'Success';
+                } else if (oBox.totalGroupStampings == 0) {
+                    return 'Error';
+                } else {
+                    return 'Warning';
+                }
+            },
+
+            onFormatLabelText: function (sName, nZoomLevel, bShowLabels, bShowSpot, sId, sSelectedId) {
+                const bShowText = sId == sSelectedId || (bShowSpot && bShowLabels && nZoomLevel >= 16);
+                return bShowText ? sName : "";
+            },
+
+            onFormatStampLabelText: function (sName, nZoomLevel, bShowLabels, bShowStampedSpots, bShowUnStampedSpots, hasVisited, sId, sSelectedId) {
+                const bShouldDisplayByFilter = (hasVisited && bShowStampedSpots) || (!hasVisited && bShowUnStampedSpots);
+                const isSelected = sId == sSelectedId;
+                return isSelected || (bShouldDisplayByFilter && bShowLabels && nZoomLevel >= 16) ? sName : "";
+            },
+
+            onFormatBooleanToSemanticType: function (bVisible, nZoomLevel) {
+                return bVisible && nZoomLevel >= 13 ? 'Default' : 'Hidden';
+            },
+
+            onFormatParkingText: function (nZoomLevel, sText) {
+                return nZoomLevel >= 11 ? sText : '';
+            },
+
+            onFormatSpotScale: function (sSpotID, sSelectedID) {
+                if (sSpotID == sSelectedID) {
+                    return "1.4;1.4;1";
+                }
+                return "1;1;1";
             },
 
             onSpotContextMenu: function (oEvent) {
+                if (this.getRouter().getHashChanger().hash.includes("tour")) {
+                    return;
+                }
                 this.onButtonOpenExternalPress(oEvent);
             },
 
@@ -256,7 +196,6 @@ sap.ui.define([
                 for (const sWord of sValue.split(" ")) {
                     aFilters.push(new Filter("name", FilterOperator.Contains, sWord));
                     aFilters.push(new Filter("name", FilterOperator.Contains, sWord.charAt(0).toUpperCase() + sWord.slice(1)));
-
                 }
                 const oFinalFilter = new Filter({
                     filters: aFilters,
@@ -265,6 +204,7 @@ sap.ui.define([
 
                 this.getModel().read("/AllPointsOfInterest", {
                     filters: [oFinalFilter],
+                    sorters: [new Sorter('orderBy')],
                     success: function (oData) {
                         this.getModel("local").setProperty("/suggestionItems", oData.results.slice(0, 10));
                         oSearchField.suggest();
@@ -275,14 +215,21 @@ sap.ui.define([
             onSearchFieldSearch: function (oEvent) {
                 var oItem = oEvent.getParameter("suggestionItem");
                 if (oItem) {
-                    this._oMap.setCenterPosition(oItem.getKey());
+                    this.getRouter().navTo("MapWithPOI", { idPOI: oItem.getKey() });
                 } else {
                     MessageToast.show("Bitte einen Ort aus der Liste auswählen!");
                 }
             },
 
+            onMapRouteMatched: function (oEvent) {
+                this.applyGroupFilter();
+                this.getModel("local").setProperty("/sCurrentSpotId", "");
+                this.onButtonClosePress();
+            },
+
             onMapWithPOIRouteMatched: function (oEvent) {
                 let sCurrentSpotId = oEvent.getParameter("arguments").idPOI;
+                this.getModel("local").setProperty("/sCurrentSpotId", sCurrentSpotId);
 
                 // Define the callback function to handle the render event
                 const fnRenderHandler = () => {
@@ -307,8 +254,14 @@ sap.ui.define([
             },
 
             onSpotClick: function (oEvent, bSuppressNavigation) {
+                if (this.getRouter().getHashChanger().hash.includes("tour")) {
+                    return;
+                }
                 const oSpot = oEvent.getSource();
-                this._oMap.setCenterPosition(oSpot.getPosition());
+                const aCords = oSpot.getPosition().split(";");
+                const nCurrentZoomLevel = this.getModel("app").getProperty("/zoomlevel")
+                const nNewZoomLevel = nCurrentZoomLevel <= this.nZoomLevelClickThreshold ? this.nZoomLevelClickThreshold + 3 : nCurrentZoomLevel;
+                this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nNewZoomLevel);
 
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
                 if (!oSplitter) return;
@@ -335,14 +288,16 @@ sap.ui.define([
                     });
                 }
 
-                let sCurrentSpotId = oSpot.data("id");
                 let localModel = this.getModel("local");
+                const oPoiObject = oSpot.getBindingContext().getObject();
+                let sCurrentSpotId = oPoiObject.ID;
                 localModel.setProperty("/sCurrentSpotId", sCurrentSpotId);
-                localModel.setProperty("/title", oSpot.data("labelTextHidden"));
-                localModel.setProperty("/description", oSpot.data("description"));
-                localModel.setProperty("/bStampingVisible", this.stringToBoolean(oSpot.data("stamp")));
-                localModel.setProperty("/bStampingEnabled", oSpot.getType() == "Error");
-                localModel.setProperty("/sSelectedSpotLocation", oSpot.getPosition());
+                localModel.setProperty("/title", oPoiObject.name);
+                localModel.setProperty("/description", oPoiObject.description);
+                localModel.setProperty("/bStampingVisible", !!oPoiObject.number);
+                localModel.setProperty("/bStampingEnabled", !oPoiObject.hasVisited);
+                localModel.setProperty("/sSelectedSpotLocation", `${oPoiObject.longitude};${oPoiObject.latitude}`);
+                localModel.setProperty("/oCurrentSpot", this._getPoiById(sCurrentSpotId));
 
                 this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
 
@@ -389,17 +344,25 @@ sap.ui.define([
                         let oList = this.byId("idTravelTimesList");
 
                         // Remove all current items before adding the new ones
-                        oList.removeAllItems();
+                        oList?.removeAllItems();
 
                         // Add items to the list manually using the addItem method
                         oData.results.forEach(oItemData => {
                             let oListItem = new sap.m.StandardListItem({
                                 title: this._getPoiById(oItemData.toPoi)?.name || "",
                                 description: `${this.formatMetersToKilometers(oItemData.distanceMeters)} - ${this.formatSecondsToTime(oItemData.durationSeconds)}`,
-                                icon: "sap-icon://task"
+                                icon: "sap-icon://task",
+                                type: "Navigation",
+                                press: this.onNearbyPress.bind(this)
                             });
 
-                            oList.addItem(oListItem);
+                            // Adding Custom Data
+                            oListItem.addCustomData(new sap.ui.core.CustomData({
+                                key: "poiId",
+                                value: oItemData.toPoi
+                            }));
+
+                            oList?.addItem(oListItem);
                         });
                     }.bind(this),
                     error: function (oError) {
@@ -434,10 +397,9 @@ sap.ui.define([
                         oEvent.getSource().setIcon("sap-icon://checklist-item-2");
                         oEvent.getSource().setEnabled(false);
                         MessageToast.show(this.getText("savedStamping"));
-                        oModel.refresh();
+                        this.applyGroupFilter();
                     },
-                    // give message and reset ui to keep it consistent with backend
-                    error: () => MessageToast.show("An Error Occured")
+                    error: () => MessageToast.show(this.getText("error"))
                 }
                 oModel.create("/Stampings", {
                     "stamp": {
@@ -456,16 +418,30 @@ sap.ui.define([
             onButtonClosePress: function (oEvent) {
                 this.getRouter().navTo("Map");
                 const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
-                var oLastContentArea = oSplitter.getContentAreas().pop();
-                oSplitter.removeContentArea(oLastContentArea);
-                oLastContentArea.destroy();
-                this._pSPOIInforCard = null;
-                oSplitter.resetContentAreasSizes();
+                var aContentAreas = oSplitter.getContentAreas()
+                if (aContentAreas.length > 1) {
+
+                    var oLastContentArea = aContentAreas.pop();
+                    oSplitter.removeContentArea(oLastContentArea);
+                    oLastContentArea.destroy();
+                    this._pSPOIInforCard = null;
+                    oSplitter.resetContentAreasSizes();
+                }
+            },
+
+            onNearbyPress: function (oEvent) {
+                const idPOI = oEvent.getSource().data().poiId;
+                this.getRouter().navTo("MapWithPOI", { idPOI });
             },
 
             onGeoMapCenterChanged: function (oEvent) {
                 //set last center position in local storage
                 sessionStorage.setItem("lastCenterPosition", oEvent.getParameter("centerPoint"));
+            },
+
+            onOpenGroupManagement: function () {
+                this.oMyAvatar = this.byId("idCurrentUserAvatarMapInner--idMyAvatar");
+                this._oPopover.openBy(this.oMyAvatar);
             }
         });
     });

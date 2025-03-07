@@ -33,7 +33,18 @@ sap.ui.define([
                 });
                 oModel.read("/ParkingSpots", {
                     urlParameters: { "$top": 500 }
-                })
+                });
+
+                oModel.callFunction("/getCurrentUser", {
+                    method: "GET",
+                    success: function(oData) {
+                        this.getModel("app").setProperty("/currentUser", oData);
+                    }.bind(this),
+                    error: function(oError) {
+                        // Handle error
+                        console.error("Error getting current user:", oError);
+                    }
+                });
 
                 document.getElementById("busyIndicator").style.display = "none";
             }

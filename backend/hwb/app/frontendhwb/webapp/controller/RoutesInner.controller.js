@@ -6,12 +6,14 @@ sap.ui.define([
     "sap/m/MessageToast",
     "sap/ui/unified/Menu",
     "sap/ui/unified/MenuItem",
-    "sap/ui/core/Popup"
+    "sap/ui/core/Popup",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, JSONModel, XMLView, fioriLibrary, MessageToast, Menu, MenuItem, Popup) {
+    function (Controller, JSONModel, XMLView, fioriLibrary, MessageToast, Menu, MenuItem, Popup, Filter, FilterOperator) {
         "use strict";
         var autocomplete; //inspired by https://github.com/costa-satsati/addressautocomplete/
         var LayoutType = fioriLibrary.LayoutType;
@@ -21,6 +23,9 @@ sap.ui.define([
             _oMap: {},
 
             onInit: function () {
+                Controller.prototype.onInit.apply(this, arguments);
+                this.initializeAppModelForMap();
+
                 this.getView().setModel(new JSONModel(), "local");
 
                 this.oFlexibleColumnLayout = this.byId("fcl");
@@ -30,6 +35,46 @@ sap.ui.define([
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onDetailRouteEditMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onDetailRoutePersistedMatched, this);
             },
+            onAfterRendering: function () {
+                this.getView().getModel().setSizeLimit(1000);
+                this.attachGroupChange();
+            },
+
+            attachGroupChange: function () {
+                this.getModel("app").attachPropertyChange((oEvent) => {
+                    if (oEvent.getParameter("path") == "/aSelectedGroupIds") {
+                        // Retrieve the updated property from the model
+                        let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+                        aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup));
+                        let currentUser = this.getModel("app").getProperty("/currentUser");
+                        aSelectedGroup.push(currentUser.principal);
+
+                        // Create binding filter for selected groups
+                        let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
+
+                        // Apply filter to binding
+                        const oBinding = this.byId("idTourList").getBinding("items");
+                        if (oBinding) {
+                            oBinding.filter(aSelectedGroup.length > 1 ? oFilter : null);
+
+                            oBinding.attachDataReceived((oEvent) => {
+                                const updatedTours = oEvent.getParameter("data").results
+                                // update localModel with AverageGroupStampings
+                                let oLocalModel = this.getView().getModel("local");
+                                updatedTours.forEach(tour => {
+                                    let oTour = oLocalModel.getProperty(`/Tours(${tour.ID})`);
+                                    if (oTour) {
+                                        oTour.AverageGroupStampings = tour.AverageGroupStampings;
+                                        oTour.path = this._addStampedUsers(oTour.path);
+                                        oLocalModel.setProperty(`/Tours(${tour.ID})`, oTour);
+                                    }
+                                });
+                            });
+                        }
+                    }
+                });
+            },
+
             onDetailRoutePersistedMatched: function (oEvent) {
                 let oModel = this.getView().getModel();
                 let oLocalModel = this.getView().getModel("local");
@@ -90,7 +135,7 @@ sap.ui.define([
                 if (sTourId && oLocalModel.getProperty(`/Tours(${sTourId})`)) {
                     this._showDetailViewForIdList(sTourId);
                 } else {
-                    this.getModel().read(`/Tours(${sTourId})`, {
+                    this.getModel().read(`/Tours(guid'${sTourId}')`, {
                         success: function (oData, response) {
                             // Check if the deferred entity needs to be loaded separately
                             // load in two steps as expand is currently broken
@@ -103,9 +148,9 @@ sap.ui.define([
                             }
                         }.bind(this),
                         error: function (oError) {
-                            MessageToast.show("Error saving the tour!");
+                            MessageToast.show(this.getText("errorLoadingTour"));
                             console.error(oError);
-                        }
+                        }.bind(this)
                     });
                 }
                 this.getModel("local").setProperty("/sIdListTravelTimes", sTourId);
@@ -140,7 +185,8 @@ sap.ui.define([
                                 distance: obj.distanceMeters,
                                 travelMode: obj.travelMode,
                                 toPoiType: obj.toPoiType,
-                                positionString: obj.positionString
+                                positionString: obj.positionString,
+                                AverageGroupStampings: obj.AverageGroupStampings ?? 0,
                             }));
                             oLocalModel.setProperty(`/Tours(${sIdListTravelTimes})`, oData.getTourByIdListTravelTimes);
                             this._showDetailViewForIdList(sIdListTravelTimes);
@@ -175,9 +221,6 @@ sap.ui.define([
 
             setList: function () {
                 this.oFlexibleColumnLayout.setLayout(LayoutType.OneColumn);
-            },
-            onAfterRendering: function () {
-                this.getView().getModel().setSizeLimit(1000);
             },
 
             onOpenRoutingDialog: async function () {
@@ -221,6 +264,11 @@ sap.ui.define([
                 var oModel = this.getView().getModel(); // Get the OData model
                 var oDialogModel = this.pDialog.getModel();
 
+                let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
+                aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup)); // create copy
+                let currentUser = this.getModel("app").getProperty("/currentUser");
+                aSelectedGroup.push(currentUser.principal);
+
                 // Define the function import URL and parameters
                 var sFunctionName = "/calculateHikingRoute";
                 var oParams = {
@@ -230,8 +278,10 @@ sap.ui.define([
                     latitudeStart: oDialogModel.getProperty("/latitudeStart"),
                     longitudeStart: oDialogModel.getProperty("/longitudeStart"),
                     allowDriveInRoute: oDialogModel.getProperty("/allowDriveInRoute"),
-                    minStampCount: oDialogModel.getProperty("/minStampCount")
+                    minStampCount: oDialogModel.getProperty("/minStampCount"),
+                    groupFilterStampings: aSelectedGroup.join(',')
                 };
+
                 oParams.maxDuration = Math.round(oParams.maxDuration.getTime() / 1000) + 3600; //TODO timezone
                 // Call the function import
                 oModel.callFunction(sFunctionName, {
@@ -258,16 +308,16 @@ sap.ui.define([
                                 idListTravelTimes: oInitiallySelectedTour.id
                             });
                         } else {
-                            sap.m.MessageToast.show(this.getModel("i18n").getProperty("noRoutesFound"));
+                            MessageToast.show(this.getText("noRoutesFound"));
                         }
                     }.bind(this),
                     error: function (oError) {
-                        sap.m.MessageToast.show(this.getModel("i18n").getProperty("someThingWentWrong"));
-                        // Additional error handling
+                        MessageToast.show(this.getText("someThingWentWrong"));
                         this.pDialog.close();
-                    }
+                    }.bind(this)
                 });
             },
+
             _writeHikingRoutesAsToursToModel: function (aHikingRoutes, oModel) {
                 for (let oRoute of aHikingRoutes) {
                     oModel.setProperty(`/Tours(${oRoute.id})`, oRoute);
@@ -296,6 +346,7 @@ sap.ui.define([
                     viewName: "hwb.frontendhwb.view.RoutesMap"
                 }).then(function (detailView) {
                     let oLocalModel = this.getView().getModel("local");
+                    // TODO friends: navigating into a tour does not show icons correctly
                     oLocalModel.setProperty("/edit", false);
                     detailView.setModel("local", oLocalModel);
                     //get global Id via debugging for example in locate me function
@@ -316,8 +367,6 @@ sap.ui.define([
                             oSpot.attachClick(this.onClickSpot.bind(this));
                             oSpot.attachContextMenu(this.onContextMenuSpot.bind(this));
                         });
-
-
 
                     } else if (sCenterPosition) {
                         setTimeout(() => {
@@ -345,7 +394,7 @@ sap.ui.define([
                 }
             },
 
-            onContextMenuSpot: function (oEvent) {  
+            onContextMenuSpot: function (oEvent) {
                 if (this.getModel("local").getProperty("/edit")) {
                     if (oEvent.getParameter("menu")) {
                         var oMenu = oEvent.getParameter("menu");
@@ -365,6 +414,18 @@ sap.ui.define([
             },
 
             onAddToEndOfTour: function (sId) {
+                const path = this.getModel("local").getProperty("/oSelectedTour/path");
+                
+                const oNewPathEntry = {
+                    rank: path[path.length - 1]?.rank / 2 || 1024,
+                    ID: Math.floor(Math.random() * 1024) + 1,
+                    toPoi: sId,
+                    name: this._getPoiById(sId).name
+                };
+                path.push(oNewPathEntry);
+
+                this.getModel("local").setProperty("/oSelectedTour/path", path );
+                // this._persistTourCopy(sId);
                 this._persistTourCopy(sId);
             },
 
@@ -388,7 +449,9 @@ sap.ui.define([
                     // send list to backend and refresh
                     aRoutesSortedByRank = aRoutesSortedByRank.map(r => r.toPoi);
                     // ADD NEW POI
-                    aRoutesSortedByRank.push(sId);
+                    if(sId) {
+                        aRoutesSortedByRank.push(sId);
+                    }
                     // END CHANGE
                     const sPOIList = aRoutesSortedByRank.filter(p => !!p).join(";");
                     if (!sPOIList.includes(";")) {

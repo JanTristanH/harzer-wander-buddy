@@ -1,0 +1,13 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+                <Avatar
+                id="idMyAvatar"
+                src="{app>/currentUser/picture}"
+                initials="{parts: ['app>/currentUser/name'], formatter: '.onFormatInitialsByName'}"
+                displaySize="XS"
+                press=".onMyAvatarPress"
+                tooltip="{i18n>profile}"
+                showBorder="true"
+            />
+</core:FragmentDefinition>

@@ -10,7 +10,7 @@
         horizontalScrolling="false"
     >
         <IconTabBar
-            expanded="{device>/isNoPhone}"
+            expandable="false"
             class="sapUiResponsiveContentPadding"
         >
             <items>

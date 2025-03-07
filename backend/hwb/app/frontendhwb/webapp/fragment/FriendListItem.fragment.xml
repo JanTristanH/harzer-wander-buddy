@@ -1,0 +1,44 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+>
+    <CustomListItem>
+        <HBox
+            justifyContent="SpaceBetween"
+            alignItems="Center"
+            width="100%"
+            class="sapUiTinyMargin"
+        >
+            <!-- Friend Info: Avatar + Name -->
+            <HBox alignItems="Center">
+                <Avatar
+                    src="{picture}"
+                    displaySize="S"
+                    initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
+                    class="sapUiSmallMarginEnd"
+                />
+                <Text
+                    text="{name}"
+                    class="sapUiTinyMargin"
+                />
+            </HBox>
+            <!-- Friend Action Buttons -->
+            <HBox>
+                <Button
+                    icon="sap-icon://navigation-right-arrow"
+                    type="Transparent"
+                    press="onNavToFriendPress"
+                    class="sapUiSmallMarginEnd"
+                />
+                <!-- Add Friend Button (visible when not friends) -->
+                <Button
+                    icon="sap-icon://add"
+                    type="Transparent"
+                    visible="{= !${isFriend} }"
+                    press="onAddFriend"
+                    class="sapUiSmallMarginEnd"
+                />
+            </HBox>
+        </HBox>
+    </CustomListItem>
+</core:FragmentDefinition>

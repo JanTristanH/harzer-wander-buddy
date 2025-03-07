@@ -1,0 +1,256 @@
+<mvc:View
+    controllerName="hwb.frontendhwb.controller.Profile"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:uxap="sap.uxap"
+    displayBlock="true"
+    height="100%"
+    busyIndicatorDelay="0"
+>
+    <Page
+        title="{i18n>profile}"
+        class="sapUiResponsiveContentPadding"
+    >
+        <headerContent>
+            <core:Fragment
+                fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
+                type="XML"
+            />
+        </headerContent>
+        <content>
+            <uxap:ObjectPageLayout
+                id="ObjectPageLayout"
+                upperCaseAnchorBar="false"
+            >
+                <uxap:sections>
+                    <uxap:ObjectPageSection
+                        titleUppercase="false"
+                        title="{i18n>general}"
+                    >
+                        <uxap:subSections>
+                            <uxap:ObjectPageSubSection>
+                                <VBox
+                                    justifyContent="Center"
+                                    alignItems="Center"
+                                    width="100%"
+                                    height="50%"
+                                >
+                                    <VBox>
+                                        <Avatar
+                                            id="idProfileAvatar"
+                                            src="{picture}"
+                                            displaySize="XL"
+                                            press="onUploadImageDialog"
+                                            initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
+                                        />
+                                        <FlexBox
+                                            justifyContent="Center"
+                                            visible="{= ${ID} === ${app>/currentUser/ID} }"
+                                        >
+                                            <Button
+                                                icon="sap-icon://upload-to-cloud"
+                                                type="Transparent"
+                                                press="onUploadImageDialog"
+                                            />
+                                            <Button
+                                                icon="sap-icon://delete"
+                                                type="Transparent"
+                                                press="onDeleteProfileImage"
+                                            />
+                                        </FlexBox>
+                                    </VBox>
+                                    <VBox class="sapUiSmallMargin">
+                                        <HBox
+                                            justifyContent="Center"
+                                            alignItems="Center"
+                                        >
+                                            <Label
+                                                text="{i18n>name}:"
+                                                class="sapUiSmallMarginEnd sapUiTinyMarginTop"
+                                            />
+                                            <Input
+                                                value="{name}"
+                                                enabled="{= ${ID} === ${app>/currentUser/ID} }"
+                                                change="onNameChange"
+                                            />
+                                        </HBox>
+                                    </VBox>
+                                    <FlexBox
+                                        wrap="Wrap"
+                                        visible="{= ${ID} !== ${app>/currentUser/ID} }"
+                                        justifyContent="Center"
+                                    >
+                                        <Button
+                                            icon="sap-icon://company-view"
+                                            press=".onAddToGroupSelection"
+                                            text="{i18n>addToGroup}"
+                                            enabled="{= !${app>/aSelectedGroupIds}.includes(${principal}) &amp;&amp; ${isFriend} }"
+                                            class="sapUiSmallMargin"
+                                        />
+                                        <Button
+                                            icon="sap-icon://add-employee"
+                                            press=".onAddFriend"
+                                            text="{i18n>addFriend}"
+                                            class="sapUiSmallMargin"
+                                            visible="{= !${app>/bHasPendingFriendshipRequests}}"
+                                            enabled="{= !${isFriend} }"
+                                        />
+                                        <Button
+                                            icon="sap-icon://add-employee"
+                                            type="Emphasized"
+                                            press=".onAcceptPendingFriendshipRequest"
+                                            text="{i18n>acceptPendingFriendshipRequests}"
+                                            class="sapUiSmallMargin"
+                                            visible="{app>/bHasPendingFriendshipRequests}"
+                                        />
+                                    </FlexBox>
+                                </VBox>
+                            </uxap:ObjectPageSubSection>
+                        </uxap:subSections>
+                    </uxap:ObjectPageSection>
+
+                    <!-- friends of users -->
+                    <uxap:ObjectPageSection
+                        titleUppercase="false"
+                        title="{i18n>friends}"
+                    >
+                        <uxap:subSections>
+                            <uxap:ObjectPageSubSection>
+                                <List
+                                    id="idFriendsListProfile"
+                                    items="{
+                                        path: '/Friendships',
+                                        parameters: { expand: 'toUser' }
+                                    }"
+                                >
+                                    <items>
+                                        <CustomListItem>
+                                            <HBox
+                                                justifyContent="SpaceBetween"
+                                                alignItems="Center"
+                                                width="100%"
+                                                class="sapUiTinyMargin"
+                                            >
+                                                <HBox alignItems="Center">
+                                                    <Avatar
+                                                        src="{toUser/picture}"
+                                                        displaySize="S"
+                                                        class="sapUiSmallMarginEnd"
+                                                        initials="{parts: ['toUser/name'], formatter: '.onFormatInitialsByName'}"
+                                                    />
+                                                    <Text
+                                                        text="{toUser/name}"
+                                                        class="sapUiTinyMargin"
+                                                    />
+                                                </HBox>
+                                                <HBox>
+                                                    <Button
+                                                        icon="sap-icon://navigation-right-arrow"
+                                                        type="Transparent"
+                                                        press="onNavToFriendPress"
+                                                        class="sapUiSmallMarginEnd"
+                                                    />
+                                                </HBox>
+                                            </HBox>
+                                        </CustomListItem>
+                                    </items>
+                                </List>
+                            </uxap:ObjectPageSubSection>
+                        </uxap:subSections>
+                    </uxap:ObjectPageSection>
+
+                    <!-- shared stamps -->
+                    <uxap:ObjectPageSection
+                        titleUppercase="false"
+                        title="{i18n>stampPoints}"
+                    >
+                        <uxap:subSections>
+                            <uxap:ObjectPageSubSection>
+                                <Table
+                                    id="idStampingsProfileTable"
+                                    inset="false"
+                                    growing="true"
+                                    growingThreshold="250"
+                                    items="{
+                                        path: '/Stampboxes',
+                                        sorter: { path: 'orderBy' } 
+                                    }"
+                                    updateFinished=".onStampingsTableUpdateFinished"
+                                >
+                                    <headerToolbar>
+                                        <Toolbar>
+                                            <Title
+                                                text="{i18n>stamps}"
+                                                level="H2"
+                                            />
+                                            <ToolbarSpacer />
+                                            <Label
+                                                text="{i18n>visitedStampms}: {app>/stampedCount}"
+                                            />
+                                        </Toolbar>
+                                    </headerToolbar>
+                                    <columns>
+                                        <Column
+                                            minScreenWidth="Tablet"
+                                            demandPopin="true"
+                                            popinDisplay="WithoutHeader"
+                                            width="auto"
+                                            importance="High"
+                                        >
+                                            <Text text="{i18n>stampPoint}" />
+                                        </Column>
+                                        <Column
+                                            minScreenWidth="Tablet"
+                                            demandPopin="true"
+                                            popinDisplay="Inline"
+                                            width="5rem"
+                                            visible="{= ${ID} !== ${app>/currentUser/ID} }"
+                                        >
+                                            <Text
+                                                text="{i18n>visitedBy} {name}"
+                                            />
+                                        </Column>
+                                        <Column
+                                            minScreenWidth="Tablet"
+                                            demandPopin="true"
+                                            popinDisplay="Inline"
+                                            width="5rem"
+                                        >
+                                            <Text text="{i18n>visitedByMe}" />
+                                        </Column>
+                                    </columns>
+                                    <items>
+                                        <ColumnListItem type="Active">
+                                            <cells>
+                                                <ObjectIdentifier
+                                                    title="{name}"
+                                                />
+                                                <CheckBox
+                                                    enabled="false"
+                                                    selected="{ parts: ['stampedUserIds'], formatter: '.onFormatSelectedForUser'}"
+                                                />
+
+                                                <CheckBox
+                                                    enabled="false"
+                                                    selected="{ parts: ['stampedUserIds', 'app>/currentUser/principal'], formatter: '.onFormatSelectedForUser' }"
+                                                />
+                                            </cells>
+                                        </ColumnListItem>
+                                    </items>
+                                </Table>
+                            </uxap:ObjectPageSubSection>
+                        </uxap:subSections>
+                    </uxap:ObjectPageSection>
+
+                </uxap:sections>
+            </uxap:ObjectPageLayout>
+        </content>
+        <footer>
+            <core:Fragment
+                fragmentName="hwb.frontendhwb.fragment.Toolbar"
+                type="XML"
+            />
+        </footer>
+    </Page>
+</mvc:View>

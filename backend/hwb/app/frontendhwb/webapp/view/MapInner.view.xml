@@ -14,12 +14,18 @@
     >
         <headerContent>
             <Button
-                icon="sap-icon://menu2"
+                icon="sap-icon://filter"
+                text="{i18n>filter}"
                 press="onPressOpenFiltersMenu"
+            />
+            <core:Fragment
+                id="idCurrentUserAvatarMapInner"
+                fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
+                type="XML"
             />
         </headerContent>
         <subHeader>
-            <OverflowToolbar>
+            <Toolbar>
                 <SearchField
                     id="idMapSearchField"
                     showSearchButton="false"
@@ -27,13 +33,15 @@
                     search=".onSearchFieldSearch"
                     suggest=".onSearchFieldSuggest"
                     suggestionItems="{local>/suggestionItems}"
+                    class="sapUiSmallMargin"
                 >
                     <SuggestionItem
                         description="{local>name}"
-                        key="{local>longitude};{local>latitude}"
+                        key="{local>ID}"
                     />
                 </SearchField>
-            </OverflowToolbar>
+                <Button icon="sap-icon://company-view" press=".onOpenGroupManagement" text="{i18n>group}" class="sapUiSmallMargin"/>
+            </Toolbar>
         </subHeader>
         <content>
             <l:FixFlex class="fixFlexVertical">

@@ -5,7 +5,7 @@
     <Page id="page" title="{i18n>title}">
         <content>
             <VBox class="sapUiSmallMargin">
-                <IconTabBar id="idIconTabBarNoIcons" expanded="{device>/isNoPhone}" class="sapUiResponsiveContentPadding">
+                <IconTabBar id="idIconTabBarNoIcons" expandable="false" class="sapUiResponsiveContentPadding">
                     <items>
                         <IconTabFilter text="List" key="list">
                             <mvc:XMLView viewName="hwb.frontendhwb.view.List"/>

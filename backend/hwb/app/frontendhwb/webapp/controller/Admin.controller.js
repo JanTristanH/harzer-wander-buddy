@@ -99,7 +99,7 @@ sap.ui.define([
                     click: this.onNumberSpotClick.bind(this),
                     labelText: "temporärer Spot"
                 });
-                this.getView().byId("idAllPointsOfInterestsSpots").addItem(oAnchorSpot);
+                this.getView().byId("idAllPointsOfInterestsSpotsAdmin").addItem(oAnchorSpot);
             }
             oAnchorSpot.setPosition(evt.getParameter("pos"));
 

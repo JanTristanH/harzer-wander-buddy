@@ -3,6 +3,8 @@ const {
   v4: uuidv4
 } = require('uuid');
 
+const { onAfterFriendshipCreate, acceptPendingFriendshipRequest, onBeforeFriendshipCreate } = require('./friendships');
+
 const fetch = require('node-fetch');
 const routingManager = require('./routingManager');
 
@@ -16,14 +18,9 @@ let aTravelTimesGlobal = [];
 module.exports = class api extends cds.ApplicationService {
   init() {
 
-    this.after('READ', `Stampboxes`, async (stampBoxes, req) => {
-      const Stampings = this.entities('hwb.db').Stampings;
-      const aStampings = await SELECT.from(Stampings).where({ createdBy: req.user.id });
-      return stampBoxes.map(box => {
-        box.hasVisited = !!aStampings.find(s => s.stamp_ID == box.ID);
-        return box;
-      });
-    })
+    this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
+
+    this.on('READ', 'Tours', onTourRead.bind(this));
 
     this.after('CREATE', 'Tours', async (req) => {
       return upsertTourDetailsById(req, this.entities('hwb.db'));
@@ -69,8 +66,196 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('addElevationToAllTravelTimes', addElevationToAllTravelTimes)
 
+    this.before('CREATE', 'Friendships', onBeforeFriendshipCreate);
+
+    this.after('CREATE', 'Friendships', onAfterFriendshipCreate);
+
+    this.on('getCurrentUser', async (req) => {
+      const ExternalUsers = this.entities('hwb.db').ExternalUsers;
+      const currentUser = await SELECT.from(ExternalUsers).where({ principal: req.user.id });
+      if(currentUser[0]) {
+        currentUser[0].roles = req.user._roles;
+      }
+      return currentUser;
+    });
+
+    this.on('acceptPendingFriendshipRequest', acceptPendingFriendshipRequest);
+
+    this.after('READ', 'Users', addIsFriend.bind(this));
+
     return super.init()
   }
+}
+
+async function onTourRead(req, next) {
+  let bReturnOnlyFirst = false;
+  let tours = await next();
+
+  if (tours?.ID) {
+    bReturnOnlyFirst = true;
+    tours = [tours];
+  }
+
+  const db = this.entities('hwb.db');
+  const whereConditions = req.query.SELECT.where || [];
+  const groupFilterStampings = extractFilters(whereConditions, "!=").groupFilterStampings;
+
+  const groupUserIds =
+    groupFilterStampings && groupFilterStampings.trim().length > 0
+      ? groupFilterStampings.split(',').map(u => u.trim())
+      : [req.user.id];
+
+  const result = await addGroupDetailsToTours(db, tours, groupUserIds);
+
+  return bReturnOnlyFirst ? result[0] : result;
+}
+
+function addGroupDetailsToTours(db, tours, groupUserIds) {
+  if (!tours) {
+    return Promise.resolve([]);
+  }
+
+  return new Promise(async (resolve, reject) => {
+    // Query stampings where createdBy is in the provided group.
+    const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
+    const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
+    const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
+
+    const result = await Promise.all(
+      tours?.map(tour => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            tour.groupSize = groupUserIds.length;
+            const tourId = tour.ID;
+            let toPois;
+            if (tourId) {
+              const ttt = await SELECT
+                .from(db.Tour2TravelTime)
+                .where({ tour_ID: tourId });
+              const tt = await SELECT
+                .from(db.TravelTimes)
+                .where({ ID: { in: ttt.map(t => t.travelTime_ID) } });
+              toPois = tt.map(t => t.toPoi);
+            } else {
+              toPois = tour.path?.map(p => p.poi)
+            }
+            if (!toPois) {
+              tour.AverageGroupStampings = 0;
+              resolve(tour);
+              return;
+            }
+            const nAverageGroupStampings = getTotalStampings(aStampingsByUser, toPois) / groupUserIds.length;
+
+            // Populate the custom fields:
+            tour.AverageGroupStampings = nAverageGroupStampings;
+
+            resolve(tour);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      })
+    );
+    resolve(result);
+  });
+}
+
+function getTotalStampings(stampings, toPois) {
+  let aStampCount = [];
+  for (let i = 0; i < toPois.length; i++) {
+    const poi = toPois[i];
+    const aStampings = stampings.filter(s => s.stamping.stamp_ID == poi);
+    aStampCount.push(aStampings.length);
+  }
+  return aStampCount.reduce((p, c) => p + c, 0);
+}
+
+function getStampingByUsers(stampings, users) {
+  let result = [];
+  for (let i = 0; i < stampings.length; i++) {
+    let stamping = stampings[i];
+    let user = users.find(u => u.principal == stamping.createdBy);
+    if (user) {
+      result.push({
+        user: user,
+        stamping: stamping
+      });
+    }
+  }
+  return result;
+}
+
+async function onStampboxesRead(req, next) {
+  const db = this.entities('hwb.db');
+
+  let bReturnOnlyFirst = false;
+  const stampBoxes = await next();
+
+  if (stampBoxes?.ID) {
+    bReturnOnlyFirst = true;
+    stampBoxes = [stampBoxes];
+  }
+
+  const whereConditions = req.query.SELECT.where || [];
+  const groupFilterStampings = extractFilters(whereConditions, "!=").groupFilterStampings;
+
+  const groupUserIds =
+    groupFilterStampings && groupFilterStampings.trim().length > 0
+      ? groupFilterStampings.split(',').map(u => u.trim())
+      : [req.user.id];
+
+  const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
+  const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
+
+  const result = stampBoxes.map(box => {
+    const boxStampings = aStampings.filter(s => s.stamp_ID == box.ID);
+    const stampedUserIds = [...new Set(boxStampings.map(s => s.createdBy))];
+
+    // Populate the custom fields:
+    box.hasVisited = stampedUserIds.includes(req.user.id);
+    box.groupSize = groupUserIds.length;
+    box.totalGroupStampings = stampedUserIds.length;
+    box.stampedUserIds = stampedUserIds;
+    box.stampedUsers = aUsers.filter(u => stampedUserIds.includes(u.principal));
+
+    return box;
+  });
+  return bReturnOnlyFirst ? result[0] : result;
+}
+
+
+function extractFilters(filters, operator) {
+  if (!filters) {
+    return null;
+  }
+  if (filters[0]?.xpr) {
+    filters = filters[0].xpr;
+  }
+  let result = {};
+  for (let i = 0; i < filters.length; i++) {
+    if (filters[i].ref) {
+      // Extract the reference
+      let ref = filters[i].ref[0];
+      // Check if the next element is '=' and the element after that has a value
+      if (filters[i + 1] === operator && filters[i + 2] && filters[i + 2].val) {
+        // Store the reference and its value
+        result[ref] = filters[i + 2].val;
+        // Skip the next two elements
+        i += 2;
+      }
+    }
+  }
+  return result;
+}
+
+async function addIsFriend(users, req) {
+  const { MyFriends } = this.api.entities;
+  const aFriendships = await SELECT.from(MyFriends).where({createdBy: req.user.id});
+  const aFriendIds = aFriendships.map(f => f.ID);
+  return users.map(user => {
+    user.isFriend = aFriendIds.includes(user.ID);
+    return user;
+  });
 }
 
 function upsertTourDetailsById(req, entities) {
@@ -110,7 +295,8 @@ async function updateTourByPOIList(req) {
   const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours } = this.entities('hwb.db');
 
   let aPois = poiList.split(";").filter(p => !!p);
-  if(aPois.length < 2){
+  aPois = removeAdjacentDuplicates(aPois);  
+  if (aPois.length < 2) {
     throw new Error("At least 2 POIs are required to create a tour");
   }
   let aPoiPairs = [];
@@ -258,6 +444,18 @@ async function updateTourByPOIList(req) {
   }
 }
 
+function removeAdjacentDuplicates(arr) {
+  const result = [];
+
+  for (let i = 0; i < arr.length; i++) {
+      if (result.length === 0 || result[result.length - 1] !== arr[i]) {
+          result.push(arr[i]);
+      }
+  }
+
+  return result;
+}
+
 function getUniqueRoutes(routes) {
   const uniqueRoutes = {};
 
@@ -339,17 +537,19 @@ async function getTourByIdListTravelTimes(req) {
     }
   }
 
-  const result = await routingManager.addPositionStrings([{
+  let result = await routingManager.addPositionStrings([{
     stampCount,
     distance,
     duration,
     id,
     path
   }]);
+  result = await addGroupDetailsToTours(this.entities('hwb.db'), result, [req.user.id]);
   return result[0];
 }
 
 async function calculateHikingRoute(req) {
+  const db = this.entities('hwb.db');
   // req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
   console.log(req.data);
   const { typedTravelTimes, Stampboxes, Stampings } = this.api.entities;
@@ -374,6 +574,17 @@ async function calculateHikingRoute(req) {
     let newRoutes = await routingManager.calculateHikingRoutes(req.data, aTravelTimesGlobal, aStampsDoneByUser);
     results = results.concat(newRoutes);
   }
+
+  if (results.length > 0) {
+    const groupFilterStampings = req.data.groupFilterStampings;
+    const groupUserIds =
+      groupFilterStampings && groupFilterStampings.trim().length > 0
+        ? groupFilterStampings.split(',').map(u => u.trim())
+        : [req.user.id];
+
+    results = await addGroupDetailsToTours(db, results, groupUserIds);
+  }
+
   return { results }
 
   return {
@@ -559,7 +770,7 @@ function getTravelTimes(box, neighborPois, travelMode) {
       if (neighbor.distanceKm == 0) {
         continue;
       }
-      if(!neighbor){
+      if (!neighbor) {
         console.error("Neighbor is missing");
         continue;
       }
@@ -739,7 +950,7 @@ function addElevationProfileToTravelTime(oTravelTime) {
         // "status": "OK",
         // }
 
-        if(j.results.length == 0){
+        if (j.results.length == 0) {
           resolve(oTravelTime);
           return;
         }

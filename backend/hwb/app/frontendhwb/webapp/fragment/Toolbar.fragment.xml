@@ -23,6 +23,13 @@
         icon="sap-icon://paper-plane"
         press="onNavToRouting"
     />
+    <ToolbarSpacer />
+    <Button
+        id="navButtonFriendsId"
+        text="{i18n>friends}"
+        icon="sap-icon://group"
+        press="onNavToFriends"
+    />
     <Button
         id="idRoutePlanenAdminButton"
         text="{i18n>AdminMap}"
