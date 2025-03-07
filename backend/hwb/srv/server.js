@@ -42,20 +42,6 @@ const config = {
           sub: userFromToken.sub,
           updated_at_iso_string: userFromToken.updated_at
         });
-      } else {
-        // Update existing user
-        // TODO compare dates
-        // TODO at some point allow updates in our application and do not overwrite them
-        await db.update(ExternalUsers)
-          .where({ email: userFromToken.email })
-          .set({
-            family_name: userFromToken.family_name,
-            given_name: userFromToken.given_name,
-            name: userFromToken.name,
-            nickname: userFromToken.nickname,
-            picture: userFromToken.picture,
-            updated_at_iso_string: new Date().toISOString()
-          });
       }
     } catch (error) {
       console.error('Error managing user in database:', error);
