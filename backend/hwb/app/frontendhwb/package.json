@@ -15,8 +15,5 @@
     "devDependencies": {
         "@ui5/cli": "^3.0.3",
         "ui5-task-zipper": "^0.7.3"
-    },
-    "dependencies": {
-        "frontendhwb": "file:"
     }
 }
