@@ -104,6 +104,22 @@
                                             class="sapUiSmallMargin"
                                             visible="{app>/bHasPendingFriendshipRequests}"
                                         />
+                                        <HBox 
+                                            visible="{isFriend}"
+                                            alignItems="Center"
+                                        >
+                                            <Label
+                                                class="sapUiTinyMarginTop"
+                                                text="{i18n>isAllowedToStampForMe}:" 
+                                            />
+                                            <Switch
+                                                id="idIsAllowedToStampForFriendSwitch"
+                                                state="{isAllowedToStampForFriend}"
+                                                change="onAllowedToStampSwitchChange"
+                                                customTextOn="{i18n>yes}"
+                                                customTextOff="{i18n>no}"
+                                            />
+                                        </HBox>
                                     </FlexBox>
                                 </VBox>
                             </uxap:ObjectPageSubSection>

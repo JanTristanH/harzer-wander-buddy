@@ -107,7 +107,8 @@ service api @(requires: 'authenticated-user') {
             toUser.picture   as picture,
             createdBy        as createdBy,
             ID               as FriendshipID,
-            true             as isFriend : Boolean
+            true             as isFriend : Boolean,
+            isAllowedToStampForFriend as isAllowedToStampForFriend,
         };
 
     @cds.redirection.target
