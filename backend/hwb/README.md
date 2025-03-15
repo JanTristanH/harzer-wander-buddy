@@ -81,13 +81,13 @@ This project is configured to run with a postgres.
 - maintain cookie policy (currently only tecnical cookie, so not needed ✔️)
 - Filtering on Map view -> Goethe weg usw. ❌
 - upgrade developer to production key ❌
-- minimum authority
+- minimum authority ✔️
   - admin role ✔️
   - only edit my own tours ✔️
   - add new audience to prod docker ?❌?
 - show user profile picture ✔️
 - set up social media ✔️
-- set up jeykell pages for seo ✔️ -> indexing does not work as intended
+- set up jeykell pages for seo ✔️ -> indexing does not work as intended; maybe use cloudflare pages
 - trackability total users / users active in the last x days (✔️ Good enough for start on auth0)
 - UI overhaul II -> fix up design
   - mainly tour handling
@@ -107,8 +107,8 @@ This project is configured to run with a postgres.
 - remove event handler in tour view ✔️ (Workaround)
 - authorize friend to stamp for me ✔️
 - are you sure when deleting stampings ✔️
-- support maps.me navigation
-  - handle navigation on desktop
+- support maps.me navigation ✔️
+  - handle navigation on desktop ❌
 - refactor scroll container on POI card / nearby stamps ✔️
 
 ## MVP 2
