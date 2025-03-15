@@ -31,13 +31,22 @@
                     width="100%"
                     wrap="Wrap"
                 >
-                    <Button
+                    <MenuButton 
                         text="{i18n>navigate}"
                         icon="sap-icon://forward"
                         type="Emphasized"
-                        press="onButtonOpenWithMapsAppPress"
+                        buttonMode="Split" 
+                        defaultAction="onNavigateWithGoogleMaps"
                         class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
-                    />
+                    >
+                        <menu>
+                            <Menu itemSelected="onMenuAction">
+                                <MenuItem text="{i18n>navigate}" icon="sap-icon://forward" press="onNavigateWithGoogleMaps"/>
+                                <MenuItem text="{i18n>navigateOtherApp}" icon="sap-icon://map-2" />
+                            </Menu>
+                        </menu>
+                    </MenuButton>
+
                     <core:Fragment fragmentName="hwb.frontendhwb.fragment.GroupAwareStampMenuButton" type="XML" />
                     <Button
                         text="{i18n>share}"

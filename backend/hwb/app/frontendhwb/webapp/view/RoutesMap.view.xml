@@ -350,6 +350,7 @@
                                         alignItems="Center"
                                         justifyContent="Center"
                                         height="100%"
+                                        wrap="NoWrap"
                                     >
                                         <Button
                                             icon="{path: 'local>toPoi', formatter: '.formatStampButtonIcon'}"
@@ -367,9 +368,13 @@
                                                 />
                                             </customData>
                                         </Button>
-                                        <Button
+
+                                        <MenuButton
                                             icon="sap-icon://forward"
-                                            press="onButtonOpenWithMapsAppPress"
+                                            type="Emphasized"
+                                            buttonMode="Split" 
+                                            defaultAction="onNavigateWithGoogleMaps"
+                                            class="sapUiTinyMarginEnd"
                                         >
                                             <customData>
                                                 <core:CustomData
@@ -378,7 +383,29 @@
                                                     writeToDom="true"
                                                 />
                                             </customData>
-                                        </Button>
+                                            <menu>
+                                                <Menu itemSelected="onMenuAction">
+                                                    <MenuItem text="{i18n>navigate}" icon="sap-icon://forward" press="onNavigateWithGoogleMaps">
+                                                        <customData>
+                                                            <core:CustomData
+                                                                key="ID"
+                                                                value="{local>toPoi}"
+                                                                writeToDom="true"
+                                                            />
+                                                        </customData>
+                                                    </MenuItem>
+                                                    <MenuItem text="{i18n>navigateOtherApp}" icon="sap-icon://map-2">
+                                                       <customData>
+                                                            <core:CustomData
+                                                                key="ID"
+                                                                value="{local>toPoi}"
+                                                                writeToDom="true"
+                                                            />
+                                                        </customData>
+                                                    </MenuItem>
+                                                </Menu>
+                                            </menu>
+                                        </MenuButton>
                                     </FlexBox>
                                 </FlexBox>
                             </HBox>

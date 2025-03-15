@@ -408,11 +408,18 @@ sap.ui.define([
                 }, mParameters);
             },
 
-            onButtonOpenWithMapsAppPress: function () {
+            onNavigateWithGoogleMaps: function () {
                 const sLocation = this.getModel("local").getProperty("/sSelectedSpotLocation");
                 const lat = sLocation.split(";")[1];
                 const long = sLocation.split(";")[0];
-                this.openMapsApp(lat, long);
+                window.open(`https://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
+            },
+
+            onNavigateWithNative: function () {
+                const sLocation = this.getModel("local").getProperty("/sSelectedSpotLocation");
+                const lat = sLocation.split(";")[1];
+                const long = sLocation.split(";")[0];
+                window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
             },
 
             onButtonClosePress: function (oEvent) {

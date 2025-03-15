@@ -441,10 +441,14 @@ sap.ui.define([
 
             },
 
-            onButtonOpenWithMapsAppPress: function (oEvent) {
+            onNavigateWithGoogleMaps: function (oEvent) {
                 const poi = this._getPoiById(oEvent.getSource().getCustomData()[0].getValue());
+                window.open(`https://maps.google.com/maps?daddr=${poi.latitude},${poi.longitude}&amp;ll=`);
+            },
 
-                this.openMapsApp(poi.latitude, poi.longitude);
+            onNavigateWithNative: function (oEvent) {
+                const poi = this._getPoiById(oEvent.getSource().getCustomData()[0].getValue());
+                window.open(`maps://maps.google.com/maps?daddr=${poi.latitude},${poi.longitude}&amp;ll=`);
             },
 
             formatAvatarGroupItems: function (aUsers) {
