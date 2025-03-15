@@ -49,21 +49,37 @@ sap.ui.define([
         },
 
         initAcceptButton: function () {
-            this.getModel("app").setProperty("/bHasPendingFriendshipRequests", false);
-            const sCurrentUserPrincipal = this.getModel("app").getProperty("/currentUser/ID");
-            this.getModel().read('/PendingFriendshipRequests',
-                {
-                    filters: [new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserPrincipal)],
-                    parameters: { expand: 'fromUser,toUser' },
-                    success: function (oData) {
-                        if(oData.results.length > 0) {
-                            this.getModel("app").setProperty("/bHasPendingFriendshipRequests", true);
-                            this.getModel("app").setProperty("/sPendingFriendshipRequestID", oData.results[0].ID);
-                        }
-                    }.bind(this)
-                }
-            )
+            var oAppModel = this.getModel("app");
+            var sCurrentUserPrincipal = oAppModel.getProperty("/currentUser/ID");
+        
+            // If user ID is null, attach a change handler
+            if (!sCurrentUserPrincipal) {
+                oAppModel.bindProperty("/currentUser/ID").attachChange(function () {
+                    var sNewUserId = oAppModel.getProperty("/currentUser/ID");
+                    if (sNewUserId) {
+                        this._readPendingFriendshipRequests(sNewUserId);
+                    }
+                }.bind(this));
+            } else {
+                this._readPendingFriendshipRequests(sCurrentUserPrincipal);
+            }
+        
+            // Reset pending requests indicator
+            oAppModel.setProperty("/bHasPendingFriendshipRequests", false);
         },
+        
+        _readPendingFriendshipRequests: function (sUserId) {
+            this.getModel().read('/PendingFriendshipRequests', {
+                filters: [new Filter("fromUser_ID", FilterOperator.EQ, sUserId)],
+                parameters: { expand: 'fromUser,toUser' },
+                success: function (oData) {
+                    if (oData.results.length > 0) {
+                        this.getModel("app").setProperty("/bHasPendingFriendshipRequests", true);
+                        this.getModel("app").setProperty("/sPendingFriendshipRequestID", oData.results[0].ID);
+                    }
+                }.bind(this)
+            });
+        },        
 
         onAcceptPendingFriendshipRequest: function (oEvent) {
             const oModel = this.getView().getModel();

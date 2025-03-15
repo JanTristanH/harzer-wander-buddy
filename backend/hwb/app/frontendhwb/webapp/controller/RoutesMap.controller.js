@@ -269,7 +269,7 @@ sap.ui.define([
                     error: function (oError) {
                         MessageToast.show(this.getText("error"));
                         console.error(oError);
-                    }
+                    }.bind(this)
                 });
 
             },
