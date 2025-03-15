@@ -184,7 +184,18 @@ service api @(requires: 'authenticated-user') {
             grant: 'READ',
             where: 'createdBy = $user'
         },
-        {grant: 'WRITE'}
+        {
+            grant: 'CREATE',
+            to   : 'authenticated-user'
+        },
+        {
+            grant: 'UPDATE',
+            where: 'createdBy = $user'
+        },
+        {
+            grant: 'DELETE',
+            where: 'createdBy = $user'
+        }
     ])                                        as projection on db.Stampings;
 
     action   stampForGroup(sStampId : UUID, sCurrentUserId : UUID, bStampForUser : Boolean, sGroupPrincipals : String) returns String;

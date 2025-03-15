@@ -222,6 +222,13 @@ async function onStampboxesRead(req, next) {
     box.stampedUserIds = stampedUserIds;
     box.stampedUsers = aUsers.filter(u => stampedUserIds.includes(u.principal));
 
+    if(box.Stampings){
+      // XXX path authorization on expands only applies on HANA :(
+      // All Stampings are loaded!
+      // TODO: rewrite to ensure only needed are loaded
+      box.Stampings = box.Stampings.filter( s => s.createdBy == req.user.id);
+    }
+
     return box;
   });
   return bReturnOnlyFirst ? result[0] : result;
