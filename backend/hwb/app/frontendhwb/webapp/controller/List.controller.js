@@ -92,7 +92,10 @@ sap.ui.define([
                     let oStamping = this.getModel().getProperty("/" + oSelectedItem.getBindingContext().getProperty("Stampings")[0]);
                     let StampingId = oStamping.ID;
                     let mParameters = {
-                        success: () => MessageToast.show(this.getText("deletedStamping")) || oModel.refresh(),
+                        success: () => {
+                            MessageToast.show(this.getText("deletedStamping"));
+                            oModel.invalidate();
+                        },
                         // give message and reset ui to keep it consistent with backend
                         error: () => MessageToast.show("An Error Occured") || oSelectedItem.setSelected(true)
                     }
