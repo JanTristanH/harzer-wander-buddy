@@ -275,7 +275,7 @@ sap.ui.define([
                     MessageToast.show(this.getText("friendshipCreated"));
                     this.getModel().refresh();
                     this.byId("idIsAllowedToStampForFriendSwitch")
-                        .bindProperty("state", { path: `/Friendships(guid'${oData.results[0].ID}')/isAllowedToStampForFriend`});
+                        .bindProperty("state", { path: `/Friendships(guid'${oData.ID}')/isAllowedToStampForFriend`});
                 }.bind(this),
                 error: function (oError) {
                     // Handle error
