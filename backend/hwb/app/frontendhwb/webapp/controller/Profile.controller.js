@@ -26,7 +26,7 @@ sap.ui.define([
         _onRouteMatched: function (oEvent) {
             this.getModel("app").setProperty("/backendUrl", window.location.origin);
             const sUserID = oEvent.getParameter("arguments").userId;
-            this.sPath = "/Users(guid'" + sUserID + "')";
+            this.sPath = "/Users('" + sUserID + "')";
             this.sUserID = sUserID;
             this.getModel().invalidateEntityType("api.Stampboxes"); // force refresh of list
             this.getView().bindElement({
@@ -88,7 +88,7 @@ sap.ui.define([
 
         updateTableFilters: function () {
             const currentUser = this.getModel("app").getProperty("/currentUser");
-            const aSelectedGroup = [currentUser.principal, this.getModel().getProperty(this.sPath + "/principal")];
+            const aSelectedGroup = [currentUser.ID, this.sUserID];
 
             // Create binding filter for selected groups
             let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, [...new Set(aSelectedGroup)].join(','));
@@ -150,7 +150,6 @@ sap.ui.define([
                 MessageToast.show(this.getText("uploadSuccess"));
                 this.onCloseImageUploadDialog();
                 this.submitChanges(); // persist updated picture url
-                this.getModel("app").setProperty("/currentUser/picture", this.getModel().getProperty(this.sPath + "/picture"));
             }
         },
 
@@ -191,6 +190,7 @@ sap.ui.define([
             this.getModel().submitChanges({
                 success: function () {
                     MessageToast.show(this.getText("saved"));
+                    this.getModel("app").setProperty("/currentUser/picture", this.getModel().getProperty(this.sPath + "/picture"));
                 }.bind(this),
                 error: function () {
                     MessageToast.show(this.getText("error"));
@@ -205,42 +205,39 @@ sap.ui.define([
         },
 
         onStampingsTableUpdateFinished: function (oEvent) {
-            const sPrincipal = this.getModel().getProperty(this.sPath + "/principal");
             let count = 0;
             const aItems = oEvent.getSource().getItems();
             for (let i = 0; i < aItems.length; i++) {
-                if (aItems[i].getBindingContext().getProperty("stampedUserIds").includes(sPrincipal)) {
+                if (aItems[i].getBindingContext().getProperty("stampedUserIds").includes(this.sUserID)) {
                     count++;
                 }
             }
             this.getModel("app").setProperty("/stampedCount", count);
         },
 
-        onFormatSelectedForUser: function (aSelectedGroupIds, sPrincipal) {
-            if (!sPrincipal) {
+        onFormatSelectedForUser: function (aSelectedGroupIds, sID) {
+            if (!sID) {
                 const oContext = this.getView().getBindingContext();
-                sPrincipal = oContext?.getProperty("principal");
+                sID = oContext?.getProperty("ID");
             }
-            if (!sPrincipal || !Array.isArray(aSelectedGroupIds) || aSelectedGroupIds.length === 0) {
+            if (!sID || !Array.isArray(aSelectedGroupIds) || aSelectedGroupIds.length === 0) {
                 return false;
             }
 
-            return aSelectedGroupIds.includes(sPrincipal);
+            return aSelectedGroupIds.includes(sID);
         },
 
         onFormatAddToGroupVisible: function () {
             const aGroup = this.getModel("app").getProperty("/aSelectedGroupIds");
-            const sPrincipal = this.getModel().getProperty(this.sPath + "/principal");
-            return !aGroup.includes(sPrincipal);
+            return !aGroup.includes(this.sUserID);
         },
 
         onAddToGroupSelection: function () {
-            const sPrincipal = this.getModel().getProperty(this.sPath + "/principal");
             this.oMyAvatar = this.byId("container-hwb.frontendhwb---Profile--idMyAvatar");
 
             this._oPopover.openBy(this.oMyAvatar);
             const oComboBox = this.byId("container-hwb.frontendhwb---Profile--idGroupsMultiComboBox");
-            oComboBox.addSelectedKeys([sPrincipal])
+            oComboBox.addSelectedKeys([this.sUserID])
         },
 
         onNavToFriendPress: function (oEvent) {

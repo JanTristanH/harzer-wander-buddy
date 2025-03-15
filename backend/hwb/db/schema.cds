@@ -19,7 +19,7 @@ aspect PointOfInterest {
 }
 
 entity ExternalUsers : cuid {
-    principal             : User        @assert.unique;
+    key ID                : String(255)        @assert.unique;
     email                 : String(255) @assert.unique;
     email_verified        : Boolean;
     family_name           : String(255);

@@ -85,7 +85,7 @@
                                             icon="sap-icon://company-view"
                                             press=".onAddToGroupSelection"
                                             text="{i18n>addToGroup}"
-                                            enabled="{= !${app>/aSelectedGroupIds}.includes(${principal}) &amp;&amp; ${isFriend} }"
+                                            enabled="{= !${app>/aSelectedGroupIds}.includes(${ID}) &amp;&amp; ${isFriend} }"
                                             class="sapUiSmallMargin"
                                         />
                                         <Button
@@ -249,7 +249,7 @@
 
                                                 <CheckBox
                                                     enabled="false"
-                                                    selected="{ parts: ['stampedUserIds', 'app>/currentUser/principal'], formatter: '.onFormatSelectedForUser' }"
+                                                    selected="{ parts: ['stampedUserIds', 'app>/currentUser/ID'], formatter: '.onFormatSelectedForUser' }"
                                                 />
                                             </cells>
                                         </ColumnListItem>

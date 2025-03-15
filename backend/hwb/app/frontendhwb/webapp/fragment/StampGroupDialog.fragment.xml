@@ -27,7 +27,7 @@
                         selectedKeys="{app>/aSelectedGroupIdsToStamp}"
                         selectionFinish="onSelectionFinish"
                         items="{/MyFriends}">
-                        <core:Item key="{principal}" text="{name}" enabled="{isAllowedToStampForFriend}"/>
+                        <core:Item key="{ID}" text="{name}" enabled="{isAllowedToStampForFriend}"/>
                     </MultiComboBox>
                 </HBox>
 

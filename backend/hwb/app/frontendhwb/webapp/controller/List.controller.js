@@ -36,7 +36,7 @@ sap.ui.define([
                 let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
                 aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup)); // create copy
                 let currentUser = this.getModel("app").getProperty("/currentUser");
-                aSelectedGroup.push(currentUser.principal);
+                aSelectedGroup.push(currentUser.ID);
 
                 // Create binding filter for selected groups
                 let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
@@ -92,7 +92,10 @@ sap.ui.define([
                     let oStamping = this.getModel().getProperty("/" + oSelectedItem.getBindingContext().getProperty("Stampings")[0]);
                     let StampingId = oStamping.ID;
                     let mParameters = {
-                        success: () => MessageToast.show(this.getText("deletedStamping")) || oModel.refresh(),
+                        success: () => {
+                            MessageToast.show(this.getText("deletedStamping"));
+                            oModel.invalidate();
+                        },
                         // give message and reset ui to keep it consistent with backend
                         error: () => MessageToast.show("An Error Occured") || oSelectedItem.setSelected(true)
                     }
@@ -107,7 +110,6 @@ sap.ui.define([
 
             selectWhere: function (keysAreMatching) {
                 const table = this.byId("StampingsTable");
-                let that = this;
                 table.getItems().forEach(element => {
                     if (keysAreMatching(element.getBindingContext())) {
                         table.setSelectedItemById(element.getId())
@@ -289,14 +291,14 @@ sap.ui.define([
             onFormatColumnVisibility: function (nIndex, aSelectedGroupIds) {
                 const result = aSelectedGroupIds?.length >= nIndex + 1;
                 if (result) {
-                    const sPrincipal = aSelectedGroupIds[nIndex];
-                    this.addColumnName(nIndex, sPrincipal);
+                    const sID = aSelectedGroupIds[nIndex];
+                    this.addColumnName(nIndex, sID);
                 }
                 return result;
             },
 
-            addColumnName: function (nIndex, sPrincipal) {
-                const aFilters = [new Filter("principal", FilterOperator.EQ, sPrincipal)];
+            addColumnName: function (nIndex, sID) {
+                const aFilters = [new Filter("ID", FilterOperator.EQ, sID)];
                 this.getModel().read("/Users", {
                     filters: aFilters,
                     success: function (oData) {
@@ -312,8 +314,8 @@ sap.ui.define([
                 if (!aSelectedGroupIds || !aSelectedGroupIds.length) {
                     return false;
                 }
-                const sPrincipal = aSelectedGroupIds[index];
-                return stampedUserIds.includes(sPrincipal);
+                const sID = aSelectedGroupIds[index];
+                return stampedUserIds.includes(sID);
             },
         });
     });
