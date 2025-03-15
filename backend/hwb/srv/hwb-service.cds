@@ -3,16 +3,16 @@ using {hwb.db as db} from '../db/schema';
 service api @(requires: 'authenticated-user') {
 
     @requires: 'admin'
-    function calculateTravelTimesNNearestNeighbors(n : Integer)     returns Integer;
+    function calculateTravelTimesNNearestNeighbors(n : Integer)        returns Integer;
 
     @requires: 'admin'
-    function getMissingTravelTimesCount(n : Integer)                returns Integer;
+    function getMissingTravelTimesCount(n : Integer)                   returns Integer;
 
     @requires: 'admin'
-    function addElevationToAllTravelTimes()                         returns String;
+    function addElevationToAllTravelTimes()                            returns String;
 
     @requires: 'admin'
-    action   DeleteSpotWithRoutes(SpotId : UUID)                    returns String;
+    action   DeleteSpotWithRoutes(SpotId : UUID)                       returns String;
 
 
     function calculateHikingRoute(maxDepth : Integer,
@@ -22,13 +22,13 @@ service api @(requires: 'authenticated-user') {
                                   allowDriveInRoute : Boolean,
                                   latitudeStart : String,
                                   longitudeStart : String,
-                                  groupFilterStampings : String)    returns String;
+                                  groupFilterStampings : String)       returns String;
 
-    function getTourByIdListTravelTimes(idListTravelTimes : String) returns String;
-    action   updateTourByPOIList(TourID : UUID, POIList : String)   returns String;
+    function getTourByIdListTravelTimes(idListTravelTimes : String)    returns String;
+    action   updateTourByPOIList(TourID : UUID, POIList : String)      returns String;
 
     @requires: 'admin'
-    function updateOrderBy()                                        returns String;
+    function updateOrderBy()                                           returns String;
 
     @cds.redirection.target
     @readonly
@@ -77,7 +77,7 @@ service api @(requires: 'authenticated-user') {
             '[]'  as roles    : String
         };
 
-    function getCurrentUser()                                       returns Users;
+    function getCurrentUser()                                          returns Users;
 
     @restrict: [
         {
@@ -101,14 +101,15 @@ service api @(requires: 'authenticated-user') {
     }]
     entity MyFriends                          as
         projection on db.Friendships {
-            toUser.ID        as ID,
-            toUser.principal as principal,
-            toUser.name      as name,
-            toUser.picture   as picture,
-            createdBy        as createdBy,
-            ID               as FriendshipID,
-            true             as isFriend : Boolean,
-            isAllowedToStampForFriend as isAllowedToStampForFriend,
+            toUser.ID                 as ID,
+            toUser.principal          as principal,
+            toUser.name               as name,
+            toUser.picture            as picture,
+            createdBy                 as createdBy,
+            ID                        as FriendshipID,
+            true                      as isFriend : Boolean,
+            isAllowedToStampForFriend as isAllowedToStampForMe,
+            false                      as isAllowedToStampForFriend : Boolean
         };
 
     @cds.redirection.target
@@ -128,7 +129,7 @@ service api @(requires: 'authenticated-user') {
     @readonly
     entity PendingFriendshipRequests          as projection on db.PendingFriendshipRequests;
 
-    action   acceptPendingFriendshipRequest(FriendshipID : UUID)    returns String;
+    action   acceptPendingFriendshipRequest(FriendshipID : UUID)       returns String;
 
     @readonly
     entity RouteCalculationRequest            as projection on db.RouteCalculationRequest;
@@ -186,6 +187,7 @@ service api @(requires: 'authenticated-user') {
         {grant: 'WRITE'}
     ])                                        as projection on db.Stampings;
 
+    action   stampForGroup(sStampId : UUID, sCurrentUserId : UUID, bStampForUser : Boolean, sGroupPrincipals : String) returns String;
 
     // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
     // TODO set up read restrictions from external

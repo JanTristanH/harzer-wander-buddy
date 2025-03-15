@@ -1,0 +1,53 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:l="sap.ui.layout">
+
+    <Dialog
+        id="idStampGroupDialog"
+        title="{i18n>stampForGroup}"
+        type="Message">
+
+        <content>
+            <VBox>
+                <MessageStrip
+                    text="{i18n>stampDialogInfo}"
+                    type="Information"
+                    showIcon="true"
+                    class="sapUiSmallMarginBottom"/>
+
+                <HBox alignItems="Center" class="sapUiTinyMarginBottom">
+                    <Label
+                        text="{i18n>group}: "
+                        class="sapUiTinyMarginTop sapUiTinyMarginEnd"/>
+
+                    <MultiComboBox
+                        id="idGroupsMultiComboBoxStampGroupDialog"
+                        placeholder="{i18n>chooseGroup}"
+                        selectedKeys="{app>/aSelectedGroupIdsToStamp}"
+                        selectionFinish="onSelectionFinish"
+                        items="{/MyFriends}">
+                        <core:Item key="{principal}" text="{name}" enabled="{isAllowedToStampForFriend}"/>
+                    </MultiComboBox>
+                </HBox>
+
+                <CheckBox
+                    id="idIncludeMeCheckbox"
+                    text="{i18n>includeMe}"
+                    enabled="{app>/bStampingEnabled}"
+                    selected="{app>/bIncludeMe}"/>
+            </VBox>
+        </content>
+
+        <buttons>
+            <Button
+                text="{i18n>stampGroup}"
+                type="Emphasized"
+                enabled="{= ${app>/aSelectedGroupIdsToStamp}.length > 0}"
+                press="onConfirmStampGroup"/>
+            <Button
+                text="{i18n>cancel}"
+                press="onCancelStampGroup"/>
+        </buttons>
+    </Dialog>
+</core:FragmentDefinition>

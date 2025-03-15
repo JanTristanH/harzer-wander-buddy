@@ -94,7 +94,6 @@ sap.ui.define([
                     }.bind(this)
                 });
             } else {
-                debugger
                 MessageToast.show(this.getText("errorRemovingFriend"));
             }
         },

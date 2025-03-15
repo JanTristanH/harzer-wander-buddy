@@ -75,7 +75,7 @@ sap.ui.define([
                     FriendshipID: ID
                 },
                 success: function () {
-                    this.initAccpetButton();
+                    this.initAcceptButton();
                     this.getModel().refresh();
                 }.bind(this),
                 error: function (oError) {
@@ -274,8 +274,8 @@ sap.ui.define([
                     this.getModel().refresh();
                     MessageToast.show(this.getText("friendshipCreated"));
                     this.getModel().refresh();
-                    debugger
-                    this.byId("idIsAllowedToStampForFriendSwitch".bind("/Friendships" + oData[0].ID))
+                    this.byId("idIsAllowedToStampForFriendSwitch")
+                        .bindProperty("state", { path: `/Friendships(guid'${oData.results[0].ID}')/isAllowedToStampForFriend`});
                 }.bind(this),
                 error: function (oError) {
                     // Handle error
@@ -290,7 +290,7 @@ sap.ui.define([
             this.getModel().read("/Friendships", {
                 filters: [
                         new Filter("toUser_ID", FilterOperator.EQ, this.sUserID),
-                        new Filter("toUser_ID", FilterOperator.EQ, sCurrentUserId)
+                        new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserId)
                     ],
                 success: function(oData) {
                    if (oData.results.length > 0) {

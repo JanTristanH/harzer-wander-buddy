@@ -2,6 +2,7 @@
     xmlns="sap.m"
     xmlns:f="sap.f"
     xmlns:card="sap.f.cards"
+    xmlns:core="sap.ui.core"
 >
     <HBox
         justifyContent="End"
@@ -27,7 +28,7 @@
                 justifyContent="SpaceBetween"
             >
                 <HBox
-                    width="80%"
+                    width="85%"
                     class="scrollableHbox"
                 >
                     <Button
@@ -37,15 +38,7 @@
                         press="onButtonOpenWithMapsAppPress"
                         class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
                     />
-                    <Button
-                        text="{i18n>stamp}"
-                        icon="{path: 'local>/bStampingEnabled', formatter: '.formatStampButtonIcon'}"
-                        visible="{local>/bStampingVisible}"
-                        enabled="{local>/bStampingEnabled}"
-                        type="Transparent"
-                        press="onButtonStampPress"
-                        class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
-                    />
+                    <core:Fragment fragmentName="hwb.frontendhwb.fragment.GroupAwareStampMenuButton" type="XML" />
                     <Button
                         text="{i18n>share}"
                         icon="sap-icon://share-2"
