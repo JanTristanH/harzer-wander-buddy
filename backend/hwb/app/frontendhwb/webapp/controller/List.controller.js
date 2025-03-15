@@ -110,7 +110,6 @@ sap.ui.define([
 
             selectWhere: function (keysAreMatching) {
                 const table = this.byId("StampingsTable");
-                let that = this;
                 table.getItems().forEach(element => {
                     if (keysAreMatching(element.getBindingContext())) {
                         table.setSelectedItemById(element.getId())
