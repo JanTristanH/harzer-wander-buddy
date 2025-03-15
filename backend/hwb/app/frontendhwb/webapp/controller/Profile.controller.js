@@ -38,7 +38,8 @@ sap.ui.define([
                 }
             });
 
-            this.initAccpetButton();
+            this.initAcceptButton();
+            this.bindStampForMeSwitch()
 
             const oFilter = new Filter("fromUser_ID", FilterOperator.EQ, sUserID);
             const oFriendListBinding = this.byId("idFriendsListProfile").getBinding("items");
@@ -47,7 +48,7 @@ sap.ui.define([
             this.getModel().refresh();
         },
 
-        initAccpetButton: function () {
+        initAcceptButton: function () {
             this.getModel("app").setProperty("/bHasPendingFriendshipRequests", false);
             const sCurrentUserPrincipal = this.getModel("app").getProperty("/currentUser/ID");
             this.getModel().read('/PendingFriendshipRequests',
@@ -74,7 +75,7 @@ sap.ui.define([
                     FriendshipID: ID
                 },
                 success: function () {
-                    this.initAccpetButton();
+                    this.initAcceptButton();
                     this.getModel().refresh();
                 }.bind(this),
                 error: function (oError) {
@@ -269,10 +270,12 @@ sap.ui.define([
                 fromUser: { "ID": currentUserID },
                 toUser: { "ID": oFriendData.ID }
             }, {
-                success: function () {
+                success: function (oData) {
                     this.getModel().refresh();
                     MessageToast.show(this.getText("friendshipCreated"));
                     this.getModel().refresh();
+                    this.byId("idIsAllowedToStampForFriendSwitch")
+                        .bindProperty("state", { path: `/Friendships(guid'${oData.ID}')/isAllowedToStampForFriend`});
                 }.bind(this),
                 error: function (oError) {
                     // Handle error
@@ -281,5 +284,25 @@ sap.ui.define([
                 }.bind(this)
             });
         },
+
+        bindStampForMeSwitch: function() {
+            const sCurrentUserId = this.getModel("app").getProperty("/currentUser/ID");
+            this.getModel().read("/Friendships", {
+                filters: [
+                        new Filter("toUser_ID", FilterOperator.EQ, this.sUserID),
+                        new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserId)
+                    ],
+                success: function(oData) {
+                   if (oData.results.length > 0) {
+                        this.byId("idIsAllowedToStampForFriendSwitch")
+                            .bindProperty("state", { path: `/Friendships(guid'${oData.results[0].ID}')/isAllowedToStampForFriend`});
+                    }
+                }.bind(this)
+            })
+        },
+
+        onAllowedToStampSwitchChange: function() {
+            this.submitChanges();
+        }
     });
 });

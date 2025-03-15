@@ -66,6 +66,8 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('addElevationToAllTravelTimes', addElevationToAllTravelTimes)
 
+    this.on('stampForGroup', stampForGroup)
+
     this.before('CREATE', 'Friendships', onBeforeFriendshipCreate);
 
     this.after('CREATE', 'Friendships', onAfterFriendshipCreate);
@@ -73,7 +75,7 @@ module.exports = class api extends cds.ApplicationService {
     this.on('getCurrentUser', async (req) => {
       const ExternalUsers = this.entities('hwb.db').ExternalUsers;
       const currentUser = await SELECT.from(ExternalUsers).where({ principal: req.user.id });
-      if(currentUser[0]) {
+      if (currentUser[0]) {
         currentUser[0].roles = req.user._roles;
       }
       return currentUser;
@@ -82,6 +84,8 @@ module.exports = class api extends cds.ApplicationService {
     this.on('acceptPendingFriendshipRequest', acceptPendingFriendshipRequest);
 
     this.after('READ', 'Users', addIsFriend.bind(this));
+
+    this.after('READ', 'MyFriends', addIsAllowedToStampForFriend.bind(this));
 
     return super.init()
   }
@@ -218,6 +222,13 @@ async function onStampboxesRead(req, next) {
     box.stampedUserIds = stampedUserIds;
     box.stampedUsers = aUsers.filter(u => stampedUserIds.includes(u.principal));
 
+    if(box.Stampings){
+      // XXX path authorization on expands only applies on HANA :(
+      // All Stampings are loaded!
+      // TODO: rewrite to ensure only needed are loaded
+      box.Stampings = box.Stampings.filter( s => s.createdBy == req.user.id);
+    }
+
     return box;
   });
   return bReturnOnlyFirst ? result[0] : result;
@@ -250,7 +261,7 @@ function extractFilters(filters, operator) {
 
 async function addIsFriend(users, req) {
   const { MyFriends } = this.api.entities;
-  const aFriendships = await SELECT.from(MyFriends).where({createdBy: req.user.id});
+  const aFriendships = await SELECT.from(MyFriends).where({ createdBy: req.user.id });
   const aFriendIds = aFriendships.map(f => f.ID);
   return users.map(user => {
     user.isFriend = aFriendIds.includes(user.ID);
@@ -295,7 +306,7 @@ async function updateTourByPOIList(req) {
   const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours } = this.entities('hwb.db');
 
   let aPois = poiList.split(";").filter(p => !!p);
-  aPois = removeAdjacentDuplicates(aPois);  
+  aPois = removeAdjacentDuplicates(aPois);
   if (aPois.length < 2) {
     throw new Error("At least 2 POIs are required to create a tour");
   }
@@ -448,9 +459,9 @@ function removeAdjacentDuplicates(arr) {
   const result = [];
 
   for (let i = 0; i < arr.length; i++) {
-      if (result.length === 0 || result[result.length - 1] !== arr[i]) {
-          result.push(arr[i]);
-      }
+    if (result.length === 0 || result[result.length - 1] !== arr[i]) {
+      result.push(arr[i]);
+    }
   }
 
   return result;
@@ -990,4 +1001,68 @@ function addElevationProfileToTravelTime(oTravelTime) {
       }
       );
   });
+}
+
+async function stampForGroup(req) {
+  const { Stampings, ExternalUsers } = this.entities('hwb.db')
+  const { sStampId, sGroupPrincipals, sCurrentUserId, bStampForUser } = req.data;
+
+  const aUsers = await SELECT.from(ExternalUsers).where({ ID: sCurrentUserId, principal: req.user.id});
+  if(aUsers.length < 1) {
+    req.error(404, 'User has not been found!');
+    return;
+  }
+  
+  const aGroupPrincipals = sGroupPrincipals?.split(',');
+
+  const aFriendsAllowedToStamp = await cds.run(`
+    SELECT f.ID, f.fromUser_ID, eu.principal as fromUser_principal
+    FROM hwb_db_Friendships AS f
+    JOIN hwb_db_ExternalUsers AS eu ON f.fromUser_ID = eu.ID
+    WHERE f.isAllowedToStampForFriend = true
+      AND f.toUser_ID = ?
+      AND eu.principal IN (${aGroupPrincipals.map(() => '?').join(', ')})
+  `, [sCurrentUserId, ...aGroupPrincipals]);
+
+  const aStampings = aFriendsAllowedToStamp.map(friend => ({
+    stamp_ID: sStampId,
+    createdBy: friend.fromUser_principal
+  }));
+
+  if (bStampForUser) {
+    // create stamping for me
+    aStampings.push({ stamp_ID: sStampId });
+  }
+
+  if (aStampings.length > 0) {
+    await INSERT.into(Stampings).entries(aStampings);
+  }
+
+  return "ok";
+}
+
+async function addIsAllowedToStampForFriend(aMyFriends, req) {
+  if( !(aMyFriends.length && aMyFriends[0].ID)){
+    return aMyFriends;
+  }
+  const { ExternalUsers, Friendships } = this.entities('hwb.db');
+  const aUsers = await SELECT.from(ExternalUsers).where({ principal: req.user.id});
+  if(aUsers.length < 1) {
+    req.error(404, 'User has not been found!');
+    return;
+  }
+
+  const aCanCurrentUserStampFor = await SELECT
+    .from(Friendships)
+    .where({ 
+      toUser_ID: aUsers[0].ID,
+      isAllowedToStampForFriend: true
+    });
+    const aCanStampForIds = aCanCurrentUserStampFor.map( f => f.fromUser_ID);
+
+    for (let i = 0; i < aMyFriends.length; i++) {
+      const oFriend = aMyFriends[i];
+      oFriend.isAllowedToStampForFriend = aCanStampForIds.includes(oFriend.ID)
+    }
+    return aMyFriends;
 }

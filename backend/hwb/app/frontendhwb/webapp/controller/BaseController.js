@@ -308,7 +308,86 @@ sap.ui.define([
                 return roles.includes("admin");
             }
             return roles.split(",").map(role => role.trim()).includes("admin");
-        }        
+        },
 
+        onStampGroupPress: function () {
+            const oAppModel = this.getView().getModel("app");
+            const bStampingEnabled = this.getModel("local").getProperty("/bStampingEnabled");
+            oAppModel.setProperty("/bStampingEnabled", bStampingEnabled);
+            oAppModel.setProperty("/bIncludeMe", bStampingEnabled);
+        
+            if (!this._oStampDialog) {
+                Fragment.load({
+                    id: this.getView().getId(),
+                    name: "hwb.frontendhwb.fragment.StampGroupDialog",
+                    controller: this
+                }).then((oDialog) => {
+                    this._oStampDialog = oDialog;
+                    this.getView().addDependent(oDialog);
+                    this._setupStampDialogBinding(); // call binding setup separately
+                    oDialog.open();
+                });
+            } else {
+                this._setupStampDialogBinding(); // ensures it's called on every subsequent opening
+                this._oStampDialog.open();
+            }
+        },
+        
+        _setupStampDialogBinding: function() {
+            const oMultiComboBox = this.byId("idGroupsMultiComboBoxStampGroupDialog");
+            const oBinding = oMultiComboBox.getBinding("items");
+            const oAppModel = this.getView().getModel("app");
+        
+            if (oBinding) {
+                oBinding.attachEventOnce("dataReceived", () => {
+                    const aContexts = oBinding.getContexts();
+                    const aAllowedPrincipals = aContexts
+                        .map(context => context.getObject())
+                        .filter(o => o.isAllowedToStampForFriend)
+                        .map(o => o.principal);
+        
+                    const aSelectedGroupIds = oAppModel.getProperty("/aSelectedGroupIds") ?? [];
+                    const aFilteredSelections = aSelectedGroupIds.filter(id => aAllowedPrincipals.includes(id));
+        
+                    oAppModel.setProperty("/aSelectedGroupIdsToStamp", aFilteredSelections);
+                });
+        
+                // Trigger refresh to guarantee the event fires on every open
+                oBinding.refresh(true);
+            } else {
+                console.warn("Items binding not yet available.");
+            }
+        },
+
+        onConfirmStampGroup: function () {
+            const oAppModel = this.getView().getModel("app");
+            const bIncludeMe = oAppModel.getProperty("/bIncludeMe");
+
+            const sStampId = this.getModel("local").getProperty("/sCurrentSpotId");
+            const aSelectedGroup = oAppModel.getProperty("/aSelectedGroupIdsToStamp") || [];
+            const sCurrentUserId = oAppModel.getProperty("/currentUser/ID");
+
+            this.getModel().callFunction("/stampForGroup", {
+                method: "POST",
+                urlParameters: {
+                    sStampId,
+                    sCurrentUserId,
+                    bStampForUser: bIncludeMe,
+                    sGroupPrincipals: aSelectedGroup
+                },
+                success: function() {
+                    this.getModel().refresh();
+                }.bind(this),
+                error: function(oError) {
+                    debugger
+                    MessageToast.show(this.getText("error"));
+                    this._oStampDialog.close();
+                }.bind(this)
+            })
+        },
+
+        onCancelStampGroup: function () {
+            this._oStampDialog.close();
+        },
     });
 });
