@@ -1,7 +1,7 @@
 # Harzer-Wander-Buddy
 
 
-|Harzer Wanderbuddy for stamp collecting|![Logo](https://raw.githubusercontent.com/JanTristanH/harzer-wander-buddy-website/main/images/BuddyWithMap.webp)|
+|Harzer Wanderbuddy for stamp collecting|![Logo](https://www.harzer-wander-buddy.de/assets/images/BuddyWithMapNoBG.webp)|
 |-----|-----|
 
 ## Purpose
