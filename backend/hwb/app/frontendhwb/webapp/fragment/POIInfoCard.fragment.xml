@@ -27,9 +27,9 @@
                 class="sapUiSmallMargin"
                 justifyContent="SpaceBetween"
             >
-                <HBox
-                    width="85%"
-                    class="scrollableHbox"
+                <FlexBox
+                    width="100%"
+                    wrap="Wrap"
                 >
                     <Button
                         text="{i18n>navigate}"
@@ -54,7 +54,7 @@
                         press="onButtonOpenExternalPress"
                         class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
                     />
-                </HBox>
+                </FlexBox>
                 <VBox
                     class="sapUiSmallMarginTop"
                     width="95%"

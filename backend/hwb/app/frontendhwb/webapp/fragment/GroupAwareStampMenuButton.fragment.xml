@@ -2,18 +2,17 @@
     xmlns="sap.m"
     xmlns:core="sap.ui.core"
 >
-    <MenuButton text="{i18n>stamp}" type="Transparent">
-        <menu>
-            <Menu>
-                <MenuItem 
-                    text="{i18n>stampForMe}" 
-                    icon="{path: 'local>/bStampingEnabled', formatter: '.formatStampButtonIcon'}" 
-                    visible="{local>/bStampingVisible}"
-                    enabled="{local>/bStampingEnabled}"
-                    press="onButtonStampPress"
-                />
-                <MenuItem text="{i18n>stampForGroup}" icon="sap-icon://checklist" press=".onStampGroupPress" />
-            </Menu>
-        </menu>
-    </MenuButton>
+    <Button 
+        text="{i18n>stampForMe}" 
+        icon="{path: 'local>/bStampingEnabled', formatter: '.formatStampButtonIcon'}" 
+        visible="{local>/bStampingVisible}"
+        enabled="{local>/bStampingEnabled}"
+        press="onButtonStampPress"
+        type="Default"
+    />
+    <Button 
+        text="{i18n>stampForGroup}"
+        icon="sap-icon://checklist"
+        press=".onStampGroupPress"
+        type="Transparent" />
 </core:FragmentDefinition>
