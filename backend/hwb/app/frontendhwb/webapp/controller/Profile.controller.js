@@ -150,7 +150,6 @@ sap.ui.define([
                 MessageToast.show(this.getText("uploadSuccess"));
                 this.onCloseImageUploadDialog();
                 this.submitChanges(); // persist updated picture url
-                this.getModel("app").setProperty("/currentUser/picture", this.getModel().getProperty(this.sPath + "/picture"));
             }
         },
 
@@ -191,6 +190,7 @@ sap.ui.define([
             this.getModel().submitChanges({
                 success: function () {
                     MessageToast.show(this.getText("saved"));
+                    this.getModel("app").setProperty("/currentUser/picture", this.getModel().getProperty(this.sPath + "/picture"));
                 }.bind(this),
                 error: function () {
                     MessageToast.show(this.getText("error"));
