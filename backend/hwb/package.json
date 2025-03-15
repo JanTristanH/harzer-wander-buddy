@@ -31,7 +31,8 @@
   "cds": {
     "requires": {
       "attachments": {
-        "scan": false
+        "scan": false,
+        "kind": "db"
       },
       "db": {
         "[development]": {

@@ -14,7 +14,6 @@ service api @(requires: 'authenticated-user') {
     @requires: 'admin'
     action   DeleteSpotWithRoutes(SpotId : UUID)                       returns String;
 
-
     function calculateHikingRoute(maxDepth : Integer,
                                   maxDuration : Integer,
                                   maxDistance : Integer,
