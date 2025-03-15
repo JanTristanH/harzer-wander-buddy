@@ -65,7 +65,7 @@ sap.ui.define([
                 let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
                 aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup)); // create copy
                 let currentUser = this.getModel("app").getProperty("/currentUser");
-                aSelectedGroup.push(currentUser.principal);
+                aSelectedGroup.push(currentUser.ID);
 
                 // Create binding filter for selected groups
                 let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));

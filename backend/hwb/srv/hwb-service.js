@@ -74,7 +74,7 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('getCurrentUser', async (req) => {
       const ExternalUsers = this.entities('hwb.db').ExternalUsers;
-      const currentUser = await SELECT.from(ExternalUsers).where({ principal: req.user.id });
+      const currentUser = await SELECT.one.from(ExternalUsers).where({ ID: req.user.id });
       if (currentUser[0]) {
         currentUser[0].roles = req.user._roles;
       }
@@ -122,7 +122,7 @@ function addGroupDetailsToTours(db, tours, groupUserIds) {
   return new Promise(async (resolve, reject) => {
     // Query stampings where createdBy is in the provided group.
     const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
-    const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
+    const aUsers = await SELECT.from(db.ExternalUsers).where({ ID: { in: groupUserIds } });
     const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
 
     const result = await Promise.all(
@@ -178,7 +178,7 @@ function getStampingByUsers(stampings, users) {
   let result = [];
   for (let i = 0; i < stampings.length; i++) {
     let stamping = stampings[i];
-    let user = users.find(u => u.principal == stamping.createdBy);
+    let user = users.find(u => u.ID == stamping.createdBy);
     if (user) {
       result.push({
         user: user,
@@ -209,7 +209,7 @@ async function onStampboxesRead(req, next) {
       : [req.user.id];
 
   const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
-  const aUsers = await SELECT.from(db.ExternalUsers).where({ principal: { in: groupUserIds } });
+  const aUsers = await SELECT.from(db.ExternalUsers).where({ ID: { in: groupUserIds } });
 
   const result = stampBoxes.map(box => {
     const boxStampings = aStampings.filter(s => s.stamp_ID == box.ID);
@@ -220,7 +220,7 @@ async function onStampboxesRead(req, next) {
     box.groupSize = groupUserIds.length;
     box.totalGroupStampings = stampedUserIds.length;
     box.stampedUserIds = stampedUserIds;
-    box.stampedUsers = aUsers.filter(u => stampedUserIds.includes(u.principal));
+    box.stampedUsers = aUsers.filter(u => stampedUserIds.includes(u.ID));
 
     if(box.Stampings){
       // XXX path authorization on expands only applies on HANA :(
@@ -1004,29 +1004,22 @@ function addElevationProfileToTravelTime(oTravelTime) {
 }
 
 async function stampForGroup(req) {
-  const { Stampings, ExternalUsers } = this.entities('hwb.db')
-  const { sStampId, sGroupPrincipals, sCurrentUserId, bStampForUser } = req.data;
-
-  const aUsers = await SELECT.from(ExternalUsers).where({ ID: sCurrentUserId, principal: req.user.id});
-  if(aUsers.length < 1) {
-    req.error(404, 'User has not been found!');
-    return;
-  }
+  const { Stampings, Friendships } = this.entities('hwb.db')
+  const { sStampId, sGroupUserIds, bStampForUser } = req.data;
   
-  const aGroupPrincipals = sGroupPrincipals?.split(',');
+  const aGroupsIds = sGroupUserIds?.split(',');
 
-  const aFriendsAllowedToStamp = await cds.run(`
-    SELECT f.ID, f.fromUser_ID, eu.principal as fromUser_principal
-    FROM hwb_db_Friendships AS f
-    JOIN hwb_db_ExternalUsers AS eu ON f.fromUser_ID = eu.ID
-    WHERE f.isAllowedToStampForFriend = true
-      AND f.toUser_ID = ?
-      AND eu.principal IN (${aGroupPrincipals.map(() => '?').join(', ')})
-  `, [sCurrentUserId, ...aGroupPrincipals]);
+  const aFriendsAllowedToStamp = await SELECT
+    .from(Friendships)
+    .where({ 
+      isAllowedToStampForFriend: true,
+      toUser_ID: req.user.id,
+      fromUser_ID: { in: aGroupsIds } 
+    });
 
   const aStampings = aFriendsAllowedToStamp.map(friend => ({
     stamp_ID: sStampId,
-    createdBy: friend.fromUser_principal
+    createdBy: friend.fromUser_ID
   }));
 
   if (bStampForUser) {
@@ -1045,17 +1038,12 @@ async function addIsAllowedToStampForFriend(aMyFriends, req) {
   if( !(aMyFriends.length && aMyFriends[0].ID)){
     return aMyFriends;
   }
-  const { ExternalUsers, Friendships } = this.entities('hwb.db');
-  const aUsers = await SELECT.from(ExternalUsers).where({ principal: req.user.id});
-  if(aUsers.length < 1) {
-    req.error(404, 'User has not been found!');
-    return;
-  }
+  const { Friendships } = this.entities('hwb.db');
 
   const aCanCurrentUserStampFor = await SELECT
     .from(Friendships)
     .where({ 
-      toUser_ID: aUsers[0].ID,
+      toUser_ID: req.user.id,
       isAllowedToStampForFriend: true
     });
     const aCanStampForIds = aCanCurrentUserStampFor.map( f => f.fromUser_ID);

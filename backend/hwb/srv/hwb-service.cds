@@ -64,13 +64,12 @@ service api @(requires: 'authenticated-user') {
         },
         {
             grant: 'WRITE',
-            where: 'principal = $user'
+            where: 'ID = $user'
         }
     ]
     entity Users                              as
         projection on db.ExternalUsers {
             ID,
-            principal,
             name,
             picture,
             false as isFriend : Boolean,
@@ -102,7 +101,6 @@ service api @(requires: 'authenticated-user') {
     entity MyFriends                          as
         projection on db.Friendships {
             toUser.ID                 as ID,
-            toUser.principal          as principal,
             toUser.name               as name,
             toUser.picture            as picture,
             createdBy                 as createdBy,
@@ -198,7 +196,7 @@ service api @(requires: 'authenticated-user') {
         }
     ])                                        as projection on db.Stampings;
 
-    action   stampForGroup(sStampId : UUID, sCurrentUserId : UUID, bStampForUser : Boolean, sGroupPrincipals : String) returns String;
+    action   stampForGroup(sStampId : UUID, bStampForUser : Boolean, sGroupUserIds : String) returns String;
 
     // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
     // TODO set up read restrictions from external

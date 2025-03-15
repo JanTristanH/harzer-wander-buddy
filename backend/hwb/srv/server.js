@@ -25,12 +25,12 @@ const config = {
       const db = await cds.connect.to('db');
       const { ExternalUsers } = db.entities;
       
-      const existingUser = await db.read(ExternalUsers).where({ principal: userFromToken.sub });
+      const existingUser = await db.read(ExternalUsers).where({ ID: userFromToken.sub });
       
       if (!existingUser || existingUser.length === 0) {
         // Create new user
         await db.create(ExternalUsers).entries({
-          principal: userFromToken.sub,
+          ID: userFromToken.sub,
           email: userFromToken.email,
           email_verified: userFromToken.email_verified,
           family_name: userFromToken.family_name,

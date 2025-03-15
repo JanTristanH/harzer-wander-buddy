@@ -52,7 +52,7 @@ const acceptPendingFriendshipRequest = async (req) => {
       .from(PendingFriendshipRequests)
       .where({ 
         ID: req.data.FriendshipID, 
-        // fromUser_ID: req.user.id -> fromUser_ID is uuid, req.user.id is principal
+        fromUser_ID: req.user.id
       });
       
     if (!pendingRequest) {

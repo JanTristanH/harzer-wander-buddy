@@ -234,12 +234,12 @@ sap.ui.define([
             let aSelectedGroup = this.getModel("app").getProperty("/aSelectedGroupIds") || [];
             aSelectedGroup = JSON.parse(JSON.stringify(aSelectedGroup));
             let currentUser = this.getModel("app").getProperty("/currentUser");
-            aSelectedGroup.push(currentUser.principal);
+            aSelectedGroup.push(currentUser.ID);
 
             aPath.forEach(p => {
                 const poi = this._getPoiById(p.toPoi);
                 if (poi && poi.stampedUsers) {
-                    p.stampedUsers = poi.stampedUsers.filter(u => aSelectedGroup.includes(u.principal));
+                    p.stampedUsers = poi.stampedUsers.filter(u => aSelectedGroup.includes(u.ID));
                 }
             });
             return aPath;
@@ -341,13 +341,13 @@ sap.ui.define([
             if (oBinding) {
                 oBinding.attachEventOnce("dataReceived", () => {
                     const aContexts = oBinding.getContexts();
-                    const aAllowedPrincipals = aContexts
+                    const aAllowedIds = aContexts
                         .map(context => context.getObject())
                         .filter(o => o.isAllowedToStampForFriend)
-                        .map(o => o.principal);
+                        .map(o => o.ID);
         
                     const aSelectedGroupIds = oAppModel.getProperty("/aSelectedGroupIds") ?? [];
-                    const aFilteredSelections = aSelectedGroupIds.filter(id => aAllowedPrincipals.includes(id));
+                    const aFilteredSelections = aSelectedGroupIds.filter(id => aAllowedIds.includes(id));
         
                     oAppModel.setProperty("/aSelectedGroupIdsToStamp", aFilteredSelections);
                 });
@@ -365,21 +365,19 @@ sap.ui.define([
 
             const sStampId = this.getModel("local").getProperty("/sCurrentSpotId");
             const aSelectedGroup = oAppModel.getProperty("/aSelectedGroupIdsToStamp") || [];
-            const sCurrentUserId = oAppModel.getProperty("/currentUser/ID");
 
             this.getModel().callFunction("/stampForGroup", {
                 method: "POST",
                 urlParameters: {
                     sStampId,
-                    sCurrentUserId,
                     bStampForUser: bIncludeMe,
-                    sGroupPrincipals: aSelectedGroup
+                    sGroupUserIds: aSelectedGroup
                 },
                 success: function() {
                     this.getModel().refresh();
+                    this._oStampDialog.close();
                 }.bind(this),
                 error: function(oError) {
-                    debugger
                     MessageToast.show(this.getText("error"));
                     this._oStampDialog.close();
                 }.bind(this)
