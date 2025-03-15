@@ -24,9 +24,6 @@ sap.ui.define([
                 return this.byId("RoutesMapId").byId("map");
             },
 
-            onRoutesDetailEditMatched: function() {
-                this.getModel("local").setProperty("/edit", true);
-            },
 
             onRoutesDetailMatched: function () {
                 this.bPersistedDisplayed = true;
@@ -85,7 +82,6 @@ sap.ui.define([
             onButtonEditPress: function () {
                 var oModel = this.getModel();
                 const oLocalModel = this.getView().getModel("local");
-                oLocalModel.setProperty("/edit", true);
 
                 let TourId = this.TourId || this.getRouter().getRouteInfoByHash(this.getRouter().getHashChanger().getHash()).arguments.TourId;
                 if (this.bPersistedDisplayed && TourId) {
@@ -125,7 +121,6 @@ sap.ui.define([
 
             onButtonSavePress: function () {
                 const oLocalModel = this.getView().getModel("local");
-                oLocalModel.setProperty("/edit", false);
                 this.getRouter().navTo("RoutesDetail", {
                     TourId: oLocalModel.getProperty("/sIdListTravelTimes")
                 });

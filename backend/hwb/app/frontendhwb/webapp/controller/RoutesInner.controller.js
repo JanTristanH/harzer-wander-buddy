@@ -77,7 +77,7 @@ sap.ui.define([
 
             onDetailRoutePersistedMatched: function (oEvent) {
                 let oModel = this.getView().getModel();
-                let oLocalModel = this.getView().getModel("local");
+                this.getModel("app").setProperty("/edit", false);
 
                 // Create promises for the read operations
                 let stampboxesPromise = new Promise(function (resolve, reject) {
@@ -113,7 +113,6 @@ sap.ui.define([
                     .then(function () {
                         // Continue once both requests are successful
                         this.onDetailRouteEditMatchedInner(oEvent);
-                        oLocalModel.setProperty("/edit", false);
                     }.bind(this))
                     .catch(function (oError) {
                         // Handle any errors here
@@ -123,12 +122,40 @@ sap.ui.define([
 
             onDetailRouteEditMatched: function (oEvent) {
                 this.onDetailRoutePersistedMatched(oEvent);
-                setTimeout(() => this.getModel("local").setProperty("/edit", true), 1500);
+                this.getModel("app").setProperty("/edit", true);
+                
+                this._retryUpdateSplitter(0); // Start retry mechanism
             },
+            
+            _retryUpdateSplitter: function (iAttempt) {
+                let oSplitter = sap.ui.getCore().byId("midView--idRoutesDetailSplitter");
+                
+                // Maximum retry attempts to prevent infinite loops
+                const MAX_RETRIES = 10;
+                const RETRY_DELAY = 500; // 200ms between retries
+            
+                if (oSplitter) {
+                    let aContents = oSplitter.getContentAreas();
+                    if (aContents && aContents.length >= 2) {
+                        aContents[0].setLayoutData(new sap.ui.layout.SplitterLayoutData({ size: "30%" }));
+                        aContents[1].setLayoutData(new sap.ui.layout.SplitterLayoutData({ size: "70%" }));
+                        console.log("Splitter updated successfully!");
+                    } else if (iAttempt < MAX_RETRIES) {
+                        console.warn(`Splitter update failed, retrying... Attempt: ${iAttempt + 1}`);
+                        setTimeout(() => this._retryUpdateSplitter(iAttempt + 1), RETRY_DELAY * Math.pow(2, iAttempt)); // Exponential backoff
+                    } else {
+                        console.error("Failed to update Splitter after multiple attempts.");
+                    }
+                } else if (iAttempt < MAX_RETRIES) {
+                    console.warn(`Splitter not found, retrying... Attempt: ${iAttempt + 1}`);
+                    setTimeout(() => this._retryUpdateSplitter(iAttempt + 1), RETRY_DELAY * Math.pow(2, iAttempt));
+                } else {
+                    console.error("Splitter not found after multiple attempts.");
+                }
+            },            
 
             onDetailRouteEditMatchedInner: function (oEvent) {
                 let oLocalModel = this.getView().getModel("local");
-                oLocalModel.setProperty("/edit", true);
                 this.onDetailRouteMatched(oEvent);
                 var sTourId = oEvent.getParameter("arguments").TourId;
                 //TODO show detail page for persisted tour
@@ -221,6 +248,7 @@ sap.ui.define([
 
             setList: function () {
                 this.oFlexibleColumnLayout.setLayout(LayoutType.OneColumn);
+                this.getModel("app").setProperty("/edit", false);
             },
 
             onOpenRoutingDialog: async function () {
@@ -347,7 +375,6 @@ sap.ui.define([
                 }).then(function (detailView) {
                     let oLocalModel = this.getView().getModel("local");
                     // TODO friends: navigating into a tour does not show icons correctly
-                    oLocalModel.setProperty("/edit", false);
                     detailView.setModel("local", oLocalModel);
                     //get global Id via debugging for example in locate me function
                     this.oFlexibleColumnLayout.addMidColumnPage(detailView);
@@ -378,7 +405,7 @@ sap.ui.define([
             },
 
             onClickSpot: function (oEvent) {
-                if (this.getModel("local").getProperty("/edit")) {
+                if (this.getModel("app").getProperty("/edit")) {
                     var oMenu = new Menu();
                     oMenu.addItem(
                         new MenuItem({
@@ -395,7 +422,7 @@ sap.ui.define([
             },
 
             onContextMenuSpot: function (oEvent) {
-                if (this.getModel("local").getProperty("/edit")) {
+                if (this.getModel("app").getProperty("/edit")) {
                     if (oEvent.getParameter("menu")) {
                         var oMenu = oEvent.getParameter("menu");
                         if (oMenu.getItems().length == 0) {
