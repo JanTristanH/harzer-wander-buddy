@@ -114,6 +114,10 @@ sap.ui.define([
             return this.getOwnerComponent().getModel("i18n").getResourceBundle().getText(sKey);
         },
 
+        getResourceBundle: function() {
+            return this.getOwnerComponent().getModel("i18n").getResourceBundle();
+        },
+
         _getPoiById: function (ID) {
             let oModel = this.getModel();
             let oStamp = oModel.getProperty(`/Stampboxes(guid'${ID}')`);

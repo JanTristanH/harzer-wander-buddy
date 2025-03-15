@@ -105,8 +105,8 @@ This project is configured to run with a postgres.
   - initials for empty picture formatter ✔️
   - see friends of user and add via profile page ✔️
 - remove event handler in tour view ✔️ (Workaround)
-- authorize friend to stamp for me
-- are you sure when deleting stampings
+- authorize friend to stamp for me ✔️
+- are you sure when deleting stampings ✔️
 - support maps.me navigation
   - handle navigation on desktop
 - refactor scroll container on POI card / nearby stamps ✔️

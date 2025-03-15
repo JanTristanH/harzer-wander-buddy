@@ -4,12 +4,13 @@ sap.ui.define([
     "sap/ui/core/Fragment",
     "sap/ui/model/json/JSONModel",
     "sap/ui/model/Filter",
-    "sap/ui/model/FilterOperator"
+    "sap/ui/model/FilterOperator",
+    "sap/m/MessageBox"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, MessageToast, Fragment, JSONModel, Filter, FilterOperator) {
+    function (Controller, MessageToast, Fragment, JSONModel, Filter, FilterOperator, MessageBox) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.List", {
@@ -69,39 +70,48 @@ sap.ui.define([
             },
 
             onSelectionChange: function (oEvent) {
-                this.updateStampCount()
-
-                // Update Backend
+                this.updateStampCount();
+            
                 var oSelectedItem = oEvent.getParameter("listItem");
-                // ListItem set to true
                 var obj = oSelectedItem.getBindingContext().getObject();
                 let oModel = this.getView().getModel();
+            
                 if (oEvent.getParameter("selected")) {
                     let ID = obj.ID;
                     let mParameters = {
                         success: () => MessageToast.show(this.getText("savedStamping")) || oModel.refresh(),
-                        // give message and reset ui to keep it consistent with backend
-                        error: () => MessageToast.show("An Error Occured") || oSelectedItem.setSelected(false)
-                    }
-                    oModel.create("/Stampings", {
-                        "stamp": {
-                            ID
-                        }
-                    }, mParameters);
+                        error: () => MessageToast.show("An Error Occurred") || oSelectedItem.setSelected(false)
+                    };
+                    oModel.create("/Stampings", { "stamp": { ID } }, mParameters);
+            
                 } else {
                     let oStamping = this.getModel().getProperty("/" + oSelectedItem.getBindingContext().getProperty("Stampings")[0]);
                     let StampingId = oStamping.ID;
-                    let mParameters = {
-                        success: () => {
-                            MessageToast.show(this.getText("deletedStamping"));
-                            oModel.invalidate();
-                        },
-                        // give message and reset ui to keep it consistent with backend
-                        error: () => MessageToast.show("An Error Occured") || oSelectedItem.setSelected(true)
-                    }
-                    oModel.remove(`/Stampings(${StampingId})`, mParameters);
+            
+                    MessageBox.confirm(this.getResourceBundle().getText("confirmDeletionOfX", oSelectedItem.getBindingContext().getProperty("name")), {
+                        icon: MessageBox.Icon.WARNING,
+                        title: this.getText("confirmDeletionTitle"),
+                        actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+                        emphasizedAction: MessageBox.Action.NO,
+                        onClose: (oAction) => {
+                            if (oAction === MessageBox.Action.YES) {
+                                // ✅ User confirmed, proceed with deletion
+                                let mParameters = {
+                                    success: () => {
+                                        MessageToast.show(this.getText("deletedStamping"));
+                                        oModel.invalidate();
+                                    },
+                                    error: () => MessageToast.show("An Error Occurred") || oSelectedItem.setSelected(true)
+                                };
+                                oModel.remove(`/Stampings(${StampingId})`, mParameters);
+                            } else {
+                                // ✅ User canceled, revert selection
+                                oSelectedItem.setSelected(true);
+                            }
+                        }
+                    });
                 }
-            },
+            },            
 
             onStampingsUpdateFinished: function (event) {
                 this.selectWhere(context => context.getProperty('hasVisited'));
