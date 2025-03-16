@@ -75,8 +75,8 @@ module.exports = class api extends cds.ApplicationService {
     this.on('getCurrentUser', async (req) => {
       const ExternalUsers = this.entities('hwb.db').ExternalUsers;
       const currentUser = await SELECT.one.from(ExternalUsers).where({ ID: req.user.id });
-      if (currentUser?.length && currentUser[0]) {
-        currentUser[0].roles = req.user._roles;
+      if (currentUser && currentUser.ID) {
+        currentUser.roles = req.user._roles;
       }
       return currentUser;
     });

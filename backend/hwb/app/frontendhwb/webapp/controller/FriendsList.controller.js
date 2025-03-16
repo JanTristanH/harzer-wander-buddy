@@ -33,6 +33,7 @@ sap.ui.define([
             const sCurrentUserID = this.getModel("app").getProperty("/currentUser/ID");
             if(!sCurrentUserID) {
                 setTimeout(this.onAfterRendering.bind(this), 250);
+                return;
             }
             const oFilter = new Filter("fromUser_ID", FilterOperator.EQ, sCurrentUserID);
 
