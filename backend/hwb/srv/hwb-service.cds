@@ -77,6 +77,10 @@ service api @(requires: 'authenticated-user') {
 
     function getCurrentUser()                                          returns Users;
 
+    function getCurrentUserID()                                        returns Users;
+
+    function getVersion()                                              returns String;
+
     @restrict: [
         {
             grant: 'READ',

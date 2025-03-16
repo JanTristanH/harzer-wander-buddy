@@ -81,6 +81,14 @@ module.exports = class api extends cds.ApplicationService {
       return currentUser;
     });
 
+    this.on('getCurrentUserID', async (req) => {
+      return req.user;
+    });
+
+    this.on('getVersion', async (req) => {
+      return process.env.npm_package_version;
+    });
+
     this.on('acceptPendingFriendshipRequest', acceptPendingFriendshipRequest);
 
     this.after('READ', 'Users', addIsFriend.bind(this));
