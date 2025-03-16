@@ -153,7 +153,7 @@ sap.ui.define([
                     const aSelectedItems = oTable.getSelectedItems();
                     let iSelectedCount = aSelectedItems.length;
 
-                    const aStampedNumbers = aSelectedItems.map(item => item.getCells()[1].getText());
+                    const aStampedNumbers = aSelectedItems.map(item => item.getCells()[0].getText());
 
                     oDialog.setModel(new JSONModel({
                         iSelectedCount,
