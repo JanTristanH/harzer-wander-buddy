@@ -502,8 +502,14 @@ sap.ui.define([
 
             onNavigateWithNative: function (oEvent) {
                 const poi = this._getPoiById(oEvent.getSource().getCustomData()[0].getValue());
-                window.open(`maps://maps.google.com/maps?daddr=${poi.latitude},${poi.longitude}&amp;ll=`);
-            },
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+                const url = isIOS
+                    ? `maps://maps.apple.com/?daddr=${poi.latitude},${poi.longitude}`
+                    : `geo:${poi.latitude},${poi.longitude}?q=${poi.latitude},${poi.longitude}`;
+            
+                window.open(url, '_self');
+            },            
 
             formatAvatarGroupItems: function (aUsers) {
                 if (!aUsers || !Array.isArray(aUsers)) {
