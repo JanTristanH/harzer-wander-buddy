@@ -474,6 +474,12 @@ sap.ui.define([
                 return !!this.getModel().getProperty(`/Stampboxes(guid'${sID}')`);
             },
 
+            onStampGroupPress: function (oEvent) {
+                const ID = oEvent.getSource().getCustomData()[0].getValue();
+                this.getModel("local").setProperty("/sCurrentSpotId", ID);
+                Controller.prototype.onStampGroupPress.apply(this, arguments);
+            },
+
             onButtonStampPress: function (oEvent) {
                 let oModel = this.getModel();
                 let ID = oEvent.getSource().getCustomData()[0].getValue();
