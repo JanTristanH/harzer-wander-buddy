@@ -183,7 +183,7 @@
         <mvc:XMLView
             id="RoutesMapId"
             async="true"
-            viewName="hwb.frontendhwb.view.MapInner"
+            viewName="hwb.frontendhwb.view.RoutesMapInner"
         />
         <VBox>
             <layoutData>

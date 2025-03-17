@@ -67,6 +67,7 @@
                 type="{ parts: ['app>/bShowParkingSpots', 'app>/zoomlevel'], formatter: '.onFormatBooleanToSemanticType' }"
                 app:labelTextHidden="{name}"
                 click="onSpotClick"
+                contextMenu="onSpotContextMenu"
                 app:id="{ID}"
                 app:stamp="false"
                 app:description="{description}"
