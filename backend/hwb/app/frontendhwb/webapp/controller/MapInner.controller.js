@@ -419,7 +419,13 @@ sap.ui.define([
                 const sLocation = this.getModel("local").getProperty("/sSelectedSpotLocation");
                 const lat = sLocation.split(";")[1];
                 const long = sLocation.split(";")[0];
-                window.open(`maps://maps.google.com/maps?daddr=${lat},${long}&amp;ll=`);
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+                const url = isIOS
+                    ? `maps://maps.apple.com/?daddr=${lat},${long}`
+                    : `geo:${lat},${long}?q=${lat},${long}`;
+            
+                window.open(url, '_self');
             },
 
             onButtonClosePress: function (oEvent) {

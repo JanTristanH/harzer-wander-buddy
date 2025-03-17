@@ -1,13 +1,16 @@
 sap.ui.define([
-    "hwb/frontendhwb/controller/BaseController",
+    "hwb/frontendhwb/controller/MapInner.controller",
     "sap/m/ColumnListItem",
     "sap/m/MessageToast",
-    "sap/f/AvatarGroupItem"
+    "sap/f/AvatarGroupItem",
+    "sap/ui/unified/Menu",
+    "sap/ui/unified/MenuItem",
+    "sap/ui/core/Popup",
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, ColumnListItem, MessageToast, AvatarGroupItem) {
+    function (Controller, ColumnListItem, MessageToast, AvatarGroupItem, Menu, MenuItem, Popup,) {
         "use strict";
 
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
@@ -20,10 +23,66 @@ sap.ui.define([
                 this.bus.subscribe("idRoutesWayPointList", "onListSelect", this.onListSelect, this);
             },
 
-            _getMap() {
-                return this.byId("RoutesMapId").byId("map");
+            onSearchFieldSearch: function(oEvent) {
+                const oPoi = this._getPoiById(oEvent.getParameter("suggestionItem").getKey());
+                this._getMap().zoomToGeoPosition(oPoi.longitude, oPoi.latitude, this.nZoomLevelLabelThreshold);
             },
 
+            onSpotClick: function(oEvent) {
+                if (this.getModel("app").getProperty("/edit")) {
+                    var oMenu = new Menu();
+                    oMenu.addItem(
+                        new MenuItem({
+                            text: this.getModel("i18n").getProperty("addToEndOfTour"),
+                            select: function (oMenuEvent) {
+                                debugger
+                                this.onAddToEndOfTour(oEvent.getSource().data().id);
+                            }.bind(this)
+                        })
+                    );
+
+                    //TODO this works on mobile but not on desktop
+                    oMenu.open(false, oEvent.getSource(), Popup.Dock.CenterCenter, Popup.Dock.CenterCenter);
+                }
+            },
+
+            onSpotContextMenu: function (oEvent) {
+                if (this.getModel("app").getProperty("/edit")) {
+                    if (oEvent.getParameter("menu")) {
+                        var oMenu = oEvent.getParameter("menu");
+                        if (oMenu.getItems().length == 0) {
+                            oMenu.addItem(
+                                new MenuItem({
+                                    text: this.getModel("i18n").getProperty("addToEndOfTour"),
+                                    select: function (oMenuEvent) {
+                                        this.onAddToEndOfTour(oEvent.getSource().data().id);
+                                    }.bind(this)
+                                })
+                            );
+                        }
+                        oEvent.getSource().openContextMenu(oMenu);
+                    }
+                }
+            },
+
+            onAddToEndOfTour: function (sId) {
+                const path = this.getModel("local").getProperty("/oSelectedTour/path");
+                
+                const oNewPathEntry = {
+                    rank: path[path.length - 1]?.rank / 2 || 1024,
+                    ID: Math.floor(Math.random() * 1024) + 1,
+                    toPoi: sId,
+                    name: this._getPoiById(sId).name
+                };
+                path.push(oNewPathEntry);
+
+                this.getModel("local").setProperty("/oSelectedTour/path", path );
+                this._persistTourCopy(sId);
+            },
+
+            _getMap() {
+                return this.byId("midView--RoutesMapId--map");
+            },
 
             onRoutesDetailMatched: function () {
                 this.bPersistedDisplayed = true;
@@ -415,6 +474,12 @@ sap.ui.define([
                 return !!this.getModel().getProperty(`/Stampboxes(guid'${sID}')`);
             },
 
+            onStampGroupPress: function (oEvent) {
+                const ID = oEvent.getSource().getCustomData()[0].getValue();
+                this.getModel("local").setProperty("/sCurrentSpotId", ID);
+                Controller.prototype.onStampGroupPress.apply(this, arguments);
+            },
+
             onButtonStampPress: function (oEvent) {
                 let oModel = this.getModel();
                 let ID = oEvent.getSource().getCustomData()[0].getValue();
@@ -443,8 +508,14 @@ sap.ui.define([
 
             onNavigateWithNative: function (oEvent) {
                 const poi = this._getPoiById(oEvent.getSource().getCustomData()[0].getValue());
-                window.open(`maps://maps.google.com/maps?daddr=${poi.latitude},${poi.longitude}&amp;ll=`);
-            },
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+                const url = isIOS
+                    ? `maps://maps.apple.com/?daddr=${poi.latitude},${poi.longitude}`
+                    : `geo:${poi.latitude},${poi.longitude}?q=${poi.latitude},${poi.longitude}`;
+            
+                window.open(url, '_self');
+            },            
 
             formatAvatarGroupItems: function (aUsers) {
                 if (!aUsers || !Array.isArray(aUsers)) {
@@ -459,7 +530,65 @@ sap.ui.define([
                         tooltip: user.name || "Unknown"
                     });
                 });
-            }            
+            },
+
+            _persistTourCopy: function (sId) {
+                const sNameBefore = this.getModel("local").getProperty("/oSelectedTour/name");
+                let aRoutesSortedByRank = this.getModel("local").getProperty("/oSelectedTour/path")
+                    .filter(r => !!r.ID)
+                    .sort((a, b) => {
+                        return b.rank - a.rank;  // This will sort in descending order
+                    });
+                if (aRoutesSortedByRank.length > 0) {
+
+                    // create sensible POI list
+                    let aResultListPois = [];
+                    aResultListPois.push(aRoutesSortedByRank[0].fromPoi);
+                    aRoutesSortedByRank.forEach(r => {
+                        aResultListPois.push(r.toPoi);
+                    });
+
+
+                    // send list to backend and refresh
+                    aRoutesSortedByRank = aRoutesSortedByRank.map(r => r.toPoi);
+                    // ADD NEW POI
+                    if(sId) {
+                        aRoutesSortedByRank.push(sId);
+                    }
+                    // END CHANGE
+                    const sPOIList = aRoutesSortedByRank.filter(p => !!p).join(";");
+                    if (!sPOIList.includes(";")) {
+                        // only one POI in list, no calculation needed
+                        return;
+                    }
+                    const sTourID = this.getModel("local").getProperty("/oSelectedTour/ID");
+                    this.getModel().callFunction("/updateTourByPOIList", {
+                        method: "POST",
+                        urlParameters: {
+                            POIList: sPOIList,
+                            TourID: sTourID
+                        },
+                        success: function (oData, response) {
+                            // Handle the successful response here
+                            MessageToast.show(this.getText("tourSaved"));
+                            const oLocalModel = this.getModel("local");
+                            let oTour = oData.updateTourByPOIList;
+                            oTour.name = sNameBefore;
+                            oLocalModel.setProperty("/oSelectedTour", oTour);
+                            this.loadTourTravelTime(sTourID, function (travelTimeData) {
+                                oLocalModel.setProperty(`/oSelectedTour/path`, this._mapTravelTimeToPOIList(travelTimeData));
+                            }.bind(this));
+                        }.bind(this),
+                        error: function (oError) {
+                            // Handle errors here
+                            MessageToast.show(this.getText("error"));
+                            console.error(oError);
+                        }
+                    });
+                } else {
+                    console.info("no calculation needed");
+                }
+            },
 
         });
     });
