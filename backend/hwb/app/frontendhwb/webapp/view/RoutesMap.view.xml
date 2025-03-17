@@ -183,7 +183,7 @@
         <mvc:XMLView
             id="RoutesMapId"
             async="true"
-            viewName="hwb.frontendhwb.view.MapInner"
+            viewName="hwb.frontendhwb.view.RoutesMapInner"
         />
         <VBox>
             <layoutData>
@@ -355,7 +355,9 @@
                                         alignItems="Center"
                                         justifyContent="Center"
                                         height="100%"
-                                        wrap="NoWrap"
+                                        wrap="Wrap"
+                                        width="20%"
+                                        class="sapUiTinyMarginEnd"
                                     >
                                         <Button
                                             icon="{path: 'local>toPoi', formatter: '.formatStampButtonIcon'}"
@@ -364,6 +366,21 @@
                                             type="Transparent"
                                             press="onButtonStampPress"
                                             class="sapUiTinyMarginEnd"
+                                        >
+                                            <customData>
+                                                <core:CustomData
+                                                    key="ID"
+                                                    value="{local>toPoi}"
+                                                    writeToDom="true"
+                                                />
+                                            </customData>
+                                        </Button>
+
+                                        <Button 
+                                            text="{i18n>group}"
+                                            icon="sap-icon://checklist"
+                                            press=".onStampGroupPress"
+                                            type="Transparent"
                                         >
                                             <customData>
                                                 <core:CustomData
