@@ -1032,31 +1032,45 @@ function addElevationProfileToTravelTime(oTravelTime) {
 }
 
 async function stampForGroup(req) {
-  const { Stampings, Friendships } = this.entities('hwb.db')
+  const { Stampings, Friendships } = this.entities('hwb.db');
   const { sStampId, sGroupUserIds, bStampForUser } = req.data;
-  
-  const aGroupsIds = sGroupUserIds?.split(',');
 
-  const aFriendsAllowedToStamp = await SELECT
+  // Extract group user IDs into an array
+  const groupUserIds = sGroupUserIds?.split(',') || [];
+
+  // Find friends allowed to stamp for the current user
+  const friendsAllowedToStamp = await SELECT
     .from(Friendships)
-    .where({ 
+    .where({
       isAllowedToStampForFriend: true,
       toUser_ID: req.user.id,
-      fromUser_ID: { in: aGroupsIds } 
+      fromUser_ID: { in: groupUserIds }
     });
 
-  const aStampings = aFriendsAllowedToStamp.map(friend => ({
+  // Prepare stampings for friends and optionally for the current user
+  const stampings = friendsAllowedToStamp.map(friend => ({
     stamp_ID: sStampId,
     createdBy: friend.fromUser_ID
   }));
 
   if (bStampForUser) {
-    // create stamping for me
-    aStampings.push({ stamp_ID: sStampId });
+    stampings.push({ stamp_ID: sStampId });
   }
 
-  if (aStampings.length > 0) {
-    await INSERT.into(Stampings).entries(aStampings);
+  // Filter out existing stampings to avoid duplicates
+  const existingStampings = await SELECT
+    .from(Stampings)
+    .where({
+      stamp_ID: sStampId,
+      createdBy: { in: stampings.map(stamping => stamping.createdBy) }
+    });
+
+  const existingStampingIds = existingStampings.map(stamping => `${stamping.stamp_ID}-${stamping.createdBy}`);
+  const newStampings = stampings.filter(stamping => !existingStampingIds.includes(`${stamping.stamp_ID}-${stamping.createdBy}`));
+
+  // Insert new stampings
+  if (newStampings.length > 0) {
+    await INSERT.into(Stampings).entries(newStampings);
   }
 
   return "ok";
