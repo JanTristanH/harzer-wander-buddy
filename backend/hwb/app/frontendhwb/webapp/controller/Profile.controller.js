@@ -79,7 +79,15 @@ sap.ui.define([
                     }
                 }.bind(this)
             });
-        },        
+        },
+
+        onFriendSelectionChange: function (oEvent) {
+            const oListItem = oEvent.getParameter("listItem");
+            const oContext = oListItem.getBindingContext();
+            oListItem.setSelected(false);
+            const userId = oContext.getObject().toUser_ID;
+            this.getRouter().navTo("Profile", { userId });
+        },
 
         onAcceptPendingFriendshipRequest: function (oEvent) {
             const oModel = this.getView().getModel();

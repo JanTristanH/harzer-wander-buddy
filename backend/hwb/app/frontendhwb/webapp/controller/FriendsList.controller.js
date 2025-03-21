@@ -100,12 +100,20 @@ sap.ui.define([
         },
 
         onNavToFriendPress: function (oEvent) {
-            const oContext = oEvent.getSource().getBindingContext();
+            const oContext = oEvent.getSource().getBindingContext() ?? oEvent.getParameter("listItem").getBindingContext();
             if (!oContext) {
                 MessageToast.show("No friend context found.");
                 return;
             }
 
+            const userId = oContext.getObject().ID;
+            this.getRouter().navTo("Profile", { userId });
+        },
+
+        onFriendSelectionChange: function (oEvent) {
+            const oListItem = oEvent.getParameter("listItem");
+            const oContext = oListItem.getBindingContext();
+            oListItem.setSelected(false);
             const userId = oContext.getObject().ID;
             this.getRouter().navTo("Profile", { userId });
         },

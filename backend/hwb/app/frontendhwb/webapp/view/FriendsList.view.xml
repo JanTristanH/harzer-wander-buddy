@@ -38,6 +38,8 @@
                             }"
                             headerText="{i18n>friendListHeader}"
                             noDataText="{i18n>friendListNoData}"
+                            selectionChange="onFriendSelectionChange"
+                            mode="SingleSelectMaster"
                         >
                             <items>
                                 <CustomListItem>

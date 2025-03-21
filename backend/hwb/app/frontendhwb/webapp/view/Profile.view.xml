@@ -139,6 +139,8 @@
                                         path: '/Friendships',
                                         parameters: { expand: 'toUser' }
                                     }"
+                                    selectionChange="onFriendSelectionChange"
+                                    mode="SingleSelectMaster"
                                 >
                                     <items>
                                         <CustomListItem>
