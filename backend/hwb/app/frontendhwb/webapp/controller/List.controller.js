@@ -251,7 +251,7 @@ sap.ui.define([
                 const applicableStampings = aStampedNumbers.filter(stamped => this.aRiserRequiredStamps.includes(stamped));
                 const missingRequiredCount = this.aRiserRequiredStamps.length - applicableStampings.length;
 
-                return nStampedCount - missingRequiredCount;
+                return Math.max(nStampedCount - missingRequiredCount, 0);
             },
 
             getRequiredStampsRiser: function () {
