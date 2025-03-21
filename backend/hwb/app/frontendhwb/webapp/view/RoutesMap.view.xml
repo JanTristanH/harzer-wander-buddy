@@ -294,6 +294,7 @@
                                             width="100%"
                                             minYValue="{local>minElevation}"
                                             visible="{= ${local>travelMode} === 'walk' &amp;&amp; !!${local>maxElevation} }"
+                                            tooltip="{i18n>heightProfile}"
                                         >
                                             <chart:lastYLabel>
                                                 <chart:AreaMicroChartLabel
@@ -363,6 +364,8 @@
                                             icon="{path: 'local>toPoi', formatter: '.formatStampButtonIcon'}"
                                             visible="{path: 'local>toPoi', formatter: '.formatStampButtonVisible'}"
                                             enabled="{path: 'local>toPoi', formatter: '.formatStampButtonEnabled'}"
+                                            text="{i18n>stamp}"
+                                            tooltip="{i18n>stamp}"
                                             type="Transparent"
                                             press="onButtonStampPress"
                                             class="sapUiTinyMarginEnd"
@@ -378,6 +381,8 @@
 
                                         <Button 
                                             text="{i18n>group}"
+                                            tooltip="{i18n>group}"
+                                            visible="{path: 'local>toPoi', formatter: '.formatStampButtonVisible'}"
                                             icon="sap-icon://checklist"
                                             press=".onStampGroupPress"
                                             type="Transparent"
