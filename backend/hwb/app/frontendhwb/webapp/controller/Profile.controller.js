@@ -323,7 +323,9 @@ sap.ui.define([
         },
 
         onAllowedToStampSwitchChange: function() {
-            this.submitChanges();
+            this.getModel().submitChanges({
+                success: () => this.getModel().refresh()
+            });
         }
     });
 });
