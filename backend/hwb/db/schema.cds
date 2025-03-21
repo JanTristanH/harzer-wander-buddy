@@ -108,7 +108,7 @@ entity TravelTimes : cuid {
                            on tours.travelTime = $self;
 }
 
-@assert.integrity: false
+@assert.integrity: true
 entity Stampings : cuid {
     stamp     : Association to Stampboxes;
     createdAt : Timestamp @cds.on.insert: $now;

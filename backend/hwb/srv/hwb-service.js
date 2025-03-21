@@ -95,7 +95,26 @@ module.exports = class api extends cds.ApplicationService {
 
     this.after('READ', 'MyFriends', addIsAllowedToStampForFriend.bind(this));
 
+    this.before("CREATE", "Stampings", verifyStampingIsForBox)
+
     return super.init()
+  }
+}
+
+async function verifyStampingIsForBox(req) {
+  const { stamp } = req.data;
+  const db = this.entities('hwb.db');
+
+  if (!stamp) {
+      req.error(400, 'Stampbox is required for the stamping.');
+      console.log(req.data)
+      return;
+  }
+
+  const existingStampbox = await SELECT.from(db.Stampboxes).where({ ID: stamp.ID });
+  if (!existingStampbox || existingStampbox.length === 0) {
+      req.error(404, `Stampbox with ID ${stamp} does not exist.`);
+      return;
   }
 }
 
