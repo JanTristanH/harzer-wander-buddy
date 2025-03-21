@@ -166,11 +166,21 @@ sap.ui.define([
 
                 // Apply filter only if there is a search value.
                 if (sValue !== "") {
-                    var oBinding = oList.getBinding("items");
+                    const oBinding = oList.getBinding("items");
                     if (oBinding) {
-                        oBinding.filter([
-                            new Filter("name", FilterOperator.Contains, sValue)
-                        ]);
+                        const oFilter1 = new Filter("name", FilterOperator.Contains, sValue);
+                        const oFilter2 = new Filter("name", FilterOperator.Contains, sValue.toLowerCase());
+                        const capitalizeFirstLetter = sValue.charAt(0).toUpperCase() + sValue.slice(1);
+                        const oFilter3 = new Filter("name", FilterOperator.Contains, capitalizeFirstLetter);
+
+
+                        // Combine them with an OR condition
+                        const oFinalFilter = new Filter({
+                            filters: [oFilter1, oFilter2, oFilter3],
+                            and: false
+                        });
+
+                        oBinding.filter(oFinalFilter);
                     }
                 }
             });
