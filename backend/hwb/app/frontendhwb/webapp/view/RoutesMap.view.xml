@@ -30,14 +30,14 @@
                 class="sapUiTinyMargin"
                 text="{i18n>edit}"
                 icon="sap-icon://edit"
-                visible="{= !${app>/edit} }"
+                visible="{= !${app>/edit} &amp;&amp; ${app>/currentUser/ID} === ${local>/oSelectedTour/createdBy} }"
                 press="onButtonEditPress"
             />
             <Button
                 class="sapUiTinyMargin"
                 text="{i18n>delete}"
                 icon="sap-icon://delete"
-                visible="{app>/edit}"
+                visible="{= ${app>/edit} &amp;&amp; ${app>/currentUser/ID} === ${local>/oSelectedTour/createdBy} }"
                 type="Transparent"
                 press="onButtonDeletePress"
             />
@@ -45,7 +45,7 @@
                 class="sapUiTinyMargin"
                 text="{i18n>done}"
                 icon="sap-icon://save"
-                visible="{app>/edit}"
+                visible="{= ${app>/edit} &amp;&amp; ${app>/currentUser/ID} === ${local>/oSelectedTour/createdBy} }"
                 press="onButtonSavePress"
             />
         </HBox>

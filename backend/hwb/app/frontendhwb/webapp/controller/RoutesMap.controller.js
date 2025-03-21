@@ -35,7 +35,6 @@ sap.ui.define([
                         new MenuItem({
                             text: this.getModel("i18n").getProperty("addToEndOfTour"),
                             select: function (oMenuEvent) {
-                                debugger
                                 this.onAddToEndOfTour(oEvent.getSource().data().id);
                             }.bind(this)
                         })
