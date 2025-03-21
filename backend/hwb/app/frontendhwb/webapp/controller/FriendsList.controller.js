@@ -137,6 +137,14 @@ sap.ui.define([
             });
         },
 
+        onUpdateFinished: function(oEvent) {
+            var oBinding = oEvent.getSource().getBinding("items");
+            var oIconTabFilter = this.byId("pendingFriendshipRequestsIconTabFilter");
+
+            var sText = this.getText("pendingFriendshipRequests") + ` (${oBinding.getLength()})`;
+            oIconTabFilter.setText(sText);
+        },
+
         onSearchFieldLiveChange: function (oEvent) {
             const sValue = oEvent.getParameter("newValue");
             const oList = this.byId("idFriendsList");

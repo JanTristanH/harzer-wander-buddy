@@ -95,14 +95,16 @@
                         </List>
                     </IconTabFilter>
                     <IconTabFilter
+                        id="pendingFriendshipRequestsIconTabFilter"
                         key="pendingFriendshipRequests"
-                        text="{i18n>pendingFriendshipRequests}"
+                        text="{i18n>pendingFriendshipRequests} (0)"
                     >
                         <!-- PendingFriendshipRequests of user-->
                         <List
                             id="idPendingFriendshipRequestsList"
                             items="{path: '/PendingFriendshipRequests', parameters: {expand: 'fromUser,toUser'}}"
                             noDataText="{i18n>pendingFriendshipRequestsNoData}"
+                            updateFinished="onUpdateFinished"
                         >
                             <items>
                                 <StandardListItem
