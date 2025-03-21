@@ -273,6 +273,7 @@ async function addIsFriend(users, req) {
   const aFriendIds = aFriendships.map(f => f.ID);
   return users.map(user => {
     user.isFriend = aFriendIds.includes(user.ID);
+    user.isAllowedFor
     return user;
   });
 }

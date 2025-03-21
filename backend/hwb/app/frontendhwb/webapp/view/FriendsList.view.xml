@@ -54,10 +54,16 @@
                                                 class="sapUiSmallMarginEnd"
                                                 initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
                                             />
-                                            <Text
-                                                text="{name}"
+                                            <VBox 
                                                 class="sapUiTinyMargin"
-                                            />
+                                            >
+                                                <Text
+                                                    text="{name}"
+                                                />
+                                                <Label text="{i18n>isAllowedToStampForMe}"      visible="{= ${isAllowedToStampForMe} &amp;&amp; !${isAllowedToStampForFriend} }" />
+                                                <Label text="{i18n>isAllowedToStampForFriend}"  visible="{= !${isAllowedToStampForMe} &amp;&amp; ${isAllowedToStampForFriend} }" />
+                                                <Label text="{i18n>isAllowedToStampBothWays}"   visible="{= ${isAllowedToStampForMe} &amp;&amp; ${isAllowedToStampForFriend} }" />
+                                            </VBox>
                                         </HBox>
                                         <HBox>
                                             <Button
