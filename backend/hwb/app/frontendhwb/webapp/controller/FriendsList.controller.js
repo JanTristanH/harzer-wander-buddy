@@ -74,26 +74,50 @@ sap.ui.define([
         onRemoveFriend: function (oEvent) {
             var oButton = oEvent.getSource();
             var oContext = oButton.getBindingContext();
+            
             if (!oContext) {
                 MessageToast.show("No friend context found.");
                 return;
             }
-
+        
             // Get the binding path for the selected friend.
             var sFriendshipId = oContext.getObject().FriendshipID;
-
-            if(sFriendshipId) {
-
-                var oModel = this.getView().getModel();
-                oModel.remove(`/Friendships(${sFriendshipId})`, {
-                    success: function () {
-                        MessageToast.show(this.getText("friendRemoved"));
-                        this.getModel().refresh();
-                    }.bind(this),
-                    error: function (oError) {
-                        MessageToast.show(this.getText("errorRemovingFriend"));
-                    }.bind(this)
+        
+            if (sFriendshipId) {
+                // Create the confirmation dialog
+                var oDialog = new sap.m.Dialog({
+                    title: this.getText("confirmRemoveAction"),
+                    type: "Message",
+                    content: new sap.m.Text({
+                        text: this.getText("confirmRemoveFriendMessage")
+                    }),
+                    beginButton: new sap.m.Button({
+                        text: this.getText("remove"),
+                        press: function () {
+                            var oModel = this.getView().getModel();
+                            oModel.remove(`/Friendships(${sFriendshipId})`, {
+                                success: function () {
+                                    MessageToast.show(this.getText("friendRemoved"));
+                                    this.getModel().refresh();
+                                }.bind(this),
+                                error: function (oError) {
+                                    MessageToast.show(this.getText("errorRemovingFriend"));
+                                }.bind(this)
+                            });
+        
+                            oDialog.close();
+                        }.bind(this)
+                    }),
+                    endButton: new sap.m.Button({
+                        text: this.getText("cancel"),
+                        press: function () {
+                            oDialog.close();
+                        }
+                    })
                 });
+        
+                // Open the dialog
+                oDialog.open();
             } else {
                 MessageToast.show(this.getText("errorRemovingFriend"));
             }
@@ -125,7 +149,7 @@ sap.ui.define([
 
             // Open a confirmation dialog to accept or decline the request
             var oDialog = new sap.m.Dialog({
-                title: this.getText("confirmAction"),
+                title: this.getText("confirmFrienshipAction"),
                 type: "Message",
                 content: new sap.m.Text({
                     text: this.getText("confirmAcceptRequestMessage")
