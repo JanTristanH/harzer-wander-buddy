@@ -215,9 +215,8 @@ sap.ui.define([
             let sTitle = sValue === "" ? this.getText("friendListHeader") : this.getText("wanderbuddies");
             oList.setHeaderText(sTitle);
 
-            // Ensure the fragment template is loaded (it returns a Promise if not already loaded).
+
             Promise.resolve(this._oFriendListItemTemplate).then(function(oTemplate) {
-                // Bind the aggregation using a factory function that clones the common fragment.
                 oList.bindAggregation("items", {
                     path: sPath,
                     factory: function(sId, oContext) {

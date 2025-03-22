@@ -42,55 +42,10 @@
                             mode="SingleSelectMaster"
                         >
                             <items>
-                                <CustomListItem>
-                                    <HBox
-                                        justifyContent="SpaceBetween"
-                                        alignItems="Center"
-                                        width="100%"
-                                        class="sapUiTinyMargin"
-                                    >
-                                        <HBox alignItems="Center">
-                                            <Avatar
-                                                src="{picture}"
-                                                displaySize="S"
-                                                class="sapUiSmallMarginEnd"
-                                                initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
-                                            />
-                                            <VBox 
-                                                class="sapUiTinyMargin"
-                                            >
-                                                <Text
-                                                    text="{name}"
-                                                />
-                                                <Label text="{i18n>isAllowedToStampForMe}"      visible="{= ${isAllowedToStampForMe} &amp;&amp; !${isAllowedToStampForFriend} }" />
-                                                <Label text="{i18n>isAllowedToStampForFriend}"  visible="{= !${isAllowedToStampForMe} &amp;&amp; ${isAllowedToStampForFriend} }" />
-                                                <Label text="{i18n>isAllowedToStampBothWays}"   visible="{= ${isAllowedToStampForMe} &amp;&amp; ${isAllowedToStampForFriend} }" />
-                                            </VBox>
-                                        </HBox>
-                                        <HBox>
-                                            <Button
-                                                icon="sap-icon://navigation-right-arrow"
-                                                type="Transparent"
-                                                press="onNavToFriendPress"
-                                                class="sapUiSmallMarginEnd"
-                                            />
-                                            <Button
-                                                icon="sap-icon://add"
-                                                type="Transparent"
-                                                visible="{= !${isFriend} }"
-                                                press="onAddFriend"
-                                                class="sapUiSmallMarginEnd"
-                                            />
-                                            <Button
-                                                icon="sap-icon://delete"
-                                                type="Transparent"
-                                                visible="{isFriend}"
-                                                press="onRemoveFriend"
-                                                class="sapUiSmallMarginEnd"
-                                            />
-                                        </HBox>
-                                    </HBox>
-                                </CustomListItem>
+                                <core:Fragment
+                                    fragmentName="hwb.frontendhwb.fragment.FriendListItem"
+                                    type="XML"
+                                />
                             </items>
                         </List>
                     </IconTabFilter>
