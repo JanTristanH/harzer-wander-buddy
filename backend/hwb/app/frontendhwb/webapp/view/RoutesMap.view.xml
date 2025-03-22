@@ -421,7 +421,7 @@
                                                             />
                                                         </customData>
                                                     </MenuItem>
-                                                    <MenuItem text="{i18n>navigateOtherApp}" icon="sap-icon://map-2">
+                                                    <MenuItem text="{i18n>navigateOtherApp}" icon="sap-icon://map-2" press="onNavigateWithNative">
                                                        <customData>
                                                             <core:CustomData
                                                                 key="ID"
