@@ -300,7 +300,7 @@ sap.ui.define([
             },
 
             onFormatColumnVisibility: function (nIndex, aSelectedGroupIds) {
-                const result = aSelectedGroupIds?.length >= nIndex + 1;
+                const result = aSelectedGroupIds?.length >= parseInt(nIndex) + 1;
                 if (result) {
                     const sID = aSelectedGroupIds[nIndex];
                     this.addColumnName(nIndex, sID);
