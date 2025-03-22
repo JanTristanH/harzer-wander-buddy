@@ -1,0 +1,64 @@
+services:
+  watchtower:
+    profiles:
+      - standalone
+    image: containrrr/watchtower
+    command:
+      - "--label-enable"
+      - "--interval"
+      - "180"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  proxy:
+    profiles:
+      - standalone
+    image: traefik:v3.3
+    command:
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=info@harzer-wander-buddy.de"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock
+  hwb:
+    image: ghcr.io/jantristanh/hwb:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hwb.rule=Host(app.harzer-wander-buddy.de)"
+      - "traefik.http.routers.hwb.entrypoints=websecure"
+      - "traefik.http.routers.hwb.tls.certresolver=myresolver"
+      - "com.centurylinklabs.watchtower.enable=true"
+    environment:
+      GOOLGE_MAPS_API_KEY: ${GOOLGE_MAPS_API_KEY}
+      ISSUER_BASE_URL: https://dev-ijucl08spdudaszc.us.auth0.com
+      CLIENT_ID: ${CLIENT_ID}
+      CLIENT_SECRET: ${CLIENT_SECRET}
+      SECRET: ${SECRET}
+      BASE_URL: https://app.harzer-wander-buddy.de/
+      AUDIENCE: https://app.harzer-wander-buddy.de/api/v2/
+      MAX_REQUESTS_PER_CALL: 1000
+      cds.requires.db.[production].credentials.host: db
+      cds.requires.db.[production].credentials.port: 5432
+      cds.requires.db.[production].credentials.user: postgres
+      cds.requires.db.[production].credentials.database: postgres
+      cds.requires.db.[production].credentials.password: ${DB_PASSWORD}
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ${ROOT_DIR}/hwb/db:/var/lib/postgresql/data
+volumes:
+  letsencrypt:
