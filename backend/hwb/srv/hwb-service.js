@@ -163,10 +163,18 @@ function addGroupDetailsToTours(db, tours, groupUserIds) {
               const ttt = await SELECT
                 .from(db.Tour2TravelTime)
                 .where({ tour_ID: tourId });
+              ttt.sort((a, b) => a.rank - b.rank);
+
               const tt = await SELECT
-                .from(db.TravelTimes)
-                .where({ ID: { in: ttt.map(t => t.travelTime_ID) } });
+              .from(db.TravelTimes)
+              .where({ ID: { in: ttt.map(t => t.travelTime_ID) } });
+          
               toPois = tt.map(t => t.toPoi);
+
+              if (tt.length > 0 && ttt.length > 0) {
+                const firstTravelTime = tt.filter( tt => tt.ID == ttt[0].travelTime_ID)[0];
+                toPois.push(firstTravelTime.fromPoi);
+              }
             } else {
               toPois = tour.path?.map(p => p.poi)
             }
@@ -1054,7 +1062,10 @@ async function stampForGroup(req) {
   }));
 
   if (bStampForUser) {
-    stampings.push({ stamp_ID: sStampId });
+    stampings.push({ 
+      stamp_ID: sStampId,
+      createdBy: req.user.id
+    });
   }
 
   // Filter out existing stampings to avoid duplicates

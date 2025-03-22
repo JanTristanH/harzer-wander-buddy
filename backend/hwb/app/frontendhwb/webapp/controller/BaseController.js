@@ -371,7 +371,7 @@ sap.ui.define([
                 method: "POST",
                 urlParameters: {
                     sStampId,
-                    bStampForUser: bIncludeMe,
+                    bStampForUser: !!bIncludeMe,
                     sGroupUserIds: aSelectedGroup
                 },
                 success: function() {
