@@ -35,7 +35,8 @@
                             <headerToolbar>
                                 <Toolbar>
                                     <Title
-                                        text="{i18n>stamps}"
+                                        id="selectedCount"
+                                        text="{i18n>visitedStampms}: {app>/selectedCount}"
                                         level="H2"
                                     />
                                     <ToolbarSpacer />
@@ -44,10 +45,13 @@
                                         press="onShowBagdesButtonPress"
                                         text="{i18n>myBadges}"
                                     />
-                                    <Label
-                                        id="selectedCount"
-                                        text="{i18n>visitedStampms}: {app>/selectedCount}"
-                                    />
+                                    <ComboBox
+                                        selectedKey="{app>/selectedFilterKey}"
+                                    >
+                                        <core:Item key="all"       text="{i18n>showAll}" />
+                                        <core:Item key="stamped"   text="{i18n>visitedStamps} ({app>/selectedCount})" />
+                                        <core:Item key="unstamped" text="{i18n>missingStamps} ({= 222 - ${app>/selectedCount} })" />
+                                    </ComboBox>
                                 </Toolbar>
                             </headerToolbar>
                             <columns>
@@ -120,7 +124,11 @@
                                 </Column>
                             </columns>
                             <items>
-                                <ColumnListItem type="Active" press="onListItemPress">
+                                <ColumnListItem 
+                                    type="Active"
+                                    press="onListItemPress"
+                                    visible="{ parts: ['app>/selectedFilterKey', 'hasVisited'], formatter: '.onFormatListItemVisible'}"
+                                >
                                     <cells>
                                         <Text text="{number}" />
                                         <CheckBox

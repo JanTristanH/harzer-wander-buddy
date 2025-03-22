@@ -18,6 +18,7 @@ sap.ui.define([
                 Controller.prototype.onInit.apply(this, arguments);
                 this.disableSelectAll();
                 this.attachGroupChange();
+                this.getModel("app").setProperty("/selectedFilterKey", "all");
             },
 
             onAfterRendering: function () {
@@ -318,6 +319,19 @@ sap.ui.define([
                         MessageToast.show(this.getText("error"));
                     }
                 });
+            },
+
+            onFormatListItemVisible: function (sKey, bHasVisited) {
+                if(!sKey || sKey == "all") {
+                    return true;
+                }
+                if(sKey == "stamped" && bHasVisited) {
+                    return true;
+                }
+                if(sKey == "unstamped" && !bHasVisited) {
+                    return true;
+                }
+                return false;
             },
 
             onFormatGroupSelected: function (index, aSelectedGroupIds, stampedUserIds) {
