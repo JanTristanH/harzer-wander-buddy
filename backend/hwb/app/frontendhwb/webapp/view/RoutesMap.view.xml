@@ -30,7 +30,7 @@
                 class="sapUiTinyMargin"
                 text="{i18n>edit}"
                 icon="sap-icon://edit"
-                visible="{= !${app>/edit} &amp;&amp; ${app>/currentUser/ID} === ${local>/oSelectedTour/createdBy} }"
+                visible="{= !${app>/edit} &amp;&amp; ${app>/currentUser/ID} === ${local>/oSelectedTour/createdBy} || ${local>/oSelectedTour/createdBy} === undefined }"
                 press="onButtonEditPress"
             />
             <Button
