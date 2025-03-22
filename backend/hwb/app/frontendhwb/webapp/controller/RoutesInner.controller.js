@@ -351,6 +351,7 @@ sap.ui.define([
 
             onToursListSelectionChange: function (oEvent) {
                 let oSelectedItem = oEvent.getParameter("listItem");
+                oSelectedItem.setSelected(false);
                 let TourId = oSelectedItem.getCustomData().find(data => data.getKey() === "ID").getValue();
 
                 this.getRouter().navTo("RoutesDetail", {
