@@ -38,71 +38,37 @@
                             }"
                             headerText="{i18n>friendListHeader}"
                             noDataText="{i18n>friendListNoData}"
+                            selectionChange="onFriendSelectionChange"
+                            mode="SingleSelectMaster"
                         >
                             <items>
-                                <CustomListItem>
-                                    <HBox
-                                        justifyContent="SpaceBetween"
-                                        alignItems="Center"
-                                        width="100%"
-                                        class="sapUiTinyMargin"
-                                    >
-                                        <HBox alignItems="Center">
-                                            <Avatar
-                                                src="{picture}"
-                                                displaySize="S"
-                                                class="sapUiSmallMarginEnd"
-                                                initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
-                                            />
-                                            <Text
-                                                text="{name}"
-                                                class="sapUiTinyMargin"
-                                            />
-                                        </HBox>
-                                        <HBox>
-                                            <Button
-                                                icon="sap-icon://navigation-right-arrow"
-                                                type="Transparent"
-                                                press="onNavToFriendPress"
-                                                class="sapUiSmallMarginEnd"
-                                            />
-                                            <Button
-                                                icon="sap-icon://add"
-                                                type="Transparent"
-                                                visible="{= !${isFriend} }"
-                                                press="onAddFriend"
-                                                class="sapUiSmallMarginEnd"
-                                            />
-                                            <Button
-                                                icon="sap-icon://delete"
-                                                type="Transparent"
-                                                visible="{isFriend}"
-                                                press="onRemoveFriend"
-                                                class="sapUiSmallMarginEnd"
-                                            />
-                                        </HBox>
-                                    </HBox>
-                                </CustomListItem>
+                                <core:Fragment
+                                    fragmentName="hwb.frontendhwb.fragment.FriendListItem"
+                                    type="XML"
+                                />
                             </items>
                         </List>
                     </IconTabFilter>
                     <IconTabFilter
+                        id="pendingFriendshipRequestsIconTabFilter"
                         key="pendingFriendshipRequests"
-                        text="{i18n>pendingFriendshipRequests}"
+                        text="{i18n>pendingFriendshipRequests} (0)"
                     >
                         <!-- PendingFriendshipRequests of user-->
                         <List
                             id="idPendingFriendshipRequestsList"
                             items="{path: '/PendingFriendshipRequests', parameters: {expand: 'fromUser,toUser'}}"
                             noDataText="{i18n>pendingFriendshipRequestsNoData}"
+                            updateFinished="onUpdateFinished"
                         >
                             <items>
                                 <StandardListItem
                                     title="{i18n>requestFrom}: {toUser/name}"
                                     description="{i18n>clickToAccept}"
                                     icon="{toUser/picture}"
-                                    type="Active"
+                                    type="DetailAndActive"
                                     press="onAcceptPendingFriendshipRequest"
+                                    detailPress="onAcceptPendingFriendshipRequest"
                                 />
                             </items>
                         </List>

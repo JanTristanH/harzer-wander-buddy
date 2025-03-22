@@ -18,6 +18,7 @@ sap.ui.define([
                 Controller.prototype.onInit.apply(this, arguments);
                 this.disableSelectAll();
                 this.attachGroupChange();
+                this.getModel("app").setProperty("/selectedFilterKey", "all");
             },
 
             onAfterRendering: function () {
@@ -251,7 +252,7 @@ sap.ui.define([
                 const applicableStampings = aStampedNumbers.filter(stamped => this.aRiserRequiredStamps.includes(stamped));
                 const missingRequiredCount = this.aRiserRequiredStamps.length - applicableStampings.length;
 
-                return nStampedCount - missingRequiredCount;
+                return Math.max(nStampedCount - missingRequiredCount, 0);
             },
 
             getRequiredStampsRiser: function () {
@@ -299,7 +300,7 @@ sap.ui.define([
             },
 
             onFormatColumnVisibility: function (nIndex, aSelectedGroupIds) {
-                const result = aSelectedGroupIds?.length >= nIndex + 1;
+                const result = aSelectedGroupIds?.length >= parseInt(nIndex) + 1;
                 if (result) {
                     const sID = aSelectedGroupIds[nIndex];
                     this.addColumnName(nIndex, sID);
@@ -318,6 +319,19 @@ sap.ui.define([
                         MessageToast.show(this.getText("error"));
                     }
                 });
+            },
+
+            onFormatListItemVisible: function (sKey, bHasVisited) {
+                if(!sKey || sKey == "all") {
+                    return true;
+                }
+                if(sKey == "stamped" && bHasVisited) {
+                    return true;
+                }
+                if(sKey == "unstamped" && !bHasVisited) {
+                    return true;
+                }
+                return false;
             },
 
             onFormatGroupSelected: function (index, aSelectedGroupIds, stampedUserIds) {

@@ -257,12 +257,11 @@ sap.ui.define([
                         name: "hwb.frontendhwb.fragment.HikingRouteDialog"
                     });
 
-
                     this.pDialog.open();
-
+                    
                     oView.addDependent(this.pDialog);
                     this.onAfterRenderingFragment();
-
+                    
                     // create routing model
                     var oModel = new JSONModel({
                         maxDepth: 15,
@@ -275,8 +274,9 @@ sap.ui.define([
                     });
                     this.pDialog.setModel(oModel);
                 }
-
-
+                
+                
+                this.byId('idAutocompleteInput').setBusy(false);
                 this.pDialog.open();
                 this.onAfterRenderingFragment();
             },
@@ -351,6 +351,7 @@ sap.ui.define([
 
             onToursListSelectionChange: function (oEvent) {
                 let oSelectedItem = oEvent.getParameter("listItem");
+                oSelectedItem.setSelected(false);
                 let TourId = oSelectedItem.getCustomData().find(data => data.getKey() === "ID").getValue();
 
                 this.getRouter().navTo("RoutesDetail", {

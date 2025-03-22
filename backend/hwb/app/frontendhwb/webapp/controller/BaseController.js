@@ -131,6 +131,10 @@ sap.ui.define([
         },
 
         formatCleanMeter: function (meters) {
+            if (isNaN(meters) || meters === null || meters === undefined) {
+                return "0 m";
+            }
+
             return `${parseInt(meters)} m`;
         },
 
@@ -367,7 +371,7 @@ sap.ui.define([
                 method: "POST",
                 urlParameters: {
                     sStampId,
-                    bStampForUser: bIncludeMe,
+                    bStampForUser: !!bIncludeMe,
                     sGroupUserIds: aSelectedGroup
                 },
                 success: function() {

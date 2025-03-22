@@ -21,6 +21,7 @@ sap.ui.define([
             if (!this.getModel("app").getProperty("/aSelectedGroupIds")) {
                 this.getModel("app").setProperty("/aSelectedGroupIds", []);
             }
+            this.getModel("app").setProperty("/selectedFilterKeyProfile", "all");
         },
 
         _onRouteMatched: function (oEvent) {
@@ -70,7 +71,10 @@ sap.ui.define([
         
         _readPendingFriendshipRequests: function (sUserId) {
             this.getModel().read('/PendingFriendshipRequests', {
-                filters: [new Filter("fromUser_ID", FilterOperator.EQ, sUserId)],
+                filters: [
+                    new Filter("fromUser_ID", FilterOperator.EQ, sUserId),
+                    new Filter("toUser_ID", FilterOperator.EQ, this.sUserID)
+                ],
                 parameters: { expand: 'fromUser,toUser' },
                 success: function (oData) {
                     if (oData.results.length > 0) {
@@ -79,7 +83,15 @@ sap.ui.define([
                     }
                 }.bind(this)
             });
-        },        
+        },
+
+        onFriendSelectionChange: function (oEvent) {
+            const oListItem = oEvent.getParameter("listItem");
+            const oContext = oListItem.getBindingContext();
+            oListItem.setSelected(false);
+            const userId = oContext.getObject().toUser_ID;
+            this.getRouter().navTo("Profile", { userId });
+        },
 
         onAcceptPendingFriendshipRequest: function (oEvent) {
             const oModel = this.getView().getModel();
@@ -315,7 +327,32 @@ sap.ui.define([
         },
 
         onAllowedToStampSwitchChange: function() {
-            this.submitChanges();
+            this.getModel().submitChanges({
+                success: () => this.getModel().refresh()
+            });
+        },
+
+        onFormatListItemVisible: function(selectedFilterKeyProfile, stampedUserIds) {
+            const sCurrentUserId = this.getModel("app").getProperty("/currentUser/ID")
+            switch (selectedFilterKeyProfile) {
+                case undefined:
+                case "all":
+                    return true;
+                case "stamped":
+                    return stampedUserIds.includes(this.sUserID);
+                case "unstamped":
+                    return !stampedUserIds.includes(this.sUserID);
+                case "stampedMe":
+                    return stampedUserIds.includes(sCurrentUserId);
+                case "unstampedMe":
+                    return !stampedUserIds.includes(sCurrentUserId);
+                case "stampedBoth":
+                    return stampedUserIds.includes(this.sUserID) && stampedUserIds.includes(sCurrentUserId);
+                case "unstampedBoth":
+                    return !stampedUserIds.includes(this.sUserID) && !stampedUserIds.includes(sCurrentUserId)
+                default:
+                    return false;
+            }
         }
     });
 });

@@ -206,6 +206,11 @@
                                             </additionalContent>
                                         </IllustratedMessage>
                                     </HBox>
+                                    <Title 
+                                        level="H3" 
+                                        text="{i18n>generatedToursTitle}"
+                                        visible="{= !!${local>/hikingRoutes/0} }"
+                                    />
                                     <SelectList
                                         id="idRouteList"
                                         items="{local>/hikingRoutes}"

@@ -95,7 +95,26 @@ module.exports = class api extends cds.ApplicationService {
 
     this.after('READ', 'MyFriends', addIsAllowedToStampForFriend.bind(this));
 
+    this.before("CREATE", "Stampings", verifyStampingIsForBox)
+
     return super.init()
+  }
+}
+
+async function verifyStampingIsForBox(req) {
+  const { stamp } = req.data;
+  const db = this.entities('hwb.db');
+
+  if (!stamp) {
+      req.error(400, 'Stampbox is required for the stamping.');
+      console.log(req.data)
+      return;
+  }
+
+  const existingStampbox = await SELECT.from(db.Stampboxes).where({ ID: stamp.ID });
+  if (!existingStampbox || existingStampbox.length === 0) {
+      req.error(404, `Stampbox with ID ${stamp} does not exist.`);
+      return;
   }
 }
 
@@ -144,10 +163,18 @@ function addGroupDetailsToTours(db, tours, groupUserIds) {
               const ttt = await SELECT
                 .from(db.Tour2TravelTime)
                 .where({ tour_ID: tourId });
+              ttt.sort((a, b) => a.rank - b.rank);
+
               const tt = await SELECT
-                .from(db.TravelTimes)
-                .where({ ID: { in: ttt.map(t => t.travelTime_ID) } });
+              .from(db.TravelTimes)
+              .where({ ID: { in: ttt.map(t => t.travelTime_ID) } });
+          
               toPois = tt.map(t => t.toPoi);
+
+              if (tt.length > 0 && ttt.length > 0) {
+                const firstTravelTime = tt.filter( tt => tt.ID == ttt[0].travelTime_ID)[0];
+                toPois.push(firstTravelTime.fromPoi);
+              }
             } else {
               toPois = tour.path?.map(p => p.poi)
             }
@@ -159,7 +186,7 @@ function addGroupDetailsToTours(db, tours, groupUserIds) {
             const nAverageGroupStampings = getTotalStampings(aStampingsByUser, toPois) / groupUserIds.length;
 
             // Populate the custom fields:
-            tour.AverageGroupStampings = nAverageGroupStampings;
+            tour.AverageGroupStampings = Math.round(nAverageGroupStampings * 100) / 100;
 
             resolve(tour);
           } catch (error) {
@@ -273,6 +300,7 @@ async function addIsFriend(users, req) {
   const aFriendIds = aFriendships.map(f => f.ID);
   return users.map(user => {
     user.isFriend = aFriendIds.includes(user.ID);
+    user.isAllowedFor
     return user;
   });
 }
@@ -1012,31 +1040,48 @@ function addElevationProfileToTravelTime(oTravelTime) {
 }
 
 async function stampForGroup(req) {
-  const { Stampings, Friendships } = this.entities('hwb.db')
+  const { Stampings, Friendships } = this.entities('hwb.db');
   const { sStampId, sGroupUserIds, bStampForUser } = req.data;
-  
-  const aGroupsIds = sGroupUserIds?.split(',');
 
-  const aFriendsAllowedToStamp = await SELECT
+  // Extract group user IDs into an array
+  const groupUserIds = sGroupUserIds?.split(',') || [];
+
+  // Find friends allowed to stamp for the current user
+  const friendsAllowedToStamp = await SELECT
     .from(Friendships)
-    .where({ 
+    .where({
       isAllowedToStampForFriend: true,
       toUser_ID: req.user.id,
-      fromUser_ID: { in: aGroupsIds } 
+      fromUser_ID: { in: groupUserIds }
     });
 
-  const aStampings = aFriendsAllowedToStamp.map(friend => ({
+  // Prepare stampings for friends and optionally for the current user
+  const stampings = friendsAllowedToStamp.map(friend => ({
     stamp_ID: sStampId,
     createdBy: friend.fromUser_ID
   }));
 
   if (bStampForUser) {
-    // create stamping for me
-    aStampings.push({ stamp_ID: sStampId });
+    stampings.push({ 
+      stamp_ID: sStampId,
+      createdBy: req.user.id
+    });
   }
 
-  if (aStampings.length > 0) {
-    await INSERT.into(Stampings).entries(aStampings);
+  // Filter out existing stampings to avoid duplicates
+  const existingStampings = await SELECT
+    .from(Stampings)
+    .where({
+      stamp_ID: sStampId,
+      createdBy: { in: stampings.map(stamping => stamping.createdBy) }
+    });
+
+  const existingStampingIds = existingStampings.map(stamping => `${stamping.stamp_ID}-${stamping.createdBy}`);
+  const newStampings = stampings.filter(stamping => !existingStampingIds.includes(`${stamping.stamp_ID}-${stamping.createdBy}`));
+
+  // Insert new stampings
+  if (newStampings.length > 0) {
+    await INSERT.into(Stampings).entries(newStampings);
   }
 
   return "ok";

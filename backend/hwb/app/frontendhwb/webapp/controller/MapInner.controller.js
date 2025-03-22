@@ -205,19 +205,24 @@ sap.ui.define([
                 this.getModel().read("/AllPointsOfInterest", {
                     filters: [oFinalFilter],
                     sorters: [new Sorter('orderBy')],
+                    urlParameters: {
+                        $top: 10
+                    },
                     success: function (oData) {
-                        this.getModel("local").setProperty("/suggestionItems", oData.results.slice(0, 10));
+                        this.getModel("local").setProperty("/suggestionItems", oData.results);
                         oSearchField.suggest();
                     }.bind(this),
                 })
             },
 
             onSearchFieldSearch: function (oEvent) {
-                var oItem = oEvent.getParameter("suggestionItem");
-                if (oItem) {
+                const oItem = oEvent.getParameter("suggestionItem");
+                const oSearchField = oEvent.getSource();
+                if (oItem) {  
+                    oSearchField._blur();
                     this.getRouter().navTo("MapWithPOI", { idPOI: oItem.getKey() });
                 } else {
-                    MessageToast.show("Bitte einen Ort aus der Liste auswählen!");
+                    MessageToast.show(this.getText("selectPointFromList"));
                 }
             },
 
@@ -452,9 +457,9 @@ sap.ui.define([
                 sessionStorage.setItem("lastCenterPosition", oEvent.getParameter("centerPoint"));
             },
 
-            onOpenGroupManagement: function () {
+            onOpenGroupManagement: function (oEvent) {
                 this.oMyAvatar = this.byId("idCurrentUserAvatarMapInner--idMyAvatar");
-                this._oPopover.openBy(this.oMyAvatar);
+                this._oPopover.openBy(this.oMyAvatar ?? oEvent.getSource());
             }
         });
     });

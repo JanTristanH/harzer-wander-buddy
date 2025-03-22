@@ -16,6 +16,8 @@ sap.ui.define([
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
             bPersistedDisplayed: true,
             onInit: function () {
+                Controller.prototype.onInit.apply(this, arguments);
+                this.getModel("app").setProperty("/edit", false);
                 this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onRoutesDetailTransientRouteMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onRoutesDetailMatched, this);
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onRoutesDetailEditMatched, this);
@@ -35,7 +37,6 @@ sap.ui.define([
                         new MenuItem({
                             text: this.getModel("i18n").getProperty("addToEndOfTour"),
                             select: function (oMenuEvent) {
-                                debugger
                                 this.onAddToEndOfTour(oEvent.getSource().data().id);
                             }.bind(this)
                         })

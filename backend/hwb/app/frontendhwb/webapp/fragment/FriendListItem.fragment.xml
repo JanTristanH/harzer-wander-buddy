@@ -9,20 +9,36 @@
             width="100%"
             class="sapUiTinyMargin"
         >
-            <!-- Friend Info: Avatar + Name -->
             <HBox alignItems="Center">
                 <Avatar
                     src="{picture}"
                     displaySize="S"
-                    initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
                     class="sapUiSmallMarginEnd"
+                    initials="{parts: ['name'], formatter: '.onFormatInitialsByName'}"
                 />
-                <Text
-                    text="{name}"
+                <VBox 
                     class="sapUiTinyMargin"
-                />
+                >
+                    <Text
+                        text="{name}"
+                    />
+                    <Label 
+                        text="{i18n>isAllowedToStampForMe}"      
+                        visible="{= ${isAllowedToStampForMe} !== undefined &amp;&amp; 
+                                    ${isAllowedToStampForMe} &amp;&amp; !${isAllowedToStampForFriend} }"
+                    />
+                    <Label 
+                        text="{i18n>isAllowedToStampForFriend}"
+                        visible="{= ${isAllowedToStampForMe} !== undefined &amp;&amp; 
+                                    !${isAllowedToStampForMe} &amp;&amp; ${isAllowedToStampForFriend} }"
+                    />
+                    <Label 
+                        text="{i18n>isAllowedToStampBothWays}"   
+                        visible="{= ${isAllowedToStampForMe} !== undefined &amp;&amp;
+                                    ${isAllowedToStampForMe} &amp;&amp; ${isAllowedToStampForFriend} }"
+                    />
+                </VBox>
             </HBox>
-            <!-- Friend Action Buttons -->
             <HBox>
                 <Button
                     icon="sap-icon://navigation-right-arrow"
@@ -30,12 +46,18 @@
                     press="onNavToFriendPress"
                     class="sapUiSmallMarginEnd"
                 />
-                <!-- Add Friend Button (visible when not friends) -->
                 <Button
                     icon="sap-icon://add"
                     type="Transparent"
                     visible="{= !${isFriend} }"
                     press="onAddFriend"
+                    class="sapUiSmallMarginEnd"
+                />
+                <Button
+                    icon="sap-icon://delete"
+                    type="Transparent"
+                    visible="{isFriend}"
+                    press="onRemoveFriend"
                     class="sapUiSmallMarginEnd"
                 />
             </HBox>

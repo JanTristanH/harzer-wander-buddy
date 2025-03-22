@@ -74,33 +74,57 @@ sap.ui.define([
         onRemoveFriend: function (oEvent) {
             var oButton = oEvent.getSource();
             var oContext = oButton.getBindingContext();
+            
             if (!oContext) {
                 MessageToast.show("No friend context found.");
                 return;
             }
-
+        
             // Get the binding path for the selected friend.
             var sFriendshipId = oContext.getObject().FriendshipID;
-
-            if(sFriendshipId) {
-
-                var oModel = this.getView().getModel();
-                oModel.remove(`/Friendships(${sFriendshipId})`, {
-                    success: function () {
-                        MessageToast.show(this.getText("friendRemoved"));
-                        this.getModel().refresh();
-                    }.bind(this),
-                    error: function (oError) {
-                        MessageToast.show(this.getText("errorRemovingFriend"));
-                    }.bind(this)
+        
+            if (sFriendshipId) {
+                // Create the confirmation dialog
+                var oDialog = new sap.m.Dialog({
+                    title: this.getText("confirmRemoveAction"),
+                    type: "Message",
+                    content: new sap.m.Text({
+                        text: this.getText("confirmRemoveFriendMessage")
+                    }),
+                    beginButton: new sap.m.Button({
+                        text: this.getText("remove"),
+                        press: function () {
+                            var oModel = this.getView().getModel();
+                            oModel.remove(`/Friendships(${sFriendshipId})`, {
+                                success: function () {
+                                    MessageToast.show(this.getText("friendRemoved"));
+                                    this.getModel().refresh();
+                                }.bind(this),
+                                error: function (oError) {
+                                    MessageToast.show(this.getText("errorRemovingFriend"));
+                                }.bind(this)
+                            });
+        
+                            oDialog.close();
+                        }.bind(this)
+                    }),
+                    endButton: new sap.m.Button({
+                        text: this.getText("cancel"),
+                        press: function () {
+                            oDialog.close();
+                        }
+                    })
                 });
+        
+                // Open the dialog
+                oDialog.open();
             } else {
                 MessageToast.show(this.getText("errorRemovingFriend"));
             }
         },
 
         onNavToFriendPress: function (oEvent) {
-            const oContext = oEvent.getSource().getBindingContext();
+            const oContext = oEvent.getSource().getBindingContext() ?? oEvent.getParameter("listItem").getBindingContext();
             if (!oContext) {
                 MessageToast.show("No friend context found.");
                 return;
@@ -110,23 +134,76 @@ sap.ui.define([
             this.getRouter().navTo("Profile", { userId });
         },
 
+        onFriendSelectionChange: function (oEvent) {
+            const oListItem = oEvent.getParameter("listItem");
+            const oContext = oListItem.getBindingContext();
+            oListItem.setSelected(false);
+            const userId = oContext.getObject().ID;
+            this.getRouter().navTo("Profile", { userId });
+        },
+
         onAcceptPendingFriendshipRequest: function (oEvent) {
             const oModel = this.getView().getModel();
-            const ID = oEvent.getSource().getBindingContext().getProperty("ID")
+            const oBindingContext = oEvent.getSource().getBindingContext();
+            const ID = oBindingContext.getProperty("ID");
 
-            oModel.callFunction("/acceptPendingFriendshipRequest", {
-                method: "POST",
-                urlParameters: {
-                    FriendshipID: ID
-                },
-                success: function () {
-                    this.getModel().refresh();
-                }.bind(this),
-                error: function (oError) {
-                    // Handle error
-                    console.error("Error accepting friendship request:", oError);
-                }
+            // Open a confirmation dialog to accept or decline the request
+            var oDialog = new sap.m.Dialog({
+                title: this.getText("confirmFrienshipAction"),
+                type: "Message",
+                content: new sap.m.Text({
+                    text: this.getText("confirmAcceptRequestMessage")
+                }),
+                beginButton: new sap.m.Button({
+                    text: this.getText("accept"),
+                    type: "Emphasized",
+                    press: function () {
+                        oModel.callFunction("/acceptPendingFriendshipRequest", {
+                            method: "POST",
+                            urlParameters: {
+                                FriendshipID: ID
+                            },
+                            success: function () {
+                                this.getModel().refresh();
+                                sap.m.MessageToast.show(this.getText("friendshipRequestAccepted"));
+                            }.bind(this),
+                            error: function (oError) {
+                                console.error("Error accepting friendship request:", oError);
+                                sap.m.MessageToast.show(this.getText("error"));
+                            }.bind(this)
+                        });
+        
+                        oDialog.close();
+                    }.bind(this)
+                }),
+                endButton: new sap.m.Button({
+                    text: this.getText("decline"),
+                    press: function () {
+                        oModel.remove(`/PendingFriendshipRequests(${ID})`, {
+                            success: function () {
+                                sap.m.MessageToast.show(this.getText("friendshipRequestDeclined"));
+                            }.bind(this),
+                            error: function (oError) {
+                                console.error("Error declining friendship request:", oError);
+                                sap.m.MessageToast.show(this.getText("error"));
+                            }.bind(this)
+                        });
+        
+                        oDialog.close();
+                    }
+                })
             });
+        
+            // Open the dialog
+            oDialog.open();
+        },
+
+        onUpdateFinished: function(oEvent) {
+            var oBinding = oEvent.getSource().getBinding("items");
+            var oIconTabFilter = this.byId("pendingFriendshipRequestsIconTabFilter");
+
+            var sText = this.getText("pendingFriendshipRequests") + ` (${oBinding.getLength()})`;
+            oIconTabFilter.setText(sText);
         },
 
         onSearchFieldLiveChange: function (oEvent) {
@@ -138,9 +215,8 @@ sap.ui.define([
             let sTitle = sValue === "" ? this.getText("friendListHeader") : this.getText("wanderbuddies");
             oList.setHeaderText(sTitle);
 
-            // Ensure the fragment template is loaded (it returns a Promise if not already loaded).
+
             Promise.resolve(this._oFriendListItemTemplate).then(function(oTemplate) {
-                // Bind the aggregation using a factory function that clones the common fragment.
                 oList.bindAggregation("items", {
                     path: sPath,
                     factory: function(sId, oContext) {
@@ -150,11 +226,21 @@ sap.ui.define([
 
                 // Apply filter only if there is a search value.
                 if (sValue !== "") {
-                    var oBinding = oList.getBinding("items");
+                    const oBinding = oList.getBinding("items");
                     if (oBinding) {
-                        oBinding.filter([
-                            new Filter("name", FilterOperator.Contains, sValue)
-                        ]);
+                        const oFilter1 = new Filter("name", FilterOperator.Contains, sValue);
+                        const oFilter2 = new Filter("name", FilterOperator.Contains, sValue.toLowerCase());
+                        const capitalizeFirstLetter = sValue.charAt(0).toUpperCase() + sValue.slice(1);
+                        const oFilter3 = new Filter("name", FilterOperator.Contains, capitalizeFirstLetter);
+
+
+                        // Combine them with an OR condition
+                        const oFinalFilter = new Filter({
+                            filters: [oFilter1, oFilter2, oFilter3],
+                            and: false
+                        });
+
+                        oBinding.filter(oFinalFilter);
                     }
                 }
             });

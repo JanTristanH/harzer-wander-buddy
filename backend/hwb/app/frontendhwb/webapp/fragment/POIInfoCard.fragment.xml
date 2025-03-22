@@ -42,7 +42,7 @@
                         <menu>
                             <Menu itemSelected="onMenuAction">
                                 <MenuItem text="{i18n>navigate}" icon="sap-icon://forward" press="onNavigateWithGoogleMaps"/>
-                                <MenuItem text="{i18n>navigateOtherApp}" icon="sap-icon://map-2" />
+                                <MenuItem text="{i18n>navigateOtherApp}" icon="sap-icon://map-2" press="onNavigateWithNative"/>
                             </Menu>
                         </menu>
                     </MenuButton>
