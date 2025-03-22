@@ -257,12 +257,11 @@ sap.ui.define([
                         name: "hwb.frontendhwb.fragment.HikingRouteDialog"
                     });
 
-
                     this.pDialog.open();
-
+                    
                     oView.addDependent(this.pDialog);
                     this.onAfterRenderingFragment();
-
+                    
                     // create routing model
                     var oModel = new JSONModel({
                         maxDepth: 15,
@@ -275,8 +274,9 @@ sap.ui.define([
                     });
                     this.pDialog.setModel(oModel);
                 }
-
-
+                
+                
+                this.byId('idAutocompleteInput').setBusy(false);
                 this.pDialog.open();
                 this.onAfterRenderingFragment();
             },
