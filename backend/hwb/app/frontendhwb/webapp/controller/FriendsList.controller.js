@@ -120,21 +120,58 @@ sap.ui.define([
 
         onAcceptPendingFriendshipRequest: function (oEvent) {
             const oModel = this.getView().getModel();
-            const ID = oEvent.getSource().getBindingContext().getProperty("ID")
+            const oBindingContext = oEvent.getSource().getBindingContext();
+            const ID = oBindingContext.getProperty("ID");
 
-            oModel.callFunction("/acceptPendingFriendshipRequest", {
-                method: "POST",
-                urlParameters: {
-                    FriendshipID: ID
-                },
-                success: function () {
-                    this.getModel().refresh();
-                }.bind(this),
-                error: function (oError) {
-                    // Handle error
-                    console.error("Error accepting friendship request:", oError);
-                }
+            // Open a confirmation dialog to accept or decline the request
+            var oDialog = new sap.m.Dialog({
+                title: this.getText("confirmAction"),
+                type: "Message",
+                content: new sap.m.Text({
+                    text: this.getText("confirmAcceptRequestMessage")
+                }),
+                beginButton: new sap.m.Button({
+                    text: this.getText("accept"),
+                    type: "Emphasized",
+                    press: function () {
+                        oModel.callFunction("/acceptPendingFriendshipRequest", {
+                            method: "POST",
+                            urlParameters: {
+                                FriendshipID: ID
+                            },
+                            success: function () {
+                                this.getModel().refresh();
+                                sap.m.MessageToast.show(this.getText("friendshipRequestAccepted"));
+                            }.bind(this),
+                            error: function (oError) {
+                                console.error("Error accepting friendship request:", oError);
+                                sap.m.MessageToast.show(this.getText("error"));
+                            }.bind(this)
+                        });
+        
+                        oDialog.close();
+                    }.bind(this)
+                }),
+                endButton: new sap.m.Button({
+                    text: this.getText("decline"),
+                    press: function () {
+                        oModel.remove(`/PendingFriendshipRequests(${ID})`, {
+                            success: function () {
+                                sap.m.MessageToast.show(this.getText("friendshipRequestDeclined"));
+                            }.bind(this),
+                            error: function (oError) {
+                                console.error("Error declining friendship request:", oError);
+                                sap.m.MessageToast.show(this.getText("error"));
+                            }.bind(this)
+                        });
+        
+                        oDialog.close();
+                    }
+                })
             });
+        
+            // Open the dialog
+            oDialog.open();
         },
 
         onUpdateFinished: function(oEvent) {

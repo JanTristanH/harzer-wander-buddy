@@ -111,8 +111,9 @@
                                     title="{i18n>requestFrom}: {toUser/name}"
                                     description="{i18n>clickToAccept}"
                                     icon="{toUser/picture}"
-                                    type="Active"
+                                    type="DetailAndActive"
                                     press="onAcceptPendingFriendshipRequest"
+                                    detailPress="onAcceptPendingFriendshipRequest"
                                 />
                             </items>
                         </List>

@@ -127,7 +127,17 @@ service api @(requires: 'authenticated-user') {
     entity Friendships                        as projection on db.Friendships;
 
 
-    @readonly
+    @restrict: [
+        {grant: 'READ'},
+        {
+            grant: 'CREATE',
+            to   : 'authenticated-user'
+        },
+        {
+            grant: 'DELETE',
+            where: 'fromUser_ID = $user'
+        }
+    ]
     entity PendingFriendshipRequests          as projection on db.PendingFriendshipRequests;
 
     action   acceptPendingFriendshipRequest(FriendshipID : UUID)       returns String;
