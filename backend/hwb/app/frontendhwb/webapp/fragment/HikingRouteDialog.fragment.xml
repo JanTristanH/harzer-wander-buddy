@@ -54,7 +54,7 @@
                         <f:FormElement label="{i18n>StartAddress}">
                             <f:fields>
                                 <Input id="idAutocompleteInput"
-                                    placeholder="{i18n>StartWnteringAddress}" />
+                                    placeholder="{i18n>StartEnteringAddress}" />
                                 </f:fields>
                         </f:FormElement>
                         <f:FormElement label="">
