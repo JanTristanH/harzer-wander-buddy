@@ -16,6 +16,7 @@ sap.ui.define([
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
             bPersistedDisplayed: true,
             onInit: function () {
+                Controller.prototype.onInit.apply(this, arguments);
                 this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onRoutesDetailTransientRouteMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onRoutesDetailMatched, this);
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onRoutesDetailEditMatched, this);
