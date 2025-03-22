@@ -6,7 +6,7 @@
     xmlns:core="sap.ui.core"
 >
     <App id="app">
-        <Page title="{i18n>title}">
+        <Page title="{i18n>visitedStampms}: {app>/selectedCount}">
             <headerContent>
                 <core:Fragment
                     fragmentName="hwb.frontendhwb.fragment.currentUserAvatar"
@@ -14,8 +14,7 @@
                 />
             </headerContent>
             <content>
-                <HBox class="sapUiResponsiveContentPadding">
-                    <ScrollContainer height="90vh" vertical="true">
+                <HBox class="sapUiSmallMargin">
                         <Table
                             id="StampingsTable"
                             inset="false"
@@ -33,26 +32,25 @@
                             updateFinished=".onStampingsUpdateFinished"
                         >
                             <headerToolbar>
-                                <Toolbar>
-                                    <Title
-                                        id="selectedCount"
-                                        text="{i18n>visitedStampms}: {app>/selectedCount}"
-                                        level="H2"
-                                    />
+                                <OverflowToolbar>
                                     <ToolbarSpacer />
-                                    <Button
-                                        icon="sap-icon://badge"
-                                        press="onShowBagdesButtonPress"
-                                        text="{i18n>myBadges}"
-                                    />
                                     <ComboBox
                                         selectedKey="{app>/selectedFilterKey}"
                                     >
                                         <core:Item key="all"       text="{i18n>showAll}" />
                                         <core:Item key="stamped"   text="{i18n>visitedStamps} ({app>/selectedCount})" />
                                         <core:Item key="unstamped" text="{i18n>missingStamps} ({= 222 - ${app>/selectedCount} })" />
+                                        <layoutData>
+                                            <OverflowToolbarLayoutData
+                                                priority="NeverOverflow"/>
+                                        </layoutData>
                                     </ComboBox>
-                                </Toolbar>
+                                    <Button
+                                        icon="sap-icon://badge"
+                                        press="onShowBagdesButtonPress"
+                                        text="{i18n>myBadges}"
+                                    />
+                                </OverflowToolbar>
                             </headerToolbar>
                             <columns>
                                 <Column
@@ -161,7 +159,6 @@
                                 </ColumnListItem>
                             </items>
                         </Table>
-                    </ScrollContainer>
                 </HBox>
             </content>
             <footer>
