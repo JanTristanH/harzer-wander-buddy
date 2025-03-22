@@ -70,7 +70,10 @@ sap.ui.define([
         
         _readPendingFriendshipRequests: function (sUserId) {
             this.getModel().read('/PendingFriendshipRequests', {
-                filters: [new Filter("fromUser_ID", FilterOperator.EQ, sUserId)],
+                filters: [
+                    new Filter("fromUser_ID", FilterOperator.EQ, sUserId),
+                    new Filter("toUser_ID", FilterOperator.EQ, this.sUserID)
+                ],
                 parameters: { expand: 'fromUser,toUser' },
                 success: function (oData) {
                     if (oData.results.length > 0) {
