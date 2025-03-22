@@ -178,7 +178,7 @@ function addGroupDetailsToTours(db, tours, groupUserIds) {
             const nAverageGroupStampings = getTotalStampings(aStampingsByUser, toPois) / groupUserIds.length;
 
             // Populate the custom fields:
-            tour.AverageGroupStampings = nAverageGroupStampings;
+            tour.AverageGroupStampings = Math.round(nAverageGroupStampings * 100) / 100;
 
             resolve(tour);
           } catch (error) {
