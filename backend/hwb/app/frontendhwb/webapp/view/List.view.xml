@@ -34,7 +34,7 @@
                             <headerToolbar>
                                 <OverflowToolbar>
                                     <ToolbarSpacer />
-                                    <ComboBox
+                                    <Select
                                         selectedKey="{app>/selectedFilterKey}"
                                     >
                                         <core:Item key="all"       text="{i18n>showAll}" />
@@ -44,7 +44,7 @@
                                             <OverflowToolbarLayoutData
                                                 priority="NeverOverflow"/>
                                         </layoutData>
-                                    </ComboBox>
+                                    </Select>
                                     <Button
                                         icon="sap-icon://badge"
                                         press="onShowBagdesButtonPress"
