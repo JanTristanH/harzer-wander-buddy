@@ -457,9 +457,9 @@ sap.ui.define([
                 sessionStorage.setItem("lastCenterPosition", oEvent.getParameter("centerPoint"));
             },
 
-            onOpenGroupManagement: function () {
+            onOpenGroupManagement: function (oEvent) {
                 this.oMyAvatar = this.byId("idCurrentUserAvatarMapInner--idMyAvatar");
-                this._oPopover.openBy(this.oMyAvatar);
+                this._oPopover.openBy(this.oMyAvatar ?? oEvent.getSource());
             }
         });
     });

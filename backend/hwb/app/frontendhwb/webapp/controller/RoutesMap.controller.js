@@ -17,6 +17,7 @@ sap.ui.define([
             bPersistedDisplayed: true,
             onInit: function () {
                 Controller.prototype.onInit.apply(this, arguments);
+                this.getModel("app").setProperty("/edit", false);
                 this.getRouter().getRoute("RoutesDetailTransient").attachPatternMatched(this.onRoutesDetailTransientRouteMatched, this);
                 this.getRouter().getRoute("RoutesDetail").attachPatternMatched(this.onRoutesDetailMatched, this);
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onRoutesDetailEditMatched, this);
