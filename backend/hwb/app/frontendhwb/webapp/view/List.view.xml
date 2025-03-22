@@ -125,7 +125,8 @@
                                 <ColumnListItem 
                                     type="Active"
                                     press="onListItemPress"
-                                    visible="{ parts: ['app>/selectedFilterKey', 'hasVisited'], formatter: '.onFormatListItemVisible'}"
+                                    visible="{ parts: ['app>/selectedFilterKey', 'hasVisited'], 
+                                                formatter: '.onFormatListItemVisible'}"
                                 >
                                     <cells>
                                         <Text text="{number}" />

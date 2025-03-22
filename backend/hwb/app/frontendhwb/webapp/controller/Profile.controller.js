@@ -21,6 +21,7 @@ sap.ui.define([
             if (!this.getModel("app").getProperty("/aSelectedGroupIds")) {
                 this.getModel("app").setProperty("/aSelectedGroupIds", []);
             }
+            this.getModel("app").setProperty("/selectedFilterKeyProfile", "all");
         },
 
         _onRouteMatched: function (oEvent) {
@@ -329,6 +330,29 @@ sap.ui.define([
             this.getModel().submitChanges({
                 success: () => this.getModel().refresh()
             });
+        },
+
+        onFormatListItemVisible: function(selectedFilterKeyProfile, stampedUserIds) {
+            const sCurrentUserId = this.getModel("app").getProperty("/currentUser/ID")
+            switch (selectedFilterKeyProfile) {
+                case undefined:
+                case "all":
+                    return true;
+                case "stamped":
+                    return stampedUserIds.includes(this.sUserID);
+                case "unstamped":
+                    return !stampedUserIds.includes(this.sUserID);
+                case "stampedMe":
+                    return stampedUserIds.includes(sCurrentUserId);
+                case "unstampedMe":
+                    return !stampedUserIds.includes(sCurrentUserId);
+                case "stampedBoth":
+                    return stampedUserIds.includes(this.sUserID) && stampedUserIds.includes(sCurrentUserId);
+                case "unstampedBoth":
+                    return !stampedUserIds.includes(this.sUserID) && !stampedUserIds.includes(sCurrentUserId)
+                default:
+                    return false;
+            }
         }
     });
 });
