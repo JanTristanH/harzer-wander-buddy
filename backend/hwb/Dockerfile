@@ -1,10 +1,10 @@
 FROM node:18-alpine
+EXPOSE 4004
 
 WORKDIR /usr/src/app
 
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
 COPY ./package*.json ./
 
 # Bundle app source
@@ -18,7 +18,7 @@ RUN rm -rf db/data
 
 # Build ui5 app
 
-WORKDIR app/frontendhwb
+WORKDIR /usr/src/app/frontendhwb
 
 RUN npm ci
 RUN npm run build
