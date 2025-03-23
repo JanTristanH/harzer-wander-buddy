@@ -1,5 +1,4 @@
 FROM node:18-alpine
-EXPOSE 4004
 
 WORKDIR /usr/src/app
 
@@ -11,14 +10,14 @@ COPY ./package*.json ./
 COPY . .
 
 RUN npm i @sap/cds -g \
-    && npm install
+&& npm install
 
 # ensure no data is in db/data directory
 RUN rm -rf db/data
 
 # Build ui5 app
 
-WORKDIR /usr/src/app/frontendhwb
+WORKDIR app/frontendhwb
 
 RUN npm ci
 RUN npm run build
@@ -28,6 +27,8 @@ WORKDIR /usr/src/app
 # Make the script executable
 COPY start.sh ./
 RUN chmod +x start.sh
+
+EXPOSE 4004
 
 # Run the script on container startup
 CMD ["./start.sh"]
