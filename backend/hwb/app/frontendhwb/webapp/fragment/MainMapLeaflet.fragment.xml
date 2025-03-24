@@ -1,0 +1,27 @@
+<custom:LeafletMap
+    xmlns:custom="hwb.frontendhwb.control"    
+    id="map"
+    initialPosition="10.615779999999972;51.80054"
+    initialZoom="16"
+    zoomlevel="{app>/zoomlevel}"
+    centerPosition="{local>centerPosition}"
+    height="80%"
+    width="100%"
+    zoomChanged="onGeoMapZoomChanged"
+    centerChanged="onGeoMapCenterChanged">
+    <custom:Spots
+        id="idAllPointsOfInterestsSpots"
+        items="{ path: '/Stampboxes', parameters:{expand : 'Stampings'} }"
+    >
+        <!-- Example spot aggregation. Adjust bindings as per your model. -->
+        <custom:LeafletSpot
+            position="{longitude};{latitude}"
+            text="{name}"
+            click="onSpotClick" />
+        <!-- Add additional spots or use aggregation binding as needed. -->
+    </custom:Spots>
+
+    <!-- <custom:Spots>
+    <custom:LeafletSpot position="10.61578;51.80054" text="Test Spot" />
+</custom:Spots> -->
+</custom:LeafletMap>

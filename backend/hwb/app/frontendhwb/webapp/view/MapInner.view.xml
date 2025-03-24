@@ -47,7 +47,7 @@
             <l:FixFlex class="fixFlexVertical">
                 <l:flexContent>
                     <core:Fragment
-                        fragmentName="hwb.frontendhwb.fragment.MainMap"
+                        fragmentName="hwb.frontendhwb.fragment.MainMapLeaflet"
                         type="XML"
                     />
                 </l:flexContent>
