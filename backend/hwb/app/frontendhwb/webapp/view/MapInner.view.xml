@@ -53,25 +53,27 @@
                 fragmentName="hwb.frontendhwb.fragment.MainMapLeaflet"
                 type="XML"
             />
-<VBox
-    id="bottomSheet"
-    visible="true"
-    class="bottom-sheet"
->
-    <HBox class="sheet-header">
-        <VBox class="drag-handle"></VBox>
-        <Button icon="sap-icon://decline" press=".onCloseBottomSheet" />
-    </HBox>
-    <VBox class="sheet-content">
-        <Text text="🗺️ POI Details Here" />
-        <Text text="More content..." />
-    </VBox>
-</VBox>
-
-            <!-- <core:Fragment
+            <VBox
+                id="bottomSheet"
+                visible="true"
+                class="bottom-sheet"
+            >
+                <HBox class="sheet-header">
+                    <VBox class="drag-handle" />
+                    <Button
+                        icon="sap-icon://decline"
+                        press=".onCloseBottomSheet"
+                    />
+                </HBox>
+                <VBox class="sheet-content">
+                    <Text text="🗺️ POI Details Here" />
+                    <Text text="More content..." />
+                    <!-- <core:Fragment
                 fragmentName="hwb.frontendhwb.fragment.POIInfoCard"
                 type="XML"
             /> -->
+                </VBox>
+            </VBox>
         </content>
     </Page>
 </mvc:View>

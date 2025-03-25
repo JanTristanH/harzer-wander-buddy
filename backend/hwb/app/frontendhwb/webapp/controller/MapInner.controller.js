@@ -12,6 +12,7 @@ sap.ui.define([
      */
     function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel, Sorter) {
         "use strict";
+        let isDragging = false;
         return Controller.extend("hwb.frontendhwb.controller.MapInner", {
             itemCache: [],
             _aParkingSpaceCache: [],
@@ -80,56 +81,63 @@ sap.ui.define([
             },
 
             _initBottomSheetDrag: function () {
-// script.js
-const bottomSheet =
-    document.querySelector(".bottom-sheet");
-const dragHandle =
-    document.querySelector(".drag-handle");
-const closeBtn =
-    document.querySelector(".close-btn");
-
-let isDragging = false;
-let startY, startBottom;
-
-dragHandle
-    .addEventListener("mousedown", startDragging);
-closeBtn
-    .addEventListener("click", hideBottomSheet);
-
-function startDragging(e) {
-    e.preventDefault();
-    isDragging = true;
-    startY = e.clientY;
-    startBottom =
-        parseInt(getComputedStyle(bottomSheet).bottom);
-
-    document.addEventListener("mousemove", drag);
-    document.addEventListener("mouseup", stopDragging);
-}
-
-function drag(e) {
-    if (!isDragging) return;
-    const deltaY =
-        e.clientY - startY;
-    bottomSheet.style.bottom =
-        Math.max(startBottom - deltaY, 0) + "px";
-}
-
-function stopDragging() {
-    isDragging = false;
-    document
-        .removeEventListener("mousemove", drag);
-    document
-        .removeEventListener("mouseup", stopDragging);
-}
-
-function hideBottomSheet() {
-    bottomSheet.style.display = "none";
-    document.body.style.overflow = "auto";
-    bottomSheet.style.bottom = "-100%";
-}
-
-            },
+                const bottomSheet = document.querySelector(".bottom-sheet");
+                const sheetHeader = document.querySelector(".sheet-header");
+                const dragHandle = document.querySelector(".drag-handle");
+                const closeBtn = document.querySelector(".close-btn");
+            
+                let startY, startBottom;
+            
+                // Mouse events
+                sheetHeader.addEventListener("mousedown", startDraggingMouse);
+                dragHandle.addEventListener("mousedown", startDraggingMouse);
+                document.addEventListener("mouseup", stopDragging);
+                document.addEventListener("mousemove", dragMouse);
+            
+                // Touch events
+                sheetHeader.addEventListener("touchstart", startDraggingTouch, { passive: false });
+                dragHandle.addEventListener("touchstart", startDraggingTouch, { passive: false });
+                document.addEventListener("touchend", stopDragging);
+                document.addEventListener("touchmove", dragTouch, { passive: false });
+            
+                closeBtn.addEventListener("click", hideBottomSheet);
+            
+                function startDraggingMouse(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    startY = e.clientY;
+                    startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
+                }
+            
+                function dragMouse(e) {
+                    if (!isDragging) return;
+                    const deltaY = e.clientY - startY;
+                    bottomSheet.style.bottom = Math.max(startBottom - deltaY, 0) + "px";
+                }
+            
+                function startDraggingTouch(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    startY = e.touches[0].clientY;
+                    startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
+                }
+            
+                function dragTouch(e) {
+                    if (!isDragging) return;
+                    const deltaY = e.touches[0].clientY - startY;
+                    bottomSheet.style.bottom = Math.max(startBottom - deltaY, 0) + "px";
+                }
+            
+                function stopDragging() {
+                    isDragging = false;
+                }
+            
+                function hideBottomSheet() {
+                    bottomSheet.style.display = "none";
+                    document.body.style.overflow = "auto";
+                    bottomSheet.style.bottom = "-100%";
+                }
+            },            
 
             attachGroupChange: function () {
                 this.getModel("app").attachPropertyChange((oEvent) => {
@@ -341,11 +349,11 @@ function hideBottomSheet() {
                 this.byId("bottomSheet").setVisible(true);
 
                 const bottomSheet =
-    document.querySelector(".bottom-sheet");
+                    document.querySelector(".bottom-sheet");
 
-    bottomSheet.style.display = "block";
-    document.body.style.overflow = "hidden";
-    bottomSheet.style.bottom = "0";
+                bottomSheet.style.display = "block";
+                document.body.style.overflow = "hidden";
+                bottomSheet.style.bottom = "0";
 
                 // if (this.getRouter().getHashChanger().hash.includes("tour")) {
                 //     return;
