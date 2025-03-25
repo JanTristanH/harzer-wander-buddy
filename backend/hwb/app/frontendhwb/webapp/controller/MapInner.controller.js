@@ -52,6 +52,156 @@ sap.ui.define([
                 }
             },
 
+            onAfterRendering: function () {
+                this._initBottomSheetDrag();
+            },
+
+            onShowBottomSheet: function () {
+                const sheet = this.byId("bottomSheet").getDomRef();
+                // Make it visible in SAPUI5
+                this.byId("bottomSheet").setVisible(true);
+
+                document.body.style.overflow = "hidden";
+                // Slide it up into view
+                sheet.style.transform = "translateY(0)";
+            },
+
+            onCloseBottomSheet: function () {
+                const sheet = this.byId("bottomSheet").getDomRef();
+                // Slide it down off-screen
+                sheet.style.transform = "translateY(100%)";
+
+                // After the transition, hide it
+                setTimeout(() => {
+                    this.byId("bottomSheet").setVisible(false);
+                    document.body.style.overflow = "auto";
+                }, 300);
+            },
+
+            _initBottomSheetDrag: function () {
+                debugger
+                const sheet = this.byId("bottomSheet").getDomRef();
+                if (!sheet) return;
+
+                const dragHandle = sheet.querySelector(".dragHandle");
+                let isDragging = false;
+                let startY = 0;
+                let startTranslateY = 0;
+
+                const onMouseMove = (e) => {
+                    if (!isDragging) return;
+
+                    const currentY = e.clientY;
+                    const deltaY = currentY - startY;
+                    let newTranslateY = startTranslateY + deltaY;
+
+                    // Prevent dragging above the top (negative values)
+                    if (newTranslateY < 0) {
+                        newTranslateY = 0;
+                    }
+
+                    // You can also clamp how far they can drag down if desired
+                    // e.g., newTranslateY = Math.min(newTranslateY, maxAllowed);
+
+                    sheet.style.transform = `translateY(${newTranslateY}px)`;
+                };
+
+                const onMouseUp = () => {
+                    debugger
+                    isDragging = false;
+                    document.removeEventListener("mousemove", onMouseMove);
+                    document.removeEventListener("mouseup", onMouseUp);
+
+                    // Read the final Y-translate
+                    const transformMatrix = window.getComputedStyle(sheet).transform;
+                    let finalY = 0;
+                    if (transformMatrix !== "none") {
+                        // For a 2D transform matrix, the last value (index 5) is the Y offset
+                        const matrixValues = transformMatrix
+                            .match(/matrix\((.+)\)/)[1]
+                            .split(",");
+                        finalY = parseFloat(matrixValues[5]) || 0;
+                    }
+
+                    // Snap logic: if the sheet is dragged halfway down, close it
+                    if (finalY > sheet.offsetHeight / 2) {
+                        this.onCloseBottomSheet();
+                    } else {
+                        // Snap fully open
+                        sheet.style.transform = "translateY(0)";
+                    }
+                };
+
+                const onMouseDown = (e) => {
+                    debugger
+                    e.preventDefault();
+                    isDragging = true;
+                    startY = e.clientY;
+
+                    // Get current translateY as our reference
+                    const transformMatrix = window.getComputedStyle(sheet).transform;
+                    if (transformMatrix !== "none") {
+                        const matrixValues = transformMatrix
+                            .match(/matrix\((.+)\)/)[1]
+                            .split(",");
+                        startTranslateY = parseFloat(matrixValues[5]) || 0;
+                    } else {
+                        startTranslateY = 0;
+                    }
+
+                    document.addEventListener("mousemove", onMouseMove);
+                    document.addEventListener("mouseup", onMouseUp);
+                };
+
+                dragHandle.addEventListener("mousedown", onMouseDown);
+
+                // Add these inside your _initBottomSheetDrag function
+const onTouchStart = (e) => {
+    e.preventDefault();
+    isDragging = true;
+    startY = e.touches[0].clientY;
+    const transformMatrix = window.getComputedStyle(sheet).transform;
+    if (transformMatrix !== "none") {
+      const matrixValues = transformMatrix.match(/matrix\((.+)\)/)[1].split(",");
+      startTranslateY = parseFloat(matrixValues[5]) || 0;
+    } else {
+      startTranslateY = 0;
+    }
+    document.addEventListener("touchmove", onTouchMove);
+    document.addEventListener("touchend", onTouchEnd);
+  };
+  
+  const onTouchMove = (e) => {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - startY;
+    let newTranslateY = startTranslateY + deltaY;
+    if (newTranslateY < 0) newTranslateY = 0;
+    sheet.style.transform = `translateY(${newTranslateY}px)`;
+  };
+  
+  const onTouchEnd = () => {
+    isDragging = false;
+    document.removeEventListener("touchmove", onTouchMove);
+    document.removeEventListener("touchend", onTouchEnd);
+  
+    const transformMatrix = window.getComputedStyle(sheet).transform;
+    let finalY = 0;
+    if (transformMatrix !== "none") {
+      const matrixValues = transformMatrix.match(/matrix\((.+)\)/)[1].split(",");
+      finalY = parseFloat(matrixValues[5]) || 0;
+    }
+    if (finalY > sheet.offsetHeight / 2) {
+      this.onCloseBottomSheet();
+    } else {
+      sheet.style.transform = "translateY(0)";
+    }
+  };
+  
+  dragHandle.addEventListener("touchstart", onTouchStart);
+  
+            },
+
             attachGroupChange: function () {
                 this.getModel("app").attachPropertyChange((oEvent) => {
                     if (oEvent.getParameter("path") == "/aSelectedGroupIds") {
@@ -218,7 +368,7 @@ sap.ui.define([
             onSearchFieldSearch: function (oEvent) {
                 const oItem = oEvent.getParameter("suggestionItem");
                 const oSearchField = oEvent.getSource();
-                if (oItem) {  
+                if (oItem) {
                     oSearchField._blur();
                     this.getRouter().navTo("MapWithPOI", { idPOI: oItem.getKey() });
                 } else {
@@ -259,63 +409,64 @@ sap.ui.define([
             },
 
             onSpotClick: function (oEvent, bSuppressNavigation) {
-                if (this.getRouter().getHashChanger().hash.includes("tour")) {
-                    return;
-                }
-                const oSpot = oEvent.getSource();
-                const aCords = oSpot.getPosition().split(";");
-                const nCurrentZoomLevel = this.getModel("app").getProperty("/zoomlevel")
-                const nNewZoomLevel = nCurrentZoomLevel <= this.nZoomLevelClickThreshold ? this.nZoomLevelClickThreshold + 3 : nCurrentZoomLevel;
-                this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nNewZoomLevel);
+                this.byId("bottomSheet").setVisible(true);
+                // if (this.getRouter().getHashChanger().hash.includes("tour")) {
+                //     return;
+                // }
+                // const oSpot = oEvent.getSource();
+                // const aCords = oSpot.getPosition().split(";");
+                // const nCurrentZoomLevel = this.getModel("app").getProperty("/zoomlevel")
+                // const nNewZoomLevel = nCurrentZoomLevel <= this.nZoomLevelClickThreshold ? this.nZoomLevelClickThreshold + 3 : nCurrentZoomLevel;
+                // this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nNewZoomLevel);
 
-                const oSplitter = this.byId("idSplitter");
-                if (!oSplitter) return;
-                debugger
-                if (oSplitter.getContentAreas().length > 1) {
-                    // if more than 1 exists, the info card is open and can be recreated
-                    // this also resets the location of the splitter
-                    const oLastContentArea = oSplitter.getContentAreas().pop();
-                    oSplitter.removeContentArea(oLastContentArea);
-                    oLastContentArea.destroy();
-                    this._pSPOIInforCard = null;
-                    setTimeout(() => this.onSpotClick(oEvent), 0);
-                    return;
-                }
+                // const oSplitter = this.byId("idSplitter");
+                // if (!oSplitter) return;
+                // debugger
+                // if (oSplitter.getContentAreas().length > 1) {
+                //     // if more than 1 exists, the info card is open and can be recreated
+                //     // this also resets the location of the splitter
+                //     const oLastContentArea = oSplitter.getContentAreas().pop();
+                //     oSplitter.removeContentArea(oLastContentArea);
+                //     oLastContentArea.destroy();
+                //     this._pSPOIInforCard = null;
+                //     setTimeout(() => this.onSpotClick(oEvent), 0);
+                //     return;
+                // }
 
-                let oView = this.getView();
-                if (!this._pSPOIInforCard) {
-                    this._pSPOIInforCard = Fragment.load({
-                        id: oView.getId(),
-                        name: "hwb.frontendhwb.fragment.POIInfoCard",
-                        controller: this
-                    }).then(function (oDialog) {
-                        oView.addDependent(oDialog);
-                        return oDialog;
-                    });
-                }
+                // let oView = this.getView();
+                // if (!this._pSPOIInforCard) {
+                //     this._pSPOIInforCard = Fragment.load({
+                //         id: oView.getId(),
+                //         name: "hwb.frontendhwb.fragment.POIInfoCard",
+                //         controller: this
+                //     }).then(function (oDialog) {
+                //         oView.addDependent(oDialog);
+                //         return oDialog;
+                //     });
+                // }
 
-                let localModel = this.getModel("local");
-                const oPoiObject = oSpot.getBindingContext().getObject();
-                let sCurrentSpotId = oPoiObject.ID;
-                localModel.setProperty("/sCurrentSpotId", sCurrentSpotId);
-                localModel.setProperty("/title", oPoiObject.name);
-                localModel.setProperty("/description", oPoiObject.description);
-                localModel.setProperty("/bStampingVisible", !!oPoiObject.number);
-                localModel.setProperty("/bStampingEnabled", !oPoiObject.hasVisited);
-                localModel.setProperty("/sSelectedSpotLocation", `${oPoiObject.longitude};${oPoiObject.latitude}`);
-                localModel.setProperty("/oCurrentSpot", this._getPoiById(sCurrentSpotId));
+                // let localModel = this.getModel("local");
+                // const oPoiObject = oSpot.getBindingContext().getObject();
+                // let sCurrentSpotId = oPoiObject.ID;
+                // localModel.setProperty("/sCurrentSpotId", sCurrentSpotId);
+                // localModel.setProperty("/title", oPoiObject.name);
+                // localModel.setProperty("/description", oPoiObject.description);
+                // localModel.setProperty("/bStampingVisible", !!oPoiObject.number);
+                // localModel.setProperty("/bStampingEnabled", !oPoiObject.hasVisited);
+                // localModel.setProperty("/sSelectedSpotLocation", `${oPoiObject.longitude};${oPoiObject.latitude}`);
+                // localModel.setProperty("/oCurrentSpot", this._getPoiById(sCurrentSpotId));
 
-                this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
+                // this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
 
-                if (!bSuppressNavigation) {
-                    this.getRouter().navTo("MapWithPOI", { idPOI: sCurrentSpotId });
-                }
+                // if (!bSuppressNavigation) {
+                //     this.getRouter().navTo("MapWithPOI", { idPOI: sCurrentSpotId });
+                // }
 
-                this._pSPOIInforCard.then(oInfoCard => {
-                    oInfoCard.setModel("local", localModel);
-                    oSplitter.addContentArea(oInfoCard);
-                    //oSplitter.resetContentAreasSizes();
-                });
+                // this._pSPOIInforCard.then(oInfoCard => {
+                //     oInfoCard.setModel("local", localModel);
+                //     oSplitter.addContentArea(oInfoCard);
+                //     //oSplitter.resetContentAreasSizes();
+                // });
             },
 
             _loadRelevantTravelTimesForPoi: function (sCurrentSpotId, localModel) {
@@ -430,22 +581,23 @@ sap.ui.define([
                 const url = isIOS
                     ? `maps://maps.apple.com/?daddr=${lat},${long}`
                     : `geo:${lat},${long}?q=${lat},${long}`;
-            
+
                 window.open(url, '_self');
             },
 
             onButtonClosePress: function (oEvent) {
                 this.getRouter().navTo("Map");
-                const oSplitter = this.byId("idSplitter");
-                var aContentAreas = oSplitter.getContentAreas()
-                if (aContentAreas.length > 1) {
+                this.byId("bottomSheet").setVisible(false);
+                // const oSplitter = this.byId("idSplitter");
+                // var aContentAreas = oSplitter.getContentAreas()
+                // if (aContentAreas.length > 1) {
 
-                    var oLastContentArea = aContentAreas.pop();
-                    oSplitter.removeContentArea(oLastContentArea);
-                    oLastContentArea.destroy();
-                    this._pSPOIInforCard = null;
-                    oSplitter.resetContentAreasSizes();
-                }
+                //     var oLastContentArea = aContentAreas.pop();
+                //     oSplitter.removeContentArea(oLastContentArea);
+                //     oLastContentArea.destroy();
+                //     this._pSPOIInforCard = null;
+                //     oSplitter.resetContentAreasSizes();
+                // }
             },
 
             onNearbyPress: function (oEvent) {

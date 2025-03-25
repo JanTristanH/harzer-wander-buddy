@@ -49,16 +49,29 @@
             </Toolbar>
         </subHeader>
         <content>
-            <l:Splitter
-                orientation="Vertical"
-                id="idSplitter"
-            >
-                <core:Fragment
-                    fragmentName="hwb.frontendhwb.fragment.MainMapLeaflet"
-                    type="XML"
-                />
-                <!-- an f:card will be added here based on POI selection -->
-            </l:Splitter>
+            <core:Fragment
+                fragmentName="hwb.frontendhwb.fragment.MainMapLeaflet"
+                type="XML"
+            />
+<VBox
+    id="bottomSheet"
+    visible="true"
+    class="customBottomSheet"
+>
+    <HBox class="sheetHeader">
+        <VBox class="dragHandle"></VBox>
+        <Button icon="sap-icon://decline" press=".onCloseBottomSheet" class="closeBtn" />
+    </HBox>
+    <VBox class="sheetContent">
+        <Text text="🗺️ POI Details Here" />
+        <Text text="More content..." />
+    </VBox>
+</VBox>
+
+            <!-- <core:Fragment
+                fragmentName="hwb.frontendhwb.fragment.POIInfoCard"
+                type="XML"
+            /> -->
         </content>
     </Page>
 </mvc:View>

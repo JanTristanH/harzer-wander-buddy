@@ -16,3 +16,49 @@
 .size1 {
 	font-size : 1.5rem;
 }
+
+
+
+.customBottomSheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease-in-out;
+  height: 40%; /* or adjust dynamically */
+  z-index: 1000;
+  touch-action: none;
+  transform: translateY(0);
+}
+
+.sheetHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: #fff;
+}
+
+.dragHandle {
+    width: 40px;
+    height: 5px;
+    background-color: #fff;
+    border-radius: 10px;
+    cursor: grab;
+    margin: 0 auto;
+}
+
+.closeBtn {
+    background-color: transparent;
+    border: none;
+    color: white;
+}
+
+.sheetContent {
+    padding: 1rem;
+}
