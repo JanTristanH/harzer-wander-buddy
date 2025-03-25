@@ -73,133 +73,62 @@ sap.ui.define([
 
                 // After the transition, hide it
                 setTimeout(() => {
-                    this.byId("bottomSheet").setVisible(false);
+                    bottomSheet.style.display = "none";
                     document.body.style.overflow = "auto";
+                    bottomSheet.style.bottom = "-100%";
                 }, 300);
             },
 
             _initBottomSheetDrag: function () {
-                debugger
-                const sheet = this.byId("bottomSheet").getDomRef();
-                if (!sheet) return;
+// script.js
+const bottomSheet =
+    document.querySelector(".bottom-sheet");
+const dragHandle =
+    document.querySelector(".drag-handle");
+const closeBtn =
+    document.querySelector(".close-btn");
 
-                const dragHandle = sheet.querySelector(".dragHandle");
-                let isDragging = false;
-                let startY = 0;
-                let startTranslateY = 0;
+let isDragging = false;
+let startY, startBottom;
 
-                const onMouseMove = (e) => {
-                    if (!isDragging) return;
+dragHandle
+    .addEventListener("mousedown", startDragging);
+closeBtn
+    .addEventListener("click", hideBottomSheet);
 
-                    const currentY = e.clientY;
-                    const deltaY = currentY - startY;
-                    let newTranslateY = startTranslateY + deltaY;
-
-                    // Prevent dragging above the top (negative values)
-                    if (newTranslateY < 0) {
-                        newTranslateY = 0;
-                    }
-
-                    // You can also clamp how far they can drag down if desired
-                    // e.g., newTranslateY = Math.min(newTranslateY, maxAllowed);
-
-                    sheet.style.transform = `translateY(${newTranslateY}px)`;
-                };
-
-                const onMouseUp = () => {
-                    debugger
-                    isDragging = false;
-                    document.removeEventListener("mousemove", onMouseMove);
-                    document.removeEventListener("mouseup", onMouseUp);
-
-                    // Read the final Y-translate
-                    const transformMatrix = window.getComputedStyle(sheet).transform;
-                    let finalY = 0;
-                    if (transformMatrix !== "none") {
-                        // For a 2D transform matrix, the last value (index 5) is the Y offset
-                        const matrixValues = transformMatrix
-                            .match(/matrix\((.+)\)/)[1]
-                            .split(",");
-                        finalY = parseFloat(matrixValues[5]) || 0;
-                    }
-
-                    // Snap logic: if the sheet is dragged halfway down, close it
-                    if (finalY > sheet.offsetHeight / 2) {
-                        this.onCloseBottomSheet();
-                    } else {
-                        // Snap fully open
-                        sheet.style.transform = "translateY(0)";
-                    }
-                };
-
-                const onMouseDown = (e) => {
-                    debugger
-                    e.preventDefault();
-                    isDragging = true;
-                    startY = e.clientY;
-
-                    // Get current translateY as our reference
-                    const transformMatrix = window.getComputedStyle(sheet).transform;
-                    if (transformMatrix !== "none") {
-                        const matrixValues = transformMatrix
-                            .match(/matrix\((.+)\)/)[1]
-                            .split(",");
-                        startTranslateY = parseFloat(matrixValues[5]) || 0;
-                    } else {
-                        startTranslateY = 0;
-                    }
-
-                    document.addEventListener("mousemove", onMouseMove);
-                    document.addEventListener("mouseup", onMouseUp);
-                };
-
-                dragHandle.addEventListener("mousedown", onMouseDown);
-
-                // Add these inside your _initBottomSheetDrag function
-const onTouchStart = (e) => {
+function startDragging(e) {
     e.preventDefault();
     isDragging = true;
-    startY = e.touches[0].clientY;
-    const transformMatrix = window.getComputedStyle(sheet).transform;
-    if (transformMatrix !== "none") {
-      const matrixValues = transformMatrix.match(/matrix\((.+)\)/)[1].split(",");
-      startTranslateY = parseFloat(matrixValues[5]) || 0;
-    } else {
-      startTranslateY = 0;
-    }
-    document.addEventListener("touchmove", onTouchMove);
-    document.addEventListener("touchend", onTouchEnd);
-  };
-  
-  const onTouchMove = (e) => {
+    startY = e.clientY;
+    startBottom =
+        parseInt(getComputedStyle(bottomSheet).bottom);
+
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", stopDragging);
+}
+
+function drag(e) {
     if (!isDragging) return;
-    const currentY = e.touches[0].clientY;
-    const deltaY = currentY - startY;
-    let newTranslateY = startTranslateY + deltaY;
-    if (newTranslateY < 0) newTranslateY = 0;
-    sheet.style.transform = `translateY(${newTranslateY}px)`;
-  };
-  
-  const onTouchEnd = () => {
+    const deltaY =
+        e.clientY - startY;
+    bottomSheet.style.bottom =
+        Math.max(startBottom - deltaY, 0) + "px";
+}
+
+function stopDragging() {
     isDragging = false;
-    document.removeEventListener("touchmove", onTouchMove);
-    document.removeEventListener("touchend", onTouchEnd);
-  
-    const transformMatrix = window.getComputedStyle(sheet).transform;
-    let finalY = 0;
-    if (transformMatrix !== "none") {
-      const matrixValues = transformMatrix.match(/matrix\((.+)\)/)[1].split(",");
-      finalY = parseFloat(matrixValues[5]) || 0;
-    }
-    if (finalY > sheet.offsetHeight / 2) {
-      this.onCloseBottomSheet();
-    } else {
-      sheet.style.transform = "translateY(0)";
-    }
-  };
-  
-  dragHandle.addEventListener("touchstart", onTouchStart);
-  
+    document
+        .removeEventListener("mousemove", drag);
+    document
+        .removeEventListener("mouseup", stopDragging);
+}
+
+function hideBottomSheet() {
+    bottomSheet.style.display = "none";
+    document.body.style.overflow = "auto";
+    bottomSheet.style.bottom = "-100%";
+}
+
             },
 
             attachGroupChange: function () {
@@ -410,6 +339,14 @@ const onTouchStart = (e) => {
 
             onSpotClick: function (oEvent, bSuppressNavigation) {
                 this.byId("bottomSheet").setVisible(true);
+
+                const bottomSheet =
+    document.querySelector(".bottom-sheet");
+
+    bottomSheet.style.display = "block";
+    document.body.style.overflow = "hidden";
+    bottomSheet.style.bottom = "0";
+
                 // if (this.getRouter().getHashChanger().hash.includes("tour")) {
                 //     return;
                 // }

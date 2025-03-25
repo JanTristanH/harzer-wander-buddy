@@ -56,13 +56,13 @@
 <VBox
     id="bottomSheet"
     visible="true"
-    class="customBottomSheet"
+    class="bottom-sheet"
 >
-    <HBox class="sheetHeader">
-        <VBox class="dragHandle"></VBox>
-        <Button icon="sap-icon://decline" press=".onCloseBottomSheet" class="closeBtn" />
+    <HBox class="sheet-header">
+        <VBox class="drag-handle"></VBox>
+        <Button icon="sap-icon://decline" press=".onCloseBottomSheet" />
     </HBox>
-    <VBox class="sheetContent">
+    <VBox class="sheet-content">
         <Text text="🗺️ POI Details Here" />
         <Text text="More content..." />
     </VBox>
