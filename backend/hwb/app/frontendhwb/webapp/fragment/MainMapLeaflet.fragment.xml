@@ -5,7 +5,7 @@
     initialZoom="16"
     zoomlevel="{app>/zoomlevel}"
     centerPosition="{local>centerPosition}"
-    height="80%"
+    height="85vh"
     width="100%"
     zoomChanged="onGeoMapZoomChanged"
     centerChanged="onGeoMapCenterChanged">
@@ -16,12 +16,10 @@
         <!-- Example spot aggregation. Adjust bindings as per your model. -->
         <custom:LeafletSpot
             position="{longitude};{latitude}"
-            text="{name}"
-            click="onSpotClick" />
+            text="{number}"
+            click="onSpotClick"
+            type="{ parts: ['', 'app>/bShowStampedSpots', 'app>/bShowUnStampedSpots', 'hasVisited'], formatter: '.onFormatBoxType'}"    
+        />
         <!-- Add additional spots or use aggregation binding as needed. -->
     </custom:Spots>
-
-    <!-- <custom:Spots>
-    <custom:LeafletSpot position="10.61578;51.80054" text="Test Spot" />
-</custom:Spots> -->
 </custom:LeafletMap>

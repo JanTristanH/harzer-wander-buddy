@@ -7,7 +7,8 @@ sap.ui.define([
       metadata: {
         properties: {
           position: { type: "string", defaultValue: "0;0" },  // format: "lng;lat"
-          text: { type: "string", defaultValue: "" }
+          text: { type: "string", defaultValue: "" },
+          type: { type: "string", defaultValue: "default" }
         },
         events: {
           click: {}

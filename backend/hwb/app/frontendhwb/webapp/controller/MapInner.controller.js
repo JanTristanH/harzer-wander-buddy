@@ -268,8 +268,9 @@ sap.ui.define([
                 const nNewZoomLevel = nCurrentZoomLevel <= this.nZoomLevelClickThreshold ? this.nZoomLevelClickThreshold + 3 : nCurrentZoomLevel;
                 this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nNewZoomLevel);
 
-                const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
+                const oSplitter = this.byId("idSplitter");
                 if (!oSplitter) return;
+                debugger
                 if (oSplitter.getContentAreas().length > 1) {
                     // if more than 1 exists, the info card is open and can be recreated
                     // this also resets the location of the splitter
@@ -313,7 +314,7 @@ sap.ui.define([
                 this._pSPOIInforCard.then(oInfoCard => {
                     oInfoCard.setModel("local", localModel);
                     oSplitter.addContentArea(oInfoCard);
-                    oSplitter.resetContentAreasSizes();
+                    //oSplitter.resetContentAreasSizes();
                 });
             },
 
@@ -435,7 +436,7 @@ sap.ui.define([
 
             onButtonClosePress: function (oEvent) {
                 this.getRouter().navTo("Map");
-                const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
+                const oSplitter = this.byId("idSplitter");
                 var aContentAreas = oSplitter.getContentAreas()
                 if (aContentAreas.length > 1) {
 
