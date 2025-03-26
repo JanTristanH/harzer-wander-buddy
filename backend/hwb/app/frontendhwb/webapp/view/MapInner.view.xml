@@ -65,13 +65,14 @@
                         press=".onCloseBottomSheet"
                     />
                 </HBox>
-                <VBox class="sheet-content">
-                    <Text text="🗺️ POI Details Here" />
-                    <Text text="More content..." />
-                    <!-- <core:Fragment
-                fragmentName="hwb.frontendhwb.fragment.POIInfoCard"
-                type="XML"
-            /> -->
+                <VBox
+                    class="sheet-content"
+                    height="100%"
+                >
+                    <core:Fragment
+                        fragmentName="hwb.frontendhwb.fragment.POIInfoCard"
+                        type="XML"
+                    />
                 </VBox>
             </VBox>
         </content>

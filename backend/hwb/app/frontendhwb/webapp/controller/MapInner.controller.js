@@ -64,7 +64,7 @@ sap.ui.define([
 
                 document.body.style.overflow = "hidden";
                 // Slide it up into view
-                sheet.style.transform = "translateY(0)";
+                sheet.style.transform = "translateY(0)";s
             },
 
             onCloseBottomSheet: function () {
@@ -112,7 +112,8 @@ sap.ui.define([
                 function dragMouse(e) {
                     if (!isDragging) return;
                     const deltaY = e.clientY - startY;
-                    bottomSheet.style.bottom = Math.max(startBottom - deltaY, 0) + "px";
+                    // allow to swipe out of the screen
+                    bottomSheet.style.bottom = startBottom - deltaY + "px";
                 }
             
                 function startDraggingTouch(e) {
@@ -125,7 +126,8 @@ sap.ui.define([
                 function dragTouch(e) {
                     if (!isDragging) return;
                     const deltaY = e.touches[0].clientY - startY;
-                    bottomSheet.style.bottom = Math.max(startBottom - deltaY, 0) + "px";
+                    // allow to swipe out of the screen
+                    bottomSheet.style.bottom = startBottom - deltaY + "px";
                 }
             
                 function stopDragging() {
