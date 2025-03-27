@@ -67,7 +67,7 @@
                 </HBox>
                 <VBox
                     class="sheet-content"
-                    height="100%"
+                    height="80vh"
                 >
                     <core:Fragment
                         fragmentName="hwb.frontendhwb.fragment.POIInfoCard"

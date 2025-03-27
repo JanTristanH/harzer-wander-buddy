@@ -74,9 +74,9 @@ sap.ui.define([
 
                 // After the transition, hide it
                 setTimeout(() => {
-                    bottomSheet.style.display = "none";
+                    sheet.style.display = "none";
                     document.body.style.overflow = "auto";
-                    bottomSheet.style.bottom = "-100%";
+                    sheet.style.bottom = "-100%";
                 }, 300);
             },
 
@@ -85,6 +85,20 @@ sap.ui.define([
                 const sheetHeader = document.querySelector(".sheet-header");
                 const dragHandle = document.querySelector(".drag-handle");
                 const closeBtn = document.querySelector(".close-btn");
+                
+                const getBottomStart = newPosition => {
+                    // return newPosition;
+                    const maxBottom = "56";
+                    const minBottom = -1 * this.getModel("device").getProperty("/resize/height") * 0.8 - ( maxBottom -128);
+                    debugger
+                    if (newPosition < parseInt(minBottom)) {
+                        return minBottom;
+                    } else if (newPosition > parseInt(maxBottom)) {
+                        return maxBottom;
+                    } else {
+                        return newPosition;
+                    }
+                }
             
                 let startY, startBottom;
             
@@ -113,7 +127,7 @@ sap.ui.define([
                     if (!isDragging) return;
                     const deltaY = e.clientY - startY;
                     // allow to swipe out of the screen
-                    bottomSheet.style.bottom = startBottom - deltaY + "px";
+                    bottomSheet.style.bottom = getBottomStart(startBottom - deltaY) + "px";
                 }
             
                 function startDraggingTouch(e) {
@@ -127,7 +141,7 @@ sap.ui.define([
                     if (!isDragging) return;
                     const deltaY = e.touches[0].clientY - startY;
                     // allow to swipe out of the screen
-                    bottomSheet.style.bottom = startBottom - deltaY + "px";
+                    bottomSheet.style.bottom =getBottomStart(startBottom - deltaY) + "px";
                 }
             
                 function stopDragging() {
@@ -350,12 +364,11 @@ sap.ui.define([
             onSpotClick: function (oEvent, bSuppressNavigation) {
                 this.byId("bottomSheet").setVisible(true);
 
-                const bottomSheet =
-                    document.querySelector(".bottom-sheet");
+                const bottomSheet = document.querySelector(".bottom-sheet");
 
                 bottomSheet.style.display = "block";
                 document.body.style.overflow = "hidden";
-                bottomSheet.style.bottom = "0";
+                bottomSheet.style.bottom = "-420px";
 
                 // if (this.getRouter().getHashChanger().hash.includes("tour")) {
                 //     return;
