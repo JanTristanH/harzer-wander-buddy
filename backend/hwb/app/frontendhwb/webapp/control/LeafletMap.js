@@ -40,6 +40,7 @@ sap.ui.define([
 
       exit: function() {
         debugger
+        console.error("LeafletMap: exiting control");
         if (this._oMap) {
           this._oMap.remove();
           this._oMap = null;
@@ -122,11 +123,13 @@ sap.ui.define([
           if (oSpot.getText()) {
             //marker.bindPopup(oSpot.getText());
           }
-          marker.on("click", () => oSpot.fireClick());
+          marker.on("click", () => {
+            oSpot.fireClick()
+          });
       
           this._aMarkers.push(marker);
         });
-      },      
+      },
   
       setCenterPosition: function(sPosition) {
         var latlng = this._parsePosition(sPosition);

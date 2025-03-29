@@ -236,20 +236,36 @@ sap.ui.define([
             onMapRouteMatched: function (oEvent) {
                 this.applyGroupFilter();
                 this.getModel("local").setProperty("/sCurrentSpotId", "");
-                this.byId("bottomSheet").setVisible(false); 
+                this.byId("bottomSheet")?.setVisible(false); 
             },
 
             onMapWithPOIRouteMatched: function (oEvent) {
-                const bottomSheet = this.byId("bottomSheet");
-                bottomSheet.setVisible(true);
-
-                setTimeout(() => {
-                    // wait for dom to be rendered
-                    const domRef = bottomSheet.getDomRef();
-                    domRef.style.display = "block";
-                    domRef.style.bottom = "-420px";
-                    this._initBottomSheetDrag();
-                }, 0);
+                const tryShowBottomSheet = () => {
+                    const bottomSheet = this.byId("bottomSheet");
+                    if (!bottomSheet) {
+                        setTimeout(tryShowBottomSheet, 50);
+                        return;
+                    }
+            
+                    bottomSheet.setVisible(true);
+            
+                    // Wait until the DOM is ready
+                    const waitForDom = () => {
+                        const domRef = bottomSheet.getDomRef();
+                        if (!domRef) {
+                            setTimeout(waitForDom, 50);
+                            return;
+                        }
+            
+                        domRef.style.display = "block";
+                        domRef.style.bottom = "-420px";
+            
+                        this._initBottomSheetDrag();
+                    };
+            
+                    waitForDom();
+                };
+                tryShowBottomSheet();
 
                 let sCurrentSpotId = oEvent.getParameter("arguments").idPOI;
                 this.getModel("local").setProperty("/sCurrentSpotId", sCurrentSpotId);
@@ -272,6 +288,24 @@ sap.ui.define([
 
             onSpotClick: function (oEvent) {
                 this.getRouter().navTo("MapWithPOI", { idPOI: oEvent.getSource().getBindingContext().getProperty("ID") });
+                
+                // duplicate code from onMapWithPOIRouteMatched
+                // -> navigation to map does currently not work
+                const bottomSheet = this.byId("bottomSheet");
+                bottomSheet.setVisible(true);
+
+                const waitForDom = () => {
+                    const domRef = bottomSheet.getDomRef();
+                    if (!domRef) {
+                        setTimeout(waitForDom, 50);
+                        return;
+                    }
+        
+                    domRef.style.display = "block";
+                    domRef.style.bottom = "-420px";
+                };
+        
+                waitForDom();
             },
 
             _loadRelevantTravelTimesForPoi: function (sCurrentSpotId, localModel) {
