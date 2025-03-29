@@ -5,7 +5,7 @@
     initialZoom="16"
     zoomlevel="{app>/zoomlevel}"
     centerPosition="{local>centerPosition}"
-    height="50vh"
+    height="97%"
     width="100%"
     zoomChanged="onGeoMapZoomChanged"
     centerChanged="onGeoMapCenterChanged">

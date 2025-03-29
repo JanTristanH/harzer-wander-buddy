@@ -55,6 +55,8 @@ sap.ui.define([
 
             onCloseBottomSheet: function () {
                 this.byId("bottomSheet").setVisible(false);
+                // TODO should navigate back to map but this breaks the map
+                // this.getRouter().navTo("Map");
             },
 
             attachGroupChange: function () {
@@ -234,7 +236,7 @@ sap.ui.define([
             onMapRouteMatched: function (oEvent) {
                 this.applyGroupFilter();
                 this.getModel("local").setProperty("/sCurrentSpotId", "");
-                this.onButtonClosePress();
+                this.byId("bottomSheet").setVisible(false); 
             },
 
             onMapWithPOIRouteMatched: function (oEvent) {
@@ -384,11 +386,6 @@ sap.ui.define([
                     : `geo:${lat},${long}?q=${lat},${long}`;
 
                 window.open(url, '_self');
-            },
-
-            onButtonClosePress: function (oEvent) {
-                this.getRouter().navTo("Map");
-                this.byId("bottomSheet").setVisible(false);
             },
 
             onNearbyPress: function (oEvent) {
