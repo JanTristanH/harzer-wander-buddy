@@ -53,84 +53,8 @@ sap.ui.define([
                 }
             },
 
-            onAfterRendering: function () {
-                this._initBottomSheetDrag();
-            },
-
             onCloseBottomSheet: function () {
                 this.byId("bottomSheet").setVisible(false);
-            },
-
-            _initBottomSheetDrag: function () {
-                const getBottomSheet = () => {
-                    return this.byId("bottomSheet").getDomRef();
-                }
-
-                const getBottomStart = newPosition => {
-                    // return newPosition;
-                    const maxBottom = "56";
-                    const minBottom = -1 * this.getModel("device").getProperty("/resize/height") * 0.8 - (maxBottom - 128);
-
-                    if (newPosition < parseInt(minBottom)) {
-                        return minBottom;
-                    } else if (newPosition > parseInt(maxBottom)) {
-                        return maxBottom;
-                    } else {
-                        return newPosition;
-                    }
-                }
-                
-                let startY, startBottom;
-                
-                const sheetHeader = document.querySelector(".sheet-header");
-                const dragHandle = document.querySelector(".drag-handle");
-                // Mouse events
-                sheetHeader.addEventListener("mousedown", startDraggingMouse);
-                dragHandle.addEventListener("mousedown", startDraggingMouse);
-                document.addEventListener("mouseup", stopDragging);
-                document.addEventListener("mousemove", dragMouse);
-            
-                // Touch events
-                sheetHeader.addEventListener("touchstart", startDraggingTouch, { passive: false });
-                dragHandle.addEventListener("touchstart", startDraggingTouch, { passive: false });
-                document.addEventListener("touchend", stopDragging);
-                document.addEventListener("touchmove", dragTouch, { passive: false });
-            
-                throw new Error("needed for the drag events!?!");
-            
-                function startDraggingMouse(e) {
-                    e.preventDefault();
-                    isDragging = true;
-                    startY = e.clientY;
-                    const bottomSheet = getBottomSheet();
-                    startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
-                }
-            
-                function dragMouse(e) {
-                    if (!isDragging) return;
-                    const deltaY = e.clientY - startY;
-                    const bottomSheet = getBottomSheet();
-                    bottomSheet.style.bottom = getBottomStart(startBottom - deltaY) + "px";
-                }
-            
-                function startDraggingTouch(e) {
-                    e.preventDefault();
-                    isDragging = true;
-                    startY = e.touches[0].clientY;
-                    const bottomSheet = getBottomSheet();
-                    startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
-                }
-            
-                function dragTouch(e) {
-                    if (!isDragging) return;
-                    const deltaY = e.touches[0].clientY - startY;
-                    const bottomSheet = getBottomSheet();
-                    bottomSheet.style.bottom = getBottomStart(startBottom - deltaY) + "px";
-                }
-            
-                function stopDragging() {
-                    isDragging = false;
-                }
             },
 
             attachGroupChange: function () {
@@ -314,99 +238,36 @@ sap.ui.define([
             },
 
             onMapWithPOIRouteMatched: function (oEvent) {
-                let sCurrentSpotId = oEvent.getParameter("arguments").idPOI;
-                this.getModel("local").setProperty("/sCurrentSpotId", sCurrentSpotId);
-
-                // Define the callback function to handle the render event
-                const fnRenderHandler = () => {
-                    let aItems = [...this.byId("idAllPointsOfInterestsSpots").getItems()];
-                    const oParkingSpots = this.byId("idParkingSpotsSpots");
-
-                    if (oParkingSpots) {
-                        aItems.push(...oParkingSpots.getItems());
-                    }
-
-                    const oSpot = aItems.find(e => e.data("id") === sCurrentSpotId);
-
-                    if (oSpot) {
-                        // Detach the render event once the spot is found
-                        this._oMap.detachEvent("render", fnRenderHandler);
-                        this.onSpotClick({ getSource: function () { return oSpot; } }, true);
-                    }
-                };
-
-                // Attach the render event to wait until the control is rendered
-                this._oMap.attachEvent("render", fnRenderHandler);
-            },
-
-            onSpotClick: function (oEvent, bSuppressNavigation) {
                 const bottomSheet = this.byId("bottomSheet");
                 bottomSheet.setVisible(true);
-                
+
                 setTimeout(() => {
-                    // this._initBottomSheetDrag();
                     // wait for dom to be rendered
                     const domRef = bottomSheet.getDomRef();
                     domRef.style.display = "block";
                     domRef.style.bottom = "-420px";
+                    this._initBottomSheetDrag();
                 }, 0);
-                // if (this.getRouter().getHashChanger().hash.includes("tour")) {
-                //     return;
-                // }
-                // const oSpot = oEvent.getSource();
-                // const aCords = oSpot.getPosition().split(";");
-                // const nCurrentZoomLevel = this.getModel("app").getProperty("/zoomlevel")
-                // const nNewZoomLevel = nCurrentZoomLevel <= this.nZoomLevelClickThreshold ? this.nZoomLevelClickThreshold + 3 : nCurrentZoomLevel;
-                // this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nNewZoomLevel);
 
-                // const oSplitter = this.byId("idSplitter");
-                // if (!oSplitter) return;
-                // debugger
-                // if (oSplitter.getContentAreas().length > 1) {
-                //     // if more than 1 exists, the info card is open and can be recreated
-                //     // this also resets the location of the splitter
-                //     const oLastContentArea = oSplitter.getContentAreas().pop();
-                //     oSplitter.removeContentArea(oLastContentArea);
-                //     oLastContentArea.destroy();
-                //     this._pSPOIInforCard = null;
-                //     setTimeout(() => this.onSpotClick(oEvent), 0);
-                //     return;
-                // }
+                let sCurrentSpotId = oEvent.getParameter("arguments").idPOI;
+                this.getModel("local").setProperty("/sCurrentSpotId", sCurrentSpotId);
 
-                // let oView = this.getView();
-                // if (!this._pSPOIInforCard) {
-                //     this._pSPOIInforCard = Fragment.load({
-                //         id: oView.getId(),
-                //         name: "hwb.frontendhwb.fragment.POIInfoCard",
-                //         controller: this
-                //     }).then(function (oDialog) {
-                //         oView.addDependent(oDialog);
-                //         return oDialog;
-                //     });
-                // }
+                const oPoiObject = this._getPoiById(sCurrentSpotId)
+                let localModel = this.getModel("local");
 
-                // let localModel = this.getModel("local");
-                // const oPoiObject = oSpot.getBindingContext().getObject();
-                // let sCurrentSpotId = oPoiObject.ID;
-                // localModel.setProperty("/sCurrentSpotId", sCurrentSpotId);
-                // localModel.setProperty("/title", oPoiObject.name);
-                // localModel.setProperty("/description", oPoiObject.description);
-                // localModel.setProperty("/bStampingVisible", !!oPoiObject.number);
-                // localModel.setProperty("/bStampingEnabled", !oPoiObject.hasVisited);
-                // localModel.setProperty("/sSelectedSpotLocation", `${oPoiObject.longitude};${oPoiObject.latitude}`);
-                // localModel.setProperty("/oCurrentSpot", this._getPoiById(sCurrentSpotId));
+                localModel.setProperty("/sCurrentSpotId", sCurrentSpotId);
+                localModel.setProperty("/title", oPoiObject.name);
+                localModel.setProperty("/description", oPoiObject.description);
+                localModel.setProperty("/bStampingVisible", !!oPoiObject.number);
+                localModel.setProperty("/bStampingEnabled", !oPoiObject.hasVisited);
+                localModel.setProperty("/sSelectedSpotLocation", `${oPoiObject.longitude};${oPoiObject.latitude}`);
+                localModel.setProperty("/oCurrentSpot", this._getPoiById(sCurrentSpotId));
 
-                // this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
+                this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
+            },
 
-                // if (!bSuppressNavigation) {
-                //     this.getRouter().navTo("MapWithPOI", { idPOI: sCurrentSpotId });
-                // }
-
-                // this._pSPOIInforCard.then(oInfoCard => {
-                //     oInfoCard.setModel("local", localModel);
-                //     oSplitter.addContentArea(oInfoCard);
-                //     //oSplitter.resetContentAreasSizes();
-                // });
+            onSpotClick: function (oEvent) {
+                this.getRouter().navTo("MapWithPOI", { idPOI: oEvent.getSource().getBindingContext().getProperty("ID") });
             },
 
             _loadRelevantTravelTimesForPoi: function (sCurrentSpotId, localModel) {
@@ -528,16 +389,6 @@ sap.ui.define([
             onButtonClosePress: function (oEvent) {
                 this.getRouter().navTo("Map");
                 this.byId("bottomSheet").setVisible(false);
-                // const oSplitter = this.byId("idSplitter");
-                // var aContentAreas = oSplitter.getContentAreas()
-                // if (aContentAreas.length > 1) {
-
-                //     var oLastContentArea = aContentAreas.pop();
-                //     oSplitter.removeContentArea(oLastContentArea);
-                //     oLastContentArea.destroy();
-                //     this._pSPOIInforCard = null;
-                //     oSplitter.resetContentAreasSizes();
-                // }
             },
 
             onNearbyPress: function (oEvent) {
@@ -553,6 +404,74 @@ sap.ui.define([
             onOpenGroupManagement: function (oEvent) {
                 this.oMyAvatar = this.byId("idCurrentUserAvatarMapInner--idMyAvatar");
                 this._oPopover.openBy(this.oMyAvatar ?? oEvent.getSource());
+            },
+
+            _initBottomSheetDrag: function () {
+                const getBottomSheet = () => {
+                    return this.byId("bottomSheet").getDomRef();
+                }
+
+                const getBottomStart = newPosition => {
+                    // return newPosition;
+                    const maxBottom = "56";
+                    const minBottom = -1 * this.getModel("device").getProperty("/resize/height") * 0.8 - (maxBottom - 128);
+
+                    if (newPosition < parseInt(minBottom)) {
+                        return minBottom;
+                    } else if (newPosition > parseInt(maxBottom)) {
+                        return maxBottom;
+                    } else {
+                        return newPosition;
+                    }
+                }
+
+                const sheetHeader = document.querySelector(".sheet-header");
+                const dragHandle = document.querySelector(".drag-handle");
+                // Mouse events
+                sheetHeader.addEventListener("mousedown", startDraggingMouse.bind(this));
+                dragHandle.addEventListener("mousedown", startDraggingMouse.bind(this));
+                document.addEventListener("mouseup", stopDragging.bind(this));
+                document.addEventListener("mousemove", dragMouse.bind(this));
+
+                // Touch events
+                sheetHeader.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
+                dragHandle.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
+                document.addEventListener("touchend", stopDragging.bind(this));
+                document.addEventListener("touchmove", dragTouch.bind(this), { passive: false });
+
+                function startDraggingMouse(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    this.startY = e.clientY;
+                    const bottomSheet = getBottomSheet();
+                    this.startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
+                };
+
+                function dragMouse(e) {
+                    if (!isDragging) return;
+                    const deltaY = e.clientY - this.startY;
+                    const bottomSheet = getBottomSheet();
+                    bottomSheet.style.bottom = getBottomStart(this.startBottom - deltaY) + "px";
+                }
+
+                function startDraggingTouch(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    this.startY = e.touches[0].clientY;
+                    const bottomSheet = getBottomSheet();
+                    this.startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
+                }
+
+                function dragTouch(e) {
+                    if (!isDragging) return;
+                    const deltaY = e.touches[0].clientY - this.startY;
+                    const bottomSheet = getBottomSheet();
+                    bottomSheet.style.bottom = getBottomStart(this.startBottom - deltaY) + "px";
+                }
+
+                function stopDragging() {
+                    isDragging = false;
+                }
             }
         });
     });

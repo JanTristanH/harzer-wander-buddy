@@ -120,7 +120,7 @@ sap.ui.define([
           });
           const marker = L.marker(pos, { icon }).addTo(this._oMap);
           if (oSpot.getText()) {
-            marker.bindPopup(oSpot.getText());
+            //marker.bindPopup(oSpot.getText());
           }
           marker.on("click", () => oSpot.fireClick());
       
