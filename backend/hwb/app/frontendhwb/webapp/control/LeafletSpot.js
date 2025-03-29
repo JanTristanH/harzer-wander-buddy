@@ -81,6 +81,8 @@ sap.ui.define([
           return this._colorRed;
         case "Success":
           return this._colorGreen;
+        case "Warning":
+          return this._colorYellow;
         default:
           return this._colorBlue;
       }
@@ -89,6 +91,7 @@ sap.ui.define([
     _colorRed: "rgb(187,0,0)",
     _colorGreen: "rgb(43, 125, 43)",
     _colorBlue: "rgb(66, 124, 172)",
+    _colorYellow: "rgb(255, 255, 0)",
     _locationIcon: `<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="50" height="56" viewBox="187.96 -95.74 1080 1080" xml:space="preserve">

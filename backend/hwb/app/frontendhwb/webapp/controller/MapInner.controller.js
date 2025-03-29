@@ -78,7 +78,7 @@ sap.ui.define([
                 let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
 
                 // Apply filter to binding
-                const oBinding = this.byId("idAllPointsOfInterestsSpots").getBinding("items");
+                const oBinding = this.byId("idStampingSpots").getBinding("items");
                 if (oBinding) {
                     oBinding.filter(aSelectedGroup.length > 1 ? oFilter : null);
                 }

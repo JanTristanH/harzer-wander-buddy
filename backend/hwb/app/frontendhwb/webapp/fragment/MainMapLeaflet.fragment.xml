@@ -10,15 +10,17 @@
     zoomChanged="onGeoMapZoomChanged"
     centerChanged="onGeoMapCenterChanged">
     <custom:Spots
-        id="idAllPointsOfInterestsSpots"
+        id="idStampingSpots"
         items="{ path: '/Stampboxes', parameters:{expand : 'Stampings'} }"
     >
         <!-- Example spot aggregation. Adjust bindings as per your model. -->
         <custom:LeafletSpot
             position="{longitude};{latitude}"
+            scale="{ parts:['ID','local>/sCurrentSpotId'], formatter: '.onFormatSpotScale'}"
             text="{number}"
+            type="{ parts: ['', 'app>/bShowStampedSpots', 'app>/bShowUnStampedSpots', 'hasVisited'], formatter: '.onFormatBoxType'}"
+            labelText="{ parts: ['name', 'app>/zoomlevel', 'app>/bShowLabels', 'app>/bShowStampedSpots', 'app>/bShowUnStampedSpots', 'hasVisited', 'ID','local>/sCurrentSpotId'], formatter: '.onFormatStampLabelText'}"
             click="onSpotClick"
-            type="{ parts: ['', 'app>/bShowStampedSpots', 'app>/bShowUnStampedSpots', 'hasVisited'], formatter: '.onFormatBoxType'}"    
         />
         <!-- Add additional spots or use aggregation binding as needed. -->
     </custom:Spots>
