@@ -57,31 +57,20 @@ sap.ui.define([
                 this._initBottomSheetDrag();
             },
 
-            onShowBottomSheet: function () {
-                const sheet = this.byId("bottomSheet").getDomRef();
-                // Make it visible in SAPUI5
-                this.byId("bottomSheet").setVisible(true);
-
-                document.body.style.overflow = "hidden";
-                // Slide it up into view
-                sheet.style.transform = "translateY(0)"; s
-            },
-
             onCloseBottomSheet: function () {
                 this.byId("bottomSheet").setVisible(false);
             },
 
             _initBottomSheetDrag: function () {
-                const bottomSheet = document.querySelector(".bottom-sheet");
-                const sheetHeader = document.querySelector(".sheet-header");
-                const dragHandle = document.querySelector(".drag-handle");
-                const closeBtn = document.querySelector(".close-btn");
-                
+                const getBottomSheet = () => {
+                    return this.byId("bottomSheet").getDomRef();
+                }
+
                 const getBottomStart = newPosition => {
                     // return newPosition;
                     const maxBottom = "56";
                     const minBottom = -1 * this.getModel("device").getProperty("/resize/height") * 0.8 - (maxBottom - 128);
-                    debugger
+
                     if (newPosition < parseInt(minBottom)) {
                         return minBottom;
                     } else if (newPosition > parseInt(maxBottom)) {
@@ -90,9 +79,11 @@ sap.ui.define([
                         return newPosition;
                     }
                 }
-            
+                
                 let startY, startBottom;
-            
+                
+                const sheetHeader = document.querySelector(".sheet-header");
+                const dragHandle = document.querySelector(".drag-handle");
                 // Mouse events
                 sheetHeader.addEventListener("mousedown", startDraggingMouse);
                 dragHandle.addEventListener("mousedown", startDraggingMouse);
@@ -105,19 +96,20 @@ sap.ui.define([
                 document.addEventListener("touchend", stopDragging);
                 document.addEventListener("touchmove", dragTouch, { passive: false });
             
-                closeBtn.addEventListener("click", hideBottomSheet);
+                throw new Error("needed for the drag events!?!");
             
                 function startDraggingMouse(e) {
                     e.preventDefault();
                     isDragging = true;
                     startY = e.clientY;
+                    const bottomSheet = getBottomSheet();
                     startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
                 }
             
                 function dragMouse(e) {
                     if (!isDragging) return;
                     const deltaY = e.clientY - startY;
-                    // allow to swipe out of the screen
+                    const bottomSheet = getBottomSheet();
                     bottomSheet.style.bottom = getBottomStart(startBottom - deltaY) + "px";
                 }
             
@@ -125,24 +117,19 @@ sap.ui.define([
                     e.preventDefault();
                     isDragging = true;
                     startY = e.touches[0].clientY;
+                    const bottomSheet = getBottomSheet();
                     startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
                 }
             
                 function dragTouch(e) {
                     if (!isDragging) return;
                     const deltaY = e.touches[0].clientY - startY;
-                    // allow to swipe out of the screen
+                    const bottomSheet = getBottomSheet();
                     bottomSheet.style.bottom = getBottomStart(startBottom - deltaY) + "px";
                 }
             
                 function stopDragging() {
                     isDragging = false;
-                }
-            
-                function hideBottomSheet() {
-                    bottomSheet.style.display = "none";
-                    document.body.style.overflow = "auto";
-                    bottomSheet.style.bottom = "-100%";
                 }
             },
 
@@ -355,8 +342,9 @@ sap.ui.define([
             onSpotClick: function (oEvent, bSuppressNavigation) {
                 const bottomSheet = this.byId("bottomSheet");
                 bottomSheet.setVisible(true);
-
+                
                 setTimeout(() => {
+                    // this._initBottomSheetDrag();
                     // wait for dom to be rendered
                     const domRef = bottomSheet.getDomRef();
                     domRef.style.display = "block";
