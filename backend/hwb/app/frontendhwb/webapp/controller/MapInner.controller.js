@@ -266,6 +266,8 @@ sap.ui.define([
                 localModel.setProperty("/oCurrentSpot", this._getPoiById(sCurrentSpotId));
 
                 this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
+                
+                this._oMap.setCenterPosition(oPoiObject.longitude + ";" + oPoiObject.latitude);  
             },
 
             onSpotClick: function (oEvent) {

@@ -130,8 +130,11 @@ sap.ui.define([
   
       setCenterPosition: function(sPosition) {
         var latlng = this._parsePosition(sPosition);
-        this._oMap?.setView(latlng, this._oMap.getZoom());
-      },
+        this._oMap?.panTo(latlng, {
+            animate: true,
+            duration: 0.5 // in seconds (optional)
+        });
+    },    
   
       zoomToGeoPosition: function(sLong, sLat, sZoomLevel) {
         this._oMap?.setView([sLat, sLong], sZoomLevel || fallBackZoomLevel);
