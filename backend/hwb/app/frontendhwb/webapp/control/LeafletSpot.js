@@ -49,8 +49,6 @@ sap.ui.define([
       }
       this.setProperty("type", sType, true);
       this.updateMarker();
-      console.log("setType", sType);
-      
       return this;
     },
 
