@@ -123,6 +123,14 @@
   padding-right: 5px;
 }
 
+.marker-text-hidden {
+  text-align: center;
+  color: black;
+  font-weight: 600;
+  font-size: 12px;
+  z-index: 201;
+}
+
 .marker-label {
   font-size: 12px;
   font-weight: normal;

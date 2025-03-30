@@ -48,21 +48,16 @@ sap.ui.define([
         return this;
       }
 
-      this.setProperty("type", sType, true); // true = suppress invalidate
-      this._updateRenderingBasedOnType();    // custom logic
+      this.setProperty("type", sType, true);
       this.marker?.setIcon(L.divIcon({
         className: '',
-        html: `<p>${this.getText()}</p>`,
+        html: this.getHtmlIconForSpot(),
         iconSize: [30, 30],
         iconAnchor: [15, 15]
       }));
       return this;
     },
 
-    _updateRenderingBasedOnType: function () {
-      // Your custom logic here, e.g., update marker style
-      console.log("Type changed to:", this.getType());
-    },
 
     _parsePosition: function (sPosition) {
       var aCoords = sPosition?.split(";") ?? aFallBackCords;
@@ -74,12 +69,16 @@ sap.ui.define([
     getHtmlIconForSpot: function () {
       const primaryColor = this._typeToColor(this.getType());
       const scale = this.getScale() || "1;1;1";
+      const isHidden = this.getType() == "Hidden";
 
+      
       const baseSvg = this._newLocationIcon.replaceAll(placeholderPrimaryColor, primaryColor);
 
-      const text = `<div class="marker-text">${this.getText()}</div>`;
+      const markerTextClass = isHidden ? "marker-text-hidden" : "marker-text";
+      const text = `<div class="${markerTextClass}">${this.getText()}</div>`;
 
       const labelText = this.getLabelText();
+
       const labelSvg = labelText
         ? `<div class="marker-label">
              <strong>${labelText}</strong>
@@ -89,10 +88,10 @@ sap.ui.define([
       return `
         <div class="marker-container" style="transform: scale(${scale}); transform-origin: center;">
           <div class="marker-icon-wrapper">
-            ${baseSvg}
+            ${isHidden ? "" : baseSvg}
             ${text}
           </div>
-          ${labelSvg}
+          ${isHidden ? "" : labelSvg}
         </div>`;
     },    
 
@@ -104,8 +103,6 @@ sap.ui.define([
           return this._colorGreen;
         case "Warning":
           return this._colorYellow;
-        case "Hidden":
-          return "transparent";
         default:
           return this._colorBlue;
       }
