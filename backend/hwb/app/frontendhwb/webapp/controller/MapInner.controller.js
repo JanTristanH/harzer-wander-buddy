@@ -451,15 +451,18 @@ sap.ui.define([
 
                 const sheetHeader = document.querySelector(".sheet-header");
                 const dragHandle = document.querySelector(".drag-handle");
+                const sheetContent = document.querySelector(".sheet-content");
                 // Mouse events
                 sheetHeader.addEventListener("mousedown", startDraggingMouse.bind(this));
                 dragHandle.addEventListener("mousedown", startDraggingMouse.bind(this));
+                sheetContent.addEventListener("mousedown", startDraggingMouse.bind(this));
                 document.addEventListener("mouseup", stopDragging.bind(this));
                 document.addEventListener("mousemove", dragMouse.bind(this));
 
                 // Touch events
                 sheetHeader.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
                 dragHandle.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
+                sheetContent.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
                 document.addEventListener("touchend", stopDragging.bind(this));
                 document.addEventListener("touchmove", dragTouch.bind(this), { passive: false });
 
