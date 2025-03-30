@@ -391,7 +391,7 @@ sap.ui.define([
 
         onFormatSpotText: function (sText) {
             if (!sText) return "";
-            const parts = sText.split("/");
+            const parts = sText.split("Stempelstelle /");
             return parts.pop() || "";
         }
     });
