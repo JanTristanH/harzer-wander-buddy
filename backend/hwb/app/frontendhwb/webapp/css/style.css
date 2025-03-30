@@ -32,6 +32,7 @@
   background-color: #0056b3;
 }
 
+/* Styles for the bottom sheet */
 .bottom-sheet {
   display: none;
   position: fixed;

@@ -109,6 +109,10 @@ sap.ui.define([
 
       aSpots.forEach(oSpot => {
         const marker = oSpot.getMarker();
+        if(!marker) {
+          console.warn("LeafletMap: No marker found for spot");
+          return;
+        }
         marker.addTo(this._oMap)
         this._aMarkers.push(marker);
       });
@@ -123,7 +127,7 @@ sap.ui.define([
     },
 
     zoomToGeoPosition: function (sLong, sLat, sZoomLevel) {
-      this._oMap?.setView([parseFloat(sLat) - 0.004, parseFloat(sLong)], sZoomLevel || fallBackZoomLevel);
+      this._oMap?.setView([parseFloat(sLat) - 0.004, parseFloat(sLong)], sZoomLevel ?? this.getZoomlevel());
     },
 
     invalidateSize: function () {

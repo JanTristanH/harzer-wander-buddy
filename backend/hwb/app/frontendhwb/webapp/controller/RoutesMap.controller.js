@@ -12,7 +12,7 @@ sap.ui.define([
      */
     function (Controller, ColumnListItem, MessageToast, AvatarGroupItem, Menu, MenuItem, Popup,) {
         "use strict";
-
+        let isDragging = false;
         return Controller.extend("hwb.frontendhwb.controller.RoutesMap", {
             bPersistedDisplayed: true,
             onInit: function () {
@@ -23,6 +23,10 @@ sap.ui.define([
                 this.getRouter().getRoute("RoutesDetailEdit").attachPatternMatched(this.onRoutesDetailEditMatched, this);
                 this.bus = this.getOwnerComponent().getEventBus();
                 this.bus.subscribe("idRoutesWayPointList", "onListSelect", this.onListSelect, this);
+            },
+
+            onAfterRendering: function () {
+                this._initBottomSheetDrag();
             },
 
             onSearchFieldSearch: function(oEvent) {
@@ -456,7 +460,7 @@ sap.ui.define([
                 let oPoi = this._getPoiById(oItem.toPoi || oItem.fromPoi 
                     || oItem.poi // calculated routes
                 );
-                this._getMap().setCenterPosition(`${oPoi.longitude};${oPoi.latitude}`);
+                this._getMap().zoomToGeoPosition(oPoi.longitude, oPoi.latitude);
             },
 
             formatStampButtonIcon: function (sID) {
@@ -591,5 +595,96 @@ sap.ui.define([
                 }
             },
 
+            _initBottomSheetDrag: function () {
+                const getBottomSheet = () => {
+                    return this.byId("bottomSheetTour")?.getDomRef();
+                }
+
+                this.showBottomSheetWaitingForMap();
+
+                const getBottomStart = newPosition => {
+                    // return newPosition;
+                    const maxBottom = "56";
+                    const minBottom = -1 * this.getModel("device").getProperty("/resize/height") * 0.8 - (maxBottom - 128);
+
+                    if (newPosition < parseInt(minBottom)) {
+                        return minBottom;
+                    } else if (newPosition > parseInt(maxBottom)) {
+                        return maxBottom;
+                    } else {
+                        return newPosition;
+                    }
+                }
+
+                const sheetHeader = document.querySelector(".sheet-header");
+                const dragHandle = document.querySelector(".drag-handle");
+                const sheetContent = document.querySelector(".sheet-content");
+                // Mouse events
+                sheetHeader.addEventListener("mousedown", startDraggingMouse.bind(this));
+                dragHandle.addEventListener("mousedown", startDraggingMouse.bind(this));
+                sheetContent.addEventListener("mousedown", startDraggingMouse.bind(this));
+                document.addEventListener("mouseup", stopDragging.bind(this));
+                document.addEventListener("mousemove", dragMouse.bind(this));
+
+                // Touch events
+                sheetHeader.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
+                dragHandle.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
+                sheetContent.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
+                document.addEventListener("touchend", stopDragging.bind(this));
+                document.addEventListener("touchmove", dragTouch.bind(this), { passive: false });
+
+                function startDraggingMouse(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    this.startY = e.clientY;
+                    const bottomSheet = getBottomSheet();
+                    this.startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
+                };
+
+                function dragMouse(e) {
+                    if (!isDragging) return;
+                    const deltaY = e.clientY - this.startY;
+                    const bottomSheet = getBottomSheet();
+                    if (!bottomSheet) return;
+                    bottomSheet.style.bottom = getBottomStart(this.startBottom - deltaY) + "px";
+                }
+
+                function startDraggingTouch(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    this.startY = e.touches[0].clientY;
+                    const bottomSheet = getBottomSheet();
+                    if (!bottomSheet) return;
+                    this.startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
+                }
+
+                function dragTouch(e) {
+                    if (!isDragging) return;
+                    const deltaY = e.touches[0].clientY - this.startY;
+                    const bottomSheet = getBottomSheet();
+                    if (!bottomSheet) return;
+                    bottomSheet.style.bottom = getBottomStart(this.startBottom - deltaY) + "px";
+                }
+
+                function stopDragging() {
+                    isDragging = false;
+                }
+            },
+
+            showBottomSheetWaitingForMap: function () {
+                const oMap = this._getMap();
+                const sheet = this.byId("bottomSheetTour");
+                if (!oMap || !sheet) {
+                    setTimeout(() => this.showBottomSheetWaitingForMap(), 100);
+                    return;
+                }
+                const bottomSheet =sheet.getDomRef();
+                bottomSheet.style.display = "block";
+                bottomSheet.style.bottom = "-420px";
+                bottomSheet.style.width = oMap.getDomRef().offsetWidth + "px";
+                bottomSheet.style.right = "0";
+bottomSheet.style.left = "auto"; // just in case
+
+            }
         });
     });

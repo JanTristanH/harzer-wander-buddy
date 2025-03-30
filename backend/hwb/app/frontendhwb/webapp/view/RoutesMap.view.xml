@@ -175,23 +175,24 @@
             </Table>
         </ScrollContainer>
     </Panel>
-    <l:Splitter
-        orientation="Vertical"
-        id="idRoutesDetailSplitter"
-        resize=".onSplitterRoutesDetailResize"
-    >
         <mvc:XMLView
             id="RoutesMapId"
             async="true"
             viewName="hwb.frontendhwb.view.RoutesMapInner"
         />
-        <VBox>
-            <layoutData>
-                <l:SplitterLayoutData
-                    id="idTourKeyFactsSplitterLayoutData"
-                    size="20%"
-                />
-            </layoutData>
+
+            <VBox
+                id="bottomSheetTour"
+                class="bottom-sheet"
+            >
+                <HBox class="sheet-header">
+                    <VBox class="drag-handle" />
+                </HBox>
+                <VBox
+                    class="sheet-content"
+                    height="80vh"
+                >
+
             <FlexBox
                 justifyContent="SpaceAround"
                 alignItems="Center"
@@ -244,7 +245,7 @@
             >
                 <ScrollContainer
                     width="100%"
-                    height="{local>/wayPointScrollContainerHeight}"
+                    height="60vh"
                     vertical="true"
                     horizontal="false"
                 >
@@ -440,6 +441,7 @@
                     </List>
                 </ScrollContainer>
             </Panel>
+
         </VBox>
-    </l:Splitter>
+    </VBox>
 </mvc:View>
