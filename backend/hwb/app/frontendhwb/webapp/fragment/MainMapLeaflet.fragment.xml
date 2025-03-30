@@ -1,5 +1,5 @@
 <custom:LeafletMap
-    xmlns:custom="hwb.frontendhwb.control"    
+    xmlns:custom="hwb.frontendhwb.control"
     id="map"
     initialPosition="10.615779999999972;51.80054"
     initialZoom="16"
@@ -8,12 +8,12 @@
     height="97%"
     width="100%"
     zoomChanged="onGeoMapZoomChanged"
-    centerChanged="onGeoMapCenterChanged">
+    centerChanged="onGeoMapCenterChanged"
+>
     <custom:Spots
         id="idStampingSpots"
         items="{ path: '/Stampboxes', parameters:{expand : 'Stampings'} }"
     >
-        <!-- Example spot aggregation. Adjust bindings as per your model. -->
         <custom:LeafletSpot
             position="{longitude};{latitude}"
             scale="{ parts:['ID','local>/sCurrentSpotId'], formatter: '.onFormatSpotScale'}"
@@ -22,6 +22,19 @@
             labelText="{ parts: ['name', 'app>/zoomlevel', 'app>/bShowLabels', 'app>/bShowStampedSpots', 'app>/bShowUnStampedSpots', 'hasVisited', 'ID','local>/sCurrentSpotId'], formatter: '.onFormatStampLabelText'}"
             click="onSpotClick"
         />
-        <!-- Add additional spots or use aggregation binding as needed. -->
+    </custom:Spots>
+
+    <custom:Spots
+        id="idParkingSpots"
+        items="{/ParkingSpots}"
+    >
+        <custom:LeafletSpot
+            position="{longitude};{latitude}"
+            scale="{ parts:['ID','local>/sCurrentSpotId'], formatter: '.onFormatSpotScale'}"
+            text="{ parts: ['app>/zoomlevel', 'i18n>ParkingSpotText'], formatter: '.onFormatParkingText' }"
+            type="{ parts: ['app>/bShowParkingSpots', 'app>/zoomlevel'], formatter: '.onFormatBooleanToSemanticType' }"
+            labelText="{ parts: ['name', 'app>/zoomlevel', 'app>/bShowLabels', 'app>/bShowParkingSpots', 'ID','local>/sCurrentSpotId'], formatter: '.onFormatLabelText'}"
+            click="onSpotClick"
+        />
     </custom:Spots>
 </custom:LeafletMap>
