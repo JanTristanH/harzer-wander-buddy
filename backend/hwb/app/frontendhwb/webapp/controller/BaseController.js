@@ -388,5 +388,11 @@ sap.ui.define([
         onCancelStampGroup: function () {
             this._oStampDialog.close();
         },
+
+        onFormatSpotText: function (sText) {
+            if (!sText) return "";
+            const parts = sText.split("/");
+            return parts.pop() || "";
+        }
     });
 });

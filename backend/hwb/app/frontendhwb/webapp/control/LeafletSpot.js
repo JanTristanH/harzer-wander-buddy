@@ -73,16 +73,16 @@ sap.ui.define([
 
     getHtmlIconForSpot: function () {
       const primaryColor = this._typeToColor(this.getType());
-      const labelText = this.getLabelText(); // full text like "Stempelstelle 22 / Gelber Brink"
       const scale = this.getScale() || "1;1;1";
-    
+
       const baseSvg = this._newLocationIcon.replaceAll(placeholderPrimaryColor, primaryColor);
-    
+
       const text = `<div class="marker-text">${this.getText()}</div>`;
-    
+
+      const labelText = this.getLabelText();
       const labelSvg = labelText
         ? `<div class="marker-label">
-             <strong>${labelText.split('/')[0].trim()}</strong> / ${labelText.split('/')[1]?.trim() || ""}
+             <strong>${labelText}</strong>
            </div>`
         : "";
     
