@@ -37,4 +37,12 @@
             click="onSpotClick"
         />
     </custom:Spots>
+
+    <custom:Spots>
+        <custom:LeafletSpot
+            text="📍"
+            id="idUserLocationSpot"
+            position="{local>/UserLocationLng};{local>/UserLocationLat}"
+        />
+    </custom:Spots>
 </custom:LeafletMap>
