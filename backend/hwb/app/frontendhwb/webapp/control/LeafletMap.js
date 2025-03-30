@@ -123,7 +123,7 @@ sap.ui.define([
     },
 
     zoomToGeoPosition: function (sLong, sLat, sZoomLevel) {
-      this._oMap?.setView([parseFloat(sLat), parseFloat(sLong)], sZoomLevel || fallBackZoomLevel);
+      this._oMap?.setView([parseFloat(sLat) - 0.004, parseFloat(sLong)], sZoomLevel || fallBackZoomLevel);
     },
 
     invalidateSize: function () {

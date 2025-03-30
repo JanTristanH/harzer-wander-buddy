@@ -199,9 +199,14 @@ sap.ui.define([
                 const oSearchField = oEvent.getSource();
                 const sValue = oEvent.getParameter("suggestValue").toLowerCase();
                 let aFilters = [];
-                for (const sWord of sValue.split(" ")) {
-                    aFilters.push(new Filter("name", FilterOperator.Contains, sWord));
-                    aFilters.push(new Filter("name", FilterOperator.Contains, sWord.charAt(0).toUpperCase() + sWord.slice(1)));
+
+                if(sValue.includes("stempelstelle")) {
+                    aFilters.push(new Filter("name", FilterOperator.Contains, sValue));
+                } else {
+                    for (const sWord of sValue.split(" ")) {
+                        aFilters.push(new Filter("name", FilterOperator.Contains, sWord));
+                        aFilters.push(new Filter("name", FilterOperator.Contains, sWord.charAt(0).toUpperCase() + sWord.slice(1)));
+                    }
                 }
                 const oFinalFilter = new Filter({
                     filters: aFilters,
@@ -222,12 +227,16 @@ sap.ui.define([
             },
 
             onSearchFieldSearch: function (oEvent) {
-                const oItem = oEvent.getParameter("suggestionItem");
+                let oItem = oEvent.getParameter("suggestionItem");
                 const oSearchField = oEvent.getSource();
+                if (!oItem) {
+                    oItem = oSearchField.getSuggestionItems()[0];
+                }
                 if (oItem) {
                     oSearchField._blur();
                     this.getRouter().navTo("MapWithPOI", { idPOI: oItem.getKey() });
                 } else {
+                    debugger
                     MessageToast.show(this.getText("selectPointFromList"));
                 }
             },
