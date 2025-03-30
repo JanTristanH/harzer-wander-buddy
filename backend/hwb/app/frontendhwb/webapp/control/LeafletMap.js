@@ -58,7 +58,7 @@ sap.ui.define([
         }).addTo(this._oMap);
 
         this._oMap.on('zoomend', () => {
-          this.fireZoomChanged({ zoom: this._oMap.getZoom() });
+          this.fireZoomChanged({ zoomLevel: this._oMap.getZoom() });
         });
 
         this._oMap.on('moveend', () => {

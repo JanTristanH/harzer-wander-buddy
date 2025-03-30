@@ -13,7 +13,7 @@ sap.ui.define([
         type: { type: "string", defaultValue: "default" },
         labelText: { type: "string", defaultValue: "" },
         scale: { type: "string", defaultValue: "1;1;1" }
-      },      
+      },
       events: {
         click: {}
       }
@@ -47,15 +47,54 @@ sap.ui.define([
       if (sType === this.getType()) {
         return this;
       }
-
       this.setProperty("type", sType, true);
+      this.updateMarker();
+      return this;
+    },
+
+    setPosition: function (sPosition) {
+      if (sPosition === this.getPosition()) {
+        return this;
+      }
+      this.setProperty("position", sPosition, true);
+      this.updateMarker(); // or updatePosition if you have specific logic
+      return this;
+    },
+    
+    setText: function (sText) {
+      if (sText === this.getText()) {
+        return this;
+      }
+      this.setProperty("text", sText, true);
+      this.updateMarker(); // or updateText if separate
+      return this;
+    },
+    
+    setLabelText: function (sLabelText) {
+      if (sLabelText === this.getLabelText()) {
+        return this;
+      }
+      this.setProperty("labelText", sLabelText, true);
+      this.updateMarker(); // or updateLabelText
+      return this;
+    },
+    
+    setScale: function (sScale) {
+      if (sScale === this.getScale()) {
+        return this;
+      }
+      this.setProperty("scale", sScale, true);
+      this.updateMarker(); // or updateScale
+      return this;
+    },
+    
+    updateMarker: function newFunction() {
       this.marker?.setIcon(L.divIcon({
         className: '',
         html: this.getHtmlIconForSpot(),
         iconSize: [30, 30],
         iconAnchor: [15, 15]
       }));
-      return this;
     },
 
 
@@ -71,7 +110,7 @@ sap.ui.define([
       const scale = this.getScale() || "1;1;1";
       const isHidden = this.getType() == "Hidden";
 
-      
+
       const baseSvg = this._newLocationIcon.replaceAll(placeholderPrimaryColor, primaryColor);
 
       const markerTextClass = isHidden ? "marker-text-hidden" : "marker-text";
@@ -84,7 +123,7 @@ sap.ui.define([
              <strong>${labelText}</strong>
            </div>`
         : "";
-    
+
       return `
         <div class="marker-container" style="transform: scale(${scale}); transform-origin: center;">
           <div class="marker-icon-wrapper">
@@ -93,7 +132,7 @@ sap.ui.define([
           </div>
           ${isHidden ? "" : labelSvg}
         </div>`;
-    },    
+    },
 
     _typeToColor: function (sType) {
       switch (sType) {
@@ -103,13 +142,13 @@ sap.ui.define([
           return "rgb(43, 125, 43)";
         case "Warning":
           return "rgb(231 140 7)";
-          default:
+        default:
           return "rgb(66, 124, 172)";
       }
     },
 
-    _newLocationIcon: 
-`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="50" height="56" viewBox="0 0 1080 1080" xml:space="preserve">
+    _newLocationIcon:
+      `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="50" height="56" viewBox="0 0 1080 1080" xml:space="preserve">
 <g transform="matrix(45 0 0 45 540 540)"  >
 <path style="stroke: rgb(255,255,255); stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: ${placeholderPrimaryColor}; fill-rule: nonzero; opacity: 1;"  transform=" translate(-12, -12)" d="M 12 11.5 C 10.619288125423017 11.5 9.5 10.380711874576983 9.5 9 C 9.5 7.619288125423017 10.619288125423017 6.5 12 6.5 C 13.380711874576983 6.5 14.5 7.619288125423016 14.5 9 C 14.5 10.380711874576983 13.380711874576983 11.5 12 11.5 M 12 2 C 8.134006751184447 2 5 5.1340067511844465 5 9 C 5 14.25 12 22 12 22 C 12 22 19 14.25 19 9 C 19 5.1340067511844465 15.865993248815553 2 12 2" stroke-linecap="round" />
 </g>

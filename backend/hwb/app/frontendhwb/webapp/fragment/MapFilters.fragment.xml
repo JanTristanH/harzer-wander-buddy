@@ -9,7 +9,7 @@
         placement="Bottom"
     >
         <VBox>
-            <CheckBox text="{i18n>showName}" selected="{app>/bShowLabels}" />
+            <!-- <CheckBox text="{i18n>showName}" selected="{app>/bShowLabels}" /> -->
             <CheckBox text="{i18n>visitedStamps}" selected="{app>/bShowStampedSpots}" />
             <CheckBox text="{i18n>missingStamps}" selected="{app>/bShowUnStampedSpots}" />
             <CheckBox text="{i18n>ParkingSpaces}" selected="{app>/bShowParkingSpots}" />
