@@ -678,13 +678,26 @@ sap.ui.define([
                     setTimeout(() => this.showBottomSheetWaitingForMap(), 100);
                     return;
                 }
-                const bottomSheet =sheet.getDomRef();
+
+                const mapDomRef = oMap.getDomRef();
+                const bottomSheet = sheet.getDomRef();
+
                 bottomSheet.style.display = "block";
                 bottomSheet.style.bottom = "-420px";
                 bottomSheet.style.width = oMap.getDomRef().offsetWidth + "px";
                 bottomSheet.style.right = "0";
-bottomSheet.style.left = "auto"; // just in case
+                bottomSheet.style.left = "auto"; 
 
+                if (this._bottomSheetResizeObserver) {
+                    this._bottomSheetResizeObserver.disconnect();
+                }
+            
+                // Attach ResizeObserver to map
+                this._bottomSheetResizeObserver = new ResizeObserver(() => {
+                    bottomSheet.style.width = mapDomRef.offsetWidth + "px";
+                });
+            
+                this._bottomSheetResizeObserver.observe(mapDomRef);
             }
         });
     });
