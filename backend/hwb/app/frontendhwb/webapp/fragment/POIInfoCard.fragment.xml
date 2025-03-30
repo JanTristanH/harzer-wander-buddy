@@ -80,7 +80,7 @@
                 <HBox
                     class="sapUiSmallMarginTop"
                     width="95%"
-                    visible="false"
+                    visible="{= !${local>/bStampingVisible}}"
                 >
                     <ExpandableText
                         class="sapUiTinyMarginBottom sapUiTinyMarginTop"

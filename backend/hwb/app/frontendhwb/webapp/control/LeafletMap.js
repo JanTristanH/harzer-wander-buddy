@@ -72,7 +72,7 @@ sap.ui.define([
       const aSpots = this.getAggregation("spots") || [];
 
       aSpots.forEach(oSpotGroup => {
-        oSpotGroup.attachEventOnce("_change", this._renderSpots, this);
+        oSpotGroup.attachEvent("_change", this._renderSpots, this);
 
         if (typeof oSpotGroup.updateItems === "function") {
           oSpotGroup.updateItems();
@@ -123,7 +123,7 @@ sap.ui.define([
     },
 
     zoomToGeoPosition: function (sLong, sLat, sZoomLevel) {
-      this._oMap?.setView([sLat, sLong], sZoomLevel || fallBackZoomLevel);
+      this._oMap?.setView([sLat + 0.2, sLong], sZoomLevel || fallBackZoomLevel);
     },
 
     invalidateSize: function () {

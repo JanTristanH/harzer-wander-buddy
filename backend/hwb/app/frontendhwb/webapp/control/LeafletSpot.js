@@ -109,7 +109,7 @@ sap.ui.define([
 
     getHtmlIconForSpot: function () {
       const primaryColor = this._typeToColor(this.getType());
-      const scale = this.getScale() || "1;1;1";
+      const scale = this.getScale().split(";")[0] || "1";
       const isHidden = this.getType() == "Hidden";
 
 
