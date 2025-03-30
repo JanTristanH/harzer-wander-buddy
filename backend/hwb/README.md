@@ -110,6 +110,7 @@ This project is configured to run with a postgres.
 - support maps.me navigation ✔️
   - handle navigation on desktop ❌
 - refactor scroll container on POI card / nearby stamps ✔️
+- delete stamping from poi card
 
 ## MVP 2
 
