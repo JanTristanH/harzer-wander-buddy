@@ -282,7 +282,7 @@ sap.ui.define([
 
                 this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
                 
-                this._oMap.setCenterPosition(oPoiObject.longitude + ";" + oPoiObject.latitude);  
+                this._oMap.zoomToGeoPosition(oPoiObject.longitude, oPoiObject.latitude, this.nZoomLevelLabelThreshold);
             },
 
             onSpotClick: function (oEvent) {
