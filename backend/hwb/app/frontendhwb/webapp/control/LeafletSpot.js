@@ -98,22 +98,18 @@ sap.ui.define([
     _typeToColor: function (sType) {
       switch (sType) {
         case "Error":
-          return this._colorRed;
+          return "rgb(187,0,0)";
         case "Success":
-          return this._colorGreen;
+          return "rgb(43, 125, 43)";
         case "Warning":
-          return this._colorYellow;
-        default:
-          return this._colorBlue;
+          return "rgb(231 140 7)";
+          default:
+          return "rgb(66, 124, 172)";
       }
     },
 
-    _colorRed: "rgb(187,0,0)",
-    _colorGreen: "rgb(43, 125, 43)",
-    _colorBlue: "rgb(66, 124, 172)",
-    _colorYellow: "rgb(255, 255, 0)",
-
-    _newLocationIcon: `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="50" height="56" viewBox="0 0 1080 1080" xml:space="preserve">
+    _newLocationIcon: 
+`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="50" height="56" viewBox="0 0 1080 1080" xml:space="preserve">
 <g transform="matrix(45 0 0 45 540 540)"  >
 <path style="stroke: rgb(255,255,255); stroke-width: 1; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: ${placeholderPrimaryColor}; fill-rule: nonzero; opacity: 1;"  transform=" translate(-12, -12)" d="M 12 11.5 C 10.619288125423017 11.5 9.5 10.380711874576983 9.5 9 C 9.5 7.619288125423017 10.619288125423017 6.5 12 6.5 C 13.380711874576983 6.5 14.5 7.619288125423016 14.5 9 C 14.5 10.380711874576983 13.380711874576983 11.5 12 11.5 M 12 2 C 8.134006751184447 2 5 5.1340067511844465 5 9 C 5 14.25 12 22 12 22 C 12 22 19 14.25 19 9 C 19 5.1340067511844465 15.865993248815553 2 12 2" stroke-linecap="round" />
 </g>
