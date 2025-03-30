@@ -54,9 +54,7 @@ sap.ui.define([
             },
 
             onCloseBottomSheet: function () {
-                this.byId("bottomSheet").setVisible(false);
-                // TODO should navigate back to map but this breaks the map
-                // this.getRouter().navTo("Map");
+                this.getRouter().navTo("Map");
             },
 
             attachGroupChange: function () {
@@ -289,24 +287,6 @@ sap.ui.define([
 
             onSpotClick: function (oEvent) {
                 this.getRouter().navTo("MapWithPOI", { idPOI: oEvent.getSource().getBindingContext().getProperty("ID") });
-                
-                // duplicate code from onMapWithPOIRouteMatched
-                // -> navigation to map does currently not work
-                const bottomSheet = this.byId("bottomSheet");
-                bottomSheet.setVisible(true);
-
-                const waitForDom = () => {
-                    const domRef = bottomSheet.getDomRef();
-                    if (!domRef) {
-                        setTimeout(waitForDom, 50);
-                        return;
-                    }
-        
-                    domRef.style.display = "block";
-                    domRef.style.bottom = "-420px";
-                };
-        
-                waitForDom();
             },
 
             _loadRelevantTravelTimesForPoi: function (sCurrentSpotId, localModel) {
