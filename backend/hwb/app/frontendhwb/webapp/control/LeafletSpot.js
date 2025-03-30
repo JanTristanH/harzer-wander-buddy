@@ -8,10 +8,12 @@ sap.ui.define([
   return Control.extend("hwb.frontendhwb.LeafletSpot", {
     metadata: {
       properties: {
-        position: { type: "string", defaultValue: "0;0" },  // format: "lng;lat"
+        position: { type: "string", defaultValue: "0;0" },
         text: { type: "string", defaultValue: "" },
-        type: { type: "string", defaultValue: "default" }
-      },
+        type: { type: "string", defaultValue: "default" },
+        labelText: { type: "string", defaultValue: "" },
+        scale: { type: "string", defaultValue: "1;1;1" }
+      },      
       events: {
         click: {}
       }
@@ -69,11 +71,29 @@ sap.ui.define([
       return [parseFloat(aCoords[1]), parseFloat(aCoords[0])];
     },
 
-    getHtmlIconForSpot: function (oSpot) {
-      return this._locationIcon
-        .replaceAll(placeholderPrimaryColor, this._typeToColor(this.getType()))
-        .replaceAll(placeholderText, this.getText());
-    },
+    getHtmlIconForSpot: function () {
+      const primaryColor = this._typeToColor(this.getType());
+      const text = this.getText();
+      const labelText = this.getLabelText();
+      const scale = this.getScale() || "1;1;1";
+    
+      // SVG base with injected scale
+      const baseSvg = this._locationIcon
+        .replaceAll(placeholderPrimaryColor, primaryColor)
+        .replaceAll(placeholderText, text);
+    
+      // Append labelText below icon only if it's set
+      const labelSvg = labelText
+        ? `<div style="text-align: center; font-size: 10px; margin-top: 2px;">${labelText}</div>`
+        : "";
+    
+      // Wrap the SVG and label inside a scalable container
+      return `
+        <div style="transform: scale(${scale}); transform-origin: center; text-align: center;">
+          ${baseSvg}
+          ${labelSvg}
+        </div>`;
+    },    
 
     _typeToColor: function (sType) {
       switch (sType) {
@@ -83,6 +103,8 @@ sap.ui.define([
           return this._colorGreen;
         case "Warning":
           return this._colorYellow;
+        case "Hidden":
+          return "transparent";
         default:
           return this._colorBlue;
       }
