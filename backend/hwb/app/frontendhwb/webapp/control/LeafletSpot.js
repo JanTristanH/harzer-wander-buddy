@@ -36,7 +36,9 @@ sap.ui.define([
         //marker.bindPopup(oSpot.getText());
       }
       marker.on("click", () => {
-        this.fireClick()
+        if(this.getType() != "Hidden") {
+          this.fireClick()
+        }
       });
 
       this.marker = marker;

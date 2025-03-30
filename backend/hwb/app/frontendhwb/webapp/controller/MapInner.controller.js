@@ -169,8 +169,9 @@ sap.ui.define([
             onFormatStampLabelText: function (sName, nZoomLevel, bShowLabels, bShowStampedSpots, bShowUnStampedSpots, hasVisited, sId, sSelectedId) {
                 const bShouldDisplayByFilter = (hasVisited && bShowStampedSpots) || (!hasVisited && bShowUnStampedSpots);
                 const isSelected = sId == sSelectedId;
+                const nThreshold = isSelected ? 13 : 16;
                 sName = this.onFormatSpotText(sName);
-                return isSelected || (bShouldDisplayByFilter && bShowLabels && nZoomLevel >= 16) ? sName : "";
+                return (bShouldDisplayByFilter && bShowLabels && nZoomLevel >= nThreshold) ? sName : "";
             },
 
             onFormatBooleanToSemanticType: function (bVisible, nZoomLevel) {
