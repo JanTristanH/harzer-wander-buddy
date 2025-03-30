@@ -49,6 +49,8 @@ sap.ui.define([
       }
       this.setProperty("type", sType, true);
       this.updateMarker();
+      console.log("setType", sType);
+      
       return this;
     },
 
@@ -57,7 +59,7 @@ sap.ui.define([
         return this;
       }
       this.setProperty("position", sPosition, true);
-      this.updateMarker(); // or updatePosition if you have specific logic
+      this.updateMarker();
       return this;
     },
     
@@ -66,7 +68,7 @@ sap.ui.define([
         return this;
       }
       this.setProperty("text", sText, true);
-      this.updateMarker(); // or updateText if separate
+      this.updateMarker();
       return this;
     },
     
@@ -75,7 +77,7 @@ sap.ui.define([
         return this;
       }
       this.setProperty("labelText", sLabelText, true);
-      this.updateMarker(); // or updateLabelText
+      this.updateMarker();
       return this;
     },
     
@@ -84,7 +86,7 @@ sap.ui.define([
         return this;
       }
       this.setProperty("scale", sScale, true);
-      this.updateMarker(); // or updateScale
+      this.updateMarker();
       return this;
     },
     
@@ -141,7 +143,7 @@ sap.ui.define([
         case "Success":
           return "rgb(43, 125, 43)";
         case "Warning":
-          return "rgb(231 140 7)";
+          return "rgb(231, 140, 7)";
         default:
           return "rgb(66, 124, 172)";
       }

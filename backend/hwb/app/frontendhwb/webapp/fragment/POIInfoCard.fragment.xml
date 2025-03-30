@@ -31,7 +31,11 @@
                         </menu>
                     </MenuButton>
 
-                    <core:Fragment fragmentName="hwb.frontendhwb.fragment.GroupAwareStampMenuButton" type="XML" />
+                    <FlexBox 
+                        visible="{local>/bStampingVisible}"
+                    >
+                        <core:Fragment fragmentName="hwb.frontendhwb.fragment.GroupAwareStampMenuButton" type="XML" />
+                    </FlexBox>
                     <Button
                         text="{i18n>share}"
                         icon="sap-icon://share-2"
