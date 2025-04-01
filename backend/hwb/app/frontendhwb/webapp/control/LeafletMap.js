@@ -136,7 +136,6 @@ sap.ui.define([
     _renderRoutes: function () {
       if (!this._oMap) return;
 
-      debugger
       // Clear existing markers
       if (this._aPolyline) {
         this._aPolyline.forEach(polyline => polyline.remove());
