@@ -3,7 +3,6 @@ sap.ui.define([
 ], function (Control) {
   "use strict";
   const placeholderPrimaryColor = "{placeholderPrimaryColor}"
-  const placeholderText = "{placeholderText}";
 
   return Control.extend("hwb.frontendhwb.LeafletSpot", {
     metadata: {

@@ -18,7 +18,8 @@ sap.ui.define([
       },
       defaultAggregation: "spots",
       aggregations: {
-        spots: { type: "hwb.frontendhwb.Spots", multiple: true, singularName: "spot" }
+        spots: { type: "hwb.frontendhwb.Spots", multiple: true, singularName: "spot" },
+        routes: { type: "hwb.frontendhwb.Routes", multiple: true, singularName: "route" }
       },
       events: {
         zoomChanged: {},
@@ -80,6 +81,20 @@ sap.ui.define([
       });
 
       this._renderSpots(); // TODO double render?
+
+      
+      // After rendering, ensure any bound routes are materialized
+      const aRoutes = this.getAggregation("spots") || [];
+
+      aRoutes.forEach(oRouteGroup => {
+        oRouteGroup.attachEvent("_change", this._renderRoutes, this);
+
+        if (typeof oRouteGroup.updateItems === "function") {
+          oRouteGroup.updateItems();
+        }
+      });
+
+      this._renderRoutes(); // TODO double render?
     },
 
     updateAggregation: function (sName) {
@@ -115,6 +130,29 @@ sap.ui.define([
         }
         marker.addTo(this._oMap)
         this._aMarkers.push(marker);
+      });
+    },
+
+    _renderRoutes: function () {
+      if (!this._oMap) return;
+
+      debugger
+      // Clear existing markers
+      if (this._aPolyline) {
+        this._aPolyline.forEach(polyline => polyline.remove());
+      }
+      this._aPolyline = [];
+
+      const aRoutes = this.getAggregation("routes")?.flatMap(s => s.getAggregation("items")).filter(s => !!s) || [];
+
+      aRoutes.forEach(oRoute => {
+        const polyline = oRoute.getPolyline();
+        if(!polyline) {
+          console.warn("LeafletMap: No polyline found for route");
+          return;
+        }
+        polyline.addTo(this._oMap)
+        this._aPolyline.push(polyline);
       });
     },
 
