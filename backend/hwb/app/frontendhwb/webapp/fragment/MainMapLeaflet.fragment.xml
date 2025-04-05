@@ -14,16 +14,13 @@
     <custom:Routes items="{local>/oSelectedTour/path}">
         <custom:Route
             position="{local>positionString}"
-        />
-            <!-- directionIndicator="true"
+            directionIndicator="true"
             lineDash="{ path: 'local>travelMode', formatter: '.onFormatRouteLineDash'}"
             tooltip="Länge: {local>duration}s - Distanz: {local>distance}"
             labelText="{local>order}"
-            end="1"
-            start="0"
             color="rgba(92,186,230,1.0)"
             colorBorder="rgb(255,255,255)"
-            hotDeltaColor="RHLSA(0,1,1,0.6)" -->
+        />
     </custom:Routes>
 </custom:routes>
 

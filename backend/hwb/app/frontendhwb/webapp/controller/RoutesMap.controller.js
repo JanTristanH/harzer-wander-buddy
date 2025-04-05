@@ -37,11 +37,12 @@ sap.ui.define([
             onSpotClick: function(oEvent) {
                 if (this.getModel("app").getProperty("/edit")) {
                     var oMenu = new Menu();
+                    const ID = oEvent.getSource().getBindingContext().getProperty("ID");
                     oMenu.addItem(
                         new MenuItem({
                             text: this.getModel("i18n").getProperty("addToEndOfTour"),
                             select: function (oMenuEvent) {
-                                this.onAddToEndOfTour(oEvent.getSource().data().id);
+                                this.onAddToEndOfTour(ID);
                             }.bind(this)
                         })
                     );
@@ -60,7 +61,7 @@ sap.ui.define([
                                 new MenuItem({
                                     text: this.getModel("i18n").getProperty("addToEndOfTour"),
                                     select: function (oMenuEvent) {
-                                        this.onAddToEndOfTour(oEvent.getSource().data().id);
+                                        const ID = oEvent.getSource().getBindingContext().getProperty("ID");
                                     }.bind(this)
                                 })
                             );
@@ -297,7 +298,7 @@ sap.ui.define([
                             // Handle errors here
                             MessageToast.show(this.getText("error"));
                             console.error(oError);
-                        }
+                        }.bind(this)
                     });
                 } else {
                     console.info("no calculation needed");
@@ -460,7 +461,11 @@ sap.ui.define([
                 let oPoi = this._getPoiById(oItem.toPoi || oItem.fromPoi 
                     || oItem.poi // calculated routes
                 );
-                this._getMap().zoomToGeoPosition(oPoi.longitude, oPoi.latitude);
+                const screenHeight = this.getModel("device").getProperty("/resize/height");
+                const scaleFactor = screenHeight / 1000; // normalize to 1.0 at 1000px height
+                const offset = 0.0008 * scaleFactor;
+
+                this._getMap().zoomToGeoPosition(oPoi.longitude, oPoi.latitude - offset);
             },
 
             formatStampButtonIcon: function (sID) {
@@ -588,7 +593,7 @@ sap.ui.define([
                             // Handle errors here
                             MessageToast.show(this.getText("error"));
                             console.error(oError);
-                        }
+                        }.bind(this)
                     });
                 } else {
                     console.info("no calculation needed");

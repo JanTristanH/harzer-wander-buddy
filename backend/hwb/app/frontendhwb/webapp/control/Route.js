@@ -7,10 +7,11 @@ sap.ui.define([
         metadata: {
             properties: {
                 position: { type: "string", defaultValue: "1;1;0;" },
-                //   text: { type: "string", defaultValue: "" },
-                //   type: { type: "string", defaultValue: "default" },
-                //   labelText: { type: "string", defaultValue: "" },
-                //   scale: { type: "string", defaultValue: "1;1;1" }
+                lineDash: { type: "string", defaultValue: "" },
+                labelText: { type: "string", defaultValue: "" },
+                color: { type: "string", defaultValue: "5ebae6" },
+                colorBorder: { type: "string", defaultValue: "#ffffff" },
+                directionIndicator: { type: "boolean", defaultValue: "" },
             },
             events: {
                 click: {}
@@ -24,43 +25,55 @@ sap.ui.define([
                 .map(cords => cords.split(";"))
                 .filter(cords => cords.length === 2)
                 .map(cords => [parseFloat(cords[1]), parseFloat(cords[0])]);
+            const dashArray = this.getLineDash().split(";").join(",");
 
             // Create the white border (bottom layer)
             const borderPolyline = L.polyline(latlngs, {
-                color: 'white',
+                color: this.getColorBorder(),
                 weight: 6,
-                dashArray: '5, 10',
+                dashArray,
                 opacity: 1
             });
 
             // Create the main colored line (top layer)
             const coloredPolyline = L.polyline(latlngs, {
-                color: '#5ebae6',
+                color: this.getColor(),
                 weight: 4,
-                dashArray: '5, 10',
+                dashArray,
                 opacity: 1
             });
 
+            const group = [borderPolyline, coloredPolyline];
+
+            if (this.getDirectionIndicator()) {
+              const [lineLengthStr, gapLengthStr] = this.getLineDash().split(";");
+              const lineLength = parseFloat(lineLengthStr);
+              const gapLength = parseFloat(gapLengthStr);
+              const totalLength = lineLength + gapLength > 0 ? lineLength + gapLength + 1 : 10; // Avoid division by zero
             
-const decorator = L.polylineDecorator(coloredPolyline, {
+              const decorator = L.polylineDecorator(coloredPolyline, {
                 patterns: [
                   {
-                    offset: 0,
-                    repeat: 50, // distance between arrows in pixels
+                    // Move arrow to the end of each stroke by offsetting from the start of the segment
+                    offset: `${lineLength - 1}px`, // 1px back from the end for visibility
+                    repeat: `${totalLength * 7}px`,
                     symbol: L.Symbol.arrowHead({
                       pixelSize: 10,
                       polygon: false,
                       pathOptions: {
                         stroke: true,
-                        color: '#5ebae6'
+                        color: this.getColor(),
                       }
                     })
                   }
                 ]
-              })
+              });
+            
+              group.push(decorator);
+            }            
 
             // Combine both into a LayerGroup
-            this.polyline = L.layerGroup([borderPolyline, coloredPolyline, decorator]);
+            this.polyline = L.layerGroup(group);
 
             return this.polyline;
         }
