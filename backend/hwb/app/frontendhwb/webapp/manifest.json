@@ -56,13 +56,7 @@
                 "sap.m": {},
                 "sap.ui.core": {},
                 "sap.f": {},
-                "sap.suite.ui.generic.template": {},
-                "sap.ui.comp": {},
-                "sap.ui.generic.app": {},
-                "sap.ui.table": {},
-                "sap.ushell": {},
-                "sap.ui.vbm":{"lazy": false},
-				"sap.ui.vk": { "lazy": false}
+                "sap.ui.table": {}
             }
         },
         "contentDensities": {

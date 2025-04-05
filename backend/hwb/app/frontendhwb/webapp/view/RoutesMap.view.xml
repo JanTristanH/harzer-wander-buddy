@@ -289,7 +289,7 @@
                                             text="{parts: [{path: 'local>elevationGain'}, {path: 'local>elevationLoss'}], formatter: '.formatElevationDescription'}"
                                             visible="{= !!${local>duration} &amp;&amp; !!${local>maxElevation} }"
                                         />
-                                        <chart:AreaMicroChart
+                                        <!-- <chart:AreaMicroChart
                                             size="S"
                                             view="Wide"
                                             width="100%"
@@ -330,7 +330,7 @@
                                                     </chart:points>
                                                 </chart:AreaMicroChartItem>
                                             </chart:minThreshold>
-                                        </chart:AreaMicroChart>
+                                        </chart:AreaMicroChart> -->
                                     </VBox>
                                     <FlexBox
                                         alignItems="Center"

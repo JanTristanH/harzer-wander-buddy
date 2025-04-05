@@ -2,7 +2,6 @@
     xmlns="sap.m"
     xmlns:ux="sap.uxap"
     xmlns:core="sap.ui.core"
-    xmlns:chart="sap.suite.ui.microchart"
 >
     <Dialog
         title="{i18n>badges}"
@@ -36,7 +35,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iSelectedCount} >= 8 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '8'}], formatter: '.min'} / 8" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="8"
                             >
@@ -46,7 +46,7 @@
                                         color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '8'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>bronzeRequirementText}"
@@ -72,7 +72,9 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iSelectedCount} >= 16 }"
                             />
-                            <chart:HarveyBallMicroChart
+
+                            <Text text="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '16'}], formatter: '.min'} / 16" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="16"
                             >
@@ -82,7 +84,7 @@
                                         color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '16'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>silverRequirementText}"
@@ -108,7 +110,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iSelectedCount} >= 24 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '24'}], formatter: '.min'} / 24" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="24"
                             >
@@ -118,7 +121,7 @@
                                         color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '24'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>goldRequirementText}"
@@ -144,7 +147,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iSelectedCount} >= 50 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '50'}], formatter: '.min'} / 50" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="50"
                             >
@@ -154,7 +158,7 @@
                                         color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '50'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>kingRequirementText}"
@@ -180,7 +184,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iRiserProgressCount} >= 111 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iRiserProgressCount'}, {value: '111'}], formatter: '.min'} / 111" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="111"
                             >
@@ -190,7 +195,7 @@
                                         color="{parts: [{path: 'localDialog>/iRiserProgressCount'}, {value: '111'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>riserRequirementText}"
@@ -261,7 +266,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iSelectedCount} >= 100 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '100'}], formatter: '.min'} / 100" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="100"
                             >
@@ -271,7 +277,7 @@
                                         color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '100'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>backpackRequirementText}"
@@ -297,7 +303,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iSelectedCount} >= 150 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '150'}], formatter: '.min'} / 150" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="150"
                             >
@@ -307,7 +314,7 @@
                                         color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '150'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>shoeRequirementText}"
@@ -333,7 +340,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iSelectedCount} >= 222 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '222'}], formatter: '.min'} / 222" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="222"
                             >
@@ -343,7 +351,7 @@
                                         color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '222'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>emperorRequirementText}"
@@ -371,9 +379,10 @@
                                 mode="Background"
                                 height="5rem"
                                 width="5rem"
-                                visible="{= ${localDialog>/iBoarderProgressCount} >= 15 }"
+                                visible="{= ${localDialog>/iBoarderProgressCount} >= 22 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iBoarderProgressCount'}, {value: '22'}], formatter: '.min'} / 22" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="22"
                             >
@@ -383,7 +392,7 @@
                                         color="{parts: [{path: 'localDialog>/iBoarderProgressCount'}, {value: '22'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>boarderRequirementText}"
@@ -461,7 +470,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iGoetheProgressCount} >= 28 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iGoetheProgressCount'}, {value: '28'}], formatter: '.min'} / 28" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="28"
                             >
@@ -471,7 +481,7 @@
                                         color="{parts: [{path: 'localDialog>/iGoetheProgressCount'}, {value: '28'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>goetheRequirementText}"
@@ -542,7 +552,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iWitchProgressCount} >= 11 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iWitchProgressCount'}, {value: '11'}], formatter: '.min'} / 11" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="11"
                             >
@@ -552,7 +563,7 @@
                                         color="{parts: [{path: 'localDialog>/iWitchProgressCount'}, {value: '11'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
 
                         <Text
@@ -628,7 +639,8 @@
                                 width="5rem"
                                 visible="{= ${localDialog>/iSelectedCount} >= 11 }"
                             />
-                            <chart:HarveyBallMicroChart
+                            <Text text="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '11'}], formatter: '.min'} / 11" />
+                            <!-- <chart:HarveyBallMicroChart
                                 size="M"
                                 total="11"
                             >
@@ -638,7 +650,7 @@
                                         color="{parts: [{path: 'localDialog>/iSelectedCount'}, {value: '11'}], formatter: '.calculateValueColor'}"
                                     />
                                 </chart:items>
-                            </chart:HarveyBallMicroChart>
+                            </chart:HarveyBallMicroChart> -->
                         </FlexBox>
                         <Text
                             text="{i18n>princeRequirementText}"
