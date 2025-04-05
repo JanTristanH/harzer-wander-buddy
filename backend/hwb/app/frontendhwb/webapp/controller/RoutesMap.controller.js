@@ -27,6 +27,7 @@ sap.ui.define([
 
             onAfterRendering: function () {
                 this._initBottomSheetDrag();
+                this._onElevationProfileUpdated();
             },
 
             onSearchFieldSearch: function(oEvent) {
@@ -709,6 +710,53 @@ sap.ui.define([
                 });
             
                 this._bottomSheetResizeObserver.observe(mapDomRef);
-            }
+            },
+
+            _onElevationProfileUpdated: function () {
+                debugger
+                const oModel = this.getView().getModel("local");
+                const aProfile = oModel.getProperty("/elevationProfile") || [];
+              
+                const ctx = document.getElementById("elevationChartCanvas");
+                if (!ctx) return;
+              
+                // Destroy previous chart instance if it exists
+                if (this._elevationChart) {
+                  this._elevationChart.destroy();
+                }
+              
+                this._elevationChart = new Chart(ctx, {
+                  type: "line",
+                  data: {
+                    labels: aProfile.map((p) => p.x),
+                    datasets: [{
+                      data: aProfile.map((p) => p.y),
+                      fill: true,
+                      backgroundColor: "rgba(0, 123, 255, 0.2)",
+                      borderColor: "rgba(0, 123, 255, 1)",
+                      borderWidth: 1,
+                      pointRadius: 0
+                    }]
+                  },
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: { enabled: false }
+                    },
+                    scales: {
+                      x: {
+                        display: false
+                      },
+                      y: {
+                        display: false,
+                        min: oModel.getProperty("/minElevation") || 0
+                      }
+                    }
+                  }
+                });
+              }
+              
         });
     });

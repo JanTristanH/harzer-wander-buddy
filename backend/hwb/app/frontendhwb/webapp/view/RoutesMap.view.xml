@@ -7,6 +7,7 @@
     xmlns:dnd="sap.ui.core.dnd"
     xmlns:chart="sap.suite.ui.microchart"
     xmlns:f="sap.f"
+    xmlns:custom="hwb.frontendhwb.control"
     displayBlock="true"
     busyIndicatorDelay="0"
 >
@@ -289,6 +290,12 @@
                                             text="{parts: [{path: 'local>elevationGain'}, {path: 'local>elevationLoss'}], formatter: '.formatElevationDescription'}"
                                             visible="{= !!${local>duration} &amp;&amp; !!${local>maxElevation} }"
                                         />
+                                        <custom:ChartElevation
+                                            elevationProfile="{local>elevationProfile}"
+                                            minElevation="{local>minElevation}"
+                                            visible="{= ${local>travelMode} === 'walk' 
+                                                &amp;&amp; !!${local>maxElevation} }"/>
+
                                         <!-- <chart:AreaMicroChart
                                             size="S"
                                             view="Wide"
