@@ -690,13 +690,19 @@ sap.ui.define([
                     setTimeout(() => this.showBottomSheetWaitingForMap(), 100);
                     return;
                 }
-
-                const mapDomRef = oMap.getDomRef();
+                
+                const mapDomRef = oMap.getParent().getDomRef();
+                if (!mapDomRef || mapDomRef.offsetWidth === 0) {
+                    // Map is not yet rendered, wait for it to be ready
+                    setTimeout(() => this.showBottomSheetWaitingForMap(), 100);
+                    return;
+                }
+                
                 const bottomSheet = sheet.getDomRef();
 
                 bottomSheet.style.display = "block";
                 bottomSheet.style.bottom = "-420px";
-                bottomSheet.style.width = oMap.getDomRef().offsetWidth + "px";
+                bottomSheet.style.width = mapDomRef.offsetWidth + "px";
                 bottomSheet.style.right = "0";
                 bottomSheet.style.left = "auto"; 
 
@@ -713,7 +719,6 @@ sap.ui.define([
             },
 
             _onElevationProfileUpdated: function () {
-                debugger
                 const oModel = this.getView().getModel("local");
                 const aProfile = oModel.getProperty("/elevationProfile") || [];
               

@@ -185,13 +185,14 @@
             <VBox
                 id="bottomSheetTour"
                 class="bottom-sheet"
+                width="50vw"
             >
                 <HBox class="sheet-header">
                     <VBox class="drag-handle" />
                 </HBox>
                 <VBox
                     class="sheet-content"
-                    height="80vh"
+                    height="85vh"
                 >
 
             <FlexBox
