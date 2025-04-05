@@ -713,6 +713,7 @@ sap.ui.define([
                 // Attach ResizeObserver to map
                 this._bottomSheetResizeObserver = new ResizeObserver(() => {
                     bottomSheet.style.width = mapDomRef.offsetWidth + "px";
+                    oMap.invalidateSize();
                 });
             
                 this._bottomSheetResizeObserver.observe(mapDomRef);
