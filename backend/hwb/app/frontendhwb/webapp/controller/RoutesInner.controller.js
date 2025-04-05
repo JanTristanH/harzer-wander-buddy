@@ -61,7 +61,7 @@ sap.ui.define([
                                 updatedTours.forEach(tour => {
                                     let oTour = oLocalModel.getProperty(`/Tours(${tour.ID})`);
                                     if (oTour) {
-                                        oTour.AverageGroupStampings = tour.AverageGroupStampings;
+                                        oTour.AverageGroupStampings = tour.AverageGroupStampings || 0;
                                         oTour.path = this._addStampedUsers(oTour.path);
                                         oLocalModel.setProperty(`/Tours(${tour.ID})`, oTour);
                                     }
@@ -210,7 +210,7 @@ sap.ui.define([
                                 travelMode: obj.travelMode,
                                 toPoiType: obj.toPoiType,
                                 positionString: obj.positionString,
-                                AverageGroupStampings: obj.AverageGroupStampings ?? 0,
+                                AverageGroupStampings: obj.AverageGroupStampings || 0,
                             }));
                             oLocalModel.setProperty(`/Tours(${sIdListTravelTimes})`, oData.getTourByIdListTravelTimes);
                             this._showDetailViewForIdList(sIdListTravelTimes);
@@ -419,6 +419,7 @@ sap.ui.define([
                         this.getModel("local").setProperty(`/Tours(${oData.ID})`, oData);
                         MessageToast.show(this.getText("tourSaved"));
 
+                        this.getModel("app").setProperty("/edit", true);
                         this.getRouter().navTo("RoutesDetailEdit", {
                             TourId: oData.ID
                         });

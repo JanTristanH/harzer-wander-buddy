@@ -94,6 +94,11 @@ sap.ui.define([
                 this.bPersistedDisplayed = true;
             },
 
+            onRoutesDetailEditMatched: function () {
+                this.bPersistedDisplayed = true;
+                this.getModel("app").setProperty("/edit", true);
+            },
+
             onRoutesDetailTransientRouteMatched: function (oEvent) {
                 this.bPersistedDisplayed = false;
                 this.TourId = oEvent.getParameter("arguments").TourId;
@@ -147,6 +152,7 @@ sap.ui.define([
             onButtonEditPress: function () {
                 var oModel = this.getModel();
                 const oLocalModel = this.getView().getModel("local");
+                this.getModel("app").setProperty("/edit", true);
 
                 let TourId = this.TourId || this.getRouter().getRouteInfoByHash(this.getRouter().getHashChanger().getHash()).arguments.TourId;
                 if (this.bPersistedDisplayed && TourId) {
@@ -161,7 +167,7 @@ sap.ui.define([
                         // TODO those will be calculated by backend
                         "duration": oLocalModel.getProperty("/oSelectedTour/duration"),
                         "distance": oLocalModel.getProperty("/oSelectedTour/distance"),
-                        "stampCount": oLocalModel.getProperty("/oSelectedTour/stampCount")
+                        "stampCount": oLocalModel.getProperty("/oSelectedTour/stampCount") || 0
                     };
 
                     // Call function

@@ -7,6 +7,7 @@ sap.ui.define([
   const fallBackZoomLevel = 15;
 
   return Control.extend("hwb.frontendhwb.LeafletMap", {
+    _oMap: null,
     metadata: {
       properties: {
         initialPosition: { type: "string", defaultValue: "0;0" },  // format: "lng;lat"
@@ -33,8 +34,13 @@ sap.ui.define([
 
     invalidate: function () {
       // Prevent UI5 from re-rendering this control
-      // but allow manual updates to children if needed
       console.debug("LeafletMap: suppressing invalidate()");
+    
+      clearTimeout(this._invalidateTimeout);
+      this._invalidateTimeout = setTimeout(() => {
+        this._renderSpots();
+        this._renderRoutes();
+      }, 250); // Adjust delay (ms) as needed
     },
 
     exit: function () {
@@ -66,6 +72,11 @@ sap.ui.define([
           const center = this._oMap.getCenter();
           const sCenter = center.lng + ";" + center.lat;
           this.fireCenterChanged({ center: sCenter });
+          clearTimeout(this._invalidateTimeout);
+        });
+
+        this._oMap.on('movestart', () => {
+          clearTimeout(this._invalidateTimeout);
         });
       }
 
@@ -102,6 +113,13 @@ sap.ui.define([
       if (sName === "spots") {
         this._renderSpots();
       }
+      if (sName === "routes") {
+        this._renderRoutes();
+      }
+    },
+
+    updateItems: function () {
+      debugger
     },
 
     _parsePosition: function (sPosition) {

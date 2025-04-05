@@ -585,7 +585,7 @@ async function getTourByIdListTravelTimes(req) {
   }
 
   let result = await routingManager.addPositionStrings([{
-    stampCount,
+    stampCount: stampCount ? stampCount : 0,
     distance,
     duration,
     id,
