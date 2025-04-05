@@ -27,8 +27,8 @@ sap.ui.define([
       const icon = L.divIcon({
         className: '',
         html: this.getHtmlIconForSpot(),
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
+        iconSize: [50, 56],
+        iconAnchor: [25, 56]
       });
       const marker = L.marker(pos, { icon });
       if (this.getText()) {
@@ -93,8 +93,8 @@ sap.ui.define([
       this.marker?.setIcon(L.divIcon({
         className: '',
         html: this.getHtmlIconForSpot(),
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
+        iconSize: [50, 56],
+        iconAnchor: [25, 56]
       }));
     },
 
