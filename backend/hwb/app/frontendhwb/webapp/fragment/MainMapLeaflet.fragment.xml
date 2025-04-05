@@ -10,19 +10,19 @@
     zoomChanged="onGeoMapZoomChanged"
     centerChanged="onGeoMapCenterChanged"
 >
-<custom:routes>
-    <custom:Routes items="{local>/oSelectedTour/path}">
-        <custom:Route
-            position="{local>positionString}"
-            directionIndicator="true"
-            lineDash="{ path: 'local>travelMode', formatter: '.onFormatRouteLineDash'}"
-            tooltip="Länge: {local>duration}s - Distanz: {local>distance}"
-            labelText="{local>order}"
-            color="rgba(92,186,230,1.0)"
-            colorBorder="rgb(255,255,255)"
-        />
-    </custom:Routes>
-</custom:routes>
+    <custom:routes>
+        <custom:Routes items="{local>/oSelectedTour/path}">
+            <custom:Route
+                position="{local>positionString}"
+                directionIndicator="true"
+                lineDash="{ path: 'local>travelMode', formatter: '.onFormatRouteLineDash'}"
+                tooltip="Länge: {local>duration}s - Distanz: {local>distance}"
+                labelText="{local>order}"
+                color="rgba(92,186,230,1.0)"
+                colorBorder="rgb(255,255,255)"
+            />
+        </custom:Routes>
+    </custom:routes>
 
     <custom:Spots
         id="idStampingSpots"

@@ -237,7 +237,6 @@ sap.ui.define([
                     oSearchField._blur();
                     this.getRouter().navTo("MapWithPOI", { idPOI: oItem.getKey() });
                 } else {
-                    debugger
                     MessageToast.show(this.getText("selectPointFromList"));
                 }
             },

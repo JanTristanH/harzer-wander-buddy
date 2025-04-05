@@ -44,7 +44,6 @@ sap.ui.define([
     },
 
     exit: function () {
-      debugger
       console.error("LeafletMap: exiting control");
       if (this._oMap) {
         this._oMap.remove();
@@ -95,7 +94,7 @@ sap.ui.define([
 
       
       // After rendering, ensure any bound routes are materialized
-      const aRoutes = this.getAggregation("spots") || [];
+      const aRoutes = this.getAggregation("routes") || [];
 
       aRoutes.forEach(oRouteGroup => {
         oRouteGroup.attachEvent("_change", this._renderRoutes, this);
@@ -119,7 +118,6 @@ sap.ui.define([
     },
 
     updateItems: function () {
-      debugger
     },
 
     _parsePosition: function (sPosition) {
