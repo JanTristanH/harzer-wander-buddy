@@ -42,15 +42,6 @@ sap.ui.define([
                 }
                 this.getRouter().getRoute("MapWithPOI").attachPatternMatched(this.onMapWithPOIRouteMatched, this);
                 this.getRouter().getRoute("Map").attachPatternMatched(this.onMapRouteMatched, this);
-                //check localstorage last center position and set it
-                let sLastCenterPosition = sessionStorage.getItem("lastCenterPosition");
-                if (sLastCenterPosition) {
-                    this._oMap.setCenterPosition(sLastCenterPosition);
-                    // create current location marker
-                    this.onLocateMePress(null, false);
-                } else {
-                    this.onLocateMePress(null, true);
-                }
             },
 
             onCloseBottomSheet: function () {
@@ -242,12 +233,23 @@ sap.ui.define([
             },
 
             onMapRouteMatched: function (oEvent) {
+                //check localstorage last center position and set it
+                let sLastCenterPosition = sessionStorage.getItem("lastCenterPosition");
+                if (sLastCenterPosition) {
+                    this._oMap.setCenterPosition(sLastCenterPosition);
+                    // create current location marker
+                    this.onLocateMePress(null, false);
+                } else {
+                    this.onLocateMePress(null, true);
+                }
+
                 this.applyGroupFilter();
                 this.getModel("local").setProperty("/sCurrentSpotId", "");
                 this.byId("bottomSheet")?.setVisible(false); 
             },
 
             onMapWithPOIRouteMatched: function (oEvent) {
+                this.onLocateMePress(null, false)
                 const tryShowBottomSheet = () => {
                     const bottomSheet = this.byId("bottomSheet");
                     if (!bottomSheet) {
