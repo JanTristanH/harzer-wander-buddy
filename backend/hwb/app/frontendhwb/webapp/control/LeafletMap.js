@@ -70,7 +70,7 @@ sap.ui.define([
         this._oMap.on('moveend', () => {
           const center = this._oMap.getCenter();
           const sCenter = center.lng + ";" + center.lat;
-          this.fireCenterChanged({ center: sCenter });
+          this.fireCenterChanged({ centerPoint: sCenter });
           clearTimeout(this._invalidateTimeout);
         });
 
