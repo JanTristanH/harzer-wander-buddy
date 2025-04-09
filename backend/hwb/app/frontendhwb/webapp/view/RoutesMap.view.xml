@@ -270,19 +270,49 @@
                                         class="sapUiSmallMarginEnd size1"
                                     />
                                 </FlexBox>
-                                <FlexBox
+                                <!-- <FlexBox
                                     alignItems="Start"
                                     justifyContent="SpaceBetween"
                                     width="100%"
-                                >
+                                > -->
                                     <VBox
                                         class="sapUiSmallMarginEnd"
                                         justifyContent="Center"
+                                        width="100%"
+                                    >
+                                    <HBox
+                                        alignItems="Center"
+                                        justifyContent="SpaceBetween"
+                                        width="100%"
                                     >
                                         <Text
                                             text="{local>name}"
                                             class="sapUiTinyMarginTopBottom sapMTextBold"
                                         />
+                                        <FlexBox
+                                        alignItems="Center"
+                                        justifyContent="Center"
+                                        height="100%"
+                                        >
+                                            <f:AvatarGroup
+                                                id="avatarGroupTravelTime"
+                                                groupType="Individual"
+                                                avatarDisplaySize="S"
+                                                items="{local>stampedUsers}"
+                                                press="onAvatarGroupPress"
+                                            > 
+                                                <f:AvatarGroupItem
+                                                    initials="{parts: ['local>name'], formatter: '.onFormatInitialsByName'}"
+                                                    fallbackIcon="sap-icon://person-placeholder"
+                                                    src="{local>picture}"
+                                                    tooltip="{local>name}"
+                                                    fieldGroupIds="{local>ID}"
+                                                />
+                                            </f:AvatarGroup>
+                                        </FlexBox>
+                                    </HBox>
+                                    <HBox>
+                                    </HBox>
                                         <Label
                                             text="{parts: [{path: 'local>duration'}, {path: 'local>distance'}], formatter: '.formatDescription'}"
                                             visible="{= !!${local>duration} }"
@@ -296,75 +326,11 @@
                                             minElevation="{local>minElevation}"
                                             visible="{= ${local>travelMode} === 'walk' 
                                                 &amp;&amp; !!${local>maxElevation} }"/>
-
-                                        <!-- <chart:AreaMicroChart
-                                            size="S"
-                                            view="Wide"
-                                            width="100%"
-                                            minYValue="{local>minElevation}"
-                                            visible="{= ${local>travelMode} === 'walk' &amp;&amp; !!${local>maxElevation} }"
-                                            tooltip="{i18n>heightProfile}"
-                                        >
-                                            <chart:lastYLabel>
-                                                <chart:AreaMicroChartLabel
-                                                    label="{path: 'local>maxElevation', formatter: '.formatCleanMeter'}"
-                                                />
-                                            </chart:lastYLabel>
-                                            <chart:lastXLabel>
-                                                <chart:AreaMicroChartLabel
-                                                    label="{path: 'local>minElevation', formatter: '.formatCleanMeter'}"
-                                                />
-                                            </chart:lastXLabel>
-                                            <chart:chart>
-                                                <chart:AreaMicroChartItem points="{local>elevationProfile}" >
-                                                    <chart:points>
-                                                        <chart:AreaMicroChartPoint
-                                                            x="{local>x}"
-                                                            y="{local>y}"
-                                                        />
-                                                    </chart:points>
-                                                </chart:AreaMicroChartItem>
-                                            </chart:chart>
-                                            <chart:minThreshold>
-                                                <chart:AreaMicroChartItem
-                                                    color="Good"
-                                                    points="{local>elevationProfile}"
-                                                >
-                                                    <chart:points>
-                                                        <chart:AreaMicroChartPoint
-                                                            x="{local>x}"
-                                                            y="{local>y}"
-                                                        />
-                                                    </chart:points>
-                                                </chart:AreaMicroChartItem>
-                                            </chart:minThreshold>
-                                        </chart:AreaMicroChart> -->
                                     </VBox>
                                     <FlexBox
                                         alignItems="Center"
                                         justifyContent="Center"
-                                        height="100%"
-                                    >
-                                        <f:AvatarGroup
-                                            id="avatarGroupTravelTime"
-                                            groupType="Individual"
-                                            avatarDisplaySize="S"
-                                            items="{local>stampedUsers}"
-                                            press="onAvatarGroupPress"
-                                        > 
-                                            <f:AvatarGroupItem
-                                                initials="{parts: ['local>name'], formatter: '.onFormatInitialsByName'}"
-                                                fallbackIcon="sap-icon://person-placeholder"
-                                                src="{local>picture}"
-                                                tooltip="{local>name}"
-                                                fieldGroupIds="{local>ID}"
-                                            />
-                                        </f:AvatarGroup>
-                                    </FlexBox>
-                                    <FlexBox
-                                        alignItems="Center"
-                                        justifyContent="Center"
-                                        height="100%"
+                                        direction="Column"
                                         wrap="Wrap"
                                         width="20%"
                                         class="sapUiTinyMarginEnd"
@@ -443,7 +409,7 @@
                                             </menu>
                                         </MenuButton>
                                     </FlexBox>
-                                </FlexBox>
+                                <!-- </FlexBox> -->
                             </HBox>
                         </CustomListItem>
                     </List>

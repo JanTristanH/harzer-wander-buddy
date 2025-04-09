@@ -29,14 +29,6 @@ sap.ui.define([
           this._chart.destroy();
         }
 
-        // Fix blurry canvas on high-DPI screens
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        canvas.getContext("2d").scale(dpr, dpr);
-
-
         const aProfile = this.getElevationProfile();
         const yValues = aProfile.map(p => p.y);
         const minY = this.getMinElevation() || Math.min(...yValues);
