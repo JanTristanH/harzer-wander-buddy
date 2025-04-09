@@ -297,7 +297,7 @@
                                             <f:AvatarGroup
                                                 id="avatarGroupTravelTime"
                                                 groupType="Individual"
-                                                avatarDisplaySize="S"
+                                                avatarDisplaySize="XS"
                                                 items="{local>stampedUsers}"
                                                 press="onAvatarGroupPress"
                                             > 

@@ -76,6 +76,10 @@
                                             />
                                         </HBox>
                                     </VBox>
+                                    <Title
+                                        text="{i18n>visitedStampms}: {app>/stampedCount}"
+                                        level="H2"
+                                    />
                                     <FlexBox
                                         wrap="Wrap"
                                         visible="{= ${ID} !== ${app>/currentUser/ID} }"
@@ -198,10 +202,6 @@
                                 >
                                     <headerToolbar>
                                         <Toolbar>
-                                            <Title
-                                                text="{i18n>visitedStampms} {name}: {app>/stampedCount}"
-                                                level="H2"
-                                            />
                                             <ToolbarSpacer />
                                             <Select
                                                 selectedKey="{app>/selectedFilterKeyProfile}"
@@ -209,8 +209,8 @@
                                                 <core:Item key="all"            text="{i18n>showAll}" />
                                                 <core:Item key="stamped"        text="{i18n>visitedStamps} {name} ({app>/stampedCount})" />
                                                 <core:Item key="unstamped"      text="{i18n>missingStamps} {name} ({= 222 - ${app>/stampedCount} })" />
-                                                <core:Item key="stampedMe"      text="{i18n>visitedStamps} {i18n>me}"   enabled="{= ${ID} !== ${app>/currentUser/ID} }" />
-                                                <core:Item key="unstampedMe"    text="{i18n>missingStamps} {i18n>me}"   enabled="{= ${ID} !== ${app>/currentUser/ID} }" />
+                                                <core:Item key="stampedMe"      text="{i18n>myVisitedStamps}"   enabled="{= ${ID} !== ${app>/currentUser/ID} }" />
+                                                <core:Item key="unstampedMe"    text="{i18n>myMissingStamps}"   enabled="{= ${ID} !== ${app>/currentUser/ID} }" />
                                                 <core:Item key="stampedBoth"    text="{i18n>visitedStamps} {i18n>both}" enabled="{= ${ID} !== ${app>/currentUser/ID} }"/>
                                                 <core:Item key="unstampedBoth"  text="{i18n>missingStamps} {i18n>both}" enabled="{= ${ID} !== ${app>/currentUser/ID} }" />
                                                 <layoutData>
