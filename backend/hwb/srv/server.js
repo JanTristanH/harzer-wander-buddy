@@ -59,6 +59,7 @@ cds.on("bootstrap", (app) => {
   app.use(auth(config));
 
   app.use('/app/frontendhwb', requiresAuth(), express.static(__dirname + '/../app/frontendhwb'));
+  app.use('/app/dependencies', requiresAuth(), express.static(__dirname + '/../app/dependencies'));
 
   // rewrite ui5 dist path
   app.use((req, res, next) => {
