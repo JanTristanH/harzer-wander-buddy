@@ -4,14 +4,16 @@ sap.ui.define([
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
     "sap/m/MessageToast",
+    "sap/m/MessageBox",
     "sap/ui/model/json/JSONModel",
     "sap/ui/model/Sorter"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel, Sorter) {
+    function (Controller, Fragment, Filter, FilterOperator, MessageToast, MessageBox, JSONModel, Sorter) {
         "use strict";
+        let isDragging = false;
         return Controller.extend("hwb.frontendhwb.controller.MapInner", {
             itemCache: [],
             _aParkingSpaceCache: [],
@@ -41,15 +43,10 @@ sap.ui.define([
                 }
                 this.getRouter().getRoute("MapWithPOI").attachPatternMatched(this.onMapWithPOIRouteMatched, this);
                 this.getRouter().getRoute("Map").attachPatternMatched(this.onMapRouteMatched, this);
-                //check localstorage last center position and set it
-                let sLastCenterPosition = sessionStorage.getItem("lastCenterPosition");
-                if (sLastCenterPosition) {
-                    this._oMap.setCenterPosition(sLastCenterPosition);
-                    // create current location marker
-                    this.onLocateMePress(null, false);
-                } else {
-                    this.onLocateMePress(null, true);
-                }
+            },
+
+            onCloseBottomSheet: function () {
+                this.getRouter().navTo("Map");
             },
 
             attachGroupChange: function () {
@@ -71,7 +68,7 @@ sap.ui.define([
                 let oFilter = new Filter("groupFilterStampings", FilterOperator.NE, aSelectedGroup.join(','));
 
                 // Apply filter to binding
-                const oBinding = this.byId("idAllPointsOfInterestsSpots").getBinding("items");
+                const oBinding = this.byId("idStampingSpots").getBinding("items");
                 if (oBinding) {
                     oBinding.filter(aSelectedGroup.length > 1 ? oFilter : null);
                 }
@@ -164,7 +161,9 @@ sap.ui.define([
             onFormatStampLabelText: function (sName, nZoomLevel, bShowLabels, bShowStampedSpots, bShowUnStampedSpots, hasVisited, sId, sSelectedId) {
                 const bShouldDisplayByFilter = (hasVisited && bShowStampedSpots) || (!hasVisited && bShowUnStampedSpots);
                 const isSelected = sId == sSelectedId;
-                return isSelected || (bShouldDisplayByFilter && bShowLabels && nZoomLevel >= 16) ? sName : "";
+                const nThreshold = isSelected ? 13 : 16;
+                sName = this.onFormatSpotText(sName);
+                return (bShouldDisplayByFilter && bShowLabels && nZoomLevel >= nThreshold) ? sName : "";
             },
 
             onFormatBooleanToSemanticType: function (bVisible, nZoomLevel) {
@@ -193,9 +192,14 @@ sap.ui.define([
                 const oSearchField = oEvent.getSource();
                 const sValue = oEvent.getParameter("suggestValue").toLowerCase();
                 let aFilters = [];
-                for (const sWord of sValue.split(" ")) {
-                    aFilters.push(new Filter("name", FilterOperator.Contains, sWord));
-                    aFilters.push(new Filter("name", FilterOperator.Contains, sWord.charAt(0).toUpperCase() + sWord.slice(1)));
+
+                if(sValue.includes("stempelstelle")) {
+                    aFilters.push(new Filter("name", FilterOperator.Contains, sValue));
+                } else {
+                    for (const sWord of sValue.split(" ")) {
+                        aFilters.push(new Filter("name", FilterOperator.Contains, sWord));
+                        aFilters.push(new Filter("name", FilterOperator.Contains, sWord.charAt(0).toUpperCase() + sWord.slice(1)));
+                    }
                 }
                 const oFinalFilter = new Filter({
                     filters: aFilters,
@@ -216,9 +220,12 @@ sap.ui.define([
             },
 
             onSearchFieldSearch: function (oEvent) {
-                const oItem = oEvent.getParameter("suggestionItem");
+                let oItem = oEvent.getParameter("suggestionItem");
                 const oSearchField = oEvent.getSource();
-                if (oItem) {  
+                if (!oItem) {
+                    oItem = oSearchField.getSuggestionItems()[0];
+                }
+                if (oItem) {
                     oSearchField._blur();
                     this.getRouter().navTo("MapWithPOI", { idPOI: oItem.getKey() });
                 } else {
@@ -227,75 +234,56 @@ sap.ui.define([
             },
 
             onMapRouteMatched: function (oEvent) {
+                //check localstorage last center position and set it
+                let sLastCenterPosition = sessionStorage.getItem("lastCenterPosition");
+                if (sLastCenterPosition) {
+                    this._oMap.setCenterPosition(sLastCenterPosition);
+                    // create current location marker
+                    this.onLocateMePress(null, false);
+                } else {
+                    this.onLocateMePress(null, true);
+                }
+
                 this.applyGroupFilter();
                 this.getModel("local").setProperty("/sCurrentSpotId", "");
-                this.onButtonClosePress();
+                this.byId("bottomSheet")?.setVisible(false); 
             },
 
             onMapWithPOIRouteMatched: function (oEvent) {
+                this.onLocateMePress(null, false)
+                const tryShowBottomSheet = () => {
+                    const bottomSheet = this.byId("bottomSheet");
+                    if (!bottomSheet) {
+                        setTimeout(tryShowBottomSheet, 50);
+                        return;
+                    }
+            
+                    bottomSheet.setVisible(true);
+            
+                    // Wait until the DOM is ready
+                    const waitForDom = () => {
+                        const domRef = bottomSheet.getDomRef();
+                        if (!domRef) {
+                            setTimeout(waitForDom, 50);
+                            return;
+                        }
+            
+                        domRef.style.display = "block";
+                        domRef.style.bottom = "-420px";
+            
+                        this._initBottomSheetDrag();
+                    };
+            
+                    waitForDom();
+                };
+                tryShowBottomSheet();
+
                 let sCurrentSpotId = oEvent.getParameter("arguments").idPOI;
                 this.getModel("local").setProperty("/sCurrentSpotId", sCurrentSpotId);
 
-                // Define the callback function to handle the render event
-                const fnRenderHandler = () => {
-                    let aItems = [...this.byId("idAllPointsOfInterestsSpots").getItems()];
-                    const oParkingSpots = this.byId("idParkingSpotsSpots");
-
-                    if (oParkingSpots) {
-                        aItems.push(...oParkingSpots.getItems());
-                    }
-
-                    const oSpot = aItems.find(e => e.data("id") === sCurrentSpotId);
-
-                    if (oSpot) {
-                        // Detach the render event once the spot is found
-                        this._oMap.detachEvent("render", fnRenderHandler);
-                        this.onSpotClick({ getSource: function () { return oSpot; } }, true);
-                    }
-                };
-
-                // Attach the render event to wait until the control is rendered
-                this._oMap.attachEvent("render", fnRenderHandler);
-            },
-
-            onSpotClick: function (oEvent, bSuppressNavigation) {
-                if (this.getRouter().getHashChanger().hash.includes("tour")) {
-                    return;
-                }
-                const oSpot = oEvent.getSource();
-                const aCords = oSpot.getPosition().split(";");
-                const nCurrentZoomLevel = this.getModel("app").getProperty("/zoomlevel")
-                const nNewZoomLevel = nCurrentZoomLevel <= this.nZoomLevelClickThreshold ? this.nZoomLevelClickThreshold + 3 : nCurrentZoomLevel;
-                this._oMap.zoomToGeoPosition(aCords[0], aCords[1], nNewZoomLevel);
-
-                const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
-                if (!oSplitter) return;
-                if (oSplitter.getContentAreas().length > 1) {
-                    // if more than 1 exists, the info card is open and can be recreated
-                    // this also resets the location of the splitter
-                    const oLastContentArea = oSplitter.getContentAreas().pop();
-                    oSplitter.removeContentArea(oLastContentArea);
-                    oLastContentArea.destroy();
-                    this._pSPOIInforCard = null;
-                    setTimeout(() => this.onSpotClick(oEvent), 0);
-                    return;
-                }
-
-                let oView = this.getView();
-                if (!this._pSPOIInforCard) {
-                    this._pSPOIInforCard = Fragment.load({
-                        id: oView.getId(),
-                        name: "hwb.frontendhwb.fragment.POIInfoCard",
-                        controller: this
-                    }).then(function (oDialog) {
-                        oView.addDependent(oDialog);
-                        return oDialog;
-                    });
-                }
-
+                const oPoiObject = this._getPoiById(sCurrentSpotId)
                 let localModel = this.getModel("local");
-                const oPoiObject = oSpot.getBindingContext().getObject();
-                let sCurrentSpotId = oPoiObject.ID;
+
                 localModel.setProperty("/sCurrentSpotId", sCurrentSpotId);
                 localModel.setProperty("/title", oPoiObject.name);
                 localModel.setProperty("/description", oPoiObject.description);
@@ -305,16 +293,12 @@ sap.ui.define([
                 localModel.setProperty("/oCurrentSpot", this._getPoiById(sCurrentSpotId));
 
                 this._loadRelevantTravelTimesForPoi(sCurrentSpotId, localModel);
+                
+                this._oMap.zoomToGeoPosition(oPoiObject.longitude, oPoiObject.latitude, this.nZoomLevelLabelThreshold);
+            },
 
-                if (!bSuppressNavigation) {
-                    this.getRouter().navTo("MapWithPOI", { idPOI: sCurrentSpotId });
-                }
-
-                this._pSPOIInforCard.then(oInfoCard => {
-                    oInfoCard.setModel("local", localModel);
-                    oSplitter.addContentArea(oInfoCard);
-                    oSplitter.resetContentAreasSizes();
-                });
+            onSpotClick: function (oEvent) {
+                this.getRouter().navTo("MapWithPOI", { idPOI: oEvent.getSource().getBindingContext().getProperty("ID") });
             },
 
             _loadRelevantTravelTimesForPoi: function (sCurrentSpotId, localModel) {
@@ -393,6 +377,38 @@ sap.ui.define([
                 }
             },
 
+            onDeleteStampPress: function (oEvent) {
+                const oModel = this.getModel();
+                let stampID = this.getModel("local").getProperty("/sCurrentSpotId");
+                const stampingPath = "/" + this.getModel().getProperty(`/Stampboxes(guid'${stampID}')/Stampings`)[0]
+
+                MessageBox.confirm(this.getResourceBundle().getText("confirmDeletionOfX", this._getPoiById(stampID).name), {
+                    icon: MessageBox.Icon.WARNING,
+                    title: this.getText("confirmDeletionTitle"),
+                    actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+                    emphasizedAction: MessageBox.Action.NO,
+                    onClose: (oAction) => {
+                        if (oAction === MessageBox.Action.YES) {
+                            // ✅ User confirmed, proceed with deletion
+                            let mParameters = {
+                                success: () => {
+                                    MessageToast.show(this.getText("deletedStamping"));
+                                    this.applyGroupFilter();
+                                    oEvent.getSource().setVisible(false);
+                                    this.getModel("local").setProperty("/bStampingEnabled", true);
+                                    // TODO enable other button? => refactor binding of info card anyway
+                                },
+                                error: () => MessageToast.show("An Error Occurred") || oSelectedItem.setSelected(true)
+                            };
+                            oModel.remove(stampingPath, mParameters);
+                        } else {
+                            // ✅ User canceled, revert selection
+                            oSelectedItem.setSelected(true);
+                        }
+                    }
+                });
+            },
+
             onButtonStampPress: function (oEvent) {
                 const oModel = this.getModel(),
                     localModel = this.getModel("local");
@@ -429,22 +445,8 @@ sap.ui.define([
                 const url = isIOS
                     ? `maps://maps.apple.com/?daddr=${lat},${long}`
                     : `geo:${lat},${long}?q=${lat},${long}`;
-            
+
                 window.open(url, '_self');
-            },
-
-            onButtonClosePress: function (oEvent) {
-                this.getRouter().navTo("Map");
-                const oSplitter = sap.ui.getCore().byId("container-hwb.frontendhwb---Map--idSplitter");
-                var aContentAreas = oSplitter.getContentAreas()
-                if (aContentAreas.length > 1) {
-
-                    var oLastContentArea = aContentAreas.pop();
-                    oSplitter.removeContentArea(oLastContentArea);
-                    oLastContentArea.destroy();
-                    this._pSPOIInforCard = null;
-                    oSplitter.resetContentAreasSizes();
-                }
             },
 
             onNearbyPress: function (oEvent) {
@@ -460,6 +462,77 @@ sap.ui.define([
             onOpenGroupManagement: function (oEvent) {
                 this.oMyAvatar = this.byId("idCurrentUserAvatarMapInner--idMyAvatar");
                 this._oPopover.openBy(this.oMyAvatar ?? oEvent.getSource());
+            },
+
+            _initBottomSheetDrag: function () {
+                const getBottomSheet = () => {
+                    return this.byId("bottomSheet").getDomRef();
+                }
+
+                const getBottomStart = newPosition => {
+                    // return newPosition;
+                    const maxBottom = "56";
+                    const minBottom = -1 * this.getModel("device").getProperty("/resize/height") * 0.8 - (maxBottom - 128);
+
+                    if (newPosition < parseInt(minBottom)) {
+                        return minBottom;
+                    } else if (newPosition > parseInt(maxBottom)) {
+                        return maxBottom;
+                    } else {
+                        return newPosition;
+                    }
+                }
+
+                const sheetHeader = document.querySelector(".sheet-header");
+                const dragHandle = document.querySelector(".drag-handle");
+                const sheetContent = document.querySelector(".sheet-content");
+                // Mouse events
+                sheetHeader.addEventListener("mousedown", startDraggingMouse.bind(this));
+                dragHandle.addEventListener("mousedown", startDraggingMouse.bind(this));
+                sheetContent.addEventListener("mousedown", startDraggingMouse.bind(this));
+                document.addEventListener("mouseup", stopDragging.bind(this));
+                document.addEventListener("mousemove", dragMouse.bind(this));
+
+                // Touch events
+                sheetHeader.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
+                dragHandle.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
+                sheetContent.addEventListener("touchstart", startDraggingTouch.bind(this), { passive: false });
+                document.addEventListener("touchend", stopDragging.bind(this));
+                document.addEventListener("touchmove", dragTouch.bind(this), { passive: false });
+
+                function startDraggingMouse(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    this.startY = e.clientY;
+                    const bottomSheet = getBottomSheet();
+                    this.startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
+                };
+
+                function dragMouse(e) {
+                    if (!isDragging) return;
+                    const deltaY = e.clientY - this.startY;
+                    const bottomSheet = getBottomSheet();
+                    bottomSheet.style.bottom = getBottomStart(this.startBottom - deltaY) + "px";
+                }
+
+                function startDraggingTouch(e) {
+                    e.preventDefault();
+                    isDragging = true;
+                    this.startY = e.touches[0].clientY;
+                    const bottomSheet = getBottomSheet();
+                    this.startBottom = parseInt(getComputedStyle(bottomSheet).bottom);
+                }
+
+                function dragTouch(e) {
+                    if (!isDragging) return;
+                    const deltaY = e.touches[0].clientY - this.startY;
+                    const bottomSheet = getBottomSheet();
+                    bottomSheet.style.bottom = getBottomStart(this.startBottom - deltaY) + "px";
+                }
+
+                function stopDragging() {
+                    isDragging = false;
+                }
             }
         });
     });

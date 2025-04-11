@@ -413,7 +413,7 @@ async function updateTourByPOIList(req) {
       toPoi.type = "parking"
     }
 
-    let travelMode = toPoi.type == toPoi.type == "parking" ? "drive" : "walk";
+    let travelMode = (toPoi.type === "parking" && fromPoi.type === "parking") ? "drive" : "walk";
     let calculatedTravelTime = await getTravelTimes(fromPoi, [toPoi], travelMode);
     calculatedTravelTime = calculatedTravelTime[0];
     // Add the calculated travel time to the array of needed travel times
@@ -585,7 +585,7 @@ async function getTourByIdListTravelTimes(req) {
   }
 
   let result = await routingManager.addPositionStrings([{
-    stampCount,
+    stampCount: stampCount ? stampCount : 0,
     distance,
     duration,
     id,

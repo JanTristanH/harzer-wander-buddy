@@ -1,0 +1,62 @@
+<custom:LeafletMap
+    xmlns:custom="hwb.frontendhwb.control"
+    id="map"
+    initialPosition="10.615779999999972;51.80054"
+    initialZoom="16"
+    zoomlevel="{app>/zoomlevel}"
+    centerPosition="{local>centerPosition}"
+    height="97%"
+    width="100vw"
+    zoomChanged="onGeoMapZoomChanged"
+    centerChanged="onGeoMapCenterChanged"
+>
+    <custom:routes>
+        <custom:Routes items="{local>/oSelectedTour/path}">
+            <custom:Route
+                position="{local>positionString}"
+                directionIndicator="true"
+                lineDash="{ path: 'local>travelMode', formatter: '.onFormatRouteLineDash'}"
+                tooltip="Länge: {local>duration}s - Distanz: {local>distance}"
+                labelText="{local>order}"
+                color="rgba(92,186,230,1.0)"
+                colorBorder="rgb(255,255,255)"
+            />
+        </custom:Routes>
+    </custom:routes>
+
+    <custom:Spots
+        id="idStampingSpots"
+        items="{ path: '/Stampboxes', parameters:{expand : 'Stampings'} }"
+    >
+        <custom:LeafletSpot
+            position="{longitude};{latitude}"
+            scale="{ parts:['ID','local>/sCurrentSpotId'], formatter: '.onFormatSpotScale'}"
+            text="{number}"
+            type="{ parts: ['', 'app>/bShowStampedSpots', 'app>/bShowUnStampedSpots', 'hasVisited'], formatter: '.onFormatBoxType'}"
+            labelText="{ parts: ['name', 'app>/zoomlevel', 'app>/bShowLabels', 'app>/bShowStampedSpots', 'app>/bShowUnStampedSpots', 'hasVisited', 'ID','local>/sCurrentSpotId'], formatter: '.onFormatStampLabelText'}"
+            click="onSpotClick"
+        />
+    </custom:Spots>
+
+    <custom:Spots
+        id="idParkingSpots"
+        items="{/ParkingSpots}"
+    >
+        <custom:LeafletSpot
+            position="{longitude};{latitude}"
+            scale="{ parts:['ID','local>/sCurrentSpotId'], formatter: '.onFormatSpotScale'}"
+            text="{ parts: ['app>/zoomlevel', 'i18n>ParkingSpotText'], formatter: '.onFormatParkingText' }"
+            type="{ parts: ['app>/bShowParkingSpots', 'app>/zoomlevel'], formatter: '.onFormatBooleanToSemanticType' }"
+            labelText="{ parts: ['name', 'app>/zoomlevel', 'app>/bShowLabels', 'app>/bShowParkingSpots', 'ID','local>/sCurrentSpotId'], formatter: '.onFormatLabelText'}"
+            click="onSpotClick"
+        />
+    </custom:Spots>
+
+    <custom:Spots>
+        <custom:LeafletSpot
+            text="📍"
+            id="idUserLocationSpot"
+            position="{local>/UserLocationLng};{local>/UserLocationLat}"
+        />
+    </custom:Spots>
+</custom:LeafletMap>

@@ -71,7 +71,7 @@
         </style>
         <script
             id="sap-ui-bootstrap"
-            src="https://sapui5.hana.ondemand.com/1.120.24/resources/sap-ui-core.js"
+            src="https://openui5.hana.ondemand.com/1.120.24/resources/sap-ui-core.js"
             data-sap-ui-theme="sap_horizon"
             data-sap-ui-resourceroots='{
                 "hwb.frontendhwb": "./"
@@ -82,6 +82,7 @@
             data-sap-ui-frameOptions="trusted"
         ></script>
         <script loading=async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBXJVytmwgkYfEQ4lqvN9C-4xMUYJhQmXk&libraries=places"></script>
+        <script src="/app/dependencies/chart.js"></script>
         <style>
             /* Loading splash screen */
             #busyIndicator {
@@ -104,6 +105,12 @@
                 100% { transform: scale(1); }
             }
         </style>
+
+        <!-- Leaflet install -->
+        <link rel="stylesheet" href="/app/dependencies/leaflet@1.9.4/dist/leaflet.css"/>
+        <script src="/app/dependencies/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="/app/dependencies/bbecquet/Leaflet.PolylineDecorator/dist/leaflet.polylineDecorator.js"></script>
+
     </head>
     <body class="sapUiBody sapUiSizeCompact" id="content" style="background-color: #e6e7dd;">
         <!-- Loading splash screen -->

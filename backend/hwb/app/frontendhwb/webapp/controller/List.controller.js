@@ -283,16 +283,16 @@ sap.ui.define([
                 let nPercentage = (iCurrent / iMax) * 100;
                 return this.calculateValueColorPercentage(nPercentage);
             },
+
             calculateValueColorPercentage: function (nPercentage) {
-                // Determine color based on percentage
                 if (nPercentage >= 100) {
-                    return "Good"; // Green for 100%
-                } else if (nPercentage == 0) {
-                    return "None"; // Grey for 0%
+                  return "#4caf50"; // Green for 100% (Success)
+                } else if (nPercentage === 0) {
+                  return "#9e9e9e"; // Grey for 0% (Neutral)
                 } else {
-                    return "rgb(50, 120, 190)"; // Blue otherwise
+                  return "#3278be"; // Blue for partial progress
                 }
-            },
+            },              
 
             onStampNavigatePress: function (oEvent) {
                 const sId = oEvent.getSource().data("ID");
