@@ -112,6 +112,11 @@ This project is configured to run with a postgres.
 - refactor scroll container on POI card / nearby stamps ✔️
 - delete stamping from poi card
 
+## Intermediate Fixes
+
+- store group in url for reload
+- click interaction on tour map is missing
+
 ## MVP 2
 
 - friends can edit my tour + edit as own tour
@@ -127,11 +132,11 @@ This project is configured to run with a postgres.
   - from stamp
   - from my location
 - Update color schema of app to match background of mascot
-- look into sapui5 vs openui5 (openUi5 does not have GeoMap)
+- look into sapui5 vs openui5 (openUi5 does not have GeoMap) ✔️
 - look into problem with 24 remaining routes
 - export live data to dummy data
 - fix handler to be normally performant: this.after('READ', `Stampboxes` -> use joins to load only needed group information
-- Profile page
+- Profile page ✔️
   - saved tours
   - overview achievements
   - timeline for stampings (allow change of date)
@@ -144,7 +149,7 @@ This project is configured to run with a postgres.
 - paid parking info
 - shareability for routes ✔️
 - cute mascot ✔️
-- compliant map server
+- compliant map server ~ (Current is okay for personal project, user MapBox later)
 - Comments on Stamps to mark missing / broken ones
 - support for multi book management
 
