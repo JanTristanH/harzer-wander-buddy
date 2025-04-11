@@ -65,6 +65,7 @@
                         icon="sap-icon://information"
                         title="{i18n>info}"
                         type="Active"
+                        class="sapUiTinyMarginBottom"
                         press="onNavToInfoPress"
                     />
 

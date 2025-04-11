@@ -46,6 +46,11 @@ sap.ui.define([
             installPWA();
         },
 
+        onNavToInfoPress: function () {
+            // nav to external link
+            window.open("https://www.harzer-wander-buddy.de/impressum", "_blank");
+        },
+
         onPopoverClose: function () {
             this.oMyAvatar.setActive(false);
         },
