@@ -628,9 +628,10 @@ sap.ui.define([
                     }
                 }
 
-                const sheetHeader = document.querySelector(".sheet-header");
-                const dragHandle = document.querySelector(".drag-handle");
-                const sheetContent = document.querySelector(".sheet-content");
+                const bottomSheet = getBottomSheet();
+                const sheetHeader = bottomSheet.querySelector(".sheet-header");
+                const dragHandle = bottomSheet.querySelector(".drag-handle");
+                const sheetContent = bottomSheet.querySelector(".sheet-content");
                 // Mouse events
                 sheetHeader.addEventListener("mousedown", startDraggingMouse.bind(this));
                 dragHandle.addEventListener("mousedown", startDraggingMouse.bind(this));
@@ -646,7 +647,7 @@ sap.ui.define([
                 document.addEventListener("touchmove", dragTouch.bind(this), { passive: false });
 
                 function startDraggingMouse(e) {
-                    e.preventDefault();
+                    
                     isDragging = true;
                     this.startY = e.clientY;
                     const bottomSheet = getBottomSheet();
@@ -662,7 +663,7 @@ sap.ui.define([
                 }
 
                 function startDraggingTouch(e) {
-                    e.preventDefault();
+                    
                     isDragging = true;
                     this.startY = e.touches[0].clientY;
                     const bottomSheet = getBottomSheet();
