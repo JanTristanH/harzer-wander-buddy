@@ -4,13 +4,14 @@ sap.ui.define([
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
     "sap/m/MessageToast",
+    "sap/m/MessageBox",
     "sap/ui/model/json/JSONModel",
     "sap/ui/model/Sorter"
 ],
     /**
      * @param {typeof sap.ui.core.mvc.Controller} Controller
      */
-    function (Controller, Fragment, Filter, FilterOperator, MessageToast, JSONModel, Sorter) {
+    function (Controller, Fragment, Filter, FilterOperator, MessageToast, MessageBox, JSONModel, Sorter) {
         "use strict";
         let isDragging = false;
         return Controller.extend("hwb.frontendhwb.controller.MapInner", {
@@ -374,6 +375,38 @@ sap.ui.define([
                 } else {
                     return "sap-icon://checklist-item-2";
                 }
+            },
+
+            onDeleteStampPress: function (oEvent) {
+                const oModel = this.getModel();
+                let stampID = this.getModel("local").getProperty("/sCurrentSpotId");
+                const stampingPath = "/" + this.getModel().getProperty(`/Stampboxes(guid'${stampID}')/Stampings`)[0]
+
+                MessageBox.confirm(this.getResourceBundle().getText("confirmDeletionOfX", this._getPoiById(stampID).name), {
+                    icon: MessageBox.Icon.WARNING,
+                    title: this.getText("confirmDeletionTitle"),
+                    actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+                    emphasizedAction: MessageBox.Action.NO,
+                    onClose: (oAction) => {
+                        if (oAction === MessageBox.Action.YES) {
+                            // ✅ User confirmed, proceed with deletion
+                            let mParameters = {
+                                success: () => {
+                                    MessageToast.show(this.getText("deletedStamping"));
+                                    this.applyGroupFilter();
+                                    oEvent.getSource().setVisible(false);
+                                    this.getModel("local").setProperty("/bStampingEnabled", true);
+                                    // TODO enable other button? => refactor binding of info card anyway
+                                },
+                                error: () => MessageToast.show("An Error Occurred") || oSelectedItem.setSelected(true)
+                            };
+                            oModel.remove(stampingPath, mParameters);
+                        } else {
+                            // ✅ User canceled, revert selection
+                            oSelectedItem.setSelected(true);
+                        }
+                    }
+                });
             },
 
             onButtonStampPress: function (oEvent) {

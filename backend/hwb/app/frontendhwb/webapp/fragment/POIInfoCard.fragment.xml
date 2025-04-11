@@ -4,104 +4,119 @@
     xmlns:card="sap.f.cards"
     xmlns:core="sap.ui.core"
 >
+    <Title text="{local>/title}" />
 
-            <Title text="{local>/title}" />
-        
-            <VBox
-                class="sapUiSmallMargin"
-                justifyContent="SpaceBetween"
+    <VBox
+        class="sapUiSmallMargin"
+        justifyContent="SpaceBetween"
+    >
+        <FlexBox
+            width="100%"
+            wrap="Wrap"
+        >
+            <MenuButton
+                text="{i18n>navigate}"
+                icon="sap-icon://forward"
+                type="Emphasized"
+                buttonMode="Split"
+                defaultAction="onNavigateWithGoogleMaps"
+                class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
             >
-                <FlexBox
-                    width="100%"
-                    wrap="Wrap"
-                >
-                    <MenuButton 
-                        text="{i18n>navigate}"
-                        icon="sap-icon://forward"
-                        type="Emphasized"
-                        buttonMode="Split" 
-                        defaultAction="onNavigateWithGoogleMaps"
-                        class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
-                    >
-                        <menu>
-                            <Menu itemSelected="onMenuAction">
-                                <MenuItem text="{i18n>navigate}" icon="sap-icon://forward" press="onNavigateWithGoogleMaps"/>
-                                <MenuItem text="{i18n>navigateOtherApp}" icon="sap-icon://map-2" press="onNavigateWithNative"/>
-                            </Menu>
-                        </menu>
-                    </MenuButton>
+                <menu>
+                    <Menu itemSelected="onMenuAction">
+                        <MenuItem
+                            text="{i18n>navigate}"
+                            icon="sap-icon://forward"
+                            press="onNavigateWithGoogleMaps"
+                        />
+                        <MenuItem
+                            text="{i18n>navigateOtherApp}"
+                            icon="sap-icon://map-2"
+                            press="onNavigateWithNative"
+                        />
+                    </Menu>
+                </menu>
+            </MenuButton>
 
-                    <FlexBox 
-                        visible="{local>/bStampingVisible}"
-                    >
-                        <core:Fragment fragmentName="hwb.frontendhwb.fragment.GroupAwareStampMenuButton" type="XML" />
-                    </FlexBox>
-                    <Button
-                        text="{i18n>share}"
-                        icon="sap-icon://share-2"
-                        type="Transparent"
-                        press="onButtonSharePress"
-                        class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
-                    />
-                    <Button
-                        text="{i18n>website}"
-                        icon="sap-icon://world"
-                        visible="{local>/bStampingVisible}"
-                        type="Transparent"
-                        press="onButtonOpenExternalPress"
-                        class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
-                    />
-                </FlexBox>
-                <VBox
-                    class="sapUiSmallMarginTop"
-                    width="95%"
-                    visible="{= (${app>/aSelectedGroupIds} 
+            <FlexBox visible="{local>/bStampingVisible}">
+                <core:Fragment
+                    fragmentName="hwb.frontendhwb.fragment.GroupAwareStampMenuButton"
+                    type="XML"
+                />
+                <Button
+                    text="{i18n>deleteMyVisit}"
+                    icon="sap-icon://delete"
+                    visible="{= !${local>/bStampingEnabled}}"
+                    press=".onDeleteStampPress"
+                    type="Transparent"
+                />
+            </FlexBox>
+            <Button
+                text="{i18n>share}"
+                icon="sap-icon://share-2"
+                type="Transparent"
+                press="onButtonSharePress"
+                class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
+            />
+            <Button
+                text="{i18n>website}"
+                icon="sap-icon://world"
+                visible="{local>/bStampingVisible}"
+                type="Transparent"
+                press="onButtonOpenExternalPress"
+                class="sapUiTinyMarginEnd sapUiSmallMarginBottom"
+            />
+        </FlexBox>
+        <VBox
+            class="sapUiSmallMarginTop"
+            width="95%"
+            visible="{= (${app>/aSelectedGroupIds} 
                                 &amp;&amp; ${app>/aSelectedGroupIds}.length > 0) 
                                 &amp;&amp; (${local>/oCurrentSpot/stampedUsers}
                                 &amp;&amp; ${local>/oCurrentSpot/stampedUsers}.length > 0) ? true : false }"
+        >
+            <Title text="{i18n>stampedBy}" />
+            <f:AvatarGroup
+                id="avatarGroup"
+                groupType="Individual"
+                avatarDisplaySize="S"
+                press="onAvatarGroupPress"
+                items="{local>/oCurrentSpot/stampedUsers}"
+            >
+                <f:AvatarGroupItem
+                    initials="{path: 'local>name', formatter: '.onFormatInitialsByName'}"
+                    fallbackIcon="sap-icon://person-placeholder"
+                    src="{local>picture}"
+                    tooltip="{local>name}"
+                    fieldGroupIds="{local>ID}"
+                />
+            </f:AvatarGroup>
+        </VBox>
+        <HBox
+            class="sapUiSmallMarginTop"
+            width="95%"
+            visible="{= !${local>/bStampingVisible}}"
+        >
+            <ExpandableText
+                class="sapUiTinyMarginBottom sapUiTinyMarginTop"
+                text="{local>/description}"
+            />
+        </HBox>
+        <HBox class="sapUiSmallMarginTop">
+            <ScrollContainer
+                width="100%"
+                height="300px"
+                vertical="true"
+            >
+                <List
+                    id="idTravelTimesList"
+                    headerText="{i18n>nearbyPois}"
+                    items="{local>/TravelTimes}"
                 >
-                    <Title text="{i18n>stampedBy}" />
-                    <f:AvatarGroup
-                        id="avatarGroup"
-                        groupType="Individual"
-                        avatarDisplaySize="S"
-                        press="onAvatarGroupPress"
-                        items="{local>/oCurrentSpot/stampedUsers}"
-                    >
-                        <f:AvatarGroupItem
-                            initials="{path: 'local>name', formatter: '.onFormatInitialsByName'}"
-                            fallbackIcon="sap-icon://person-placeholder"
-                            src="{local>picture}"
-                            tooltip="{local>name}"
-                            fieldGroupIds="{local>ID}"
-                        />
-                    </f:AvatarGroup>
-                </VBox>
-                <HBox
-                    class="sapUiSmallMarginTop"
-                    width="95%"
-                    visible="{= !${local>/bStampingVisible}}"
-                >
-                    <ExpandableText
-                        class="sapUiTinyMarginBottom sapUiTinyMarginTop"
-                        text="{local>/description}"
-                    />
-                </HBox>
-                <HBox class="sapUiSmallMarginTop">
-                    <ScrollContainer
-                        width="100%"
-                        height="300px"
-                        vertical="true"
-                    >
-                        <List
-                            id="idTravelTimesList"
-                            headerText="{i18n>nearbyPois}"
-                            items="{local>/TravelTimes}"
-                        >
-                        <StandardListItem />
-                        <!-- populated by MapsInnerController-->
-                        </List>
-                    </ScrollContainer>
-                </HBox>
-            </VBox>
+                    <StandardListItem />
+                    <!-- populated by MapsInnerController-->
+                </List>
+            </ScrollContainer>
+        </HBox>
+    </VBox>
 </VBox>
