@@ -35,16 +35,23 @@ sap.ui.define([
                     urlParameters: { "$top": 500 }
                 });
 
-                oModel.callFunction("/getCurrentUser", {
-                    method: "GET",
-                    success: function(oData) {
-                        this.getModel("app").setProperty("/currentUser", oData);
-                    }.bind(this),
-                    error: function(oError) {
-                        // Handle error
-                        console.error("Error getting current user:", oError);
+                fetch("/odata/v2/api/getCurrentUser", {
+                    credentials: "include"
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Not authorized");
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    this.getModel("app").setProperty("/currentUser", data);
+                })
+                .catch(err => {
+                    console.error("Manual fetch failed:", err);
+                    window.location.href = `/login?redirect_uri=${encodeURIComponent(window.location.href)}`;
                 });
+                
 
                 document.getElementById("busyIndicator").style.display = "none";
             }
