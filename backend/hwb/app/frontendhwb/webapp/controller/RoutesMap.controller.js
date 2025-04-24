@@ -609,7 +609,7 @@ sap.ui.define([
 
             _initBottomSheetDrag: function () {
                 const getBottomSheet = () => {
-                    return this.byId("bottomSheetTour")?.getDomRef();
+                    return sap.ui.getCore().byId("midView--bottomSheetTour")?.getDomRef();
                 }
 
                 this.showBottomSheetWaitingForMap();
@@ -629,6 +629,10 @@ sap.ui.define([
                 }
 
                 const bottomSheet = getBottomSheet();
+                if(!bottomSheet) {
+                    setTimeout(() => this._initBottomSheetDrag());
+                    return;
+                }
                 const sheetHeader = bottomSheet.querySelector(".sheet-header");
                 const dragHandle = bottomSheet.querySelector(".drag-handle");
                 const sheetContent = bottomSheet.querySelector(".sheet-content");
