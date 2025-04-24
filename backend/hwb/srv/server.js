@@ -2,7 +2,6 @@ const cds = require("@sap/cds");
 const { auth, requiresAuth } = require("express-openid-connect");
 const jsonwebtoken = require("jsonwebtoken");
 const express = require('express');
-const cors = require('cors')
 require("dotenv").config();
 
 
@@ -58,11 +57,6 @@ cds.on("bootstrap", (app) => {
 
 
   app.use(auth(config));
-
-  app.use(cors({
-    origin: 'https://preview-67f-67f7c4efe78885e73aaa223e-67f9284ce788857c47aa223c.monaca.mobi',
-    credentials: true
-  }));
 
   app.use('/app/frontendhwb', requiresAuth(), express.static(__dirname + '/../app/frontendhwb'));
   app.use('/app/dependencies', requiresAuth(), express.static(__dirname + '/../app/dependencies'));
