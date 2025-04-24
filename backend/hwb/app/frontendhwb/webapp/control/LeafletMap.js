@@ -38,6 +38,7 @@ sap.ui.define([
     
       clearTimeout(this._invalidateTimeout);
       this._invalidateTimeout = setTimeout(() => {
+        this.invalidateSize();
         this._renderSpots();
         this._renderRoutes();
       }, 250); // Adjust delay (ms) as needed
@@ -52,6 +53,7 @@ sap.ui.define([
     },
 
     onAfterRendering: function () {
+      this.invalidate();
       if (!this._oMap) {
         const oDomRef = this.getDomRef();
         this._oMap = L.map(oDomRef, {

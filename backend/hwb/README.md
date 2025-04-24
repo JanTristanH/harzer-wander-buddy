@@ -111,6 +111,8 @@ This project is configured to run with a postgres.
   - handle navigation on desktop ❌
 - refactor scroll container on POI card / nearby stamps ✔️
 - delete stamping from poi card ✔️
+- Password User filter seems to not work on profile page (stamped by me)
+- move GoogleMaps geo location API key / call into backend 
 
 ## Intermediate Fixes
 

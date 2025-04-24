@@ -34,17 +34,29 @@ sap.ui.define([
                 oModel.read("/ParkingSpots", {
                     urlParameters: { "$top": 500 }
                 });
-
-                oModel.callFunction("/getCurrentUser", {
-                    method: "GET",
-                    success: function(oData) {
-                        this.getModel("app").setProperty("/currentUser", oData);
-                    }.bind(this),
-                    error: function(oError) {
-                        // Handle error
-                        console.error("Error getting current user:", oError);
+                
+                // fetch without model as it does not provide error if not authorized
+                fetch("/odata/v2/api/getCurrentUser", {
+                    credentials: "include"
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Not authorized");
                     }
+                    return response.json();
+                })
+                .then(data => {
+                    this.getModel("app").setProperty("/currentUser", data);
+                })
+                .catch(err => {
+                    console.error("Manual fetch failed:", err);
+                    const sServerUrl =  this.getModel().sServiceUrl;
+                    const loginUrl = sServerUrl.split("/odata/v2/api" )[0] + "/login";
+
+                    window.location.href = loginUrl;
+
                 });
+                
 
                 document.getElementById("busyIndicator").style.display = "none";
             }
