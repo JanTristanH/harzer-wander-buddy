@@ -34,7 +34,8 @@ sap.ui.define([
                 oModel.read("/ParkingSpots", {
                     urlParameters: { "$top": 500 }
                 });
-
+                
+                // fetch without model as it does not provide error if not authorized
                 fetch("/odata/v2/api/getCurrentUser", {
                     credentials: "include"
                 })
@@ -49,7 +50,11 @@ sap.ui.define([
                 })
                 .catch(err => {
                     console.error("Manual fetch failed:", err);
-                    window.location.href = `/login?redirect_uri=${encodeURIComponent(window.location.href)}`;
+                    const sServerUrl =  this.getModel().sServiceUrl;
+                    const loginUrl = sServerUrl.split("/odata/v2/api" )[0] + "/login";
+
+                    window.location.href = loginUrl;
+
                 });
                 
 
