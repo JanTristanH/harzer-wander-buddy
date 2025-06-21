@@ -46,7 +46,7 @@ sap.ui.define([
                     return response.json();
                 })
                 .then(data => {
-                    this.getModel("app").setProperty("/currentUser", data);
+                    this.getModel("app").setProperty("/currentUser", data.d);
                 })
                 .catch(err => {
                     console.error("Manual fetch failed:", err);
