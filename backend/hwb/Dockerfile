@@ -1,12 +1,15 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
 WORKDIR /usr/src/app
 
-# Install build dependencies needed for native modules (node-gyp)
-# python3 + make + g++ are usually enough; build-base is the "bundle" alternative
-RUN apk add --no-cache python3 make g++
+# Install build dependencies for native modules (better-sqlite3, etc.)
+RUN apk add --no-cache python3 make g++ \
+    # node-gyp looks for "python", so add a symlink
+ && ln -sf /usr/bin/python3 /usr/bin/python \
+    # and tell npm explicitly which python to use
+ && npm config set python /usr/bin/python3
 
-# Copy package metadata first (better layer caching)
+# Copy package metadata first (for better layer caching)
 COPY ./package*.json ./
 
 # Install CAP CLI globally and app deps
