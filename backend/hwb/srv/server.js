@@ -1,6 +1,7 @@
 // srv/server.js (CommonJS, as before)
 const cds = require("@sap/cds");
 const express = require("express");
+const cors = require("cors");
 
 /**
  * Helper to lazily import Better Auth (ESM) from CommonJS.
@@ -27,6 +28,17 @@ cds.on("bootstrap", async (app) => {
   // ---- Better Auth integration -------------------------------------------
   // IMPORTANT: Do NOT use express.json() before the Better Auth handler. :contentReference[oaicite:2]{index=2}
   const { toNodeHandler, fromNodeHeaders, auth } = await loadBetterAuth();
+
+  // CORS for Better Auth routes
+  app.use(
+    "/api/auth",
+    cors({
+      origin: "http://localhost:8081",        // Expo web
+      credentials: true,                      // cookies!
+      methods: ["GET", "POST", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    })
+  );
 
   // All Better Auth routes (sign-in, sign-up, etc.)
   app.all("/api/auth/*", toNodeHandler(auth));

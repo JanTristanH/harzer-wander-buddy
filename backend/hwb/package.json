@@ -6,11 +6,13 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
+    "@better-auth/expo": "^1.4.5",
     "@cap-js-community/odata-v2-adapter": "^1.12.8",
     "@cap-js/attachments": "^1.2.1",
     "@cap-js/postgres": "^1.8.0",
     "@sap/cds": "^8",
     "better-auth": "^1.4.5",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4",
     "express-openid-connect": "^2.17.1",
@@ -30,6 +32,9 @@
     "watch-frontendhwb": "cds watch --open frontendhwb/webapp/index.html?sap-ui-xx-viewCache=false"
   },
   "cds": {
+    "server": {
+      "cors": false
+    },
     "requires": {
       "attachments": {
         "scan": false,

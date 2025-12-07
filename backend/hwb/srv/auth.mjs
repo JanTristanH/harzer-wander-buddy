@@ -1,6 +1,7 @@
 // srv/auth.mjs
 import "dotenv/config";
 import { betterAuth } from "better-auth";
+import { expo } from "@better-auth/expo";
 import { createAuthMiddleware } from "better-auth/api";
 import cds from "@sap/cds";
 
@@ -15,6 +16,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: false,
   },
+  plugins: [expo()],
   // Example social provider (adapt to your needs: google, github, etc.)
   socialProviders: {
     google: {
@@ -22,6 +24,11 @@ export const auth = betterAuth({
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     },
   },
+  trustedOrigins: [
+    "http://localhost:8081",
+    "hwb://",
+    "exp://*/*",
+  ],
 
   /**
    * Run custom logic after successful auth calls.
