@@ -5,9 +5,7 @@ WORKDIR /usr/src/app
 # Install build dependencies for native modules (better-sqlite3, etc.)
 RUN apk add --no-cache python3 make g++ \
     # node-gyp looks for "python", so add a symlink
- && ln -sf /usr/bin/python3 /usr/bin/python \
-    # and tell npm explicitly which python to use
- && npm config set python /usr/bin/python3
+ && ln -sf /usr/bin/python3 /usr/bin/python
 
 # Copy package metadata first (for better layer caching)
 COPY ./package*.json ./
