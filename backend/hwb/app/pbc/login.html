@@ -1,0 +1,46 @@
+<!-- app/pbc/login-test.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Better Auth Google Test</title>
+  </head>
+  <body>
+    <h1>Test Google Sign-In (Better Auth)</h1>
+    <button id="google-login">Sign in with Google</button>
+
+    <script>
+      async function googleLogin() {
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectTo = urlParams.get("redirect") || "/app/frontendhwb/dist/index.html";
+
+        // Call Better Auth's /sign-in/social endpoint over HTTP
+        const res = await fetch("/api/auth/sign-in/social", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include", // important: let Set-Cookie work
+          body: JSON.stringify({
+            provider: "google",
+            // after successful login, go to your UI5 app
+            callbackURL: redirectTo,
+          }),
+        });
+
+        const data = await res.json();
+
+        // Better Auth returns { redirect: true, url: "https://accounts.google.com/..." } on social sign-in 
+        if (data.redirect && data.url) {
+          window.location.href = data.url;
+        } else {
+          console.error("Unexpected response from Better Auth:", data);
+          alert("Sign-in failed, check console");
+        }
+      }
+
+      document
+        .getElementById("google-login")
+        .addEventListener("click", googleLogin);
+    </script>
+  </body>
+</html>

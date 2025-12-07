@@ -1,71 +1,80 @@
+// srv/server.js (CommonJS, as before)
 const cds = require("@sap/cds");
-const { auth, requiresAuth } = require("express-openid-connect");
-const jsonwebtoken = require("jsonwebtoken");
-const express = require('express');
-require("dotenv").config();
+const express = require("express");
 
+/**
+ * Helper to lazily import Better Auth (ESM) from CommonJS.
+ * We only import inside the bootstrap hook, and we keep a small cache.
+ */
+let _betterAuthLoaded;
+async function loadBetterAuth() {
+  if (!_betterAuthLoaded) {
+    const betterAuthNode = await import("better-auth/node");
+    const authModule = await import("./auth.mjs"); // path to your auth.mjs
+    _betterAuthLoaded = {
+      toNodeHandler: betterAuthNode.toNodeHandler,
+      fromNodeHeaders: betterAuthNode.fromNodeHeaders,
+      auth: authModule.auth,
+    };
+  }
+  return _betterAuthLoaded;
+}
 
-const config = {
-  authRequired: false,
-  auth0Logout: true,
-  secret: process.env.SECRET,
-  baseURL: process.env.BASE_URL,
-  clientID: process.env.CLIENT_ID,
-  issuerBaseURL: process.env.ISSUER_BASE_URL,
-  authorizationParams: {
-    response_type: "code",
-    scope: "openid profile email permissions",
-    audience: process.env.AUDIENCE,
-  },
-  afterCallback: async (req, tokenSet, userInfo) => {
-    // save / update user in our database after login
-    let userFromToken = jsonwebtoken.decode(userInfo.id_token);
-    
-    try {
-      const db = await cds.connect.to('db');
-      const { ExternalUsers } = db.entities;
-      
-      const existingUser = await db.read(ExternalUsers).where({ ID: userFromToken.sub });
-      
-      if (!existingUser || existingUser.length === 0) {
-        // Create new user
-        await db.create(ExternalUsers).entries({
-          ID: userFromToken.sub,
-          email: userFromToken.email,
-          email_verified: userFromToken.email_verified,
-          family_name: userFromToken.family_name,
-          given_name: userFromToken.given_name,
-          name: userFromToken.name,
-          nickname: userFromToken.nickname,
-          picture: userFromToken.picture,
-          sid: userFromToken.sid,
-          sub: userFromToken.sub,
-          updated_at_iso_string: userFromToken.updated_at
-        });
-      }
-    } catch (error) {
-      console.error('Error managing user in database:', error);
-    }
-
-    return userInfo;
-  },
-};
-
-cds.on("bootstrap", (app) => {
-  // ✅ Serve manifest.json publicly before authentication middleware
+cds.on("bootstrap", async (app) => {
+  // Serve manifest.json / UI5 preload stuff publicly
   app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));
 
+  // ---- Better Auth integration -------------------------------------------
+  // IMPORTANT: Do NOT use express.json() before the Better Auth handler. :contentReference[oaicite:2]{index=2}
+  const { toNodeHandler, fromNodeHeaders, auth } = await loadBetterAuth();
 
-  app.use(auth(config));
+  // All Better Auth routes (sign-in, sign-up, etc.)
+  app.all("/api/auth/*", toNodeHandler(auth));
 
-  app.use('/app/frontendhwb', requiresAuth(), express.static(__dirname + '/../app/frontendhwb'));
-  app.use('/app/dependencies', requiresAuth(), express.static(__dirname + '/../app/dependencies'));
+  // Now it's safe to use express.json() for other routes
+  app.use(express.json());
 
-  // rewrite ui5 dist path
+  // Simple auth guard using Better Auth session
+  const ensureAuth = async (req, res, next) => {
+    try {
+      const session = await auth.api.getSession({
+        headers: fromNodeHeaders(req.headers),
+      }); // :contentReference[oaicite:3]{index=3}
+
+      if (!session) {
+        const target = encodeURIComponent(req.originalUrl);
+        return res.redirect(`/app/pbc/login.html?redirect=${target}`);
+      }
+
+
+      // Optionally expose user on req for downstream handlers
+      req.user = session.user;
+      next();
+    } catch (err) {
+      console.error("Error reading session from Better Auth:", err);
+      return res.status(500).json({ error: "Auth check failed" });
+    }
+  };
+
+  // ---- Protected static resources ----------------------------------------
+
+  app.use(
+    "/app/frontendhwb",
+    ensureAuth,
+    express.static(__dirname + "/../app/frontendhwb")
+  );
+
+  app.use(
+    "/app/dependencies",
+    ensureAuth,
+    express.static(__dirname + "/../app/dependencies")
+  );
+
+  // ---- UI5 dist path rewrite (unchanged) ---------------------------------
   app.use((req, res, next) => {
     const pattern = /~\/.*?\/~/g;
     if (pattern.test(req.url)) {
-      req.url.replace(pattern, "/");
+      req.url = req.url.replace(pattern, "/");
     }
     next();
   });
