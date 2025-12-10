@@ -1,17 +1,13 @@
-// srv/server.js (CommonJS, as before)
+// srv/server.js
 const cds = require("@sap/cds");
 const express = require("express");
 const cors = require("cors");
 
-/**
- * Helper to lazily import Better Auth (ESM) from CommonJS.
- * We only import inside the bootstrap hook, and we keep a small cache.
- */
 let _betterAuthLoaded;
 async function loadBetterAuth() {
   if (!_betterAuthLoaded) {
     const betterAuthNode = await import("better-auth/node");
-    const authModule = await import("./auth.mjs"); // path to your auth.mjs
+    const authModule = await import("./auth.mjs");
     _betterAuthLoaded = {
       toNodeHandler: betterAuthNode.toNodeHandler,
       fromNodeHeaders: betterAuthNode.fromNodeHeaders,
@@ -22,44 +18,41 @@ async function loadBetterAuth() {
 }
 
 cds.on("bootstrap", async (app) => {
-  // Serve manifest.json / UI5 preload stuff publicly
-  app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));
-
-  // ---- Better Auth integration -------------------------------------------
-  // IMPORTANT: Do NOT use express.json() before the Better Auth handler. :contentReference[oaicite:2]{index=2}
   const { toNodeHandler, fromNodeHeaders, auth } = await loadBetterAuth();
 
-  // CORS for Better Auth routes
-  app.use(
-    "/api/auth",
-    cors({
-      origin: "http://localhost:8081",        // Expo web
-      credentials: true,                      // cookies!
-      methods: ["GET", "POST", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
-    })
-  );
+  // --- GLOBAL CORS FOR DEV ---------------------------------------------
+  const corsConfig = {
+    origin: "http://localhost:8081", // Expo web origin
+    credentials: true,              // allow cookies
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+    allowedHeaders: "Content-Type,Authorization,X-Requested-With,Accept",
+  };
 
-  // All Better Auth routes (sign-in, sign-up, etc.)
+  // Preflight + all methods
+  app.options("*", cors(corsConfig));
+  app.use(cors(corsConfig));
+
+  // Static (unchanged)
+  app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));
+
+  // --- Better Auth routes ----------------------------------------------
   app.all("/api/auth/*", toNodeHandler(auth));
 
-  // Now it's safe to use express.json() for other routes
+  // Body parser for other routes
   app.use(express.json());
 
-  // Simple auth guard using Better Auth session
+  // --- Auth guard for protected static content -------------------------
   const ensureAuth = async (req, res, next) => {
     try {
       const session = await auth.api.getSession({
         headers: fromNodeHeaders(req.headers),
-      }); // :contentReference[oaicite:3]{index=3}
+      });
 
       if (!session) {
         const target = encodeURIComponent(req.originalUrl);
         return res.redirect(`/app/pbc/login.html?redirect=${target}`);
       }
 
-
-      // Optionally expose user on req for downstream handlers
       req.user = session.user;
       next();
     } catch (err) {
@@ -67,8 +60,6 @@ cds.on("bootstrap", async (app) => {
       return res.status(500).json({ error: "Auth check failed" });
     }
   };
-
-  // ---- Protected static resources ----------------------------------------
 
   app.use(
     "/app/frontendhwb",
@@ -82,7 +73,7 @@ cds.on("bootstrap", async (app) => {
     express.static(__dirname + "/../app/dependencies")
   );
 
-  // ---- UI5 dist path rewrite (unchanged) ---------------------------------
+  // UI5 path rewrite (unchanged)
   app.use((req, res, next) => {
     const pattern = /~\/.*?\/~/g;
     if (pattern.test(req.url)) {
