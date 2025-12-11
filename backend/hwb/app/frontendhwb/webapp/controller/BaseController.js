@@ -61,7 +61,19 @@ sap.ui.define([
         },
 
         onLogoutPress: function () {
-            window.location.href = "/logout";
+            (async function () {
+                try {
+                await fetch("/api/auth/sign-out", {
+                    method: "POST",
+                    credentials: "include" // send cookies so Better Auth knows which session
+                });
+                } catch (e) {
+                console.error("Error signing out", e);
+                } finally {
+                // After sign-out, go back to the login page
+                window.location.href = "/app/pbc/login.html";
+                }
+            })();
         },
 
         onMyProfilePress: function () {

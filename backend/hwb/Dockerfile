@@ -1,34 +1,25 @@
-FROM node:18-alpine
+FROM node:22
 
 WORKDIR /usr/src/app
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-COPY ./package*.json ./
+RUN apt-get update \
+ && apt-get install -y python3 python3-distutils make g++ \
+ && rm -rf /var/lib/apt/lists/*
 
-# Bundle app source
+COPY ./package*.json ./
+RUN npm i @sap/cds -g \
+ && npm ci
 COPY . .
 
-RUN npm i @sap/cds -g \
-&& npm install
-
-# ensure no data is in db/data directory
 RUN rm -rf db/data
 
-# Build ui5 app
-
-WORKDIR app/frontendhwb
-
-RUN npm ci
-RUN npm run build
+WORKDIR /usr/src/app/app/frontendhwb
+RUN npm ci && npm run build
 
 WORKDIR /usr/src/app
 
-# Make the script executable
 COPY start.sh ./
 RUN chmod +x start.sh
 
 EXPOSE 4004
-
-# Run the script on container startup
 CMD ["./start.sh"]
