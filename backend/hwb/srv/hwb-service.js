@@ -96,6 +96,7 @@ module.exports = class api extends cds.ApplicationService {
     this.after('READ', 'MyFriends', addIsAllowedToStampForFriend.bind(this));
 
     this.before("CREATE", "Stampings", verifyStampingIsForBox)
+    this.before("CREATE", "Stampings", applyDefaultVisitTimestamp)
 
     return super.init()
   }
@@ -115,6 +116,12 @@ async function verifyStampingIsForBox(req) {
   if (!existingStampbox || existingStampbox.length === 0) {
       req.error(404, `Stampbox with ID ${stamp} does not exist.`);
       return;
+  }
+}
+
+function applyDefaultVisitTimestamp(req) {
+  if (!req.data.visitedAt) {
+    req.data.visitedAt = req.data.createdAt || new Date().toISOString();
   }
 }
 
