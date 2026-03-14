@@ -54,9 +54,22 @@ const mobileCors = cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 });
 
-const issuer = process.env.ISSUER_BASE_URL;
+function normalizeIssuer(rawIssuer) {
+  if (!rawIssuer) {
+    return "";
+  }
+
+  return rawIssuer.endsWith("/") ? rawIssuer : `${rawIssuer}/`;
+}
+
+const issuer = normalizeIssuer(process.env.ISSUER_BASE_URL);
 const audience = process.env.AUDIENCE;
-const jwks = issuer ? createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`)) : null;
+const jwksUrl = issuer ? new URL(".well-known/jwks.json", issuer) : null;
+const jwks = jwksUrl ? createRemoteJWKSet(jwksUrl) : null;
+
+console.log("[auth] issuer:", issuer || "<missing>");
+console.log("[auth] audience:", audience || "<missing>");
+console.log("[auth] jwks url:", jwksUrl?.toString() || "<missing>");
 
 async function bearerAuth(req, res, next) {
   const authHeader = req.headers.authorization || "";
@@ -72,6 +85,11 @@ async function bearerAuth(req, res, next) {
 
   try {
     const token = authHeader.slice("Bearer ".length);
+    const decodedToken = jsonwebtoken.decode(token) || {};
+    console.log("[auth] bearer request:", req.method, req.originalUrl);
+    console.log("[auth] token iss:", decodedToken.iss || "<missing>");
+    console.log("[auth] token aud:", decodedToken.aud || "<missing>");
+
     const { payload } = await jwtVerify(token, jwks, {
       issuer,
       audience,
@@ -80,9 +98,14 @@ async function bearerAuth(req, res, next) {
     req.auth0TokenPayload = payload;
     req.user = buildCapUserFromClaims(payload);
     await upsertExternalUser(payload);
+    console.log("[auth] bearer verification succeeded for:", payload.sub);
     next();
   } catch (error) {
-    console.error("Bearer auth failed:", error.message);
+    console.error("[auth] bearer verification failed:", error.message);
+    console.error("[auth] request url:", req.originalUrl);
+    if (error.code) {
+      console.error("[auth] error code:", error.code);
+    }
     res.status(401).json({ error: "Unauthorized" });
   }
 }
