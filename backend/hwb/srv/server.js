@@ -4,7 +4,7 @@ const jsonwebtoken = require("jsonwebtoken");
 const express = require("express");
 const cors = require("cors");
 const { createRemoteJWKSet, jwtVerify } = require("jose");
-const { buildCapUserFromClaims, upsertExternalUser } = require("./auth-utils");
+const { buildCapUserFromClaims, enrichClaimsWithUserInfo, upsertExternalUser } = require("./auth-utils");
 require("dotenv").config();
 
 
@@ -95,10 +95,12 @@ async function bearerAuth(req, res, next) {
       audience,
     });
 
-    req.auth0TokenPayload = payload;
-    req.user = buildCapUserFromClaims(payload);
-    await upsertExternalUser(payload);
-    console.log("[auth] bearer verification succeeded for:", payload.sub);
+    const enrichedPayload = await enrichClaimsWithUserInfo(token, payload);
+
+    req.auth0TokenPayload = enrichedPayload;
+    req.user = buildCapUserFromClaims(enrichedPayload);
+    await upsertExternalUser(enrichedPayload);
+    console.log("[auth] bearer verification succeeded for:", enrichedPayload.sub);
     next();
   } catch (error) {
     console.error("[auth] bearer verification failed:", error.message);
