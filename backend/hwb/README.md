@@ -22,6 +22,26 @@ For deployment you may also provide them directly to the container.
 
 This project is configured to run with a postgres.
 
+## Export live data as CSV
+
+Use these endpoints to export live DB content for CAP seed files.
+
+- `GET /export/csv`
+  - Lists all supported entities and direct download URLs.
+- `GET /export/csv/:entity`
+  - Exports one entity as CSV (`text/csv`) with filename `hwb.db.<Entity>.csv`.
+  - Example: `/export/csv/Stampboxes`
+
+The export endpoints require authentication (browser session or bearer token).
+
+Example with bearer token:
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  http://localhost:4004/export/csv/Stampboxes \
+  -o hwb.db.Stampboxes.csv
+```
+
 ## Todo
 
 - implement api call to maps to get times (by travel type) ✔️
