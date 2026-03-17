@@ -108,6 +108,7 @@ service api @(requires: 'authenticated-user') {
             toUser.picture            as picture,
             createdBy                 as createdBy,
             ID                        as FriendshipID,
+            status                    as status,
             true                      as isFriend : Boolean,
             isAllowedToStampForFriend as isAllowedToStampForMe,
             false                      as isAllowedToStampForFriend : Boolean
@@ -210,6 +211,7 @@ service api @(requires: 'authenticated-user') {
     ])                                        as projection on db.Stampings;
 
     action   stampForGroup(sStampId : UUID, bStampForUser : Boolean, sGroupUserIds : String) returns String;
+    action   getStampFriendVisits(sStampId : UUID, sGroupUserIds : String) returns String;
 
     // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
     // TODO set up read restrictions from external
