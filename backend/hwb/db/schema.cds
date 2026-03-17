@@ -111,6 +111,7 @@ entity TravelTimes : cuid {
 @assert.integrity: true
 entity Stampings : cuid {
     stamp     : Association to Stampboxes;
+    visitedAt : Timestamp;
     createdAt : Timestamp @cds.on.insert: $now;
     createdBy : User      @cds.on.insert: $user;
 }
@@ -147,6 +148,7 @@ entity Tour2TravelTime @cds.autoexpose {
 entity Friendships : cuid {
     fromUser  : Association to ExternalUsers;
     toUser    : Association to ExternalUsers;
+    status    : String(20) default 'pending';
     isAllowedToStampForFriend: Boolean default false;
     createdBy : User @cds.on.insert: $user;
 }

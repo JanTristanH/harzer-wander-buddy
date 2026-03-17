@@ -67,6 +67,7 @@ module.exports = class api extends cds.ApplicationService {
     this.on('addElevationToAllTravelTimes', addElevationToAllTravelTimes)
 
     this.on('stampForGroup', stampForGroup)
+    this.on('getStampFriendVisits', getStampFriendVisits)
 
     this.before('CREATE', 'Friendships', onBeforeFriendshipCreate);
 
@@ -96,6 +97,7 @@ module.exports = class api extends cds.ApplicationService {
     this.after('READ', 'MyFriends', addIsAllowedToStampForFriend.bind(this));
 
     this.before("CREATE", "Stampings", verifyStampingIsForBox)
+    this.before("CREATE", "Stampings", applyDefaultVisitTimestamp)
 
     return super.init()
   }
@@ -115,6 +117,12 @@ async function verifyStampingIsForBox(req) {
   if (!existingStampbox || existingStampbox.length === 0) {
       req.error(404, `Stampbox with ID ${stamp} does not exist.`);
       return;
+  }
+}
+
+function applyDefaultVisitTimestamp(req) {
+  if (!req.data.visitedAt) {
+    req.data.visitedAt = req.data.createdAt || new Date().toISOString();
   }
 }
 
@@ -297,7 +305,9 @@ function extractFilters(filters, operator) {
 async function addIsFriend(users, req) {
   const { MyFriends } = this.api.entities;
   const aFriendships = await SELECT.from(MyFriends).where({ createdBy: req.user.id });
-  const aFriendIds = aFriendships.map(f => f.ID);
+  const aFriendIds = aFriendships
+    .filter(f => f.status === 'accepted')
+    .map(f => f.ID);
   return users.map(user => {
     user.isFriend = aFriendIds.includes(user.ID);
     user.isAllowedFor
@@ -1085,6 +1095,98 @@ async function stampForGroup(req) {
   }
 
   return "ok";
+}
+
+async function getStampFriendVisits(req) {
+  const { Stampings, ExternalUsers } = this.entities('hwb.db');
+  const { MyFriends } = this.api.entities;
+  const { sStampId, sGroupUserIds } = req.data || {};
+
+  if (!sStampId) {
+    req.error(400, 'sStampId is required');
+    return JSON.stringify([]);
+  }
+
+  const myAcceptedFriends = await SELECT
+    .from(MyFriends)
+    .where({
+      createdBy: req.user.id,
+      status: 'accepted'
+    });
+  const acceptedFriendIds = myAcceptedFriends
+    .map(friend => friend.ID)
+    .filter(Boolean);
+
+  if (acceptedFriendIds.length === 0) {
+    return JSON.stringify([]);
+  }
+
+  const requestedFriendIds = sGroupUserIds && sGroupUserIds.trim().length > 0
+    ? sGroupUserIds.split(',').map(userId => userId.trim()).filter(Boolean)
+    : acceptedFriendIds;
+  const allowedRequestedIds = requestedFriendIds.filter(userId => acceptedFriendIds.includes(userId));
+
+  if (allowedRequestedIds.length === 0) {
+    return JSON.stringify([]);
+  }
+
+  const allStampings = await SELECT
+    .from(Stampings)
+    .where({
+      stamp_ID: sStampId,
+      createdBy: { in: allowedRequestedIds }
+    });
+
+  const latestByFriendId = new Map();
+  for (const stamping of allStampings) {
+    const friendId = stamping.createdBy;
+    if (!friendId) {
+      continue;
+    }
+
+    const current = latestByFriendId.get(friendId);
+    const nextTime = stamping.visitedAt || stamping.createdAt;
+    const currentTime = current ? (current.visitedAt || current.createdAt) : undefined;
+
+    if (
+      !current ||
+      new Date(nextTime || 0).getTime() > new Date(currentTime || 0).getTime()
+    ) {
+      latestByFriendId.set(friendId, stamping);
+    }
+  }
+
+  const friendIds = Array.from(latestByFriendId.keys());
+  if (friendIds.length === 0) {
+    return JSON.stringify([]);
+  }
+
+  const friendUsers = await SELECT
+    .from(ExternalUsers)
+    .columns('ID', 'name', 'picture')
+    .where({ ID: { in: friendIds } });
+  const userById = new Map(friendUsers.map(user => [user.ID, user]));
+
+  const visits = Array.from(latestByFriendId.entries())
+    .map(([friendId, stamping]) => {
+      const user = userById.get(friendId);
+      const timestamp = stamping.visitedAt || stamping.createdAt;
+
+      return {
+        friendId,
+        name: user?.name || friendId,
+        picture: user?.picture,
+        stampingId: stamping.ID,
+        visitedAt: stamping.visitedAt || null,
+        createdAt: stamping.createdAt || null,
+        timestamp: timestamp || null
+      };
+    })
+    .sort((left, right) =>
+      new Date(right.timestamp || 0).getTime() - new Date(left.timestamp || 0).getTime()
+    );
+
+  return JSON.stringify(visits);
 }
 
 async function addIsAllowedToStampForFriend(aMyFriends, req) {
