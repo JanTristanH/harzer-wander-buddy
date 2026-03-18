@@ -2,6 +2,11 @@ FROM node:22-bookworm-slim
 
 WORKDIR /usr/src/app
 
+# Required for native Node modules (e.g. sqlite3 via node-gyp)
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends python3 make g++ \
+&& rm -rf /var/lib/apt/lists/*
+
 # Install app dependencies
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 COPY ./package*.json ./
