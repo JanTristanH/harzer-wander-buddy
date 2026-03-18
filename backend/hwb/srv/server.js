@@ -3,7 +3,6 @@ const { auth, requiresAuth } = require("express-openid-connect");
 const jsonwebtoken = require("jsonwebtoken");
 const express = require("express");
 const cors = require("cors");
-const { createRemoteJWKSet, jwtVerify } = require("jose");
 const { buildCapUserFromClaims, enrichClaimsWithUserInfo, upsertExternalUser } = require("./auth-utils");
 require("dotenv").config();
 
@@ -65,7 +64,8 @@ function normalizeIssuer(rawIssuer) {
 const issuer = normalizeIssuer(process.env.ISSUER_BASE_URL);
 const audience = process.env.AUDIENCE;
 const jwksUrl = issuer ? new URL(".well-known/jwks.json", issuer) : null;
-const jwks = jwksUrl ? createRemoteJWKSet(jwksUrl) : null;
+let joseModulePromise;
+let jwks;
 const exportableEntities = [
   "AdjacentStamps",
   "Attachments_local",
@@ -85,6 +85,26 @@ console.log("[auth] issuer:", issuer || "<missing>");
 console.log("[auth] audience:", audience || "<missing>");
 console.log("[auth] jwks url:", jwksUrl?.toString() || "<missing>");
 
+function getJoseModule() {
+  if (!joseModulePromise) {
+    joseModulePromise = import("jose");
+  }
+  return joseModulePromise;
+}
+
+async function getJwks() {
+  if (!jwksUrl) {
+    return null;
+  }
+
+  if (!jwks) {
+    const { createRemoteJWKSet } = await getJoseModule();
+    jwks = createRemoteJWKSet(jwksUrl);
+  }
+
+  return jwks;
+}
+
 async function bearerAuth(req, res, next) {
   const authHeader = req.headers.authorization || "";
   if (!authHeader.startsWith("Bearer ")) {
@@ -92,12 +112,14 @@ async function bearerAuth(req, res, next) {
     return;
   }
 
+  const jwks = await getJwks();
   if (!jwks || !issuer || !audience) {
     res.status(500).json({ error: "Bearer auth is not configured correctly" });
     return;
   }
 
   try {
+    const { jwtVerify } = await getJoseModule();
     const token = authHeader.slice("Bearer ".length);
     const decodedToken = jsonwebtoken.decode(token) || {};
     console.log("[auth] bearer request:", req.method, req.originalUrl);
@@ -239,4 +261,3 @@ cds.on("bootstrap", (app) => {
 });
 
 module.exports = cds.server;
-
