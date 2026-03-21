@@ -176,6 +176,7 @@ service api @(requires: 'authenticated-user') {
                     latitude,
                     name,
                     orderBy,
+                    heroImage,
                     description,
                     'stamp' as poiType   : String
             }
@@ -186,6 +187,7 @@ service api @(requires: 'authenticated-user') {
                     latitude,
                     name,
                     '999'     as orderBy,
+                    ''        as heroImage : String(2048),
                     description,
                     'parking' as poiType : String
             };

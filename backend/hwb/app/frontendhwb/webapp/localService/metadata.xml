@@ -39,6 +39,7 @@
                 <Property Name="name" Type="Edm.String" MaxLength="40"/>
                 <Property Name="description" Type="Edm.String" MaxLength="2048"/>
                 <Property Name="number" Type="Edm.String" MaxLength="40"/>
+                <Property Name="heroImage" Type="Edm.String" MaxLength="2048"/>
                 <Property Name="isKidFriendly" Type="Edm.Boolean"/>
                 <Property Name="isElderlyFriendly" Type="Edm.Boolean"/>
                 <Property Name="isStrollerFriendly" Type="Edm.Boolean"/>

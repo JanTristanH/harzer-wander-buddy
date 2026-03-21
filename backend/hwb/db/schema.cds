@@ -41,6 +41,7 @@ entity Attachments_local : Attachments {
 entity Stampboxes : cuid, temporal, PointOfInterest {
     number                 : String(40); // to allow Sonderstempel via name
     orderBy                : String(40);
+    heroImage              : String(2048);
     isKidFriendly          : Boolean;
     isElderlyFriendly      : Boolean;
     isStrollerFriendly     : Boolean;
