@@ -81,10 +81,6 @@ const exportableEntities = [
   "TravelTimes",
 ];
 
-console.log("[auth] issuer:", issuer || "<missing>");
-console.log("[auth] audience:", audience || "<missing>");
-console.log("[auth] jwks url:", jwksUrl?.toString() || "<missing>");
-
 function getJoseModule() {
   if (!joseModulePromise) {
     joseModulePromise = import("jose");
@@ -121,10 +117,6 @@ async function bearerAuth(req, res, next) {
   try {
     const { jwtVerify } = await getJoseModule();
     const token = authHeader.slice("Bearer ".length);
-    const decodedToken = jsonwebtoken.decode(token) || {};
-    console.log("[auth] bearer request:", req.method, req.originalUrl);
-    console.log("[auth] token iss:", decodedToken.iss || "<missing>");
-    console.log("[auth] token aud:", decodedToken.aud || "<missing>");
 
     const { payload } = await jwtVerify(token, jwks, {
       issuer,
@@ -136,14 +128,8 @@ async function bearerAuth(req, res, next) {
     req.auth0TokenPayload = enrichedPayload;
     req.user = buildCapUserFromClaims(enrichedPayload);
     await upsertExternalUser(enrichedPayload);
-    console.log("[auth] bearer verification succeeded for:", enrichedPayload.sub);
     next();
   } catch (error) {
-    console.error("[auth] bearer verification failed:", error.message);
-    console.error("[auth] request url:", req.originalUrl);
-    if (error.code) {
-      console.error("[auth] error code:", error.code);
-    }
     res.status(401).json({ error: "Unauthorized" });
   }
 }

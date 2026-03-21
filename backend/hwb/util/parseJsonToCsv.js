@@ -20,12 +20,13 @@ data = data.map(poi => {
         latitude: poi.point.lat,
         name: poi.title,
         description: poi.title + " ~ this will come later: make a get request",
-        heroImage: "",
+        heroImageUrl: "",
+        imageCaption: "",
         number
     }
 })
 //map to csv ordered string
-.map(poi => `${poi.ID};${poi.validFrom};${poi.validTo};${poi.longitude};${poi.latitude};${poi.name};${poi.description};${poi.heroImage};${poi.number};`)
+.map(poi => `${poi.ID};${poi.validFrom};${poi.validTo};${poi.longitude};${poi.latitude};${poi.name};${poi.description};${poi.heroImageUrl};${poi.imageCaption};${poi.number};`)
 .join("\n");
 // Display the file data
 console.log(data);
