@@ -37,9 +37,9 @@ The export endpoints require authentication (browser session or bearer token).
 Example with bearer token:
 
 ```bash
-curl -H "Authorization: Bearer <token>" \
-  http://localhost:4004/export/csv/Stampboxes \
-  -o hwb.db.Stampboxes.csv
+npm run download-csv-exports -- \
+  --base-url https://app.harzer-wander-buddy.de \
+  --session-cookie 'eyJ...'
 ```
 
 ## Todo

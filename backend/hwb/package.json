@@ -28,7 +28,8 @@
     "start": "cds-serve",
     "watch": "cds watch",
     "deploy": "cds deploy",
-    "watch-frontendhwb": "cds watch --open frontendhwb/webapp/index.html?sap-ui-xx-viewCache=false"
+    "watch-frontendhwb": "cds watch --open frontendhwb/webapp/index.html?sap-ui-xx-viewCache=false",
+    "download-csv-exports": "node util/downloadCsvExports.js"
   },
   "cds": {
     "requires": {
