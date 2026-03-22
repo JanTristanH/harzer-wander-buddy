@@ -3,7 +3,12 @@ const {
   v4: uuidv4
 } = require('uuid');
 
-const { onAfterFriendshipCreate, acceptPendingFriendshipRequest, onBeforeFriendshipCreate } = require('./friendships');
+const {
+  onAfterFriendshipCreate,
+  acceptPendingFriendshipRequest,
+  onBeforeFriendshipCreate,
+  onBeforeFriendshipDelete,
+} = require('./friendships');
 
 const fetch = require('node-fetch');
 const routingManager = require('./routingManager');
@@ -72,6 +77,8 @@ module.exports = class api extends cds.ApplicationService {
     this.before('CREATE', 'Friendships', onBeforeFriendshipCreate);
 
     this.after('CREATE', 'Friendships', onAfterFriendshipCreate);
+
+    this.before('DELETE', 'Friendships', onBeforeFriendshipDelete);
 
     this.on('getCurrentUser', async (req) => {
       const ExternalUsers = this.entities('hwb.db').ExternalUsers;

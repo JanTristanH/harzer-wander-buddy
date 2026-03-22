@@ -121,8 +121,18 @@ service api @(requires: 'authenticated-user') {
             to   : 'authenticated-user'
         },
         {
-            grant: 'WRITE',
+            grant: 'CREATE',
             to   : 'authenticated-user'
+        },
+        {
+            grant: 'UPDATE',
+            to   : 'authenticated-user',
+            where: 'createdBy = $user'
+        },
+        {
+            grant: 'DELETE',
+            to   : 'authenticated-user',
+            where: 'createdBy = $user'
         }
     ]
     entity Friendships                        as projection on db.Friendships;

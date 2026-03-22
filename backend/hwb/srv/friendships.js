@@ -132,9 +132,29 @@ const acceptPendingFriendshipRequest = async (req) => {
   return pendingRequest.outgoingFriendship_ID;
 };
 
+const onBeforeFriendshipDelete = async (req) => {
+  const friendshipId = req.data?.ID || req.params?.[0]?.ID;
+  if (!friendshipId) {
+    return req;
+  }
+
+  const db = await cds.connect.to('db');
+  const tx = db.tx(req);
+  const { PendingFriendshipRequests } = db.entities;
+
+  await tx.run(
+    DELETE.from(PendingFriendshipRequests).where({
+      outgoingFriendship_ID: friendshipId,
+    })
+  );
+
+  return req;
+};
+
 module.exports = {
   FRIENDSHIP_STATUS,
   onAfterFriendshipCreate,
   acceptPendingFriendshipRequest,
+  onBeforeFriendshipDelete,
   onBeforeFriendshipCreate,
 };
