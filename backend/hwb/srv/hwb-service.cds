@@ -34,6 +34,10 @@ service api @(requires: 'authenticated-user') {
     entity Stampboxes                         as
         projection on db.Stampboxes {
             *,
+            neighborStamps       : Association to many NeighborsStampStamp
+                                        on neighborStamps.ID = $self.ID,
+            neighborParking      : Association to many NeighborsStampParking
+                                        on neighborParking.ID = $self.ID,
             '' as groupFilterStampings : String,
             0  as groupSize            : Integer,
             0  as totalGroupStampings  : Integer,
@@ -51,7 +55,14 @@ service api @(requires: 'authenticated-user') {
             to   : 'admin'
         }
     ]
-    entity ParkingSpots                       as projection on db.ParkingSpots;
+    entity ParkingSpots                       as
+        projection on db.ParkingSpots {
+            *,
+            neighborStamps  : Association to many NeighborsParkingStamp
+                                  on neighborStamps.ID = $self.ID,
+            neighborParking : Association to many NeighborsParkingParking
+                                  on neighborParking.ID = $self.ID
+        };
 
     @readonly
     entity TravelTimes                        as projection on db.TravelTimes;
@@ -226,6 +237,7 @@ service api @(requires: 'authenticated-user') {
 
     action   stampForGroup(sStampId : UUID, bStampForUser : Boolean, sGroupUserIds : String) returns String;
     action   getStampFriendVisits(sStampId : UUID, sGroupUserIds : String) returns String;
+    action   getUsersProgress(sGroupUserIds : String) returns String;
 
     // Entity only used internally to caculate NearestNeighbors to cut down on maps routing requests
     // TODO set up read restrictions from external
@@ -236,6 +248,10 @@ service api @(requires: 'authenticated-user') {
         {
             key Stampboxes.ID,
             key NeighborsBox.ID     as NeighborsID,
+                sourceStamp         : Association to one Stampboxes
+                                          on sourceStamp.ID = $self.ID,
+                neighborStamp       : Association to one Stampboxes
+                                          on neighborStamp.ID = $self.NeighborsID,
                 Stampboxes.number,
                 NeighborsBox.number as NeighborsNumber,
                 NeighborsBox.latitude,
@@ -271,6 +287,10 @@ service api @(requires: 'authenticated-user') {
         {
             key Stampboxes.ID,
             key Neighbors.ID as NeighborsID,
+                sourceStamp   : Association to one Stampboxes
+                                    on sourceStamp.ID = $self.ID,
+                neighborParking : Association to one ParkingSpots
+                                    on neighborParking.ID = $self.NeighborsID,
                 Stampboxes.number,
                 Neighbors.latitude,
                 Neighbors.longitude,
@@ -301,6 +321,10 @@ service api @(requires: 'authenticated-user') {
         {
             key Parking.ID,
             key NeighborsBox.ID     as NeighborsID,
+                sourceParking       : Association to one ParkingSpots
+                                          on sourceParking.ID = $self.ID,
+                neighborStamp       : Association to one Stampboxes
+                                          on neighborStamp.ID = $self.NeighborsID,
                 NeighborsBox.number as NeighborsNumber,
                 NeighborsBox.latitude,
                 NeighborsBox.longitude,
@@ -333,6 +357,10 @@ service api @(requires: 'authenticated-user') {
         {
             key Parking.ID,
             key Neighbors.ID as NeighborsID,
+                sourceParking : Association to one ParkingSpots
+                                    on sourceParking.ID = $self.ID,
+                neighborParking : Association to one ParkingSpots
+                                    on neighborParking.ID = $self.NeighborsID,
                 Neighbors.latitude,
                 Neighbors.longitude,
                 SQRT(

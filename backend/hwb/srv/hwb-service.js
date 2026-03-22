@@ -73,6 +73,7 @@ module.exports = class api extends cds.ApplicationService {
 
     this.on('stampForGroup', stampForGroup)
     this.on('getStampFriendVisits', getStampFriendVisits)
+    this.on('getUsersProgress', getUsersProgress)
 
     this.before('CREATE', 'Friendships', onBeforeFriendshipCreate);
 
@@ -1194,6 +1195,64 @@ async function getStampFriendVisits(req) {
     );
 
   return JSON.stringify(visits);
+}
+
+async function getUsersProgress(req) {
+  const { Stampings, Stampboxes } = this.entities('hwb.db');
+  const data = req.data || {};
+  const csvIds = typeof data.sGroupUserIds === 'string'
+    ? data.sGroupUserIds.split(',').map(id => id.trim()).filter(Boolean)
+    : [];
+  const arrayIds = Array.isArray(data.userIds)
+    ? data.userIds.map(id => `${id}`.trim()).filter(Boolean)
+    : [];
+  const userIds = Array.from(new Set([...arrayIds, ...csvIds]));
+
+  if (userIds.length === 0) {
+    return JSON.stringify([]);
+  }
+
+  const allStampboxes = await SELECT
+    .from(Stampboxes)
+    .columns('ID');
+  const totalCount = allStampboxes.length;
+
+  const stampings = await SELECT
+    .from(Stampings)
+    .columns('createdBy', 'stamp_ID')
+    .where({
+      createdBy: { in: userIds }
+    });
+  const stampedIdsByUser = new Map();
+
+  for (const stamping of stampings) {
+    const userId = stamping.createdBy;
+    const stampId = stamping.stamp_ID;
+    if (!userId || !stampId) {
+      continue;
+    }
+
+    let stampedIds = stampedIdsByUser.get(userId);
+    if (!stampedIds) {
+      stampedIds = new Set();
+      stampedIdsByUser.set(userId, stampedIds);
+    }
+
+    stampedIds.add(stampId);
+  }
+
+  const progress = userIds.map(userId => {
+    const visitedCount = stampedIdsByUser.get(userId)?.size || 0;
+    const completionPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
+
+    return {
+      userId,
+      visitedCount,
+      completionPercent
+    };
+  });
+
+  return JSON.stringify(progress);
 }
 
 async function addIsAllowedToStampForFriend(aMyFriends, req) {
