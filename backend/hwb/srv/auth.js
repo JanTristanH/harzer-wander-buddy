@@ -1,5 +1,14 @@
 const { buildCapUserFromClaims } = require("./auth-utils");
 
+function sendODataError(res, statusCode, message) {
+  res.status(statusCode).json({
+    error: {
+      code: String(statusCode),
+      message,
+    },
+  });
+}
+
 function capAuth0(req, res, next) {
   if (req.user?.id) {
     return next();
@@ -8,7 +17,7 @@ function capAuth0(req, res, next) {
   const claims = req.auth0TokenPayload || req.oidc?.user;
   const user = buildCapUserFromClaims(claims);
   if (!user) {
-    res.status(401).json({ error: "Unauthorized" });
+    sendODataError(res, 401, "Unauthorized");
     return;
   }
 

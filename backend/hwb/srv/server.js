@@ -61,6 +61,15 @@ function normalizeIssuer(rawIssuer) {
   return rawIssuer.endsWith("/") ? rawIssuer : `${rawIssuer}/`;
 }
 
+function sendODataError(res, statusCode, message) {
+  res.status(statusCode).json({
+    error: {
+      code: String(statusCode),
+      message,
+    },
+  });
+}
+
 const issuer = normalizeIssuer(process.env.ISSUER_BASE_URL);
 const audience = process.env.AUDIENCE;
 const jwksUrl = issuer ? new URL(".well-known/jwks.json", issuer) : null;
@@ -110,7 +119,7 @@ async function bearerAuth(req, res, next) {
 
   const jwks = await getJwks();
   if (!jwks || !issuer || !audience) {
-    res.status(500).json({ error: "Bearer auth is not configured correctly" });
+    sendODataError(res, 500, "Bearer auth is not configured correctly");
     return;
   }
 
@@ -130,7 +139,7 @@ async function bearerAuth(req, res, next) {
     await upsertExternalUser(enrichedPayload);
     next();
   } catch (error) {
-    res.status(401).json({ error: "Unauthorized" });
+    sendODataError(res, 401, "Unauthorized");
   }
 }
 
@@ -173,7 +182,7 @@ async function requireExportAuth(req, res, next) {
       return;
     }
 
-    res.status(401).json({ error: "Unauthorized" });
+    sendODataError(res, 401, "Unauthorized");
   });
 }
 
