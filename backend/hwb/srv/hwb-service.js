@@ -17,7 +17,6 @@ const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MA
 // 40.000 free 
 //  2.500 used
 let count = 0;
-let countRequest = 0;
 let aTravelTimesGlobal = [];
 
 module.exports = class api extends cds.ApplicationService {
@@ -62,6 +61,7 @@ module.exports = class api extends cds.ApplicationService {
     this.on("getTourByIdListTravelTimes", getTourByIdListTravelTimes)
 
     this.on("updateTourByPOIList", updateTourByPOIList)
+    this.on("previewTourByPOIList", previewTourByPOIList)
 
     this.on('READ', 'TypedTravelTimes', async (req) => {
       // const db = cds.transaction(req);
@@ -353,11 +353,30 @@ async function deleteSpotWithRoutes(req) {
 }
 
 async function updateTourByPOIList(req) {
+  return handleTourByPOIList.call(this, req, { persist: true });
+}
+
+async function previewTourByPOIList(req) {
+  return handleTourByPOIList.call(this, req, { persist: false });
+}
+
+async function handleTourByPOIList(req, options = { persist: true }) {
+  const persist = options.persist !== false;
   let id = req.data.TourID;
   let poiList = req.data.POIList;
 
   const { typedTravelTimes } = this.api.entities;
   const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours } = this.entities('hwb.db');
+
+  const existingTour = await SELECT.one.from(Tours).where({ ID: id });
+  if (!existingTour) {
+    req.error(404, `Tour with ID ${id} does not exist.`);
+    return;
+  }
+  if (existingTour.createdBy !== req.user.id) {
+    req.error(403, `You are not allowed to ${persist ? "update" : "preview"} tour ${id}.`);
+    return;
+  }
 
   let aPois = poiList.split(";").filter(p => !!p);
   aPois = removeAdjacentDuplicates(aPois);
@@ -381,21 +400,20 @@ async function updateTourByPOIList(req) {
     aPoiPairs.push({ fromPoi: aPois[i], toPoi: aPois[i + 1] });
   }
 
-  // Construct a condition string for the WHERE clause to match pairs of POIs
-  let conditionString = aPoiPairs
-    .map(pair => `(fromPoi = '${pair.fromPoi}' AND toPoi = '${pair.toPoi}')`)
-    .join(' OR ');
-
-  // If there are no pairs, skip the query
-  if (conditionString.length === 0) {
-    conditionString = '1 = 0'; // Just to ensure no results are returned
-  }
+  const fromPoiIds = [...new Set(aPoiPairs.map(pair => pair.fromPoi))];
+  const toPoiIds = [...new Set(aPoiPairs.map(pair => pair.toPoi))];
+  const wantedPairKeys = new Set(aPoiPairs.map(pair => `${pair.fromPoi}-${pair.toPoi}`));
 
   // Step 1: Load applicable travel times for the given POI pairs
   let aTravelTimesWithPositionString = await SELECT
     .columns('ID', 'fromPoi', 'toPoi', 'durationSeconds', 'distanceMeters', 'travelMode', 'name', 'elevationLoss', 'elevationGain')
     .from(typedTravelTimes)
-    .where(`${conditionString}`);
+    .where({
+      fromPoi: { in: fromPoiIds },
+      toPoi: { in: toPoiIds }
+    });
+  aTravelTimesWithPositionString = aTravelTimesWithPositionString
+    .filter(route => wantedPairKeys.has(`${route.fromPoi}-${route.toPoi}`));
   aTravelTimesWithPositionString = getUniqueRoutes(aTravelTimesWithPositionString);
 
   // Step 2: Identify missing travel times
@@ -418,6 +436,7 @@ async function updateTourByPOIList(req) {
 
   // Step 3: Calculate missing travel times
   let aNeededTravelTimes = [];
+  const routeBudget = createRouteBudget();
   for (let pair of aMissingTravelTimes) {
     let fromPoi = oStampBoxById[pair.fromPoi];
     if (!fromPoi) {
@@ -432,22 +451,32 @@ async function updateTourByPOIList(req) {
     }
 
     let travelMode = (toPoi.type === "parking" && fromPoi.type === "parking") ? "drive" : "walk";
-    let calculatedTravelTime = await getTravelTimes(fromPoi, [toPoi], travelMode);
+    let calculatedTravelTime = await getTravelTimes(fromPoi, [toPoi], travelMode, routeBudget);
     calculatedTravelTime = calculatedTravelTime[0];
     // Add the calculated travel time to the array of needed travel times
-    aNeededTravelTimes.push(calculatedTravelTime);
+    if (calculatedTravelTime) {
+      aNeededTravelTimes.push(calculatedTravelTime);
+    }
   }
-  // save the new travel times to the database
+  // Persist newly calculated travel times only for update calls.
   if (aNeededTravelTimes.length > 0) {
-    await INSERT(aNeededTravelTimes).into(TravelTimes);
+    if (persist) {
+      await INSERT(aNeededTravelTimes).into(TravelTimes);
+    }
     aTravelTimesWithPositionString = aTravelTimesWithPositionString.concat(aNeededTravelTimes);
   }
 
-  // Update Tour TravelTimes
+  // Build ranked tour links from the requested POI sequence.
   let aTour2TravelTime = getRankedTour2TravelTimes(aTravelTimesWithPositionString, aPois, id);
+  if (aTour2TravelTime.length !== aPois.length - 1) {
+    req.error(422, `Unable to ${persist ? "update" : "preview"} tour ${id}: missing route segments for the requested POI list.`);
+    return;
+  }
 
-  await DELETE.from(Tour2TravelTime).where({ tour_ID: id });
-  await INSERT(aTour2TravelTime).into(Tour2TravelTime);
+  if (persist) {
+    await DELETE.from(Tour2TravelTime).where({ tour_ID: id });
+    await INSERT(aTour2TravelTime).into(Tour2TravelTime);
+  }
 
   let distance = 0, duration = 0, stampCount = 0, idListTravelTimes = "", totalElevationGain = 0, totalElevationLoss = 0;
   for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
@@ -456,7 +485,6 @@ async function updateTourByPOIList(req) {
     duration += parseInt(oTravelTime.durationSeconds) || 0;
     totalElevationGain += parseInt(oTravelTime.elevationGain) || 0;
     totalElevationLoss += parseInt(oTravelTime.elevationLoss) || 0;
-    idListTravelTimes = idListTravelTimes + aTravelTimesWithPositionString.ID
 
     if (oStampBoxById[oTravelTime.toPoi]) {
       oStampBoxById[oTravelTime.toPoi] = null;
@@ -468,6 +496,7 @@ async function updateTourByPOIList(req) {
       stampCount++;
     }
   }
+  idListTravelTimes = aTour2TravelTime.map(tt => tt.travelTime_ID).join(";");
 
   let oTour = {
     ID: id,
@@ -478,9 +507,11 @@ async function updateTourByPOIList(req) {
     totalElevationGain,
     totalElevationLoss
   }
-  await UPSERT(oTour).into(Tours);
+  if (persist) {
+    await UPSERT(oTour).into(Tours);
+  }
 
-  oTour.idListTravelTimes = aTour2TravelTime.map(tt => tt.travelTime_ID).join(";")
+  oTour.idListTravelTimes = idListTravelTimes;
   oTour.path = aTour2TravelTime;
   return oTour;
 
@@ -546,22 +577,22 @@ async function getTourByIdListTravelTimes(req) {
   const { TravelTimes, Stampboxes, Stampings } = this.entities('hwb.db');
   const { typedTravelTimes } = this.api.entities;
 
-  let aPathIds = id.split(";").map(id => `'${id}'`);
-  aPathIds.unshift("'xx'");
+  let aPathIds = id.split(";").filter(Boolean);
+  aPathIds.unshift("xx");
 
   const aTravelTimesWithPositionString = await SELECT
     .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
-    .where(`ID in (${aPathIds.join(',')})`)
+    .where({ ID: { in: aPathIds } })
     .from(typedTravelTimes);
 
   let aStampBoxes = await SELECT.from(Stampboxes);
   const currentUser = req.user.id; // Get the current user ID
   let aStampingForUser = await SELECT.from(Stampings).where({ createdBy: currentUser });
-  aStampingForUser = aStampingForUser.map(stamping => stamping.stamp_ID);
+  const stampedStampBoxIds = new Set(aStampingForUser.map(stamping => stamping.stamp_ID));
 
   let oStampBoxById = {};
   aStampBoxes.forEach(box => {
-    box.stampedByUser = !!aStampingForUser[box.ID];
+    box.stampedByUser = stampedStampBoxIds.has(box.ID);
     oStampBoxById[box.ID] = box;
   });
 
@@ -624,7 +655,7 @@ async function calculateHikingRoute(req) {
       .from(typedTravelTimes);
   }
 
-  aStampsDoneByUser = await SELECT
+  let aStampsDoneByUser = await SELECT
     .columns('stamp_ID')
     .where({ createdBy: req.user.id })
     .from(Stampings);
@@ -698,12 +729,12 @@ async function getMissingTravelTimesCount(req) {
 /** calculate travel times to neighbors via maps api */
 async function calculateTravelTimesNNearestNeighbors(req) {
   const { n } = req.data
-  countRequest = 0;
-  let result = await processTravelTimes.bind(this)(n, getTravelTimes);
+  const routeBudget = createRouteBudget();
+  let result = await processTravelTimes.bind(this)(n, getTravelTimes, routeBudget);
   return result;
 }
 
-function processTravelTimes(nearestNeighborsCount, processor) {
+function processTravelTimes(nearestNeighborsCount, processor, routeBudget = createRouteBudget()) {
   const { Stampboxes, TravelTimes, ParkingSpots } = this.entities('hwb.db')
   const { NeighborsStampStamp, NeighborsStampParking, NeighborsParkingStamp, NeighborsParkingParking } = this.api.entities
   let missingTravelTimesCount = 0;
@@ -774,7 +805,7 @@ function processTravelTimes(nearestNeighborsCount, processor) {
     missingTravelTimesCount += adjacentParkingSpots.length;
 
     // calculate travel time by car via maps api
-    return processor(spot, adjacentParkingSpots, 'drive');
+    return processor(spot, adjacentParkingSpots, 'drive', routeBudget);
   }
 
   async function getTravelTimesParkingStamps(spot, aExistingTravelTimes) {
@@ -788,7 +819,7 @@ function processTravelTimes(nearestNeighborsCount, processor) {
     missingTravelTimesCount += adjacentStamps.length;
 
     // calculate travel time by foot via maps api
-    return processor(spot, adjacentStamps, 'walk');
+    return processor(spot, adjacentStamps, 'walk', routeBudget);
   }
 
   async function getTravelTimesStampParkingSpaces(box, aExistingTravelTimes) {
@@ -800,7 +831,7 @@ function processTravelTimes(nearestNeighborsCount, processor) {
     adjacentParkingSpots = adjacentParkingSpots.filter(s => !aExistingTravelTimes.includes(s.NeighborsID));
     missingTravelTimesCount += adjacentParkingSpots.length;
     // calculate travel time by foot via maps api
-    return processor(box, adjacentParkingSpots, 'walk');
+    return processor(box, adjacentParkingSpots, 'walk', routeBudget);
   }
 
   async function getTravelTimesStampStamps(box, aExistingTravelTimes) {
@@ -821,26 +852,32 @@ function processTravelTimes(nearestNeighborsCount, processor) {
     adjacentStamps = adjacentStamps.filter(s => !aExistingTravelTimes.includes(s.NeighborsID));
     missingTravelTimesCount += adjacentStamps.length;
 
-    return processor(box, adjacentStamps, 'walk');
+    return processor(box, adjacentStamps, 'walk', routeBudget);
   }
 }
 
-function getTravelTimes(box, neighborPois, travelMode) {
+function getTravelTimes(box, neighborPois, travelMode, routeBudget = createRouteBudget()) {
   return new Promise(async (resolve, reject) => {
 
     let result = [];
     for (let i = 0; i < neighborPois.length; i++) {
       const neighbor = neighborPois[i];
 
-      if (neighbor.distanceKm == 0) {
-        continue;
-      }
       if (!neighbor) {
         console.error("Neighbor is missing");
         continue;
       }
+      if (neighbor.distanceKm == 0) {
+        continue;
+      }
       console.info(`Calculating Route from ${box.name}(${box.ID}) to ${neighbor.name}(${neighbor.ID})`);
-      let oRoute = await calculateRoute(box, neighbor, travelMode);
+      let oRoute;
+      try {
+        oRoute = await calculateRoute(box, neighbor, travelMode, routeBudget);
+      } catch (error) {
+        console.error("Error calculating route:", error);
+        continue;
+      }
 
       if (oRoute && oRoute.routes && oRoute.routes[0]) {
         result.push({
@@ -853,17 +890,20 @@ function getTravelTimes(box, neighborPois, travelMode) {
           //Waypoint Route
           positionString: mapPolyLineToPositionString(oRoute.routes[0].polyline.geoJsonLinestring.coordinates)
         });
-      } else if (oRoute != "Quota per Request exceeded!") {
-        const oError = JSON.stringify(oRoute);
-        console.error("Error Calculating Route, received: " + oError);
-        reject(oRoute);
+      } else if (oRoute) {
+        console.error("Skipping invalid route result:", JSON.stringify(oRoute));
       }
 
     }
     if (travelMode == "walk") {
       // TODO test
       let aPromises = result.map(addElevationProfileToTravelTime);
-      Promise.all(aPromises).then(r => resolve(r));
+      Promise.all(aPromises)
+        .then(r => resolve(r))
+        .catch(error => {
+          console.error("Elevation profile calculation failed:", error);
+          resolve(result);
+        });
     } else {
       resolve(result);
     }
@@ -876,15 +916,14 @@ function mapPolyLineToPositionString(aCoordinates) {
     .join(";")
 }
 
-function calculateRoute(pointA, pointB, travelMode) {
+function calculateRoute(pointA, pointB, travelMode, routeBudget = createRouteBudget()) {
   if (!pointA || !pointB) {
     console.error("Point A or B is missing");
-    Promise.reject("Point A or B is missing");
+    return Promise.reject("Point A or B is missing");
   }
-  if (countRequest >= MAX_REQUESTS_PER_CALL) {
+  if (!consumeRouteBudget(routeBudget)) {
     return Promise.resolve("Quota per Request exceeded!");
   }
-  countRequest++;
   count++;
   console.log(count);
   // return {
@@ -957,12 +996,46 @@ function calculateRoute(pointA, pointB, travelMode) {
           console.error("No Route found!");
           console.error("Request: " + JSON.stringify(body));
           console.error("Response: " + JSON.stringify(j));
-          reject(j);
+          reject({
+            message: "No route found",
+            details: j
+          });
+          return;
         }
         resolve(j);
-      }
-      );
+      })
+      .catch(error => {
+        console.error("computeRoutes failed:", error);
+        reject({
+          message: "Route calculation failed",
+          details: error?.message || String(error)
+        });
+      });
   });
+}
+
+function createRouteBudget() {
+  return {
+    requests: 0,
+    limit: Number.parseInt(MAX_REQUESTS_PER_CALL, 10) || 0
+  };
+}
+
+function consumeRouteBudget(routeBudget) {
+  if (!routeBudget) {
+    return true;
+  }
+
+  if (routeBudget.limit <= 0) {
+    return false;
+  }
+
+  if (routeBudget.requests >= routeBudget.limit) {
+    return false;
+  }
+
+  routeBudget.requests += 1;
+  return true;
 }
 
 async function addElevationToAllTravelTimes(req) {
@@ -978,7 +1051,7 @@ async function addElevationToAllTravelTimes(req) {
 
 function addElevationProfileToTravelTime(oTravelTime) {
   return new Promise((resolve, reject) => {
-    aLocations = oTravelTime.positionString.split(";0;");
+    let aLocations = oTravelTime.positionString.split(";0;");
     aLocations.pop();
     // map from  "<longitude>;<latitude>" to lat lng
     aLocations = aLocations.map(location => location.split(";").reverse().join(","));

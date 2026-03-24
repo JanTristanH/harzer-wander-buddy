@@ -2,6 +2,73 @@ using {hwb.db as db} from '../db/schema';
 
 service api @(requires: 'authenticated-user') {
 
+    type TourDetailPathItem {
+        ID                  : UUID;
+        id                  : String;
+        fromPoi             : UUID;
+        toPoi               : UUID;
+        toPoiType           : String;
+        durationSeconds     : Integer64;
+        distanceMeters      : Integer64;
+        travelMode          : String(128);
+        name                : String;
+        positionString      : LargeString;
+        order               : Integer;
+    };
+
+    type TourLinkItem {
+        travelTime_ID       : UUID;
+        tour_ID             : UUID;
+        rank                : Integer;
+    };
+
+    type TourDetailResponse {
+        stampCount          : Integer;
+        distance            : Integer64;
+        duration            : Integer64;
+        id                  : String;
+        groupSize           : Integer;
+        AverageGroupStampings : Double;
+        path                : many TourDetailPathItem;
+    };
+
+    type TourUpdateResponse {
+        ID                  : UUID;
+        distance            : Integer64;
+        duration            : Integer64;
+        stampCount          : Integer;
+        idListTravelTimes   : LargeString;
+        totalElevationGain  : Double;
+        totalElevationLoss  : Double;
+        path                : many TourLinkItem;
+    };
+
+    type HikingRoutePathItem {
+        poi                 : UUID;
+        id                  : String;
+        name                : String;
+        toPoiType           : String;
+        travelMode          : String(128);
+        duration            : Integer64;
+        distance            : Integer64;
+        positionString      : LargeString;
+        order               : Integer;
+    };
+
+    type HikingRouteResult {
+        stampCount          : Integer;
+        distance            : Integer64;
+        duration            : Integer64;
+        id                  : String;
+        groupSize           : Integer;
+        AverageGroupStampings : Double;
+        path                : many HikingRoutePathItem;
+    };
+
+    type HikingRouteCalculationResponse {
+        results             : many HikingRouteResult;
+    };
+
     @requires: 'admin'
     function calculateTravelTimesNNearestNeighbors(n : Integer)        returns Integer;
 
@@ -21,10 +88,11 @@ service api @(requires: 'authenticated-user') {
                                   allowDriveInRoute : Boolean,
                                   latitudeStart : String,
                                   longitudeStart : String,
-                                  groupFilterStampings : String)       returns String;
+                                  groupFilterStampings : String)       returns HikingRouteCalculationResponse;
 
-    function getTourByIdListTravelTimes(idListTravelTimes : String)    returns String;
-    action   updateTourByPOIList(TourID : UUID, POIList : String)      returns String;
+    function getTourByIdListTravelTimes(idListTravelTimes : String)    returns TourDetailResponse;
+    action   updateTourByPOIList(TourID : UUID, POIList : String)      returns TourUpdateResponse;
+    action   previewTourByPOIList(TourID : UUID, POIList : String)     returns TourUpdateResponse;
 
     @requires: 'admin'
     function updateOrderBy()                                           returns String;
@@ -196,6 +264,7 @@ service api @(requires: 'authenticated-user') {
                     longitude,
                     latitude,
                     name,
+                    number as stampNumber,
                     orderBy,
                     heroImageUrl,
                     imageCaption,
@@ -208,6 +277,7 @@ service api @(requires: 'authenticated-user') {
                     longitude,
                     latitude,
                     name,
+                    ''        as stampNumber : String,
                     '999'     as orderBy,
                     ''        as heroImageUrl : String(2048),
                     ''        as imageCaption : String(2048),

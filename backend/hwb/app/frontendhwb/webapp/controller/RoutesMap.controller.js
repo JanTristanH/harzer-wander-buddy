@@ -30,6 +30,13 @@ sap.ui.define([
                 this._onElevationProfileUpdated();
             },
 
+            _getFunctionPayload: function (oData, sFunctionName) {
+                if (!oData) {
+                    return null;
+                }
+                return oData[sFunctionName] ?? oData?.d?.[sFunctionName] ?? oData?.d ?? oData;
+            },
+
             onSearchFieldSearch: function(oEvent) {
                 const oPoi = this._getPoiById(oEvent.getParameter("suggestionItem").getKey());
                 this._getMap().zoomToGeoPosition(oPoi.longitude, oPoi.latitude, this.nZoomLevelLabelThreshold);
@@ -294,7 +301,7 @@ sap.ui.define([
                             // Handle the successful response here
                             MessageToast.show(this.getText("tourSaved"));
                             const oLocalModel = this.getModel("local");
-                            let oTour = oData.updateTourByPOIList;
+                            let oTour = this._getFunctionPayload(oData, "updateTourByPOIList");
                             oTour.name = sNameBefore;
                             oLocalModel.setProperty("/oSelectedTour", oTour);
                             this.loadTourTravelTime(sTourID, function (travelTimeData) {
@@ -589,7 +596,7 @@ sap.ui.define([
                             // Handle the successful response here
                             MessageToast.show(this.getText("tourSaved"));
                             const oLocalModel = this.getModel("local");
-                            let oTour = oData.updateTourByPOIList;
+                            let oTour = this._getFunctionPayload(oData, "updateTourByPOIList");
                             oTour.name = sNameBefore;
                             oLocalModel.setProperty("/oSelectedTour", oTour);
                             this.loadTourTravelTime(sTourID, function (travelTimeData) {

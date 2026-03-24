@@ -37,6 +37,30 @@ sap.ui.define([
                 this.attachGroupChange();
             },
 
+            _getFunctionPayload: function (oData, sFunctionName) {
+                if (!oData) {
+                    return null;
+                }
+                return oData[sFunctionName] ?? oData?.d?.[sFunctionName] ?? oData?.d ?? oData;
+            },
+
+            _getFunctionResults: function (oData, sFunctionName) {
+                const oPayload = this._getFunctionPayload(oData, sFunctionName);
+                if (Array.isArray(oPayload)) {
+                    return oPayload;
+                }
+                if (Array.isArray(oPayload?.results)) {
+                    return oPayload.results;
+                }
+                if (Array.isArray(oData?.d?.results)) {
+                    return oData.d.results;
+                }
+                if (Array.isArray(oData?.results)) {
+                    return oData.results;
+                }
+                return [];
+            },
+
             attachGroupChange: function () {
                 this.getModel("app").attachPropertyChange((oEvent) => {
                     if (oEvent.getParameter("path") == "/aSelectedGroupIds") {
@@ -199,8 +223,9 @@ sap.ui.define([
                         method: "GET",
                         urlParameters: { idListTravelTimes: sIdListTravelTimes },
                         success: function (oData) {
+                            const oTourData = this._getFunctionPayload(oData, "getTourByIdListTravelTimes");
                             // todo harmonize in backend
-                            oData.getTourByIdListTravelTimes.path = oData.getTourByIdListTravelTimes.path.map(obj => ({
+                            oTourData.path = oTourData.path.map(obj => ({
                                 id: obj.ID,
                                 fromPoi: obj.fromPoi,
                                 name: obj.name,
@@ -212,7 +237,7 @@ sap.ui.define([
                                 positionString: obj.positionString,
                                 AverageGroupStampings: obj.AverageGroupStampings || 0,
                             }));
-                            oLocalModel.setProperty(`/Tours(${sIdListTravelTimes})`, oData.getTourByIdListTravelTimes);
+                            oLocalModel.setProperty(`/Tours(${sIdListTravelTimes})`, oTourData);
                             this._showDetailViewForIdList(sIdListTravelTimes);
                         }.bind(this)
                     });
@@ -318,7 +343,7 @@ sap.ui.define([
                         this.setDetailPage();
                         // Additional success handling
                         let oLocalModel = this.getView().getModel("local"),
-                            results = oData.calculateHikingRoute.results,
+                            results = this._getFunctionResults(oData, "calculateHikingRoute"),
                             oInitiallySelectedTour = results[0];
                         oLocalModel.setProperty("/hikingRoutes", results);
 
