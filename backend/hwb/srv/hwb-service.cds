@@ -24,6 +24,7 @@ service api @(requires: 'authenticated-user') {
 
     type TourDetailResponse {
         stampCount          : Integer;
+        newStampCountForUser: Integer;
         distance            : Integer64;
         duration            : Integer64;
         id                  : String;
@@ -37,6 +38,7 @@ service api @(requires: 'authenticated-user') {
         distance            : Integer64;
         duration            : Integer64;
         stampCount          : Integer;
+        newStampCountForUser: Integer;
         idListTravelTimes   : LargeString;
         totalElevationGain  : Double;
         totalElevationLoss  : Double;
@@ -253,8 +255,11 @@ service api @(requires: 'authenticated-user') {
     entity Tours                              as
         projection on db.Tours {
             *,
+            creator : Association to one Users
+                          on creator.ID = $self.createdBy,
             '' as groupFilterStampings  : String,
-            0  as AverageGroupStampings : Integer
+            0  as AverageGroupStampings : Integer,
+            0  as newStampCountForUser  : Integer
         };
 
     @readonly

@@ -152,12 +152,12 @@ async function onTourRead(req, next) {
       ? groupFilterStampings.split(',').map(u => u.trim())
       : [req.user.id];
 
-  const result = await addGroupDetailsToTours(db, tours, groupUserIds);
+  const result = await addGroupDetailsToTours(db, tours, groupUserIds, req.user.id);
 
   return bReturnOnlyFirst ? result[0] : result;
 }
 
-function addGroupDetailsToTours(db, tours, groupUserIds) {
+function addGroupDetailsToTours(db, tours, groupUserIds, currentUserId) {
   if (!tours) {
     return Promise.resolve([]);
   }
@@ -167,6 +167,12 @@ function addGroupDetailsToTours(db, tours, groupUserIds) {
     const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
     const aUsers = await SELECT.from(db.ExternalUsers).where({ ID: { in: groupUserIds } });
     const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
+    const stampBoxes = await SELECT.from(db.Stampboxes).columns('ID');
+    const stampBoxIds = new Set(stampBoxes.map(stamp => stamp.ID));
+    const requestedUserStampings = currentUserId
+      ? await SELECT.from(db.Stampings).columns('stamp_ID').where({ createdBy: currentUserId })
+      : [];
+    const requestedUserStampIds = new Set(requestedUserStampings.map(stamping => stamping.stamp_ID));
 
     const result = await Promise.all(
       tours?.map(tour => {
@@ -196,13 +202,19 @@ function addGroupDetailsToTours(db, tours, groupUserIds) {
             }
             if (!toPois) {
               tour.AverageGroupStampings = 0;
+              tour.newStampCountForUser = 0;
               resolve(tour);
               return;
             }
             const nAverageGroupStampings = getTotalStampings(aStampingsByUser, toPois) / groupUserIds.length;
+            const uniqueTourStampIds = [...new Set(toPois.filter(poiId => stampBoxIds.has(poiId)))];
+            const newStampCountForUser = uniqueTourStampIds.filter(
+              stampId => !requestedUserStampIds.has(stampId)
+            ).length;
 
             // Populate the custom fields:
             tour.AverageGroupStampings = Math.round(nAverageGroupStampings * 100) / 100;
+            tour.newStampCountForUser = newStampCountForUser;
 
             resolve(tour);
           } catch (error) {
@@ -360,13 +372,18 @@ async function previewTourByPOIList(req) {
   return handleTourByPOIList.call(this, req, { persist: false });
 }
 
+function isDriveTravelMode(travelMode) {
+  const normalized = String(travelMode || "").trim().toLowerCase();
+  return normalized.includes("drive");
+}
+
 async function handleTourByPOIList(req, options = { persist: true }) {
   const persist = options.persist !== false;
   let id = req.data.TourID;
   let poiList = req.data.POIList;
 
   const { typedTravelTimes } = this.api.entities;
-  const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours } = this.entities('hwb.db');
+  const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours, Stampings } = this.entities('hwb.db');
 
   const existingTour = await SELECT.one.from(Tours).where({ ID: id });
   if (!existingTour) {
@@ -394,6 +411,11 @@ async function handleTourByPOIList(req, options = { persist: true }) {
   aStampBoxes.forEach(box => {
     oStampBoxById[box.ID] = box;
   });
+  const aUserStampings = await SELECT
+    .from(Stampings)
+    .columns('stamp_ID')
+    .where({ createdBy: req.user.id });
+  const stampedStampBoxIds = new Set(aUserStampings.map(stamping => stamping.stamp_ID));
 
   // Loop through all POI pairs and create the list of required pairs
   for (let i = 0; i < aPois.length - 1; i++) {
@@ -413,7 +435,13 @@ async function handleTourByPOIList(req, options = { persist: true }) {
       toPoi: { in: toPoiIds }
     });
   aTravelTimesWithPositionString = aTravelTimesWithPositionString
-    .filter(route => wantedPairKeys.has(`${route.fromPoi}-${route.toPoi}`));
+    .filter(route => wantedPairKeys.has(`${route.fromPoi}-${route.toPoi}`))
+    .filter(route => {
+      // Enforce expected mode by POI type:
+      // parking -> parking = drive, everything else = walk
+      const isParkingToParking = !oStampBoxById[route.fromPoi] && !oStampBoxById[route.toPoi];
+      return isParkingToParking ? isDriveTravelMode(route.travelMode) : !isDriveTravelMode(route.travelMode);
+    });
   aTravelTimesWithPositionString = getUniqueRoutes(aTravelTimesWithPositionString);
 
   // Step 2: Identify missing travel times
@@ -478,25 +506,46 @@ async function handleTourByPOIList(req, options = { persist: true }) {
     await INSERT(aTour2TravelTime).into(Tour2TravelTime);
   }
 
-  let distance = 0, duration = 0, stampCount = 0, idListTravelTimes = "", totalElevationGain = 0, totalElevationLoss = 0;
-  for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
-    const oTravelTime = aTravelTimesWithPositionString[i];
-    distance += parseInt(oTravelTime.distanceMeters) || 0;
-    duration += parseInt(oTravelTime.durationSeconds) || 0;
-    totalElevationGain += parseInt(oTravelTime.elevationGain) || 0;
-    totalElevationLoss += parseInt(oTravelTime.elevationLoss) || 0;
+  const orderedTour2TravelTime = [...aTour2TravelTime].sort((a, b) => (a.rank || 0) - (b.rank || 0));
+  const travelTimesById = new Map(aTravelTimesWithPositionString.map(tt => [tt.ID, tt]));
+  const orderedTravelTimes = orderedTour2TravelTime.map(tt => travelTimesById.get(tt.travelTime_ID));
+  if (orderedTravelTimes.some(tt => !tt)) {
+    req.error(422, `Unable to ${persist ? "update" : "preview"} tour ${id}: inconsistent route segments for the requested POI list.`);
+    return;
+  }
 
-    if (oStampBoxById[oTravelTime.toPoi]) {
-      oStampBoxById[oTravelTime.toPoi] = null;
-      stampCount++;
-    }
+  let distance = 0, duration = 0, stampCount = 0, newStampCountForUser = 0, idListTravelTimes = "", totalElevationGain = 0, totalElevationLoss = 0;
+  const countedStampIds = new Set();
 
-    if (i == 0 && oStampBoxById[oTravelTime.fromPoi]) {
-      oStampBoxById[oTravelTime.fromPoi] = null;
+  function countStampIfNeeded(poiId) {
+    if (oStampBoxById[poiId] && !countedStampIds.has(poiId)) {
+      countedStampIds.add(poiId);
       stampCount++;
+      if (!stampedStampBoxIds.has(poiId)) {
+        newStampCountForUser++;
+      }
     }
   }
-  idListTravelTimes = aTour2TravelTime.map(tt => tt.travelTime_ID).join(";");
+
+  for (let i = 0; i < orderedTravelTimes.length; i++) {
+    const oTravelTime = orderedTravelTimes[i];
+    const distanceMeters = parseInt(oTravelTime.distanceMeters, 10) || 0;
+    const durationSeconds = parseInt(oTravelTime.durationSeconds, 10) || 0;
+    const isDriveSegment = isDriveTravelMode(oTravelTime.travelMode);
+
+    if (!isDriveSegment) {
+      distance += distanceMeters;
+      totalElevationGain += parseInt(oTravelTime.elevationGain, 10) || 0;
+      totalElevationLoss += parseInt(oTravelTime.elevationLoss, 10) || 0;
+    }
+    duration += durationSeconds;
+
+    if (i === 0) {
+      countStampIfNeeded(oTravelTime.fromPoi);
+    }
+    countStampIfNeeded(oTravelTime.toPoi);
+  }
+  idListTravelTimes = orderedTour2TravelTime.map(tt => tt.travelTime_ID).join(";");
 
   let oTour = {
     ID: id,
@@ -512,7 +561,8 @@ async function handleTourByPOIList(req, options = { persist: true }) {
   }
 
   oTour.idListTravelTimes = idListTravelTimes;
-  oTour.path = aTour2TravelTime;
+  oTour.newStampCountForUser = newStampCountForUser;
+  oTour.path = orderedTour2TravelTime;
   return oTour;
 
   function getRankedTour2TravelTimes(aRelevantTravelTimes, aPois, tourId) {
@@ -596,24 +646,44 @@ async function getTourByIdListTravelTimes(req) {
     oStampBoxById[box.ID] = box;
   });
 
-  let distance = 0, duration = 0, stampCount = 0;
+  let distance = 0, duration = 0, stampCount = 0, newStampCountForUser = 0;
+  const countedStampIds = new Set();
   if (aTravelTimesWithPositionString.length == 0) {
     return {
       stampCount: 0,
+      newStampCountForUser: 0,
       distance: 0,
       duration: 0,
       id: "notFound",
       path: []
     };
   }
+
+  function countStampIfNeeded(poiId) {
+    if (!oStampBoxById[poiId] || countedStampIds.has(poiId)) {
+      return;
+    }
+
+    countedStampIds.add(poiId);
+    stampCount++;
+    if (!stampedStampBoxIds.has(poiId)) {
+      newStampCountForUser++;
+    }
+  }
+
   for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
     const oTravelTime = aTravelTimesWithPositionString[i];
-    distance += parseInt(oTravelTime.distanceMeters);
-    duration += parseInt(oTravelTime.durationSeconds);
-
-    if (oStampBoxById[oTravelTime.toPoi] && oStampBoxById[oTravelTime.toPoi].stampedByUser == false) {
-      stampCount++;
+    const distanceMeters = parseInt(oTravelTime.distanceMeters, 10) || 0;
+    const durationSeconds = parseInt(oTravelTime.durationSeconds, 10) || 0;
+    if (!isDriveTravelMode(oTravelTime.travelMode)) {
+      distance += distanceMeters;
     }
+    duration += durationSeconds;
+
+    if (i == 0) {
+      countStampIfNeeded(oTravelTime.fromPoi);
+    }
+    countStampIfNeeded(oTravelTime.toPoi);
 
     oTravelTime.id = oTravelTime.ID;
     aTravelTimesWithPositionString[i] = oTravelTime;
@@ -635,12 +705,13 @@ async function getTourByIdListTravelTimes(req) {
 
   let result = await routingManager.addPositionStrings([{
     stampCount: stampCount ? stampCount : 0,
+    newStampCountForUser: newStampCountForUser ? newStampCountForUser : 0,
     distance,
     duration,
     id,
     path
   }]);
-  result = await addGroupDetailsToTours(this.entities('hwb.db'), result, [req.user.id]);
+  result = await addGroupDetailsToTours(this.entities('hwb.db'), result, [req.user.id], req.user.id);
   return result[0];
 }
 
@@ -678,7 +749,7 @@ async function calculateHikingRoute(req) {
         ? groupFilterStampings.split(',').map(u => u.trim())
         : [req.user.id];
 
-    results = await addGroupDetailsToTours(db, results, groupUserIds);
+    results = await addGroupDetailsToTours(db, results, groupUserIds, req.user.id);
   }
 
   return { results }
