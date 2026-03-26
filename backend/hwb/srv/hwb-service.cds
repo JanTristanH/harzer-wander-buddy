@@ -94,7 +94,6 @@ service api @(requires: 'authenticated-user') {
 
     function getTourByIdListTravelTimes(idListTravelTimes : String)    returns TourDetailResponse;
     action   updateTourByPOIList(TourID : UUID, POIList : String)      returns TourUpdateResponse;
-    action   previewTourByPOIList(TourID : UUID, POIList : String)     returns TourUpdateResponse;
 
     @requires: 'admin'
     function updateOrderBy()                                           returns String;

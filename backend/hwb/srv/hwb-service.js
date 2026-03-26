@@ -61,7 +61,6 @@ module.exports = class api extends cds.ApplicationService {
     this.on("getTourByIdListTravelTimes", getTourByIdListTravelTimes)
 
     this.on("updateTourByPOIList", updateTourByPOIList)
-    this.on("previewTourByPOIList", previewTourByPOIList)
 
     this.on('READ', 'TypedTravelTimes', async (req) => {
       // const db = cds.transaction(req);
@@ -366,10 +365,6 @@ async function deleteSpotWithRoutes(req) {
 
 async function updateTourByPOIList(req) {
   return handleTourByPOIList.call(this, req, { persist: true });
-}
-
-async function previewTourByPOIList(req) {
-  return handleTourByPOIList.call(this, req, { persist: false });
 }
 
 function isDriveTravelMode(travelMode) {
