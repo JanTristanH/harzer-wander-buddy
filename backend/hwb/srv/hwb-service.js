@@ -61,6 +61,7 @@ module.exports = class api extends cds.ApplicationService {
     this.on("getTourByIdListTravelTimes", getTourByIdListTravelTimes)
 
     this.on("updateTourByPOIList", updateTourByPOIList)
+    this.on('backfillMissingVisitedAt', backfillMissingVisitedAt)
 
     this.on('READ', 'TypedTravelTimes', async (req) => {
       // const db = cds.transaction(req);
@@ -1199,6 +1200,7 @@ function addElevationProfileToTravelTime(oTravelTime) {
 async function stampForGroup(req) {
   const { Stampings, Friendships } = this.entities('hwb.db');
   const { sStampId, sGroupUserIds, bStampForUser } = req.data;
+  const nowIso = new Date().toISOString();
 
   // Extract group user IDs into an array
   const groupUserIds = sGroupUserIds?.split(',') || [];
@@ -1215,13 +1217,15 @@ async function stampForGroup(req) {
   // Prepare stampings for friends and optionally for the current user
   const stampings = friendsAllowedToStamp.map(friend => ({
     stamp_ID: sStampId,
-    createdBy: friend.fromUser_ID
+    createdBy: friend.fromUser_ID,
+    visitedAt: nowIso
   }));
 
   if (bStampForUser) {
     stampings.push({ 
       stamp_ID: sStampId,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      visitedAt: nowIso
     });
   }
 
@@ -1242,6 +1246,29 @@ async function stampForGroup(req) {
   }
 
   return "ok";
+}
+
+async function backfillMissingVisitedAt(req) {
+  const { Stampings } = this.entities('hwb.db');
+  const stampingsMissingVisitedAt = await SELECT
+    .from(Stampings)
+    .columns('ID', 'createdAt')
+    .where({ visitedAt: null });
+
+  if (!stampingsMissingVisitedAt.length) {
+    return 0;
+  }
+
+  let updatedCount = 0;
+  for (const stamping of stampingsMissingVisitedAt) {
+    const visitedAt = stamping.createdAt || new Date().toISOString();
+    await UPDATE(Stampings)
+      .set({ visitedAt })
+      .where({ ID: stamping.ID });
+    updatedCount += 1;
+  }
+
+  return updatedCount;
 }
 
 async function getStampFriendVisits(req) {
