@@ -71,6 +71,15 @@ service api @(requires: 'authenticated-user') {
         results             : many HikingRouteResult;
     };
 
+    type PlaceSearchResult {
+        placeId          : String;
+        name             : String;
+        formattedAddress : String;
+        latitude         : Double;
+        longitude        : Double;
+        provider         : String;
+    };
+
     @requires: 'admin'
     function calculateTravelTimesNNearestNeighbors(n : Integer)        returns Integer;
 
@@ -94,6 +103,10 @@ service api @(requires: 'authenticated-user') {
 
     function getTourByIdListTravelTimes(idListTravelTimes : String)    returns TourDetailResponse;
     action   updateTourByPOIList(TourID : UUID, POIList : String)      returns TourUpdateResponse;
+    action   searchPlacesByName(query : String,
+                                latitude : Double,
+                                longitude : Double,
+                                limit : Integer)                        returns many PlaceSearchResult;
 
     function backfillMissingVisitedAt()                                returns Integer;
 

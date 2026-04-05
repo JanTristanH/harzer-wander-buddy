@@ -14,6 +14,14 @@ const fetch = require('node-fetch');
 const routingManager = require('./routingManager');
 
 const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MAX_REQUESTS_PER_CALL : 1000;
+const PLACE_SEARCH_MIN_QUERY_LENGTH = 3;
+const PLACE_SEARCH_MAX_RESULTS = 8;
+const PLACE_SEARCH_DEFAULT_LIMIT = 6;
+const PLACE_SEARCH_DEFAULT_LATITUDE = 51.7544;
+const PLACE_SEARCH_DEFAULT_LONGITUDE = 10.6182;
+const PLACE_SEARCH_BIAS_RADIUS_METERS = 50000;
+const PLACE_SEARCH_CACHE_TTL_HIT_MS = 7 * 24 * 60 * 60 * 1000;
+const PLACE_SEARCH_CACHE_TTL_EMPTY_MS = 24 * 60 * 60 * 1000;
 // 40.000 free 
 //  2.500 used
 let count = 0;
@@ -74,6 +82,7 @@ module.exports = class api extends cds.ApplicationService {
     this.on('stampForGroup', stampForGroup)
     this.on('getStampFriendVisits', getStampFriendVisits)
     this.on('getUsersProgress', getUsersProgress)
+    this.on('searchPlacesByName', searchPlacesByName)
 
     this.before('CREATE', 'Friendships', onBeforeFriendshipCreate);
 
@@ -1195,6 +1204,228 @@ function addElevationProfileToTravelTime(oTravelTime) {
       }
       );
   });
+}
+
+function normalizePlaceSearchQuery(value) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  return value.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function clampPlaceSearchLimit(value) {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed)) {
+    return PLACE_SEARCH_DEFAULT_LIMIT;
+  }
+
+  return Math.max(1, Math.min(PLACE_SEARCH_MAX_RESULTS, parsed));
+}
+
+function roundPlaceSearchBias(value, fallback, min, max) {
+  const parsed = Number.parseFloat(String(value));
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  const clamped = Math.max(min, Math.min(max, parsed));
+  return Number(clamped.toFixed(1)); // enforce 1 decimal everywhere
+}
+
+function buildPlaceSearchCacheKey(query, latitudeRounded, longitudeRounded) {
+  return `${query}|${latitudeRounded.toFixed(1)}|${longitudeRounded.toFixed(1)}`;
+}
+
+function parseCachedPlaceResults(payload) {
+  if (typeof payload !== 'string' || payload.trim().length === 0) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(payload);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map(place => ({
+        placeId: typeof place?.placeId === 'string' ? place.placeId : '',
+        name: typeof place?.name === 'string' ? place.name : '',
+        formattedAddress: typeof place?.formattedAddress === 'string' ? place.formattedAddress : '',
+        latitude: Number(place?.latitude),
+        longitude: Number(place?.longitude),
+        provider: 'google'
+      }))
+      .filter(place =>
+        place.placeId &&
+        place.name &&
+        Number.isFinite(place.latitude) &&
+        Number.isFinite(place.longitude)
+      );
+  } catch {
+    return [];
+  }
+}
+
+async function fetchPlacesFromGoogle({ query, latitude, longitude, limit }) {
+  const apiKey = process.env.GOOLGE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    return [];
+  }
+
+  const response = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-goog-api-key": apiKey,
+      "x-goog-fieldmask": "places.id,places.displayName,places.formattedAddress,places.location"
+    },
+    body: JSON.stringify({
+      textQuery: query,
+      languageCode: "de",
+      regionCode: "DE",
+      maxResultCount: limit,
+      locationBias: {
+        circle: {
+          center: {
+            latitude,
+            longitude
+          },
+          radius: PLACE_SEARCH_BIAS_RADIUS_METERS
+        }
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '');
+    throw new Error(`Places API failed (${response.status}): ${errorBody}`);
+  }
+
+  const payload = await response.json();
+  const places = Array.isArray(payload?.places) ? payload.places : [];
+
+  return places
+    .map(place => {
+      const latitudeValue = Number(place?.location?.latitude);
+      const longitudeValue = Number(place?.location?.longitude);
+      const placeId = typeof place?.id === 'string' ? place.id.trim() : '';
+      const name = typeof place?.displayName?.text === 'string' ? place.displayName.text.trim() : '';
+      const formattedAddress =
+        typeof place?.formattedAddress === 'string' ? place.formattedAddress.trim() : '';
+
+      if (!placeId || !name || !Number.isFinite(latitudeValue) || !Number.isFinite(longitudeValue)) {
+        return null;
+      }
+
+      return {
+        placeId,
+        name,
+        formattedAddress,
+        latitude: latitudeValue,
+        longitude: longitudeValue,
+        provider: 'google'
+      };
+    })
+    .filter(Boolean);
+}
+
+async function searchPlacesByName(req) {
+  const { PlaceSearchCache } = this.entities('hwb.db');
+  const queryInput = typeof req.data?.query === 'string' ? req.data.query : '';
+  const normalizedQuery = normalizePlaceSearchQuery(queryInput);
+
+  if (normalizedQuery.length < PLACE_SEARCH_MIN_QUERY_LENGTH) {
+    return [];
+  }
+
+  const requestedLimit = clampPlaceSearchLimit(req.data?.limit);
+  const latitudeRounded = roundPlaceSearchBias(
+    req.data?.latitude,
+    PLACE_SEARCH_DEFAULT_LATITUDE,
+    -90,
+    90
+  );
+  const longitudeRounded = roundPlaceSearchBias(
+    req.data?.longitude,
+    PLACE_SEARCH_DEFAULT_LONGITUDE,
+    -180,
+    180
+  );
+  const cacheKey = buildPlaceSearchCacheKey(normalizedQuery, latitudeRounded, longitudeRounded);
+
+  try {
+    const cacheEntry = await SELECT.one.from(PlaceSearchCache).where({ cacheKey });
+    if (cacheEntry?.expiresAt && new Date(cacheEntry.expiresAt).getTime() > Date.now()) {
+      const cachedResults = parseCachedPlaceResults(cacheEntry.payload);
+      return cachedResults.slice(0, requestedLimit);
+    }
+  } catch (error) {
+    console.error('searchPlacesByName cache lookup failed', error);
+  }
+
+  let places = [];
+  try {
+    places = await fetchPlacesFromGoogle({
+      query: queryInput.trim(),
+      latitude: latitudeRounded,
+      longitude: longitudeRounded,
+      limit: PLACE_SEARCH_MAX_RESULTS
+    });
+  } catch (error) {
+    console.error('searchPlacesByName provider call failed', error);
+    return [];
+  }
+
+  const ttlMs = places.length > 0 ? PLACE_SEARCH_CACHE_TTL_HIT_MS : PLACE_SEARCH_CACHE_TTL_EMPTY_MS;
+  const expiresAt = new Date(Date.now() + ttlMs).toISOString();
+
+  try {
+    await UPSERT.into(PlaceSearchCache).entries({
+      cacheKey,
+      queryNormalized: normalizedQuery,
+      biasLatitudeRounded: latitudeRounded,
+      biasLongitudeRounded: longitudeRounded,
+      payload: JSON.stringify(places),
+      expiresAt
+    });
+  } catch (error) {
+    console.error('searchPlacesByName cache upsert failed', error);
+  }
+
+  places = places.filter(isInsideHarzRadius);
+  return places.slice(0, requestedLimit);
+}
+
+function toRadians(value) {
+  return (value * Math.PI) / 180;
+}
+
+function distanceInMeters(lat1, lon1, lat2, lon2) {
+  const earthRadius = 6371000;
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadius * c;
+}
+
+function isInsideHarzRadius(place) {
+  const harzCenterLat = PLACE_SEARCH_DEFAULT_LATITUDE;
+  const harzCenterLon = PLACE_SEARCH_DEFAULT_LONGITUDE;
+  return distanceInMeters(
+    harzCenterLat,
+    harzCenterLon,
+    place.latitude,
+    place.longitude
+  ) <= PLACE_SEARCH_BIAS_RADIUS_METERS;
 }
 
 async function stampForGroup(req) {

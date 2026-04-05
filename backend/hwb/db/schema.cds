@@ -92,6 +92,15 @@ entity RouteCalculationRequest : cuid {
     createdBy : User      @cds.on.insert: $user;
 }
 
+entity PlaceSearchCache : managed {
+    key cacheKey        : String(512);
+    queryNormalized     : String(255);
+    biasLatitudeRounded : Double;
+    biasLongitudeRounded: Double;
+    payload             : LargeString;
+    expiresAt           : Timestamp;
+}
+
 @assert.integrity: false
 @cds.autoexpose
 entity TravelTimes : cuid {

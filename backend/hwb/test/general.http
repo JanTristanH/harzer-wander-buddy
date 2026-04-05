@@ -1,3 +1,15 @@
+POST http://localhost:4004/odata/v2/api/searchPlacesByName
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic Kevin pass
+
+{
+    "query": "Altenau",
+    "latitude": 51.7280,
+    "longitude": 10.6150,
+    "limit": 6
+}
+
 ### Get all boxes
 GET http://localhost:4004/odata/v2/api/Stampboxes
 Authorization: Basic Kevin pass
