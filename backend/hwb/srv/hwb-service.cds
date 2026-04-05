@@ -67,6 +67,13 @@ service api @(requires: 'authenticated-user') {
         path                : many HikingRoutePathItem;
     };
 
+    type RouteToStampFromPositionResult {
+        distanceMeters      : Integer64;
+        durationSeconds     : Integer64;
+        elevationGainMeters : Integer64;
+        elevationLossMeters : Integer64;
+    };
+
     type HikingRouteCalculationResponse {
         results             : many HikingRouteResult;
     };
@@ -100,6 +107,10 @@ service api @(requires: 'authenticated-user') {
                                   latitudeStart : String,
                                   longitudeStart : String,
                                   groupFilterStampings : String)       returns HikingRouteCalculationResponse;
+
+    action   getRouteToStampFromPosition(stampId : UUID,
+                                         latitude : Double,
+                                         longitude : Double)                 returns RouteToStampFromPositionResult;
 
     function getTourByIdListTravelTimes(idListTravelTimes : String)    returns TourDetailResponse;
     action   updateTourByPOIList(TourID : UUID, POIList : String)      returns TourUpdateResponse;

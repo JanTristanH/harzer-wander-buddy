@@ -63,6 +63,7 @@ module.exports = class api extends cds.ApplicationService {
     this.on('getMissingTravelTimesCount', getMissingTravelTimesCount.bind(this))
 
     this.on('calculateHikingRoute', calculateHikingRoute)
+    this.on('getRouteToStampFromPosition', getRouteToStampFromPosition)
 
     this.on("DeleteSpotWithRoutes", deleteSpotWithRoutes)
 
@@ -773,6 +774,133 @@ async function calculateHikingRoute(req) {
     totalDuration: 2,
     totalNewStamps: 3
   }
+}
+
+async function getRouteToStampFromPosition(req) {
+  const db = this.entities('hwb.db');
+  const stampId = typeof req.data?.stampId === 'string' ? req.data.stampId.trim() : '';
+  const latitude = Number(req.data?.latitude);
+  const longitude = Number(req.data?.longitude);
+
+  if (!stampId) {
+    req.error(400, 'stampId is required.');
+    return null;
+  }
+
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
+    req.error(400, 'latitude must be a valid number between -90 and 90.');
+    return null;
+  }
+
+  if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    req.error(400, 'longitude must be a valid number between -180 and 180.');
+    return null;
+  }
+
+  const stamp = await SELECT.one
+    .from(db.Stampboxes)
+    .columns('ID', 'latitude', 'longitude')
+    .where({ ID: stampId });
+
+  if (!stamp) {
+    req.error(404, `Stampbox with ID ${stampId} does not exist.`);
+    return null;
+  }
+
+  const stampLatitude = Number(stamp.latitude);
+  const stampLongitude = Number(stamp.longitude);
+  if (!Number.isFinite(stampLatitude) || !Number.isFinite(stampLongitude)) {
+    req.error(422, `Stampbox with ID ${stampId} does not have coordinates.`);
+    return null;
+  }
+
+  let route;
+  try {
+    route = await calculateRoute(
+      { latitude, longitude },
+      { latitude: stampLatitude, longitude: stampLongitude },
+      'walk'
+    );
+  } catch (error) {
+    console.error('getRouteToStampFromPosition route calculation failed, using fallback:', error);
+  }
+
+  const routeResult = route?.routes?.[0];
+  const fallbackRoute = buildFallbackRouteFromPosition(
+    { latitude, longitude },
+    { latitude: stampLatitude, longitude: stampLongitude }
+  );
+  const resolvedRoute = routeResult?.polyline?.geoJsonLinestring?.coordinates?.length
+    ? routeResult
+    : fallbackRoute;
+
+  if (!resolvedRoute?.polyline?.geoJsonLinestring?.coordinates?.length) {
+    req.error(502, 'No route found.');
+    return null;
+  }
+
+  let elevationResult;
+  try {
+    elevationResult = await addElevationProfileToTravelTime({
+      positionString: mapPolyLineToPositionString(resolvedRoute.polyline.geoJsonLinestring.coordinates)
+    });
+  } catch (error) {
+    console.error('getRouteToStampFromPosition elevation calculation failed:', error);
+    req.error(502, 'Unable to calculate elevation metrics.');
+    return null;
+  }
+
+  const distanceMeters = Number.parseFloat(resolvedRoute.distanceMeters);
+  const durationSeconds = Number.parseFloat(String(resolvedRoute.duration || '').replace(/s$/, ''));
+
+  return {
+    distanceMeters: Number.isFinite(distanceMeters) ? Math.round(distanceMeters) : 0,
+    durationSeconds: Number.isFinite(durationSeconds) ? Math.round(durationSeconds) : 0,
+    elevationGainMeters: Math.round(Number(elevationResult?.elevationGain ?? 0)),
+    elevationLossMeters: Math.round(Number(elevationResult?.elevationLoss ?? 0))
+  };
+}
+
+function buildFallbackRouteFromPosition(pointA, pointB) {
+  const distanceMeters = distanceInMeters(
+    pointA.latitude,
+    pointA.longitude,
+    pointB.latitude,
+    pointB.longitude
+  );
+  const durationSeconds = estimateWalkingDurationSeconds(distanceMeters);
+
+  return {
+    duration: `${durationSeconds}s`,
+    distanceMeters: Math.round(distanceMeters),
+    polyline: {
+      geoJsonLinestring: {
+        coordinates: buildInterpolatedCoordinates(pointA, pointB, 24)
+      }
+    }
+  };
+}
+
+function buildInterpolatedCoordinates(pointA, pointB, sampleCount = 24) {
+  const safeSampleCount = Math.max(2, Math.min(64, Math.floor(sampleCount)));
+  const coordinates = [];
+
+  for (let index = 0; index < safeSampleCount; index += 1) {
+    const factor = safeSampleCount === 1 ? 0 : index / (safeSampleCount - 1);
+    const latitude = pointA.latitude + (pointB.latitude - pointA.latitude) * factor;
+    const longitude = pointA.longitude + (pointB.longitude - pointA.longitude) * factor;
+    coordinates.push([longitude, latitude]);
+  }
+
+  return coordinates;
+}
+
+function estimateWalkingDurationSeconds(distanceMeters) {
+  if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) {
+    return 0;
+  }
+
+  return Math.max(60, Math.round(distanceMeters * 0.9));
 }
 
 async function determineStartingParking(params) {
