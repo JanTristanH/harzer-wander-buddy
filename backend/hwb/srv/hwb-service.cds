@@ -318,7 +318,8 @@ service api @(requires: 'authenticated-user') {
 
     entity Stampings @(restrict: [
         {
-            grant: 'READ'
+            grant: 'READ',
+            to   : 'authenticated-user'
         },
         {
             grant: 'CREATE',
