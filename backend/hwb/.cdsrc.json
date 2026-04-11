@@ -4,7 +4,11 @@
       "[production]": {
         "kind": "postgres",
         "credentials": {
-          "url": "postgresql://postgres:9ad6322d-2898-43cd-826e-d811947bdad3@db.vdqdopjinjyginervesk.supabase.co:5432/postgres",
+          "host": "aws-1-eu-west-2.pooler.supabase.com",
+          "port": 5432,
+          "user": "postgres.vdqdopjinjyginervesk",
+          "password": "redacted",
+          "database": "postgres",
           "ssl": {
             "rejectUnauthorized": false
           }
