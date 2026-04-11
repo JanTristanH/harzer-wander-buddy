@@ -4,7 +4,7 @@
       "[production]": {
         "kind": "postgres",
         "credentials": {
-          "url": "postgresql://postgres:[YOUR-PASSWORD]@db.vdqdopjinjyginervesk.supabase.co:5432/postgres",
+          "url": "postgresql://postgres:9ad6322d-2898-43cd-826e-d811947bdad3@db.vdqdopjinjyginervesk.supabase.co:5432/postgres",
           "ssl": {
             "rejectUnauthorized": false
           }
