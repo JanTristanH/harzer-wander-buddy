@@ -1,7 +1,6 @@
 namespace hwb.db;
 
 using {
-    temporal,
     cuid,
     managed
 } from '@sap/cds/common';
@@ -38,8 +37,10 @@ entity Attachments_local : Attachments {
 }
 
 @assert.integrity: false
-entity Stampboxes : cuid, temporal, PointOfInterest {
+entity Stampboxes : cuid, PointOfInterest {
     number                 : String(40); // to allow Sonderstempel via name
+    validFrom              : Timestamp;
+    validTo                : Timestamp;
     orderBy                : String(40);
     heroImageUrl              : String(2048);
     imageCaption           : String(2048);

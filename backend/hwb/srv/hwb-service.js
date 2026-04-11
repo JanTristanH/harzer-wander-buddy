@@ -264,13 +264,18 @@ function getStampingByUsers(stampings, users) {
 
 async function onStampboxesRead(req, next) {
   const db = this.entities('hwb.db');
+  applyDefaultCurrentValidityFilter(req);
 
   let bReturnOnlyFirst = false;
-  const stampBoxes = await next();
+  let stampBoxes = await next();
 
   if (stampBoxes?.ID) {
     bReturnOnlyFirst = true;
     stampBoxes = [stampBoxes];
+  }
+
+  if (!stampBoxes || stampBoxes.length === 0) {
+    return bReturnOnlyFirst ? null : [];
   }
 
   const whereConditions = req.query.SELECT.where || [];
@@ -305,6 +310,97 @@ async function onStampboxesRead(req, next) {
     return box;
   });
   return bReturnOnlyFirst ? result[0] : result;
+}
+
+function applyDefaultCurrentValidityFilter(req) {
+  const select = req?.query?.SELECT;
+  if (!select || hasValidityFilter(select.where) || isReadByKnownId(req)) {
+    return;
+  }
+
+  const nowIso = new Date().toISOString();
+  const currentValidityFilter = [
+    { ref: ['validFrom'] }, '<=', { val: nowIso },
+    'and',
+    { ref: ['validTo'] }, '>', { val: nowIso }
+  ];
+
+  if (!select.where || select.where.length === 0) {
+    select.where = currentValidityFilter;
+    return;
+  }
+
+  select.where = [{ xpr: select.where }, 'and', { xpr: currentValidityFilter }];
+}
+
+function isReadByKnownId(req) {
+  if (req?.data?.ID) {
+    return true;
+  }
+
+  if ((req?.params || []).some(param => param?.ID)) {
+    return true;
+  }
+
+  const select = req?.query?.SELECT;
+  if (!select) {
+    return false;
+  }
+
+  return hasFieldFilter(select.where, 'ID') || hasIdFilterInFrom(select.from);
+}
+
+function hasIdFilterInFrom(from) {
+  if (!from?.ref || !Array.isArray(from.ref)) {
+    return false;
+  }
+
+  return from.ref.some(segment => hasFieldFilter(segment?.where, 'ID'));
+}
+
+function hasFieldFilter(filters, fieldName) {
+  if (!filters || filters.length === 0) {
+    return false;
+  }
+
+  for (let i = 0; i < filters.length; i++) {
+    const token = filters[i];
+    if (token?.xpr && hasFieldFilter(token.xpr, fieldName)) {
+      return true;
+    }
+
+    const refPath = token?.ref || [];
+    if (!refPath.includes(fieldName)) {
+      continue;
+    }
+
+    const operator = filters[i + 1];
+    const valueToken = filters[i + 2];
+    if ((operator === '=' || operator === 'in') && valueToken) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function hasValidityFilter(filters) {
+  if (!filters || filters.length === 0) {
+    return false;
+  }
+
+  for (const token of filters) {
+    if (token?.xpr && hasValidityFilter(token.xpr)) {
+      return true;
+    }
+
+    const refPath = token?.ref || [];
+    if (refPath.includes('validFrom') || refPath.includes('validTo')) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 
@@ -778,11 +874,11 @@ async function calculateHikingRoute(req) {
 
 async function getRouteToStampFromPosition(req) {
   const db = this.entities('hwb.db');
-  const stampId = typeof req.data?.stampId === 'string' ? req.data.stampId.trim() : '';
+  const targetPoiId = typeof req.data?.stampId === 'string' ? req.data.stampId.trim() : '';
   const latitude = Number(req.data?.latitude);
   const longitude = Number(req.data?.longitude);
 
-  if (!stampId) {
+  if (!targetPoiId) {
     req.error(400, 'stampId is required.');
     return null;
   }
@@ -797,20 +893,27 @@ async function getRouteToStampFromPosition(req) {
     return null;
   }
 
-  const stamp = await SELECT.one
+  let targetPoi = await SELECT.one
     .from(db.Stampboxes)
     .columns('ID', 'latitude', 'longitude')
-    .where({ ID: stampId });
+    .where({ ID: targetPoiId });
 
-  if (!stamp) {
-    req.error(404, `Stampbox with ID ${stampId} does not exist.`);
+  if (!targetPoi) {
+    targetPoi = await SELECT.one
+      .from(db.ParkingSpots)
+      .columns('ID', 'latitude', 'longitude')
+      .where({ ID: targetPoiId });
+  }
+
+  if (!targetPoi) {
+    req.error(404, `Point of interest with ID ${targetPoiId} does not exist.`);
     return null;
   }
 
-  const stampLatitude = Number(stamp.latitude);
-  const stampLongitude = Number(stamp.longitude);
-  if (!Number.isFinite(stampLatitude) || !Number.isFinite(stampLongitude)) {
-    req.error(422, `Stampbox with ID ${stampId} does not have coordinates.`);
+  const targetLatitude = Number(targetPoi.latitude);
+  const targetLongitude = Number(targetPoi.longitude);
+  if (!Number.isFinite(targetLatitude) || !Number.isFinite(targetLongitude)) {
+    req.error(422, `Point of interest with ID ${targetPoiId} does not have coordinates.`);
     return null;
   }
 
@@ -818,7 +921,7 @@ async function getRouteToStampFromPosition(req) {
   try {
     route = await calculateRoute(
       { latitude, longitude },
-      { latitude: stampLatitude, longitude: stampLongitude },
+      { latitude: targetLatitude, longitude: targetLongitude },
       'walk'
     );
   } catch (error) {
@@ -828,7 +931,7 @@ async function getRouteToStampFromPosition(req) {
   const routeResult = route?.routes?.[0];
   const fallbackRoute = buildFallbackRouteFromPosition(
     { latitude, longitude },
-    { latitude: stampLatitude, longitude: stampLongitude }
+    { latitude: targetLatitude, longitude: targetLongitude }
   );
   const resolvedRoute = routeResult?.polyline?.geoJsonLinestring?.coordinates?.length
     ? routeResult

@@ -125,7 +125,16 @@ service api @(requires: 'authenticated-user') {
     function updateOrderBy()                                           returns String;
 
     @cds.redirection.target
-    @readonly
+    @restrict: [
+        {
+            grant: 'READ',
+            to   : 'authenticated-user'
+        },
+        {
+            grant: '*',
+            to   : 'admin'
+        }
+    ]
     entity Stampboxes                         as
         projection on db.Stampboxes {
             *,
