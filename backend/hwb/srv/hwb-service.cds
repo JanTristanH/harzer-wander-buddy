@@ -344,6 +344,25 @@ service api @(requires: 'authenticated-user') {
         }
     ])                                        as projection on db.Stampings;
 
+    entity StampNotes @(restrict: [
+        {
+            grant: 'READ',
+            where: 'createdBy = $user'
+        },
+        {
+            grant: 'CREATE',
+            to   : 'authenticated-user'
+        },
+        {
+            grant: 'UPDATE',
+            where: 'createdBy = $user'
+        },
+        {
+            grant: 'DELETE',
+            where: 'createdBy = $user'
+        }
+    ])                                        as projection on db.StampNotes;
+
     action   stampForGroup(sStampId : UUID, bStampForUser : Boolean, sGroupUserIds : String) returns String;
     action   getStampFriendVisits(sStampId : UUID, sGroupUserIds : String) returns String;
     action   getUsersProgress(sGroupUserIds : String) returns String;

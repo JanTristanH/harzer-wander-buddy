@@ -58,6 +58,8 @@ entity Stampboxes : cuid, PointOfInterest {
                                  on targetForAdjacentStamp.second = $self;
     Stampings              : Composition of many Stampings
                                  on Stampings.stamp = $self;
+    StampNotes             : Composition of many StampNotes
+                                 on StampNotes.stamp = $self;
 
     // dummy fields
     groupFilterStampings   : String;
@@ -126,6 +128,12 @@ entity Stampings : cuid {
     visitedAt : Timestamp;
     createdAt : Timestamp @cds.on.insert: $now;
     createdBy : User      @cds.on.insert: $user;
+}
+
+@assert.integrity: true
+entity StampNotes : cuid, managed {
+    stamp : Association to Stampboxes;
+    note  : String(500);
 }
 
 @cds.autoexpose

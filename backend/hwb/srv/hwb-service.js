@@ -22,6 +22,7 @@ const PLACE_SEARCH_DEFAULT_LONGITUDE = 10.6182;
 const PLACE_SEARCH_BIAS_RADIUS_METERS = 50000;
 const PLACE_SEARCH_CACHE_TTL_HIT_MS = 7 * 24 * 60 * 60 * 1000;
 const PLACE_SEARCH_CACHE_TTL_EMPTY_MS = 24 * 60 * 60 * 1000;
+const STAMP_NOTE_MAX_LENGTH = 500;
 // 40.000 free 
 //  2.500 used
 let count = 0;
@@ -116,6 +117,9 @@ module.exports = class api extends cds.ApplicationService {
 
     this.before("CREATE", "Stampings", verifyStampingIsForBox)
     this.before("CREATE", "Stampings", applyDefaultVisitTimestamp)
+    this.before("CREATE", "StampNotes", validateAndNormalizeStampNoteCreate.bind(this))
+    this.before("UPDATE", "StampNotes", validateAndNormalizeStampNoteUpdate.bind(this))
+    this.on("CREATE", "StampNotes", upsertStampNote.bind(this))
 
     return super.init()
   }
@@ -142,6 +146,100 @@ function applyDefaultVisitTimestamp(req) {
   if (!req.data.visitedAt) {
     req.data.visitedAt = req.data.createdAt || new Date().toISOString();
   }
+}
+
+function extractStampIdFromPayload(data = {}) {
+  return data.stamp_ID || data.stamp?.ID;
+}
+
+async function assertStampExists(req, stampId) {
+  const db = this.entities('hwb.db');
+  const existingStampbox = await SELECT.one.from(db.Stampboxes).where({ ID: stampId });
+  if (!existingStampbox) {
+    req.error(404, `Stampbox with ID ${stampId} does not exist.`);
+    return false;
+  }
+  return true;
+}
+
+function normalizeAndValidateNote(req, requireNote) {
+  if (req.data.note === undefined) {
+    if (requireNote) {
+      req.error(400, 'Note is required.');
+      return false;
+    }
+    return true;
+  }
+
+  if (typeof req.data.note !== 'string') {
+    req.error(400, 'Note must be a string.');
+    return false;
+  }
+
+  req.data.note = req.data.note.trim();
+  if (req.data.note.length > STAMP_NOTE_MAX_LENGTH) {
+    req.error(400, `Note must be at most ${STAMP_NOTE_MAX_LENGTH} characters long.`);
+    return false;
+  }
+
+  return true;
+}
+
+async function validateAndNormalizeStampNoteCreate(req) {
+  const stampId = extractStampIdFromPayload(req.data);
+  if (!stampId) {
+    req.error(400, 'Stampbox is required for the note.');
+    return;
+  }
+
+  if (!(await assertStampExists.call(this, req, stampId))) {
+    return;
+  }
+
+  if (!normalizeAndValidateNote(req, true)) {
+    return;
+  }
+
+  req.data.stamp = { ID: stampId };
+  req.data.stamp_ID = stampId;
+}
+
+function validateAndNormalizeStampNoteUpdate(req) {
+  if (req.data.stamp || req.data.stamp_ID) {
+    req.error(400, 'Changing the referenced stamp is not supported.');
+    return;
+  }
+
+  normalizeAndValidateNote(req, false);
+}
+
+async function upsertStampNote(req) {
+  const tx = cds.transaction(req);
+  const db = this.entities('hwb.db');
+  const { StampNotes } = db;
+
+  const stampId = extractStampIdFromPayload(req.data);
+  const createdBy = req.user.id;
+
+  const [existingNote] = await tx.read(StampNotes).where({ createdBy, stamp_ID: stampId });
+
+  if (existingNote) {
+    await tx.update(StampNotes)
+      .set({ note: req.data.note })
+      .where({ ID: existingNote.ID });
+    const [updatedNote] = await tx.read(StampNotes).where({ ID: existingNote.ID });
+    return updatedNote;
+  }
+
+  const ID = req.data.ID || uuidv4();
+  await tx.create(StampNotes).entries({
+    ID,
+    stamp_ID: stampId,
+    note: req.data.note
+  });
+
+  const [createdNote] = await tx.read(StampNotes).where({ ID });
+  return createdNote;
 }
 
 async function onTourRead(req, next) {
@@ -305,6 +403,10 @@ async function onStampboxesRead(req, next) {
       // All Stampings are loaded!
       // TODO: rewrite to ensure only needed are loaded
       box.Stampings = box.Stampings.filter( s => s.createdBy == req.user.id);
+    }
+    if (box.StampNotes) {
+      // Keep notes private even when loaded through Stampboxes expansions.
+      box.StampNotes = box.StampNotes.filter(note => note.createdBy == req.user.id);
     }
 
     return box;
