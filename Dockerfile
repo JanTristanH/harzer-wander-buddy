@@ -30,7 +30,7 @@ RUN npm run build
 WORKDIR /usr/src/app
 
 # Make the script executable
-COPY start.sh ./
+COPY backend/hwb/start.sh ./
 RUN chmod +x start.sh
 
 EXPOSE 4004

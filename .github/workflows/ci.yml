@@ -5,13 +5,8 @@ on:
     tags: '*.*.*'
 
 env:
-  GHCR_REGISTRY: ghcr.io
-  GHCR_IMAGE_NAME: jantristanh/hwb
-  IMAGE_NAME: hwb
-  GAR_LOCATION: ${{ vars.GAR_LOCATION || 'europe-west3' }}
-  GAR_REPOSITORY: ${{ vars.GAR_REPOSITORY || 'hwb' }}
-  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  CLOUD_RUN_REGION: ${{ vars.CLOUD_RUN_REGION || vars.GAR_LOCATION || 'europe-west3' }}
+  REGISTRY: ghcr.io
+  IMAGE_NAME: jantristanh/hwb
 
 # There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
 jobs:
@@ -23,54 +18,28 @@ jobs:
       packages: write
       attestations: write
       id-token: write
+      # 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Validate required Google Cloud configuration
-        run: |
-          test -n "${GCP_PROJECT_ID}" || (echo "Missing required variable: GCP_PROJECT_ID" && exit 1)
-          test -n "${{ vars.CLOUD_RUN_SERVICE }}" || (echo "Missing required variable: CLOUD_RUN_SERVICE" && exit 1)
-
-      - name: Authenticate to Google Cloud
-        id: gcp-auth
-        uses: google-github-actions/auth@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
-          token_format: access_token
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
-
-      - name: Log in to GHCR
+      # Uses the `docker/login-action` action to log in to the Container registry registry using the account and password that will publish the packages. Once published, the packages are scoped to the account defined here.
+      - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.GHCR_REGISTRY }}
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to Google Artifact Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.GAR_LOCATION }}-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.gcp-auth.outputs.access_token }}
-
+      # This step uses the `docker/build-push-action` action to build the image, based on your repository's `Dockerfile`. If the build succeeds, it pushes the image to GitHub Packages.
+      # It uses the `context` parameter to define the build's context as the set of files located in the specified path. For more information, see "[Usage](https://github.com/docker/build-push-action#usage)" in the README of the `docker/build-push-action` repository.
+      # It uses the `tags` and `labels` parameters to tag and label the image with the output from the "meta" step.
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@v3
         with:
           context: backend/hwb
           push: true
-          tags: |
-            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE_NAME }}:${{ github.ref_name }}
-            ${{ env.GHCR_REGISTRY }}/${{ env.GHCR_IMAGE_NAME }}:latest
-            ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
-            ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}, ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+      
 
-      - name: Deploy to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          project_id: ${{ env.GCP_PROJECT_ID }}
-          service: ${{ vars.CLOUD_RUN_SERVICE }}
-          region: ${{ env.CLOUD_RUN_REGION }}
-          image: ${{ env.GAR_LOCATION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+      
