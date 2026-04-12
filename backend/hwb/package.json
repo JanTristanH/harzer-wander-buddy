@@ -1,6 +1,6 @@
 {
   "name": "hwb",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "description": "A simple CAP project.",
   "repository": "<Add your repository here>",
   "license": "UNLICENSED",
@@ -57,9 +57,11 @@
           "kind": "postgres",
           "pool": {
             "acquireTimeoutMillis": 5000,
-            "min": 1,
+            "min": 0,
             "max": 10,
-            "fifo": true
+            "fifo": true,
+            "evictionRunIntervalMillis": 5000,
+            "idleTimeoutMillis": 30000
           }
         }
       },
