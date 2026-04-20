@@ -1,3 +1,16 @@
+FROM node:22-bookworm-slim AS expo-web-builder
+
+WORKDIR /usr/src/expo-app
+
+COPY app/package*.json ./
+COPY app/patches ./patches
+
+RUN npm ci
+
+COPY app ./
+
+RUN npx expo export --platform web
+
 FROM node:22-bookworm-slim
 
 WORKDIR /usr/src/app
@@ -28,6 +41,9 @@ RUN npm ci
 RUN npm run build
 
 WORKDIR /usr/src/app
+
+# Copy compiled Expo web app into CAP static app folder
+COPY --from=expo-web-builder /usr/src/expo-app/dist ./app/rnweb
 
 # Make the script executable
 COPY backend/hwb/start.sh ./
