@@ -75,6 +75,7 @@
       "@react-native-community/datetimepicker"
     ],
     "experiments": {
+      "baseUrl": "/app/rnweb",
       "typedRoutes": true,
       "reactCompiler": true
     },

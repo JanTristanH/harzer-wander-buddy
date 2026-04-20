@@ -239,6 +239,7 @@ cds.on("bootstrap", (app) => {
   app.use("/odata/v2/api", mobileCors, bearerAuth);
 
   app.use("/app/frontendhwb", requiresAuth(), express.static(__dirname + "/../app/frontendhwb"));
+  app.use("/app/rnweb", requiresAuth(), express.static(__dirname + "/../app/rnweb"));
   app.use("/app/dependencies", requiresAuth(), express.static(__dirname + "/../app/dependencies"));
   registerCsvExportRoutes(app);
 
