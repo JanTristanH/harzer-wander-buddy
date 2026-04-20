@@ -1,0 +1,107 @@
+{
+  "expo": {
+    "name": "Harzer Wanderbuddy",
+    "slug": "harzer-wander-buddy-app",
+    "version": "1.5.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "harzerwanderbuddyapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "de.kuestenbit.harzer-wander-buddy",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSLocationWhenInUseUsageDescription": "Harzer Wanderbuddy verwendet deinen Standort fuer Karte, Entfernungen und nahe Parkplaetze.",
+        "NSPhotoLibraryUsageDescription": "Harzer Wanderbuddy benoetigt Zugriff auf deine Fotos, damit du ein Profilbild auswaehlen kannst.",
+        "NSPhotoLibraryAddUsageDescription": "Harzer Wanderbuddy benoetigt Zugriff auf deine Fotos, falls du ein bearbeitetes Profilbild speichern moechtest."
+      }
+    },
+    "android": {
+      "package": "de.kuestenbit.harzerwanderbuddy",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "config": {}
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Harzer Wanderbuddy verwendet deinen Standort fuer Karte, Entfernungen und nahe Parkplaetze."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Harzer Wanderbuddy benoetigt Zugriff auf deine Fotos, damit du ein Profilbild auswaehlen kannst."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#e8e7de",
+          "dark": {
+            "backgroundColor": "#e8e7de"
+          }
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "backendUrl": "http://localhost:4004",
+      "auth0Domain": "dev-ijucl08spdudaszc.us.auth0.com",
+      "auth0ClientId": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh",
+      "auth0ClientIdNative": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh",
+      "auth0ClientIdWeb": "yfhEmRby71tcIEgrwCpqN6SH6o5ue4Ow",
+      "auth0Audience": "https://app.harzer-wander-buddy.de/api/v2/",
+      "auth0Scope": "openid profile email offline_access",
+      "auth0LogoutReturnPath": "auth/logout",
+      "router": {},
+      "eas": {
+        "projectId": "1511f3e0-0255-4c5b-97a4-43e285483bc2"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1511f3e0-0255-4c5b-97a4-43e285483bc2",
+      "assetPatternsToBeBundled": [
+        "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/*.ttf",
+        "node_modules/expo-router/assets/*.png",
+        "node_modules/@react-navigation/elements/lib/module/assets/*.png"
+      ]
+    }
+  }
+}

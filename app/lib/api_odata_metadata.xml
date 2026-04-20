@@ -1,0 +1,951 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Capabilities.V1.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/HTML5.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:Include Alias="HTML5" Namespace="com.sap.vocabularies.HTML5.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+  </edmx:Reference>
+  <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Validation.V1.xml" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:Include Alias="Validation" Namespace="Org.OData.Validation.V1"/>
+  </edmx:Reference>
+  <edmx:DataServices m:DataServiceVersion="2.0">
+    <Schema Namespace="api" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+      <Annotation Term="Core.Links" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Collection>
+          <Record>
+            <PropertyValue Property="rel" String="author"/>
+            <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+          </Record>
+        </Collection>
+      </Annotation>
+      <EntityContainer Name="EntityContainer" m:IsDefaultEntityContainer="true">
+        <EntitySet Name="Stampboxes" EntityType="api.Stampboxes"/>
+        <EntitySet Name="ParkingSpots" EntityType="api.ParkingSpots"/>
+        <EntitySet Name="TravelTimes" EntityType="api.TravelTimes"/>
+        <EntitySet Name="Users" EntityType="api.Users"/>
+        <EntitySet Name="Attachments" EntityType="api.Attachments"/>
+        <EntitySet Name="MyFriends" EntityType="api.MyFriends"/>
+        <EntitySet Name="Friendships" EntityType="api.Friendships"/>
+        <EntitySet Name="PendingFriendshipRequests" EntityType="api.PendingFriendshipRequests"/>
+        <EntitySet Name="RouteCalculationRequest" EntityType="api.RouteCalculationRequest"/>
+        <EntitySet Name="Tours" EntityType="api.Tours"/>
+        <EntitySet Name="AllPointsOfInterest" EntityType="api.AllPointsOfInterest"/>
+        <EntitySet Name="Stampings" EntityType="api.Stampings"/>
+        <EntitySet Name="NeighborsStampStamp" EntityType="api.NeighborsStampStamp"/>
+        <EntitySet Name="NeighborsStampParking" EntityType="api.NeighborsStampParking"/>
+        <EntitySet Name="NeighborsParkingStamp" EntityType="api.NeighborsParkingStamp"/>
+        <EntitySet Name="NeighborsParkingParking" EntityType="api.NeighborsParkingParking"/>
+        <EntitySet Name="NeighborsCalculationRequestParking" EntityType="api.NeighborsCalculationRequestParking"/>
+        <EntitySet Name="tree" EntityType="api.tree"/>
+        <EntitySet Name="treeFilter" EntityType="api.treeFilter"/>
+        <EntitySet Name="typedTravelTimes" EntityType="api.typedTravelTimes"/>
+        <EntitySet Name="AdjacentStamps" EntityType="api.AdjacentStamps"/>
+        <EntitySet Name="Tour2TravelTime" EntityType="api.Tour2TravelTime"/>
+        <FunctionImport Name="calculateTravelTimesNNearestNeighbors" ReturnType="Edm.Int32" m:HttpMethod="GET">
+          <Parameter Name="n" Type="Edm.Int32" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <FunctionImport Name="getMissingTravelTimesCount" ReturnType="Edm.Int32" m:HttpMethod="GET">
+          <Parameter Name="n" Type="Edm.Int32" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <FunctionImport Name="addElevationToAllTravelTimes" ReturnType="Edm.String" m:HttpMethod="GET"/>
+        <FunctionImport Name="DeleteSpotWithRoutes" ReturnType="Edm.String" m:HttpMethod="POST">
+          <Parameter Name="SpotId" Type="Edm.Guid" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <FunctionImport Name="calculateHikingRoute" ReturnType="Edm.String" m:HttpMethod="GET">
+          <Parameter Name="maxDepth" Type="Edm.Int32" Mode="In" Nullable="true"/>
+          <Parameter Name="maxDuration" Type="Edm.Int32" Mode="In" Nullable="true"/>
+          <Parameter Name="maxDistance" Type="Edm.Int32" Mode="In" Nullable="true"/>
+          <Parameter Name="minStampCount" Type="Edm.Int32" Mode="In" Nullable="true"/>
+          <Parameter Name="allowDriveInRoute" Type="Edm.Boolean" Mode="In" Nullable="true"/>
+          <Parameter Name="latitudeStart" Type="Edm.String" Mode="In" Nullable="true"/>
+          <Parameter Name="longitudeStart" Type="Edm.String" Mode="In" Nullable="true"/>
+          <Parameter Name="groupFilterStampings" Type="Edm.String" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <FunctionImport Name="getTourByIdListTravelTimes" ReturnType="Edm.String" m:HttpMethod="GET">
+          <Parameter Name="idListTravelTimes" Type="Edm.String" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <FunctionImport Name="updateTourByPOIList" ReturnType="Edm.String" m:HttpMethod="POST">
+          <Parameter Name="TourID" Type="Edm.Guid" Mode="In" Nullable="true"/>
+          <Parameter Name="POIList" Type="Edm.String" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <FunctionImport Name="previewTourByPOIList" ReturnType="Edm.String" m:HttpMethod="POST">
+          <Parameter Name="TourID" Type="Edm.Guid" Mode="In" Nullable="true"/>
+          <Parameter Name="POIList" Type="Edm.String" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <FunctionImport Name="updateOrderBy" ReturnType="Edm.String" m:HttpMethod="GET"/>
+        <FunctionImport Name="getCurrentUser" EntitySet="Users" ReturnType="api.Users" m:HttpMethod="GET"/>
+        <FunctionImport Name="getCurrentUserID" EntitySet="Users" ReturnType="api.Users" m:HttpMethod="GET"/>
+        <FunctionImport Name="getVersion" ReturnType="Edm.String" m:HttpMethod="GET"/>
+        <FunctionImport Name="acceptPendingFriendshipRequest" ReturnType="Edm.String" m:HttpMethod="POST">
+          <Parameter Name="FriendshipID" Type="Edm.Guid" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <FunctionImport Name="stampForGroup" ReturnType="Edm.String" m:HttpMethod="POST">
+          <Parameter Name="sStampId" Type="Edm.Guid" Mode="In" Nullable="true"/>
+          <Parameter Name="bStampForUser" Type="Edm.Boolean" Mode="In" Nullable="true"/>
+          <Parameter Name="sGroupUserIds" Type="Edm.String" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <FunctionImport Name="getStampFriendVisits" ReturnType="Edm.String" m:HttpMethod="POST">
+          <Parameter Name="sStampId" Type="Edm.Guid" Mode="In" Nullable="true"/>
+          <Parameter Name="sGroupUserIds" Type="Edm.String" Mode="In" Nullable="true"/>
+        </FunctionImport>
+        <AssociationSet Name="Friendships_fromUser" Association="api.Friendships_fromUser">
+          <End Role="Friendships" EntitySet="Friendships"/>
+          <End Role="Users" EntitySet="Users"/>
+        </AssociationSet>
+        <AssociationSet Name="Friendships_toUser" Association="api.Friendships_toUser">
+          <End Role="Friendships" EntitySet="Friendships"/>
+          <End Role="Users" EntitySet="Users"/>
+        </AssociationSet>
+        <AssociationSet Name="PendingFriendshipRequests_fromUser" Association="api.PendingFriendshipRequests_fromUser">
+          <End Role="PendingFriendshipRequests" EntitySet="PendingFriendshipRequests"/>
+          <End Role="Users" EntitySet="Users"/>
+        </AssociationSet>
+        <AssociationSet Name="PendingFriendshipRequests_toUser" Association="api.PendingFriendshipRequests_toUser">
+          <End Role="PendingFriendshipRequests" EntitySet="PendingFriendshipRequests"/>
+          <End Role="Users" EntitySet="Users"/>
+        </AssociationSet>
+        <AssociationSet Name="PendingFriendshipRequests_outgoingFriendship" Association="api.PendingFriendshipRequests_outgoingFriendship">
+          <End Role="PendingFriendshipRequests" EntitySet="PendingFriendshipRequests"/>
+          <End Role="Friendships" EntitySet="Friendships"/>
+        </AssociationSet>
+        <AssociationSet Name="Stampings_stamp" Association="api.Stampings_stamp">
+          <End Role="Stampings" EntitySet="Stampings"/>
+          <End Role="Stampboxes" EntitySet="Stampboxes"/>
+        </AssociationSet>
+        <AssociationSet Name="AdjacentStamps_first" Association="api.AdjacentStamps_first">
+          <End Role="AdjacentStamps" EntitySet="AdjacentStamps"/>
+          <End Role="Stampboxes" EntitySet="Stampboxes"/>
+        </AssociationSet>
+        <AssociationSet Name="AdjacentStamps_second" Association="api.AdjacentStamps_second">
+          <End Role="AdjacentStamps" EntitySet="AdjacentStamps"/>
+          <End Role="Stampboxes" EntitySet="Stampboxes"/>
+        </AssociationSet>
+        <AssociationSet Name="Tour2TravelTime_tour" Association="api.Tour2TravelTime_tour">
+          <End Role="Tour2TravelTime" EntitySet="Tour2TravelTime"/>
+          <End Role="Tours" EntitySet="Tours"/>
+        </AssociationSet>
+        <AssociationSet Name="Tour2TravelTime_travelTime" Association="api.Tour2TravelTime_travelTime">
+          <End Role="Tour2TravelTime" EntitySet="Tour2TravelTime"/>
+          <End Role="TravelTimes" EntitySet="TravelTimes"/>
+        </AssociationSet>
+      </EntityContainer>
+      <EntityType Name="Stampboxes">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="validFrom" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="validTo" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="longitude" Type="Edm.Double"/>
+        <Property Name="latitude" Type="Edm.Double"/>
+        <Property Name="name" Type="Edm.String" MaxLength="255"/>
+        <Property Name="description" Type="Edm.String" MaxLength="2048"/>
+        <Property Name="image" Type="Edm.String" MaxLength="2048"/>
+        <Property Name="number" Type="Edm.String" MaxLength="40"/>
+        <Property Name="orderBy" Type="Edm.String" MaxLength="40"/>
+        <Property Name="heroImageUrl" Type="Edm.String" MaxLength="2048"/>
+        <Property Name="imageCaption" Type="Edm.String" MaxLength="2048"/>
+        <Property Name="isKidFriendly" Type="Edm.Boolean"/>
+        <Property Name="isElderlyFriendly" Type="Edm.Boolean"/>
+        <Property Name="isStrollerFriendly" Type="Edm.Boolean"/>
+        <Property Name="hasVisited" Type="Edm.Boolean"/>
+        <Property Name="hasToilet" Type="Edm.Boolean"/>
+        <Property Name="hasFood" Type="Edm.Boolean"/>
+        <NavigationProperty Name="myAdjacentStamp" Relationship="api.AdjacentStamps_first" FromRole="Stampboxes" ToRole="AdjacentStamps"/>
+        <NavigationProperty Name="targetForAdjacentStamp" Relationship="api.AdjacentStamps_second" FromRole="Stampboxes" ToRole="AdjacentStamps"/>
+        <NavigationProperty Name="Stampings" Relationship="api.Stampings_stamp" FromRole="Stampboxes" ToRole="Stampings"/>
+        <Property Name="groupFilterStampings" Type="Edm.String"/>
+        <Property Name="groupSize" Type="Edm.Int32"/>
+        <Property Name="totalGroupStampings" Type="Edm.Int32"/>
+        <Property Name="stampedUserIds" Type="Edm.String"/>
+        <Property Name="stampedUsers" Type="Edm.String"/>
+      </EntityType>
+      <EntityType Name="ParkingSpots">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="longitude" Type="Edm.Double"/>
+        <Property Name="latitude" Type="Edm.Double"/>
+        <Property Name="name" Type="Edm.String" MaxLength="255"/>
+        <Property Name="description" Type="Edm.String" MaxLength="2048"/>
+        <Property Name="image" Type="Edm.String" MaxLength="2048"/>
+      </EntityType>
+      <EntityType Name="TravelTimes">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="fromPoi" Type="Edm.Guid"/>
+        <Property Name="toPoi" Type="Edm.Guid"/>
+        <Property Name="durationSeconds" Type="Edm.Int64"/>
+        <Property Name="distanceMeters" Type="Edm.Int64"/>
+        <Property Name="travelMode" Type="Edm.String" MaxLength="128"/>
+        <Property Name="positionString" Type="Edm.String"/>
+        <Property Name="elevationGain" Type="Edm.Double"/>
+        <Property Name="elevationLoss" Type="Edm.Double"/>
+        <Property Name="maxElevation" Type="Edm.Double"/>
+        <Property Name="minElevation" Type="Edm.Double"/>
+        <Property Name="elevationProfile" Type="Edm.String"/>
+        <NavigationProperty Name="tours" Relationship="api.Tour2TravelTime_travelTime" FromRole="TravelTimes" ToRole="Tour2TravelTime"/>
+      </EntityType>
+      <EntityType Name="Users">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.String" MaxLength="255" Nullable="false"/>
+        <Property Name="name" Type="Edm.String" MaxLength="255"/>
+        <Property Name="picture" Type="Edm.String" MaxLength="255"/>
+        <Property Name="isFriend" Type="Edm.Boolean"/>
+        <Property Name="roles" Type="Edm.String"/>
+      </EntityType>
+      <EntityType Name="Attachments" m:HasStream="true">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="url" Type="Edm.String"/>
+        <Property Name="mimeType" Type="Edm.String"/>
+        <Property Name="filename" Type="Edm.String"/>
+        <Property Name="status" Type="Edm.String"/>
+        <Property Name="note" Type="Edm.String"/>
+      </EntityType>
+      <EntityType Name="MyFriends">
+        <Key>
+          <PropertyRef Name="FriendshipID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.String" MaxLength="255"/>
+        <Property Name="name" Type="Edm.String" MaxLength="255"/>
+        <Property Name="picture" Type="Edm.String" MaxLength="255"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="FriendshipID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="isFriend" Type="Edm.Boolean"/>
+        <Property Name="isAllowedToStampForMe" Type="Edm.Boolean"/>
+        <Property Name="isAllowedToStampForFriend" Type="Edm.Boolean"/>
+      </EntityType>
+      <EntityType Name="Friendships">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <NavigationProperty Name="fromUser" Relationship="api.Friendships_fromUser" FromRole="Friendships" ToRole="Users"/>
+        <Property Name="fromUser_ID" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="toUser" Relationship="api.Friendships_toUser" FromRole="Friendships" ToRole="Users"/>
+        <Property Name="toUser_ID" Type="Edm.String" MaxLength="255"/>
+        <Property Name="status" Type="Edm.String" MaxLength="20"/>
+        <Property Name="isAllowedToStampForFriend" Type="Edm.Boolean"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+      </EntityType>
+      <EntityType Name="PendingFriendshipRequests">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <NavigationProperty Name="fromUser" Relationship="api.PendingFriendshipRequests_fromUser" FromRole="PendingFriendshipRequests" ToRole="Users"/>
+        <Property Name="fromUser_ID" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="toUser" Relationship="api.PendingFriendshipRequests_toUser" FromRole="PendingFriendshipRequests" ToRole="Users"/>
+        <Property Name="toUser_ID" Type="Edm.String" MaxLength="255"/>
+        <NavigationProperty Name="outgoingFriendship" Relationship="api.PendingFriendshipRequests_outgoingFriendship" FromRole="PendingFriendshipRequests" ToRole="Friendships"/>
+        <Property Name="outgoingFriendship_ID" Type="Edm.Guid"/>
+      </EntityType>
+      <EntityType Name="RouteCalculationRequest">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="longitude" Type="Edm.String" MaxLength="40"/>
+        <Property Name="latitude" Type="Edm.String" MaxLength="40"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+      </EntityType>
+      <EntityType Name="Tours">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="modifiedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="modifiedBy" Type="Edm.String" MaxLength="255"/>
+        <Property Name="name" Type="Edm.String"/>
+        <Property Name="distance" Type="Edm.Int64"/>
+        <Property Name="duration" Type="Edm.Int64"/>
+        <Property Name="stampCount" Type="Edm.Int32"/>
+        <Property Name="idListTravelTimes" Type="Edm.String"/>
+        <Property Name="totalElevationLoss" Type="Edm.Double"/>
+        <Property Name="totalElevationGain" Type="Edm.Double"/>
+        <Property Name="groupFilterStampings" Type="Edm.String"/>
+        <Property Name="AverageGroupStampings" Type="Edm.Int32"/>
+        <NavigationProperty Name="path" Relationship="api.Tour2TravelTime_tour" FromRole="Tours" ToRole="Tour2TravelTime"/>
+      </EntityType>
+      <EntityType Name="AllPointsOfInterest">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="longitude" Type="Edm.Double"/>
+        <Property Name="latitude" Type="Edm.Double"/>
+        <Property Name="name" Type="Edm.String" MaxLength="255"/>
+        <Property Name="orderBy" Type="Edm.String" MaxLength="40"/>
+        <Property Name="heroImageUrl" Type="Edm.String" MaxLength="2048"/>
+        <Property Name="imageCaption" Type="Edm.String" MaxLength="2048"/>
+        <Property Name="description" Type="Edm.String" MaxLength="2048"/>
+        <Property Name="poiType" Type="Edm.String"/>
+      </EntityType>
+      <EntityType Name="Stampings">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <NavigationProperty Name="stamp" Relationship="api.Stampings_stamp" FromRole="Stampings" ToRole="Stampboxes"/>
+        <Property Name="stamp_ID" Type="Edm.Guid"/>
+        <Property Name="visitedAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdAt" Type="Edm.DateTimeOffset" Precision="7"/>
+        <Property Name="createdBy" Type="Edm.String" MaxLength="255"/>
+      </EntityType>
+      <EntityType Name="NeighborsStampStamp">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="NeighborsID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="NeighborsID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="number" Type="Edm.String" MaxLength="40"/>
+        <Property Name="NeighborsNumber" Type="Edm.String" MaxLength="40"/>
+        <Property Name="latitude" Type="Edm.Double"/>
+        <Property Name="longitude" Type="Edm.Double"/>
+        <Property Name="distanceKm" Type="Edm.Double"/>
+      </EntityType>
+      <EntityType Name="NeighborsStampParking">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="NeighborsID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="NeighborsID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="number" Type="Edm.String" MaxLength="40"/>
+        <Property Name="latitude" Type="Edm.Double"/>
+        <Property Name="longitude" Type="Edm.Double"/>
+        <Property Name="distanceKm" Type="Edm.Double"/>
+      </EntityType>
+      <EntityType Name="NeighborsParkingStamp">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="NeighborsID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="NeighborsID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="NeighborsNumber" Type="Edm.String" MaxLength="40"/>
+        <Property Name="latitude" Type="Edm.Double"/>
+        <Property Name="longitude" Type="Edm.Double"/>
+        <Property Name="distanceKm" Type="Edm.Double"/>
+      </EntityType>
+      <EntityType Name="NeighborsParkingParking">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="NeighborsID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="NeighborsID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="latitude" Type="Edm.Double"/>
+        <Property Name="longitude" Type="Edm.Double"/>
+        <Property Name="distanceKm" Type="Edm.Double"/>
+      </EntityType>
+      <EntityType Name="NeighborsCalculationRequestParking">
+        <Key>
+          <PropertyRef Name="ID"/>
+          <PropertyRef Name="NeighborsID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="NeighborsID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="CalculationRequestLongitude" Type="Edm.Double"/>
+        <Property Name="CalculationRequestLatitude" Type="Edm.Double"/>
+        <Property Name="latitude" Type="Edm.Double"/>
+        <Property Name="longitude" Type="Edm.Double"/>
+        <Property Name="distanceKm" Type="Edm.Double"/>
+      </EntityType>
+      <EntityType Name="tree">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="fromPoi" Type="Edm.Guid"/>
+        <Property Name="toPoi" Type="Edm.Guid"/>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="rootPoiID" Type="Edm.Guid"/>
+      </EntityType>
+      <EntityType Name="treeFilter">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="fromPoi" Type="Edm.Guid"/>
+        <Property Name="toPoi" Type="Edm.Guid"/>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="rootPoiID" Type="Edm.Guid"/>
+      </EntityType>
+      <EntityType Name="typedTravelTimes">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="fromPoi" Type="Edm.Guid"/>
+        <Property Name="toPoi" Type="Edm.Guid"/>
+        <Property Name="durationSeconds" Type="Edm.Int64"/>
+        <Property Name="distanceMeters" Type="Edm.Int64"/>
+        <Property Name="travelMode" Type="Edm.String" MaxLength="128"/>
+        <Property Name="elevationGain" Type="Edm.Double"/>
+        <Property Name="elevationLoss" Type="Edm.Double"/>
+        <Property Name="name" Type="Edm.String" MaxLength="255"/>
+        <Property Name="toPoiType" Type="Edm.String"/>
+      </EntityType>
+      <EntityType Name="AdjacentStamps">
+        <Key>
+          <PropertyRef Name="first_ID"/>
+          <PropertyRef Name="second_ID"/>
+        </Key>
+        <NavigationProperty Name="first" Relationship="api.AdjacentStamps_first" FromRole="AdjacentStamps" ToRole="Stampboxes"/>
+        <Property Name="first_ID" Type="Edm.Guid" Nullable="false"/>
+        <NavigationProperty Name="second" Relationship="api.AdjacentStamps_second" FromRole="AdjacentStamps" ToRole="Stampboxes"/>
+        <Property Name="second_ID" Type="Edm.Guid" Nullable="false"/>
+      </EntityType>
+      <EntityType Name="Tour2TravelTime">
+        <Key>
+          <PropertyRef Name="tour_ID"/>
+          <PropertyRef Name="travelTime_ID"/>
+        </Key>
+        <NavigationProperty Name="tour" Relationship="api.Tour2TravelTime_tour" FromRole="Tour2TravelTime" ToRole="Tours"/>
+        <Property Name="tour_ID" Type="Edm.Guid" Nullable="false"/>
+        <NavigationProperty Name="travelTime" Relationship="api.Tour2TravelTime_travelTime" FromRole="Tour2TravelTime" ToRole="TravelTimes"/>
+        <Property Name="travelTime_ID" Type="Edm.Guid" Nullable="false"/>
+        <Property Name="rank" Type="Edm.Int16"/>
+      </EntityType>
+      <Association Name="Friendships_fromUser">
+        <End Role="Friendships" Type="api.Friendships" Multiplicity="*"/>
+        <End Role="Users" Type="api.Users" Multiplicity="0..1"/>
+        <ReferentialConstraint>
+          <Principal Role="Users">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="Friendships">
+            <PropertyRef Name="fromUser_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Association Name="Friendships_toUser">
+        <End Role="Friendships" Type="api.Friendships" Multiplicity="*"/>
+        <End Role="Users" Type="api.Users" Multiplicity="0..1"/>
+        <ReferentialConstraint>
+          <Principal Role="Users">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="Friendships">
+            <PropertyRef Name="toUser_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Association Name="PendingFriendshipRequests_fromUser">
+        <End Role="PendingFriendshipRequests" Type="api.PendingFriendshipRequests" Multiplicity="*"/>
+        <End Role="Users" Type="api.Users" Multiplicity="0..1"/>
+        <ReferentialConstraint>
+          <Principal Role="Users">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="PendingFriendshipRequests">
+            <PropertyRef Name="fromUser_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Association Name="PendingFriendshipRequests_toUser">
+        <End Role="PendingFriendshipRequests" Type="api.PendingFriendshipRequests" Multiplicity="*"/>
+        <End Role="Users" Type="api.Users" Multiplicity="0..1"/>
+        <ReferentialConstraint>
+          <Principal Role="Users">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="PendingFriendshipRequests">
+            <PropertyRef Name="toUser_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Association Name="PendingFriendshipRequests_outgoingFriendship">
+        <End Role="PendingFriendshipRequests" Type="api.PendingFriendshipRequests" Multiplicity="*"/>
+        <End Role="Friendships" Type="api.Friendships" Multiplicity="0..1"/>
+        <ReferentialConstraint>
+          <Principal Role="Friendships">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="PendingFriendshipRequests">
+            <PropertyRef Name="outgoingFriendship_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Association Name="Stampings_stamp">
+        <End Role="Stampings" Type="api.Stampings" Multiplicity="*"/>
+        <End Role="Stampboxes" Type="api.Stampboxes" Multiplicity="0..1">
+          <OnDelete Action="Cascade"/>
+        </End>
+        <ReferentialConstraint>
+          <Principal Role="Stampboxes">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="Stampings">
+            <PropertyRef Name="stamp_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Association Name="AdjacentStamps_first">
+        <End Role="AdjacentStamps" Type="api.AdjacentStamps" Multiplicity="*"/>
+        <End Role="Stampboxes" Type="api.Stampboxes" Multiplicity="0..1">
+          <OnDelete Action="Cascade"/>
+        </End>
+        <ReferentialConstraint>
+          <Principal Role="Stampboxes">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="AdjacentStamps">
+            <PropertyRef Name="first_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Association Name="AdjacentStamps_second">
+        <End Role="AdjacentStamps" Type="api.AdjacentStamps" Multiplicity="*"/>
+        <End Role="Stampboxes" Type="api.Stampboxes" Multiplicity="0..1">
+          <OnDelete Action="Cascade"/>
+        </End>
+        <ReferentialConstraint>
+          <Principal Role="Stampboxes">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="AdjacentStamps">
+            <PropertyRef Name="second_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Association Name="Tour2TravelTime_tour">
+        <End Role="Tour2TravelTime" Type="api.Tour2TravelTime" Multiplicity="*"/>
+        <End Role="Tours" Type="api.Tours" Multiplicity="0..1"/>
+        <ReferentialConstraint>
+          <Principal Role="Tours">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="Tour2TravelTime">
+            <PropertyRef Name="tour_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Association Name="Tour2TravelTime_travelTime">
+        <End Role="Tour2TravelTime" Type="api.Tour2TravelTime" Multiplicity="*"/>
+        <End Role="TravelTimes" Type="api.TravelTimes" Multiplicity="0..1"/>
+        <ReferentialConstraint>
+          <Principal Role="TravelTimes">
+            <PropertyRef Name="ID"/>
+          </Principal>
+          <Dependent Role="Tour2TravelTime">
+            <PropertyRef Name="travelTime_ID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <Annotations Target="api.EntityContainer/Stampboxes" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="api.Stampboxes/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Stampboxes/groupFilterStampings" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Stampboxes/groupSize" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Stampboxes/totalGroupStampings" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Stampboxes/stampedUserIds" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Stampboxes/stampedUsers" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.ParkingSpots/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.EntityContainer/TravelTimes" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="api.TravelTimes/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Users/isFriend" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Users/roles" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Attachments" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="UI.HeaderInfo">
+          <Record Type="UI.HeaderInfoType">
+            <PropertyValue Property="TypeName" String="Attachment"/>
+            <PropertyValue Property="TypeNamePlural" String="Attachments"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="UI.LineItem">
+          <Collection>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="content"/>
+              <Annotation Term="HTML5.CssDefaults">
+                <Record Type="HTML5.CssDefaultsType">
+                  <PropertyValue Property="width" String="30%"/>
+                </Record>
+              </Annotation>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="status"/>
+              <Annotation Term="HTML5.CssDefaults">
+                <Record Type="HTML5.CssDefaultsType">
+                  <PropertyValue Property="width" String="10%"/>
+                </Record>
+              </Annotation>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="createdAt"/>
+              <Annotation Term="HTML5.CssDefaults">
+                <Record Type="HTML5.CssDefaultsType">
+                  <PropertyValue Property="width" String="20%"/>
+                </Record>
+              </Annotation>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="createdBy"/>
+              <Annotation Term="HTML5.CssDefaults">
+                <Record Type="HTML5.CssDefaultsType">
+                  <PropertyValue Property="width" String="15%"/>
+                </Record>
+              </Annotation>
+            </Record>
+            <Record Type="UI.DataField">
+              <PropertyValue Property="Value" Path="note"/>
+              <Annotation Term="HTML5.CssDefaults">
+                <Record Type="HTML5.CssDefaultsType">
+                  <PropertyValue Property="width" String="25%"/>
+                </Record>
+              </Annotation>
+            </Record>
+          </Collection>
+        </Annotation>
+        <Annotation Term="UI.MediaResource">
+          <Record Type="UI.MediaResourceType">
+            <PropertyValue Property="Stream" Path="content"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Core.MediaType" Path="mimeType"/>
+      </Annotations>
+      <Annotations Target="api.Attachments/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Angelegt am"/>
+      </Annotations>
+      <Annotations Target="api.Attachments/createdBy" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="Die eindeutige ID eines Benutzers"/>
+        <Annotation Term="Common.Label" String="Angelegt von"/>
+      </Annotations>
+      <Annotations Target="api.Attachments/modifiedAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Geändert am"/>
+      </Annotations>
+      <Annotations Target="api.Attachments/modifiedBy" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="Die eindeutige ID eines Benutzers"/>
+        <Annotation Term="Common.Label" String="Geändert von"/>
+      </Annotations>
+      <Annotations Target="api.Attachments/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Attachments/mimeType" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.IsMediaType" Bool="true"/>
+        <Annotation Term="Common.Label" String="Media Type"/>
+      </Annotations>
+      <Annotations Target="api.Attachments/filename" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Common.Label" String="Filename"/>
+      </Annotations>
+      <Annotations Target="api.Attachments/status" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Common.Label" String="Scan Status"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Validation.AllowedValues">
+          <Collection>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="Unscanned"/>
+              <PropertyValue Property="Value" String="Unscanned"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="Scanning"/>
+              <PropertyValue Property="Value" String="Scanning"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="Infected"/>
+              <PropertyValue Property="Value" String="Infected"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="Clean"/>
+              <PropertyValue Property="Value" String="Clean"/>
+            </Record>
+            <Record Type="Validation.AllowedValue">
+              <Annotation Term="Core.SymbolicName" String="Failed"/>
+              <PropertyValue Property="Value" String="Failed"/>
+            </Record>
+          </Collection>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="api.Attachments/note" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Common.Label" String="Note"/>
+      </Annotations>
+      <Annotations Target="api.MyFriends/createdBy" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.MyFriends/FriendshipID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.MyFriends/isFriend" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.MyFriends/isAllowedToStampForFriend" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Friendships/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Friendships/createdBy" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.PendingFriendshipRequests/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.EntityContainer/RouteCalculationRequest" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="api.RouteCalculationRequest/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.RouteCalculationRequest/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.RouteCalculationRequest/createdBy" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Tours/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Tours/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Angelegt am"/>
+      </Annotations>
+      <Annotations Target="api.Tours/createdBy" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Immutable" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="Die eindeutige ID eines Benutzers"/>
+        <Annotation Term="Common.Label" String="Angelegt von"/>
+      </Annotations>
+      <Annotations Target="api.Tours/modifiedAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Common.Label" String="Geändert am"/>
+      </Annotations>
+      <Annotations Target="api.Tours/modifiedBy" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="UI.HiddenFilter" Bool="true"/>
+        <Annotation Term="UI.ExcludeFromNavigationContext" Bool="true"/>
+        <Annotation Term="Core.Computed" Bool="true"/>
+        <Annotation Term="Core.Description" String="Die eindeutige ID eines Benutzers"/>
+        <Annotation Term="Common.Label" String="Geändert von"/>
+      </Annotations>
+      <Annotations Target="api.Tours/groupFilterStampings" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Tours/AverageGroupStampings" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.EntityContainer/AllPointsOfInterest" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="api.AllPointsOfInterest/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.AllPointsOfInterest/poiType" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Stampings/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Stampings/createdAt" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.Stampings/createdBy" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsStampStamp/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsStampStamp/NeighborsID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsStampStamp/distanceKm" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsStampParking/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsStampParking/NeighborsID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsStampParking/distanceKm" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsParkingStamp/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsParkingStamp/NeighborsID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsParkingStamp/distanceKm" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsParkingParking/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsParkingParking/NeighborsID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsParkingParking/distanceKm" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsCalculationRequestParking/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsCalculationRequestParking/NeighborsID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsCalculationRequestParking/CalculationRequestLongitude" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsCalculationRequestParking/CalculationRequestLatitude" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.NeighborsCalculationRequestParking/distanceKm" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.tree/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.treeFilter/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.EntityContainer/typedTravelTimes" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Capabilities.DeleteRestrictions">
+          <Record Type="Capabilities.DeleteRestrictionsType">
+            <PropertyValue Property="Deletable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.InsertRestrictions">
+          <Record Type="Capabilities.InsertRestrictionsType">
+            <PropertyValue Property="Insertable" Bool="false"/>
+          </Record>
+        </Annotation>
+        <Annotation Term="Capabilities.UpdateRestrictions">
+          <Record Type="Capabilities.UpdateRestrictionsType">
+            <PropertyValue Property="Updatable" Bool="false"/>
+          </Record>
+        </Annotation>
+      </Annotations>
+      <Annotations Target="api.typedTravelTimes/ID" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.ComputedDefaultValue" Bool="true"/>
+      </Annotations>
+      <Annotations Target="api.typedTravelTimes/toPoiType" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+        <Annotation Term="Core.Computed" Bool="true"/>
+      </Annotations>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>
