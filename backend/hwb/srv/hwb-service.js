@@ -1451,6 +1451,9 @@ async function addElevationToAllTravelTimes(req) {
   const { TravelTimes } = this.entities('hwb.db');
   let aTravelTimes = await SELECT.from(TravelTimes).limit(250)
     .where({ elevationProfile: null, travelMode: "walk" });
+  if (aTravelTimes.length == 0) {
+    return "No TravelTimes without elevation profile found";
+  }
   let aPromises = aTravelTimes.map(addElevationProfileToTravelTime);
   let aResults = await Promise.all(aPromises);
   // persist the results

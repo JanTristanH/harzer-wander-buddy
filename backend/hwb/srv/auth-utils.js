@@ -49,14 +49,62 @@ function hasProfileClaims(claims = {}) {
   );
 }
 
-async function enrichClaimsWithUserInfo(accessToken, claims = {}) {
-  if (!accessToken || !claims.sub || hasProfileClaims(claims)) {
+function pickProfileClaimsFromExternalUser(externalUser = {}) {
+  if (!externalUser || !externalUser.ID) {
+    return {};
+  }
+
+  return {
+    email: externalUser.email,
+    email_verified: externalUser.email_verified,
+    family_name: externalUser.family_name,
+    given_name: externalUser.given_name,
+    name: externalUser.name,
+    nickname: externalUser.nickname,
+    picture: externalUser.picture,
+    sid: externalUser.sid,
+    sub: externalUser.sub || externalUser.ID,
+    updated_at: externalUser.updated_at_iso_string,
+  };
+}
+
+async function enrichClaimsFromExternalUser(claims = {}) {
+  if (!claims.sub) {
     return claims;
+  }
+
+  try {
+    const db = await cds.connect.to("db");
+    const { ExternalUsers } = db.entities;
+    const [externalUser] = await db.read(ExternalUsers).where({ ID: claims.sub });
+    if (!externalUser) {
+      return claims;
+    }
+
+    const dbClaims = pickProfileClaimsFromExternalUser(externalUser);
+    return {
+      ...dbClaims,
+      ...claims,
+    };
+  } catch (error) {
+    DEBUG && DEBUG(`ExternalUsers lookup failed: ${error.message}`);
+    return claims;
+  }
+}
+
+async function enrichClaimsWithUserInfo(accessToken, claims = {}) {
+  if (!accessToken || !claims.sub) {
+    return claims;
+  }
+
+  let enrichedClaims = await enrichClaimsFromExternalUser(claims);
+  if (hasProfileClaims(enrichedClaims)) {
+    return enrichedClaims;
   }
 
   const issuerBaseUrl = process.env.ISSUER_BASE_URL?.replace(/\/$/, "");
   if (!issuerBaseUrl) {
-    return claims;
+    return enrichedClaims;
   }
 
   try {
@@ -68,26 +116,26 @@ async function enrichClaimsWithUserInfo(accessToken, claims = {}) {
 
     if (!response.ok) {
       DEBUG && DEBUG(`userinfo lookup failed with status ${response.status}`);
-      return claims;
+      return enrichedClaims;
     }
 
     const userInfo = await response.json();
     return {
-      ...claims,
-      email: claims.email ?? userInfo.email,
-      email_verified: claims.email_verified ?? userInfo.email_verified,
-      family_name: claims.family_name ?? userInfo.family_name,
-      given_name: claims.given_name ?? userInfo.given_name,
-      name: claims.name ?? userInfo.name,
-      nickname: claims.nickname ?? userInfo.nickname,
-      picture: claims.picture ?? userInfo.picture,
-      sid: claims.sid ?? userInfo.sid,
-      sub: claims.sub ?? userInfo.sub,
-      updated_at: claims.updated_at ?? userInfo.updated_at,
+      ...enrichedClaims,
+      email: enrichedClaims.email ?? userInfo.email,
+      email_verified: enrichedClaims.email_verified ?? userInfo.email_verified,
+      family_name: enrichedClaims.family_name ?? userInfo.family_name,
+      given_name: enrichedClaims.given_name ?? userInfo.given_name,
+      name: enrichedClaims.name ?? userInfo.name,
+      nickname: enrichedClaims.nickname ?? userInfo.nickname,
+      picture: enrichedClaims.picture ?? userInfo.picture,
+      sid: enrichedClaims.sid ?? userInfo.sid,
+      sub: enrichedClaims.sub ?? userInfo.sub,
+      updated_at: enrichedClaims.updated_at ?? userInfo.updated_at,
     };
   } catch (error) {
     DEBUG && DEBUG(`userinfo lookup failed: ${error.message}`);
-    return claims;
+    return enrichedClaims;
   }
 }
 

@@ -237,8 +237,6 @@ cds.on("bootstrap", (app) => {
   app.use(auth(config));
   app.use("/odata/v4/api", mobileCors, bearerAuth);
   app.use("/odata/v2/api", mobileCors, bearerAuth);
-  app.use("/odata/v4/api", mobileCors, bearerAuth);
-  app.use("/odata/v2/api", mobileCors, bearerAuth);
 
   app.use("/app/frontendhwb", requiresAuth(), express.static(__dirname + "/../app/frontendhwb"));
   app.use("/app/dependencies", requiresAuth(), express.static(__dirname + "/../app/dependencies"));
