@@ -3,6 +3,7 @@ const { auth, requiresAuth } = require("express-openid-connect");
 const jsonwebtoken = require("jsonwebtoken");
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 const { buildCapUserFromClaims, enrichClaimsWithUserInfo, upsertExternalUser } = require("./auth-utils");
 require("dotenv").config();
 
@@ -230,6 +231,19 @@ function registerCsvExportRoutes(app) {
   });
 }
 
+const RN_WEB_MOUNT_PATH = "/app/rnweb";
+const RN_WEB_DIST_PATH = path.join(__dirname, "..", "app", "rnweb");
+const RN_WEB_INDEX_PATH = path.join(RN_WEB_DIST_PATH, "index.html");
+
+function isHtmlNavigationRequest(req) {
+  if (req.method !== "GET" && req.method !== "HEAD") {
+    return false;
+  }
+
+  const accept = req.headers.accept || "";
+  return accept.includes("text/html");
+}
+
 cds.on("bootstrap", (app) => {
   // ✅ Serve manifest.json publicly before authentication middleware
   app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));
@@ -239,7 +253,16 @@ cds.on("bootstrap", (app) => {
   app.use("/odata/v2/api", mobileCors, bearerAuth);
 
   app.use("/app/frontendhwb", requiresAuth(), express.static(__dirname + "/../app/frontendhwb"));
-  app.use("/app/rnweb", requiresAuth(), express.static(__dirname + "/../app/rnweb"));
+  // RN web owns its Auth0 flow and calls CAP APIs with bearer tokens.
+  app.use(RN_WEB_MOUNT_PATH, express.static(RN_WEB_DIST_PATH, { extensions: ["html"] }));
+  app.get(/^\/app\/rnweb(?:\/.*)?$/, (req, res, next) => {
+    if (req.path.includes(".") || !isHtmlNavigationRequest(req)) {
+      next();
+      return;
+    }
+
+    res.sendFile(RN_WEB_INDEX_PATH);
+  });
   app.use("/app/dependencies", requiresAuth(), express.static(__dirname + "/../app/dependencies"));
   registerCsvExportRoutes(app);
 

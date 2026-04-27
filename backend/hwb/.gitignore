@@ -11,6 +11,7 @@ default-*.json
 gen/
 node_modules/
 target/
+rnweb/
 
 # Web IDE, App Studio
 .che/

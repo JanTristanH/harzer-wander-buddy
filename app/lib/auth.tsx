@@ -96,13 +96,52 @@ function normalizePath(path?: string | null) {
   return normalizedPath.length > 0 ? normalizedPath : 'auth/logout';
 }
 
+function getWebBasePath() {
+  const configuredBasePath = (
+    Constants.expoConfig as
+      | {
+          experiments?: {
+            baseUrl?: string;
+          };
+        }
+      | undefined
+  )?.experiments?.baseUrl;
+
+  if (typeof configuredBasePath !== 'string') {
+    return '';
+  }
+
+  const trimmed = configuredBasePath.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  return `/${trimmed.replace(/^\/+|\/+$/g, '')}`;
+}
+
+function joinUrlPath(basePath: string, path: string) {
+  const normalizedPath = path.replace(/^\/+/, '');
+
+  if (!basePath) {
+    return `/${normalizedPath}`;
+  }
+
+  return `${basePath}/${normalizedPath}`;
+}
+
 function getRedirectUri(path?: string | null) {
   const configScheme = Constants.expoConfig?.scheme;
   const scheme = Array.isArray(configScheme) ? configScheme[0] : configScheme;
 
   if (Platform.OS === 'web') {
+    const webPath = joinUrlPath(getWebBasePath(), normalizePath(path));
+    const origin = globalThis.location?.origin;
+    if (typeof origin === 'string' && origin.length > 0) {
+      return `${origin}${webPath}`;
+    }
+
     return AuthSession.makeRedirectUri({
-      path: normalizePath(path),
+      path: webPath.replace(/^\//, ''),
     });
   }
 
