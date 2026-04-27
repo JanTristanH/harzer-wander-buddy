@@ -1765,29 +1765,34 @@ async function fetchStampWithRecentStampings(
   stampId: string,
   currentUserId?: string
 ) {
-  const expandStampNotes =
-    'StampNotes($select=ID,stamp_ID,note,createdBy,createdAt,modifiedAt;$orderby=modifiedAt desc,createdAt desc;$top=50)';
   try {
-    const rows = await fetchGuidFilteredCollection<StampboxWithExpandedData>(
-      accessToken,
-      'Stampboxes',
-      'ID',
-      stampId,
-      [
+    const [rows, stampNotes] = await Promise.all([
+      fetchGuidFilteredCollection<StampboxWithExpandedData>(
+        accessToken,
+        'Stampboxes',
+        'ID',
+        stampId,
         [
-          '$select',
-          'ID,number,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
-        ],
-        [
-          '$expand',
-          `Stampings($select=ID,visitedAt,createdAt,createdBy,stamp_ID),${expandStampNotes}`,
-        ],
-        ['$top', 1],
-      ]
-    );
+          [
+            '$select',
+            'ID,number,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
+          ],
+          [
+            '$expand',
+            'Stampings($select=ID,visitedAt,createdAt,createdBy,stamp_ID)',
+          ],
+          ['$top', 1],
+        ]
+      ),
+      fetchGuidFilteredCollection<StampNote>(accessToken, 'StampNotes', 'stamp_ID', stampId, {
+        select: ['ID', 'stamp_ID', 'note', 'createdBy', 'createdAt', 'modifiedAt'],
+        orderBy: 'modifiedAt desc,createdAt desc',
+        top: 50,
+      }),
+    ]);
 
     if (rows.length > 0) {
-      const { Stampings: expandedStampings, StampNotes: expandedStampNotes, ...stamp } = rows[0];
+      const { Stampings: expandedStampings, ...stamp } = rows[0];
       const sortedStampings = (Array.isArray(expandedStampings) ? expandedStampings : []).sort((left, right) => {
         const leftVisitedAt = left.visitedAt ? Date.parse(left.visitedAt) : Number.NaN;
         const rightVisitedAt = right.visitedAt ? Date.parse(right.visitedAt) : Number.NaN;
@@ -1807,29 +1812,10 @@ async function fetchStampWithRecentStampings(
 
         return rightTime - leftTime;
       });
-      const sortedStampNotes = (Array.isArray(expandedStampNotes) ? expandedStampNotes : []).sort((left, right) => {
-        const leftModifiedAt = left.modifiedAt ? Date.parse(left.modifiedAt) : Number.NaN;
-        const rightModifiedAt = right.modifiedAt ? Date.parse(right.modifiedAt) : Number.NaN;
-        const leftCreatedAt = left.createdAt ? Date.parse(left.createdAt) : Number.NaN;
-        const rightCreatedAt = right.createdAt ? Date.parse(right.createdAt) : Number.NaN;
-
-        const leftTime = Number.isFinite(leftModifiedAt)
-          ? leftModifiedAt
-          : Number.isFinite(leftCreatedAt)
-            ? leftCreatedAt
-            : 0;
-        const rightTime = Number.isFinite(rightModifiedAt)
-          ? rightModifiedAt
-          : Number.isFinite(rightCreatedAt)
-            ? rightCreatedAt
-            : 0;
-
-        return rightTime - leftTime;
-      });
       return {
         stamp: stamp as Stampbox,
         stampings: sortedStampings.slice(0, 200),
-        myNote: pickCurrentUserStampNote(sortedStampNotes, currentUserId),
+        myNote: pickCurrentUserStampNote(stampNotes, currentUserId),
       };
     }
   } catch {
