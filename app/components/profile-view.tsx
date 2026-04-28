@@ -567,6 +567,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
 
   const hiddenStampCount = Math.max(0, filteredStamps.length - DEFAULT_VISIBLE_ITEMS);
   const hasStampSearchQuery = normalizedStampSearchQuery.length > 0;
+  const hapticSettings = data.hapticSettings;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -953,16 +954,16 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
           ) : null}
         </ProfileSection>
 
-        {data.hapticSettings ? (
+        {hapticSettings ? (
           <ProfileSection title="Haptik">
             <Text style={styles.settingsLabel}>Vibrationsstaerke</Text>
             <View style={styles.hapticChipRow}>
-              {data.hapticSettings.options.map((option) => {
-                const isActive = data.hapticSettings.value === option.key;
+              {hapticSettings.options.map((option) => {
+                const isActive = hapticSettings.value === option.key;
                 return (
                   <Pressable
                     key={option.key}
-                    onPress={() => data.hapticSettings.onChange(option.key)}
+                    onPress={() => hapticSettings.onChange(option.key)}
                     style={({ pressed }) => [
                       styles.hapticChip,
                       isActive && styles.hapticChipActive,
@@ -975,9 +976,9 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                 );
               })}
             </View>
-            {data.hapticSettings.onTest ? (
+            {hapticSettings.onTest ? (
               <Pressable
-                onPress={data.hapticSettings.onTest}
+                onPress={hapticSettings.onTest}
                 style={({ pressed }) => [styles.hapticTestButton, pressed && styles.pressed]}>
                 <Text style={styles.hapticTestButtonLabel}>Testen</Text>
               </Pressable>

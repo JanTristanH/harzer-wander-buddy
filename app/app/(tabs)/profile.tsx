@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 import {
   ProfileErrorState,
@@ -43,6 +43,10 @@ export default function ProfileScreen() {
   const blockingError = !data ? error : null;
 
   React.useEffect(() => {
+    if (Platform.OS === 'web') {
+      return undefined;
+    }
+
     let isCancelled = false;
     void (async () => {
       const storedStrength = await loadHapticStrengthPreference();
@@ -196,17 +200,21 @@ export default function ProfileScreen() {
           },
         },
       ],
-      hapticSettings: {
-        value: hapticStrength,
-        options: [
-          { key: 'off', label: 'Aus' },
-          { key: 'light', label: 'Leicht' },
-          { key: 'medium', label: 'Mittel' },
-          { key: 'strong', label: 'Stark' },
-        ],
-        onChange: updateHapticStrength,
-        onTest: testHapticStrength,
-      },
+      ...(Platform.OS === 'web'
+        ? {}
+        : {
+            hapticSettings: {
+              value: hapticStrength,
+              options: [
+                { key: 'off', label: 'Aus' },
+                { key: 'light', label: 'Leicht' },
+                { key: 'medium', label: 'Mittel' },
+                { key: 'strong', label: 'Stark' },
+              ],
+              onChange: updateHapticStrength,
+              onTest: testHapticStrength,
+            },
+          }),
     };
   }, [
     activeStampFilter,

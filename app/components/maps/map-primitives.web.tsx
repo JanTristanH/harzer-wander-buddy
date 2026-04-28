@@ -108,6 +108,11 @@ const LEAFLET_RUNTIME_CSS = `
   background: #ddd;
   overflow: hidden;
   outline: 0;
+  touch-action: none;
+  user-select: none;
+}
+.leaflet-container * {
+  touch-action: none;
 }
 .leaflet-pane,
 .leaflet-tile,

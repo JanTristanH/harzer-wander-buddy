@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -198,6 +199,12 @@ function getProfileTimelineEntries(profile: ProfileOverviewData) {
   return Array.isArray(profileWithTimeline.stampings)
     ? profileWithTimeline.stampings
     : profile.latestVisits;
+}
+
+function preventCancelableDefault(event: Event) {
+  if (event.cancelable) {
+    event.preventDefault();
+  }
 }
 
 function markerColors(kind: MarkerKind) {
@@ -584,7 +591,7 @@ export default function MapScreen() {
     }
 
     return data.stamps
-      .map((stamp) => {
+      .map((stamp): StampMarkerItem | null => {
         const coordinate = extractCoordinate(stamp);
         if (!coordinate) {
           return null;
@@ -611,7 +618,7 @@ export default function MapScreen() {
     }
 
     return data.parkingSpots
-      .map((parkingSpot) => {
+      .map((parkingSpot): ParkingMarkerItem | null => {
         const coordinate = extractCoordinate(parkingSpot);
         if (!coordinate) {
           return null;
@@ -1699,6 +1706,33 @@ export default function MapScreen() {
     !isOnline &&
     normalizeSearchValue(searchQuery).length >= REMOTE_PLACE_SEARCH_MIN_QUERY_LENGTH &&
     !shouldSkipRemotePlaceSearch(normalizeSearchValue(searchQuery));
+
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'web' || typeof document === 'undefined') {
+        return undefined;
+      }
+
+      const preventPagePinch = (event: TouchEvent) => {
+        if (event.touches.length >= 2) {
+          preventCancelableDefault(event);
+        }
+      };
+      const listenerOptions = { capture: true, passive: false } as const;
+
+      document.addEventListener('touchmove', preventPagePinch, listenerOptions);
+      document.addEventListener('gesturestart', preventCancelableDefault, listenerOptions);
+      document.addEventListener('gesturechange', preventCancelableDefault, listenerOptions);
+      document.addEventListener('gestureend', preventCancelableDefault, listenerOptions);
+
+      return () => {
+        document.removeEventListener('touchmove', preventPagePinch, listenerOptions);
+        document.removeEventListener('gesturestart', preventCancelableDefault, listenerOptions);
+        document.removeEventListener('gesturechange', preventCancelableDefault, listenerOptions);
+        document.removeEventListener('gestureend', preventCancelableDefault, listenerOptions);
+      };
+    }, [])
+  );
 
   return (
     <View style={styles.screen}>
