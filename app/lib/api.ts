@@ -3054,10 +3054,16 @@ export async function fetchProfileOverview(
   } satisfies ProfileOverviewData;
 }
 
-export async function fetchUserProfileOverview(accessToken: string, targetUserId: string) {
+export async function fetchUserProfileOverview(
+  accessToken: string,
+  targetUserId: string,
+  currentUserId?: string
+) {
   const [targetUser, currentUser] = await Promise.all([
     fetchStringEntityById<User>(accessToken, 'Users', 'ID', targetUserId, [['$select', 'ID,name,picture,isFriend']]),
-    fetchOData<User>(accessToken, buildUrl('getCurrentUser()')),
+    currentUserId
+      ? Promise.resolve({ ID: currentUserId } satisfies User)
+      : fetchCurrentUserRecord(accessToken),
   ]);
 
   const [stamps, comparisonStamps, targetStampings, friendships, pendingRequests, visibleFriends] =
@@ -3508,11 +3514,12 @@ export async function updateCurrentUserProfile(
   updates: {
     name?: string;
     picture?: string;
-  }
+  },
+  currentUserId?: string
 ) {
-  const currentUser = await fetchCurrentUserRecord(accessToken);
+  const resolvedCurrentUserId = safeTrim(currentUserId) || (await fetchCurrentUserRecord(accessToken)).ID;
 
-  return mutateOData<User>(accessToken, buildUrl(buildStringKeyPath('Users', currentUser.ID)), {
+  return mutateOData<User>(accessToken, buildUrl(buildStringKeyPath('Users', resolvedCurrentUserId)), {
     method: 'PATCH',
     body: JSON.stringify(updates),
   });

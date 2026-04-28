@@ -417,23 +417,28 @@ export default function StampsScreen() {
         <Text style={styles.totalLabel}>{totalCount} gesamt</Text>
       </View>
 
-      <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.progressCard}>
-        <Text style={styles.progressEyebrow}>Dein Fortschritt</Text>
-        <Text style={styles.progressTitle}>
-          {visitedCount} von {totalCount} Stempelstellen
-        </Text>
-        <View style={styles.progressRow}>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => router.push('/profile/timeline/self' as never)}
+        style={({ pressed }) => [pressed && styles.progressCardPressed]}>
+        <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.progressCard}>
+          <Text style={styles.progressEyebrow}>Dein Fortschritt</Text>
+          <Text style={styles.progressTitle}>
+            {visitedCount} von {totalCount} Stempelstellen
+          </Text>
+          <View style={styles.progressRow}>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+            </View>
+            <Text style={styles.progressPercent}>{progressPercent}%</Text>
           </View>
-          <Text style={styles.progressPercent}>{progressPercent}%</Text>
-        </View>
-        <Text style={styles.progressHint}>
-          {lastVisited
-            ? `Letzter Besuch: Stempel ${lastVisited.stampNumber || '--'} • ${lastVisited.stampName} • ${formatVisitDate(lastVisited.visitedAt)}`
-            : 'Noch keine besuchten Stempelstellen'}
-        </Text>
-      </LinearGradient>
+          <Text style={styles.progressHint}>
+            {lastVisited
+              ? `Letzter Besuch: Stempel ${lastVisited.stampNumber || '--'} • ${lastVisited.stampName} • ${formatVisitDate(lastVisited.visitedAt)}`
+              : 'Noch keine besuchten Stempelstellen'}
+          </Text>
+        </LinearGradient>
+      </Pressable>
 
       {isRefreshing ? <Text style={styles.refreshHint}>Aktualisiere Daten im Hintergrund...</Text> : null}
     </View>
@@ -863,6 +868,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 24,
     elevation: 6,
+  },
+  progressCardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.995 }],
   },
   progressEyebrow: {
     color: '#f5f3ee',

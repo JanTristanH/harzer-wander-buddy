@@ -18,9 +18,18 @@ if (typeof WebBrowser.maybeCompleteAuthSession === 'function') {
 }
 
 const TOKEN_STORAGE_KEY = 'hwb-auth-token-response';
+const TOKEN_METADATA_STORAGE_KEY = 'hwb-auth-token-response-metadata';
+const TOKEN_ACCESS_TOKEN_STORAGE_KEY = 'hwb-auth-token-response-access-token';
+const TOKEN_ID_TOKEN_STORAGE_KEY = 'hwb-auth-token-response-id-token';
+const TOKEN_REFRESH_TOKEN_STORAGE_KEY = 'hwb-auth-token-response-refresh-token';
 const ONBOARDING_STORAGE_KEY = 'hwb-auth-onboarding-complete';
 const WEB_AUTH_PENDING_KEY = 'hwb-auth-pending-web-request';
+const CURRENT_USER_PROFILE_QUERY_KEY_PREFIX = 'current-user-profile';
 const inMemoryStorage = new Map<string, string>();
+const AUTH_DEBUG_ENABLED =
+  typeof __DEV__ !== 'undefined' && __DEV__
+    ? true
+    : process.env.EXPO_PUBLIC_AUTH_DEBUG === 'true';
 
 type AuthState = {
   accessToken: string;
@@ -38,6 +47,10 @@ type StoredTokenState = {
   refreshToken?: string;
   issuedAt?: number;
   expiresIn?: number;
+};
+
+type StoredTokenMetadata = Omit<StoredTokenState, 'accessToken' | 'idToken' | 'refreshToken'> & {
+  storageVersion: 2;
 };
 
 type SessionMode = 'online' | 'offline_grace';
@@ -262,21 +275,76 @@ async function deleteStoredValue(key: string) {
   inMemoryStorage.delete(key);
 }
 
+async function setOptionalStoredValue(key: string, value: string | undefined) {
+  if (value) {
+    await setStoredValue(key, value);
+    return;
+  }
+
+  await deleteStoredValue(key);
+}
+
+function toTokenResponse(storedToken: StoredTokenState) {
+  return new AuthSession.TokenResponse({
+    accessToken: storedToken.accessToken,
+    tokenType: storedToken.tokenType,
+    scope: storedToken.scope,
+    idToken: storedToken.idToken,
+    refreshToken: storedToken.refreshToken,
+    issuedAt: storedToken.issuedAt,
+    expiresIn: storedToken.expiresIn,
+  });
+}
+
 async function saveTokenResponse(tokenResponse: AuthSession.TokenResponse) {
-  const payload: StoredTokenState = {
-    accessToken: tokenResponse.accessToken,
+  const metadata: StoredTokenMetadata = {
+    storageVersion: 2,
     tokenType: tokenResponse.tokenType,
     scope: tokenResponse.scope,
-    idToken: tokenResponse.idToken,
-    refreshToken: tokenResponse.refreshToken,
     issuedAt: tokenResponse.issuedAt,
     expiresIn: tokenResponse.expiresIn,
   };
 
-  await setStoredValue(TOKEN_STORAGE_KEY, JSON.stringify(payload));
+  await Promise.all([
+    setStoredValue(TOKEN_METADATA_STORAGE_KEY, JSON.stringify(metadata)),
+    setOptionalStoredValue(TOKEN_ACCESS_TOKEN_STORAGE_KEY, tokenResponse.accessToken),
+    setOptionalStoredValue(TOKEN_ID_TOKEN_STORAGE_KEY, tokenResponse.idToken),
+    setOptionalStoredValue(TOKEN_REFRESH_TOKEN_STORAGE_KEY, tokenResponse.refreshToken),
+    deleteStoredValue(TOKEN_STORAGE_KEY),
+  ]);
 }
 
 async function loadTokenResponse() {
+  const [metadataValue, accessToken, idToken, refreshToken] = await Promise.all([
+    getStoredValue(TOKEN_METADATA_STORAGE_KEY),
+    getStoredValue(TOKEN_ACCESS_TOKEN_STORAGE_KEY),
+    getStoredValue(TOKEN_ID_TOKEN_STORAGE_KEY),
+    getStoredValue(TOKEN_REFRESH_TOKEN_STORAGE_KEY),
+  ]);
+
+  if (metadataValue || accessToken || idToken || refreshToken) {
+    try {
+      if (!metadataValue || (!accessToken && !refreshToken)) {
+        throw new Error('Incomplete token storage state.');
+      }
+
+      const metadata = JSON.parse(metadataValue) as StoredTokenMetadata;
+      return toTokenResponse({
+        accessToken: accessToken ?? '',
+        tokenType: metadata.tokenType,
+        scope: metadata.scope,
+        idToken: idToken ?? undefined,
+        refreshToken: refreshToken ?? undefined,
+        issuedAt: accessToken ? metadata.issuedAt : 0,
+        expiresIn: accessToken ? metadata.expiresIn : 1,
+      });
+    } catch (error) {
+      console.warn('Failed to parse split token response. Clearing persisted token state.', error);
+      await clearTokenResponse();
+      return null;
+    }
+  }
+
   const storedValue = await getStoredValue(TOKEN_STORAGE_KEY);
   if (!storedValue) {
     return null;
@@ -284,24 +352,24 @@ async function loadTokenResponse() {
 
   try {
     const parsed = JSON.parse(storedValue) as StoredTokenState;
-    return new AuthSession.TokenResponse({
-      accessToken: parsed.accessToken,
-      tokenType: parsed.tokenType,
-      scope: parsed.scope,
-      idToken: parsed.idToken,
-      refreshToken: parsed.refreshToken,
-      issuedAt: parsed.issuedAt,
-      expiresIn: parsed.expiresIn,
-    });
+    const tokenResponse = toTokenResponse(parsed);
+    await saveTokenResponse(tokenResponse);
+    return tokenResponse;
   } catch (error) {
     console.warn('Failed to parse stored token response. Clearing persisted token state.', error);
-    await deleteStoredValue(TOKEN_STORAGE_KEY);
+    await clearTokenResponse();
     return null;
   }
 }
 
 async function clearTokenResponse() {
-  await deleteStoredValue(TOKEN_STORAGE_KEY);
+  await Promise.all([
+    deleteStoredValue(TOKEN_STORAGE_KEY),
+    deleteStoredValue(TOKEN_METADATA_STORAGE_KEY),
+    deleteStoredValue(TOKEN_ACCESS_TOKEN_STORAGE_KEY),
+    deleteStoredValue(TOKEN_ID_TOKEN_STORAGE_KEY),
+    deleteStoredValue(TOKEN_REFRESH_TOKEN_STORAGE_KEY),
+  ]);
 }
 
 async function saveOnboardingState(hasCompletedOnboarding: boolean) {
@@ -321,6 +389,11 @@ function isMissingCurrentUserProfile(error: unknown) {
   );
 }
 
+function getCurrentUserProfileQueryKey(accessToken: string) {
+  const claims = decodeJwt<{ sub?: string }>(accessToken);
+  return [CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, claims?.sub ?? accessToken.slice(-16)] as const;
+}
+
 function toAuthState(tokenResponse: AuthSession.TokenResponse): AuthState {
   return {
     accessToken: tokenResponse.accessToken,
@@ -329,6 +402,33 @@ function toAuthState(tokenResponse: AuthSession.TokenResponse): AuthState {
     issuedAt: tokenResponse.issuedAt,
     expiresIn: tokenResponse.expiresIn,
   };
+}
+
+function logTokenResponseMetadata(event: string, tokenResponse: AuthSession.TokenResponse | null) {
+  if (!AUTH_DEBUG_ENABLED) {
+    return;
+  }
+
+  console.info(`[auth] ${event}`, {
+    hasAccessToken: Boolean(tokenResponse?.accessToken),
+    hasIdToken: Boolean(tokenResponse?.idToken),
+    hasRefreshToken: Boolean(tokenResponse?.refreshToken),
+    issuedAt: tokenResponse?.issuedAt ?? null,
+    expiresIn: tokenResponse?.expiresIn ?? null,
+    scope: tokenResponse?.scope ?? null,
+  });
+}
+
+function logAuthMetadata(event: string, metadata: Record<string, unknown>) {
+  if (!AUTH_DEBUG_ENABLED) {
+    return;
+  }
+
+  console.info(`[auth] ${event}`, metadata);
+}
+
+function isTokenFresh(tokenResponse: AuthSession.TokenResponse | null) {
+  return AuthSession.TokenResponse.isTokenFresh(tokenResponse);
 }
 
 function isUnauthorizedError(error: unknown) {
@@ -452,8 +552,20 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       return null;
     }
 
+    const queryKey = getCurrentUserProfileQueryKey(accessToken);
+    const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(queryKey);
+    if (cachedProfile) {
+      setCurrentUserProfile(cachedProfile);
+      return cachedProfile;
+    }
+
     try {
-      const profile = await fetchCurrentUserProfile(accessToken);
+      const profile = await queryClient.fetchQuery({
+        queryKey,
+        queryFn: () => fetchCurrentUserProfile(accessToken),
+        staleTime: Number.POSITIVE_INFINITY,
+        gcTime: 14 * 24 * 60 * 60 * 1000,
+      });
       setCurrentUserProfile(profile);
       return profile;
     } catch (error) {
@@ -462,6 +574,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       }
 
       if (isMissingCurrentUserProfile(error)) {
+        queryClient.removeQueries({ queryKey, exact: true });
         setCurrentUserProfile(null);
         setHasCompletedOnboarding(false);
         await saveOnboardingState(false);
@@ -476,11 +589,27 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     return preloadCurrentUserProfileForToken(authState?.accessToken ?? null);
   }, [authState?.accessToken, preloadCurrentUserProfileForToken]);
 
+  const updateCurrentUserProfileState = useCallback((profile: CurrentUserProfileData | null) => {
+    setCurrentUserProfile(profile);
+    if (profile) {
+      queryClient.setQueryData([CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, profile.id], profile);
+    }
+  }, []);
+
   const resolveValidTokenResponse = useCallback(
     async (options?: { forceRefresh?: boolean }) => {
       const forceRefresh = options?.forceRefresh ?? false;
       const tokenResponse = await loadTokenResponse();
       if (!tokenResponse) {
+        return {
+          tokenResponse: null,
+          sessionMode: 'online',
+        } satisfies ResolveValidTokenResponseResult;
+      }
+
+      if (!isOffline && !isTokenFresh(tokenResponse) && !tokenResponse.refreshToken) {
+        logTokenResponseMetadata('expired cached token cannot refresh', tokenResponse);
+        await clearTokenResponse();
         return {
           tokenResponse: null,
           sessionMode: 'online',
@@ -516,6 +645,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         );
         const mergedTokenResponse = mergeTokenResponse(tokenResponse, refreshedTokenResponse);
         await saveTokenResponse(mergedTokenResponse);
+        logTokenResponseMetadata('refresh succeeded', mergedTokenResponse);
         return {
           tokenResponse: mergedTokenResponse,
           sessionMode: 'online',
@@ -626,10 +756,19 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
 
         const cachedTokenResponse = await loadTokenResponse();
         if (!cachedTokenResponse) {
+          logTokenResponseMetadata('startup restore no cached token', null);
           applySessionFromToken(null, 'online');
           return;
         }
 
+        if (!isOffline && !isTokenFresh(cachedTokenResponse) && !cachedTokenResponse.refreshToken) {
+          logTokenResponseMetadata('startup found expired cached token without refresh token', cachedTokenResponse);
+          await clearTokenResponse();
+          applySessionFromToken(null, 'online');
+          return;
+        }
+
+        logTokenResponseMetadata('startup restored cached token', cachedTokenResponse);
         applySessionFromToken(cachedTokenResponse, isOffline ? 'offline_grace' : 'online');
       } catch (error) {
         const shouldInvalidateSession = isUnauthorizedError(error);
@@ -734,10 +873,16 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         return;
       }
 
+      const scopes = appConfig.auth0Scope.split(' ');
       const redirectUri = getRedirectUri('auth/callback');
+      logAuthMetadata(`interactive ${mode} request`, {
+        audience: appConfig.auth0Audience,
+        platform: Platform.OS,
+        scopes,
+      });
       const request = new AuthSession.AuthRequest({
         clientId: auth0ClientId,
-        scopes: appConfig.auth0Scope.split(' '),
+        scopes,
         redirectUri,
         responseType: AuthSession.ResponseType.Code,
         usePKCE: true,
@@ -795,6 +940,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       );
 
       await saveTokenResponse(tokenResponse);
+      logTokenResponseMetadata(`interactive ${mode} exchange succeeded`, tokenResponse);
       setCurrentUserProfile(null);
       setSessionMode('online');
       setAuthState({
@@ -891,6 +1037,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
 
       await saveTokenResponse(tokenResponse);
       await deleteStoredValue(WEB_AUTH_PENDING_KEY);
+      logTokenResponseMetadata('web redirect exchange succeeded', tokenResponse);
       setCurrentUserProfile(null);
       setSessionMode('online');
       setAuthState(toAuthState(tokenResponse));
@@ -987,7 +1134,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       logoutEverywhere,
       resetApp,
       preloadCurrentUserProfile,
-      setCurrentUserProfile,
+      setCurrentUserProfile: updateCurrentUserProfileState,
     }),
     [
       authError,
@@ -1010,8 +1157,8 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       logoutEverywhere,
       preloadCurrentUserProfile,
       resetApp,
-      setCurrentUserProfile,
       signup,
+      updateCurrentUserProfileState,
     ]
   );
 
