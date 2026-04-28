@@ -19,6 +19,49 @@ import { runCoreOfflineSync } from '@/lib/core-offline-sync';
 import { queryPersistOptions } from '@/lib/query-persistence';
 import { queryClient } from '@/lib/query-client';
 
+const WEB_DOCUMENT_STYLE_TAG_ID = 'hwb-web-document-behavior';
+const WEB_DOCUMENT_CSS = `
+@media (pointer: coarse) {
+  html,
+  body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body::after {
+    content: '';
+    display: block;
+    height: 1px;
+    width: 1px;
+  }
+}
+`;
+
+function WebDocumentBehavior() {
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') {
+      return undefined;
+    }
+
+    if (document.getElementById(WEB_DOCUMENT_STYLE_TAG_ID)) {
+      return undefined;
+    }
+
+    const styleTag = document.createElement('style');
+    styleTag.id = WEB_DOCUMENT_STYLE_TAG_ID;
+    styleTag.textContent = WEB_DOCUMENT_CSS;
+    document.head.appendChild(styleTag);
+
+    return () => {
+      styleTag.remove();
+    };
+  }, []);
+
+  return null;
+}
+
 function QueryFocusBridge() {
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -110,6 +153,7 @@ export default function RootLayout() {
               </Stack>
               <StatusBar style="light" />
             </ThemeProvider>
+            <WebDocumentBehavior />
             <QueryFocusBridge />
             <CoreOfflineSyncBridge />
             <OfflineBanner />
