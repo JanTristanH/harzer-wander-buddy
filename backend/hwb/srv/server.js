@@ -4,7 +4,12 @@ const jsonwebtoken = require("jsonwebtoken");
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const { buildCapUserFromClaims, enrichClaimsWithUserInfo, upsertExternalUser } = require("./auth-utils");
+const {
+  buildCapUserFromClaims,
+  enrichClaimsWithUserInfo,
+  syncExternalUserIfNeeded,
+  upsertExternalUser,
+} = require("./auth-utils");
 require("dotenv").config();
 
 
@@ -137,7 +142,7 @@ async function bearerAuth(req, res, next) {
 
     req.auth0TokenPayload = enrichedPayload;
     req.user = buildCapUserFromClaims(enrichedPayload);
-    await upsertExternalUser(enrichedPayload);
+    await syncExternalUserIfNeeded(enrichedPayload);
     next();
   } catch (error) {
     sendODataError(res, 401, "Unauthorized");

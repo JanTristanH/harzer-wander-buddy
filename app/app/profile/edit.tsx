@@ -181,10 +181,14 @@ function ProfileEditContent() {
         nextPicture = uploadedImage.url;
       }
 
-      const updatedProfile = await updateCurrentUserProfile(accessToken, {
-        name: nextName,
-        picture: nextPicture,
-      });
+      const updatedProfile = await updateCurrentUserProfile(
+        accessToken,
+        {
+          name: nextName,
+          picture: nextPicture,
+        },
+        profile.id
+      );
 
       const resolvedProfile = {
         id: profile.id,

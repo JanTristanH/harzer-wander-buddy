@@ -2,6 +2,10 @@ const cds = require("@sap/cds");
 const fetch = require("node-fetch");
 
 const DEBUG = cds.debug("cds-auth0");
+const EXTERNAL_USER_CACHE_TTL_MS = Number(process.env.EXTERNAL_USER_CACHE_TTL_MS || 5 * 60 * 1000);
+const EXTERNAL_USER_SYNC_TTL_MS = Number(process.env.EXTERNAL_USER_SYNC_TTL_MS || 24 * 60 * 60 * 1000);
+const externalUserClaimsCache = new Map();
+const externalUserSyncCache = new Map();
 
 class Auth0User extends cds.User {
   is(role) {
@@ -68,9 +72,38 @@ function pickProfileClaimsFromExternalUser(externalUser = {}) {
   };
 }
 
+function getCachedExternalUserClaims(userId) {
+  const cached = externalUserClaimsCache.get(userId);
+  if (!cached || cached.expiresAt <= Date.now()) {
+    externalUserClaimsCache.delete(userId);
+    return null;
+  }
+
+  return cached.claims;
+}
+
+function setCachedExternalUserClaims(userId, claims = {}) {
+  if (!userId) {
+    return;
+  }
+
+  externalUserClaimsCache.set(userId, {
+    claims,
+    expiresAt: Date.now() + EXTERNAL_USER_CACHE_TTL_MS,
+  });
+}
+
 async function enrichClaimsFromExternalUser(claims = {}) {
   if (!claims.sub) {
     return claims;
+  }
+
+  const cachedClaims = getCachedExternalUserClaims(claims.sub);
+  if (cachedClaims) {
+    return {
+      ...cachedClaims,
+      ...claims,
+    };
   }
 
   try {
@@ -82,6 +115,7 @@ async function enrichClaimsFromExternalUser(claims = {}) {
     }
 
     const dbClaims = pickProfileClaimsFromExternalUser(externalUser);
+    setCachedExternalUserClaims(claims.sub, dbClaims);
     return {
       ...dbClaims,
       ...claims,
@@ -94,6 +128,10 @@ async function enrichClaimsFromExternalUser(claims = {}) {
 
 async function enrichClaimsWithUserInfo(accessToken, claims = {}) {
   if (!accessToken || !claims.sub) {
+    return claims;
+  }
+
+  if (hasProfileClaims(claims)) {
     return claims;
   }
 
@@ -120,7 +158,7 @@ async function enrichClaimsWithUserInfo(accessToken, claims = {}) {
     }
 
     const userInfo = await response.json();
-    return {
+    const userInfoClaims = {
       ...enrichedClaims,
       email: enrichedClaims.email ?? userInfo.email,
       email_verified: enrichedClaims.email_verified ?? userInfo.email_verified,
@@ -133,6 +171,8 @@ async function enrichClaimsWithUserInfo(accessToken, claims = {}) {
       sub: enrichedClaims.sub ?? userInfo.sub,
       updated_at: enrichedClaims.updated_at ?? userInfo.updated_at,
     };
+    setCachedExternalUserClaims(claims.sub, userInfoClaims);
+    return userInfoClaims;
   } catch (error) {
     DEBUG && DEBUG(`userinfo lookup failed: ${error.message}`);
     return enrichedClaims;
@@ -141,7 +181,7 @@ async function enrichClaimsWithUserInfo(accessToken, claims = {}) {
 
 async function upsertExternalUser(claims = {}) {
   if (!claims.sub) {
-    return;
+    return false;
   }
 
   try {
@@ -165,12 +205,32 @@ async function upsertExternalUser(claims = {}) {
 
     if (existingUser) {
       await db.update(ExternalUsers).set(entry).where({ ID: claims.sub });
-      return;
+      setCachedExternalUserClaims(claims.sub, pickProfileClaimsFromExternalUser(entry));
+      return true;
     }
 
     await db.create(ExternalUsers).entries(entry);
+    setCachedExternalUserClaims(claims.sub, pickProfileClaimsFromExternalUser(entry));
+    return true;
   } catch (error) {
     console.error("Error managing user in database:", error);
+    return false;
+  }
+}
+
+async function syncExternalUserIfNeeded(claims = {}) {
+  if (!claims.sub) {
+    return;
+  }
+
+  const lastSyncAt = externalUserSyncCache.get(claims.sub) || 0;
+  if (Date.now() - lastSyncAt < EXTERNAL_USER_SYNC_TTL_MS) {
+    return;
+  }
+
+  const synced = await upsertExternalUser(claims);
+  if (synced) {
+    externalUserSyncCache.set(claims.sub, Date.now());
   }
 }
 
@@ -180,5 +240,6 @@ module.exports = {
   enrichClaimsWithUserInfo,
   getRoleClaimKey,
   getRolesFromClaims,
+  syncExternalUserIfNeeded,
   upsertExternalUser,
 };

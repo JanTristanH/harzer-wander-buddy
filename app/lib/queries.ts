@@ -554,7 +554,7 @@ export function useUserProfileOverviewQuery(targetUserId?: string) {
         stampComparisons: [],
       } satisfies UserProfileOverviewData;
     },
-    queryFn: () => authorizedRequest((token) => fetchUserProfileOverview(token, targetUserId!)),
+    queryFn: () => authorizedRequest((token) => fetchUserProfileOverview(token, targetUserId!, claims?.sub)),
   });
 }
 

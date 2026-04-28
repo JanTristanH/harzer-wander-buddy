@@ -20,6 +20,7 @@ if (typeof WebBrowser.maybeCompleteAuthSession === 'function') {
 const TOKEN_STORAGE_KEY = 'hwb-auth-token-response';
 const ONBOARDING_STORAGE_KEY = 'hwb-auth-onboarding-complete';
 const WEB_AUTH_PENDING_KEY = 'hwb-auth-pending-web-request';
+const CURRENT_USER_PROFILE_QUERY_KEY_PREFIX = 'current-user-profile';
 const inMemoryStorage = new Map<string, string>();
 
 type AuthState = {
@@ -321,6 +322,11 @@ function isMissingCurrentUserProfile(error: unknown) {
   );
 }
 
+function getCurrentUserProfileQueryKey(accessToken: string) {
+  const claims = decodeJwt<{ sub?: string }>(accessToken);
+  return [CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, claims?.sub ?? accessToken.slice(-16)] as const;
+}
+
 function toAuthState(tokenResponse: AuthSession.TokenResponse): AuthState {
   return {
     accessToken: tokenResponse.accessToken,
@@ -452,8 +458,20 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       return null;
     }
 
+    const queryKey = getCurrentUserProfileQueryKey(accessToken);
+    const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(queryKey);
+    if (cachedProfile) {
+      setCurrentUserProfile(cachedProfile);
+      return cachedProfile;
+    }
+
     try {
-      const profile = await fetchCurrentUserProfile(accessToken);
+      const profile = await queryClient.fetchQuery({
+        queryKey,
+        queryFn: () => fetchCurrentUserProfile(accessToken),
+        staleTime: Number.POSITIVE_INFINITY,
+        gcTime: 14 * 24 * 60 * 60 * 1000,
+      });
       setCurrentUserProfile(profile);
       return profile;
     } catch (error) {
@@ -462,6 +480,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       }
 
       if (isMissingCurrentUserProfile(error)) {
+        queryClient.removeQueries({ queryKey, exact: true });
         setCurrentUserProfile(null);
         setHasCompletedOnboarding(false);
         await saveOnboardingState(false);
@@ -475,6 +494,13 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   const preloadCurrentUserProfile = useCallback(async () => {
     return preloadCurrentUserProfileForToken(authState?.accessToken ?? null);
   }, [authState?.accessToken, preloadCurrentUserProfileForToken]);
+
+  const updateCurrentUserProfileState = useCallback((profile: CurrentUserProfileData | null) => {
+    setCurrentUserProfile(profile);
+    if (profile) {
+      queryClient.setQueryData([CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, profile.id], profile);
+    }
+  }, []);
 
   const resolveValidTokenResponse = useCallback(
     async (options?: { forceRefresh?: boolean }) => {
@@ -987,7 +1013,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       logoutEverywhere,
       resetApp,
       preloadCurrentUserProfile,
-      setCurrentUserProfile,
+      setCurrentUserProfile: updateCurrentUserProfileState,
     }),
     [
       authError,
@@ -1010,8 +1036,8 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       logoutEverywhere,
       preloadCurrentUserProfile,
       resetApp,
-      setCurrentUserProfile,
       signup,
+      updateCurrentUserProfileState,
     ]
   );
 
