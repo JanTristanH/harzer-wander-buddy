@@ -54,6 +54,7 @@ export type MapViewRef = {
 };
 
 type MapViewProps = {
+  attributionPlacement?: 'bottom-right' | 'below-zoom';
   children?: React.ReactNode;
   initialRegion?: Region;
   onMapReady?: () => void;
@@ -132,6 +133,50 @@ const LEAFLET_RUNTIME_CSS = `
 .leaflet-marker-pane { z-index: 600; }
 .leaflet-tooltip-pane { z-index: 650; }
 .leaflet-popup-pane { z-index: 700; }
+.leaflet-top,
+.leaflet-bottom {
+  pointer-events: none;
+  position: absolute;
+  z-index: 1000;
+}
+.leaflet-top { top: 0; }
+.leaflet-right { right: 0; }
+.leaflet-bottom { bottom: 0; }
+.leaflet-left { left: 0; }
+.leaflet-control {
+  clear: both;
+  pointer-events: auto;
+  position: relative;
+  z-index: 800;
+}
+.leaflet-right .leaflet-control {
+  float: right;
+  margin-right: 10px;
+}
+.leaflet-bottom .leaflet-control {
+  margin-bottom: 10px;
+}
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 6px;
+  color: #333;
+  font: 12px/1.25 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  padding: 3px 7px;
+}
+.leaflet-control-attribution a {
+  color: #1b63c3;
+  text-decoration: none;
+}
+.leaflet-control-attribution a:hover {
+  text-decoration: underline;
+}
+.hwb-leaflet-map.hwb-attribution-below-zoom .leaflet-bottom.leaflet-right {
+  display: none;
+}
+.hwb-leaflet-map.hwb-attribution-below-zoom .leaflet-bottom.leaflet-left .leaflet-control-attribution {
+  margin-bottom: 100px;
+  margin-left: 10px;
+}
 .leaflet-map-pane canvas { z-index: 100; }
 .leaflet-map-pane svg { z-index: 200; }
 .leaflet-zoom-box {
@@ -415,6 +460,7 @@ function MapInstanceBridge(props: { onMapReady?: (map: LeafletMap) => void }) {
 
 const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref) {
   const {
+    attributionPlacement = 'bottom-right',
     children,
     initialRegion,
     onMapReady,
@@ -445,6 +491,13 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
   useEffect(() => {
     ensureLeafletRuntimeCss();
   }, []);
+
+  useEffect(() => {
+    if (!map) {
+      return;
+    }
+    map.attributionControl.setPosition(attributionPlacement === 'below-zoom' ? 'bottomleft' : 'bottomright');
+  }, [attributionPlacement, map]);
 
   useEffect(() => {
     if (!map) {
@@ -571,6 +624,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
   return (
     <View style={style}>
       <MapContainer
+        className={`hwb-leaflet-map ${
+          attributionPlacement === 'below-zoom' ? 'hwb-attribution-below-zoom' : 'hwb-attribution-bottom-right'
+        }`}
         center={centerTuple}
         style={MAP_CONTAINER_STYLE}
         zoom={initialZoom}

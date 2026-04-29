@@ -1750,6 +1750,7 @@ export default function MapScreen() {
         visible={isStampSuccessToastVisible}
       />
       <MapView
+        attributionPlacement="below-zoom"
         ref={mapRef}
         initialRegion={initialRegion}
         onMapReady={() => {
