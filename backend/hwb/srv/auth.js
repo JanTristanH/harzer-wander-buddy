@@ -10,6 +10,11 @@ function sendODataError(res, statusCode, message) {
 }
 
 function capAuth0(req, res, next) {
+  const requestPath = `${req.originalUrl || ''} ${req.baseUrl || ''} ${req.path || ''} ${req.url || ''}`;
+  if (requestPath.includes('/odata/v4/public')) {
+    return next();
+  }
+
   if (req.user?.id) {
     return next();
   }

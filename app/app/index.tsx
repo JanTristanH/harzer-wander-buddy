@@ -26,9 +26,7 @@ export default function IndexScreen() {
             ? hasCompletedOnboarding
               ? '/(tabs)'
               : '/onboarding'
-            : hasCompletedOnboarding
-              ? '/login'
-              : '/onboarding'
+            : '/(tabs)'
         ) as never
       }
     />

@@ -8,6 +8,13 @@ import type { Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 
+type StampListItemProps = {
+  item: Stampbox;
+  index: number;
+  onPress: () => void;
+  metaLabel?: string | null;
+};
+
 function cardGradient(index: number, visited: boolean) {
   if (visited) {
     return index % 2 === 0
@@ -20,17 +27,12 @@ function cardGradient(index: number, visited: boolean) {
     : (['#a6b39c', '#d7cfbb'] as const);
 }
 
-export function StampListItem({
+function StampListItemComponent({
   item,
   index,
   onPress,
   metaLabel,
-}: {
-  item: Stampbox;
-  index: number;
-  onPress: () => void;
-  metaLabel?: string | null;
-}) {
+}: StampListItemProps) {
   const { accessToken } = useAuth();
   const artworkUri = item.heroImageUrl?.trim() || item.image?.trim() || '';
   const artworkSource = artworkUri ? buildAuthenticatedImageSource(artworkUri, accessToken) : null;
@@ -74,6 +76,8 @@ export function StampListItem({
     </Pressable>
   );
 }
+
+export const StampListItem = React.memo(StampListItemComponent);
 
 const styles = StyleSheet.create({
   card: {

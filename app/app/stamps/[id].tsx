@@ -32,7 +32,7 @@ import {
 import Markdown from 'react-native-markdown-display';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AuthGuard } from '@/components/auth-guard';
+import { LockedGuestRows } from '@/components/auth-locked-state';
 import { CurrentPositionDistanceSection } from '@/components/current-position-distance-section';
 import { DetailOverflowMenu } from '@/components/detail-overflow-menu';
 import { FriendsList } from '@/components/friends-list';
@@ -52,6 +52,7 @@ import {
   type VisitStamping,
 } from '@/lib/api';
 import { useAdminAccess, useAuth, useIdTokenClaims } from '@/lib/auth';
+import { useRequireSignInAction } from '@/lib/auth-actions';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import {
   isNetworkUnavailableError,
@@ -295,7 +296,8 @@ function StampDetailContent() {
   const params = useLocalSearchParams<{
     id?: string | string[];
   }>();
-  const { accessToken, canPerformWrites, isOffline, logout } = useAuth();
+  const { accessToken, canPerformWrites, isAuthenticated, isOffline, logout } = useAuth();
+  const requireSignIn = useRequireSignInAction();
   const claims = useIdTokenClaims<IdClaims>();
   const queryClient = useQueryClient();
   const stampId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -338,6 +340,13 @@ function StampDetailContent() {
     userLocation?.latitude,
     userLocation?.longitude
   );
+  const isGuest = !isAuthenticated;
+  const promptSignIn = useCallback(
+    (message?: string) => {
+      requireSignIn(message);
+    },
+    [requireSignIn]
+  );
 
   useEffect(() => {
     if (!detail) {
@@ -368,6 +377,11 @@ function StampDetailContent() {
   }, [detail]);
 
   const handleSaveNote = useCallback(async (): Promise<boolean> => {
+    if (!isAuthenticated) {
+      promptSignIn('Melde dich an, um persönliche Notizen zu speichern.');
+      return false;
+    }
+
     if (!accessToken || !stampId || isSavingNote) {
       return false;
     }
@@ -439,13 +453,20 @@ function StampDetailContent() {
     detail?.myNote?.createdAt,
     detail?.myNote?.note,
     isSavingNote,
+    isAuthenticated,
     logout,
     noteDraft,
+    promptSignIn,
     queryClient,
     stampId,
   ]);
 
   async function handleRequestRouteToStamp() {
+    if (isGuest) {
+      promptSignIn('Melde dich an, um Distanz, Höhenmeter und Reisezeiten zu berechnen.');
+      return;
+    }
+
     if (selectedStampLatitude === null || selectedStampLongitude === null) {
       return;
     }
@@ -589,6 +610,11 @@ function StampDetailContent() {
   }
 
   async function handleStampVisit() {
+    if (isGuest) {
+      promptSignIn('Melde dich an, um Besuche an Stempelstellen zu speichern.');
+      return;
+    }
+
     if (!accessToken || !stampId || isStamping) {
       return;
     }
@@ -904,6 +930,15 @@ function StampDetailContent() {
       setIsStamping(false);
     }
   }
+
+  const handlePrimaryStampButtonPress = () => {
+    if (isGuest) {
+      router.push('/login' as never);
+      return;
+    }
+
+    void handleStampVisit();
+  };
 
   async function handleDeleteVisit(stampingId: string) {
     if (!accessToken || busyVisitId) {
@@ -1664,21 +1699,35 @@ function StampDetailContent() {
             <Text style={styles.description}>Keine Beschreibung fuer diese Stempelstelle verfuegbar.</Text>
           )}
 
-          <StampNoteSection
-            isDirty={isNoteDirty}
-            isSaving={isSavingNote}
-            isTooLong={isNoteTooLong}
-            maxLength={STAMP_NOTE_MAX_LENGTH}
-            noteDraft={noteDraft}
-            noteLength={normalizedNoteDraft.length}
-            onChangeNote={setNoteDraft}
-            onSave={() => {
-              void handleSaveNote();
-            }}
-          />
+          {isGuest ? (
+            <Section title="Meine Notiz">
+              <LockedGuestRows
+                body="Melde dich an, um persönliche Notizen zu dieser Stempelstelle zu speichern."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            </Section>
+          ) : (
+            <StampNoteSection
+              isDirty={isNoteDirty}
+              isSaving={isSavingNote}
+              isTooLong={isNoteTooLong}
+              maxLength={STAMP_NOTE_MAX_LENGTH}
+              noteDraft={noteDraft}
+              noteLength={normalizedNoteDraft.length}
+              onChangeNote={setNoteDraft}
+              onSave={() => {
+                void handleSaveNote();
+              }}
+            />
+          )}
 
           <Section title="Stempel in der Nähe">
-            {showDeferredSkeletons ? (
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
               <>
                 <SkeletonRow />
                 <SkeletonRow />
@@ -1734,7 +1783,12 @@ function StampDetailContent() {
           </Section>
 
           <Section title="Parkplätze in der Nähe">
-            {showDeferredSkeletons ? (
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
               <>
                 <SkeletonLine width="86%" />
                 <SkeletonLine width="78%" />
@@ -1769,77 +1823,91 @@ function StampDetailContent() {
             )}
           </Section>
 
-          <CurrentPositionDistanceSection
-            actionLabel="Distanz berechnen"
-            errorText={routeToCurrentPositionErrorMessage}
-            loadingLineWidths={['72%', '56%']}
-            noCoordinatesText="Für diese Stempelstelle liegen keine Koordinaten vor."
-            onRequestDistance={() => {
-              void handleRequestRouteToStamp();
-            }}
-            promptText="Tippe auf den Button, um die Distanz und Höhenmeter von deinem aktuellen Standort zur Stempelstelle zu berechnen."
-            retryLabel="Erneut versuchen"
-            title="Von aktueller Position"
-            status={
-              !hasSelectedStampCoordinates
-                ? 'no-coordinates'
-                : locationState === 'idle'
-                  ? 'idle'
-                  : locationState === 'denied'
-                    ? 'denied'
-                    : isRouteToCurrentPositionLoading
-                      ? 'loading'
-                      : routeToCurrentPositionError
-                        ? 'error'
-                        : routeToCurrentPosition
-                          ? 'ready'
-                          : 'error'
-            }>
-            {routeToCurrentPosition ? (
-              <View style={styles.routeSummaryCard}>
-                <View style={[styles.rowBadge, styles.rowBadgeRoute]}>
-                  <Feather color="#b56928" name="map-pin" size={14} />
-                </View>
-                <View style={styles.rowBody}>
-                  <Text style={styles.rowTitle}>Aktuelle Position</Text>
-                  <Text style={styles.rowMeta}>
-                    {formatDistanceMeters(routeToCurrentPosition.distanceMeters)}
-                    {formatElevationSummary(
-                      routeToCurrentPosition.elevationGainMeters,
-                      routeToCurrentPosition.elevationLossMeters
-                    )}
-                  </Text>
-                </View>
-                <Pressable
-                  disabled={routeToCurrentPositionQuery.isFetching || isOffline}
-                  onPress={() => {
-                    if (isOffline) {
-                      Alert.alert('Offline', OFFLINE_REFRESH_MESSAGE);
-                      return;
-                    }
+          {isGuest ? (
+            <Section title="Von aktueller Position">
+              <LockedGuestRows
+                body="Melde dich an, um Distanz, Höhenmeter und Reisezeit von deinem Standort zu berechnen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            </Section>
+          ) : (
+            <CurrentPositionDistanceSection
+              actionLabel="Distanz berechnen"
+              errorText={routeToCurrentPositionErrorMessage}
+              loadingLineWidths={['72%', '56%']}
+              noCoordinatesText="Für diese Stempelstelle liegen keine Koordinaten vor."
+              onRequestDistance={() => {
+                void handleRequestRouteToStamp();
+              }}
+              promptText="Tippe auf den Button, um die Distanz und Höhenmeter von deinem aktuellen Standort zur Stempelstelle zu berechnen."
+              retryLabel="Erneut versuchen"
+              title="Von aktueller Position"
+              status={
+                !hasSelectedStampCoordinates
+                  ? 'no-coordinates'
+                  : locationState === 'idle'
+                    ? 'idle'
+                    : locationState === 'denied'
+                      ? 'denied'
+                      : isRouteToCurrentPositionLoading
+                        ? 'loading'
+                        : routeToCurrentPositionError
+                          ? 'error'
+                          : routeToCurrentPosition
+                            ? 'ready'
+                            : 'error'
+              }>
+              {routeToCurrentPosition ? (
+                <View style={styles.routeSummaryCard}>
+                  <View style={[styles.rowBadge, styles.rowBadgeRoute]}>
+                    <Feather color="#b56928" name="map-pin" size={14} />
+                  </View>
+                  <View style={styles.rowBody}>
+                    <Text style={styles.rowTitle}>Aktuelle Position</Text>
+                    <Text style={styles.rowMeta}>
+                      {formatDistanceMeters(routeToCurrentPosition.distanceMeters)}
+                      {formatElevationSummary(
+                        routeToCurrentPosition.elevationGainMeters,
+                        routeToCurrentPosition.elevationLossMeters
+                      )}
+                    </Text>
+                  </View>
+                  <Pressable
+                    disabled={routeToCurrentPositionQuery.isFetching || isOffline}
+                    onPress={() => {
+                      if (isOffline) {
+                        Alert.alert('Offline', OFFLINE_REFRESH_MESSAGE);
+                        return;
+                      }
 
-                    void routeToCurrentPositionQuery.refetch();
-                  }}
-                  style={({ pressed }) => [
-                    styles.routeRefreshButton,
-                    (routeToCurrentPositionQuery.isFetching || isOffline) && styles.routeRefreshButtonDisabled,
-                    pressed &&
-                    !routeToCurrentPositionQuery.isFetching &&
-                    !isOffline &&
-                    styles.sectionActionPressed,
-                  ]}>
-                  <Feather
-                    color="#2e3a2e"
-                    name={routeToCurrentPositionQuery.isFetching ? 'refresh-cw' : 'rotate-cw'}
-                    size={14}
-                  />
-                </Pressable>
-              </View>
-            ) : null}
-          </CurrentPositionDistanceSection>
+                      void routeToCurrentPositionQuery.refetch();
+                    }}
+                    style={({ pressed }) => [
+                      styles.routeRefreshButton,
+                      (routeToCurrentPositionQuery.isFetching || isOffline) && styles.routeRefreshButtonDisabled,
+                      pressed &&
+                      !routeToCurrentPositionQuery.isFetching &&
+                      !isOffline &&
+                      styles.sectionActionPressed,
+                    ]}>
+                    <Feather
+                      color="#2e3a2e"
+                      name={routeToCurrentPositionQuery.isFetching ? 'refresh-cw' : 'rotate-cw'}
+                      size={14}
+                    />
+                  </Pressable>
+                </View>
+              ) : null}
+            </CurrentPositionDistanceSection>
+          )}
 
           <Section title="Freunde hier gewesen">
-            {showDeferredSkeletons ? (
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um Besuche deiner Freunde zu sehen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
               <>
                 <SkeletonRow />
                 <SkeletonRow />
@@ -1861,7 +1929,7 @@ function StampDetailContent() {
           <Section
             title="Meine bisherigen Besuche"
             action={
-              detail.myVisits.length > 0 ? (
+              !isGuest && detail.myVisits.length > 0 ? (
                 <Pressable
                   disabled={!!busyVisitId || !canPerformWrites}
                   onPress={handleToggleVisitEditing}
@@ -1876,7 +1944,12 @@ function StampDetailContent() {
                 </Pressable>
               ) : null
             }>
-            {showDeferredSkeletons ? (
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um deine Besuche zu speichern und zu verwalten."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
               <>
                 <SkeletonLine width="72%" />
                 <SkeletonLine width="58%" />
@@ -1961,17 +2034,19 @@ function StampDetailContent() {
             </Pressable>
           </View>
           <Pressable
-            disabled={isStamping || !canPerformWrites}
-            onPress={handleStampVisit}
+            disabled={isStamping || (!isGuest && !canPerformWrites)}
+            onPress={handlePrimaryStampButtonPress}
             style={({ pressed }) => [
               styles.primaryButton,
               styles.primaryButtonWithIcon,
-              (isStamping || !canPerformWrites) && styles.primaryButtonDisabled,
-              pressed && !isStamping && canPerformWrites && styles.primaryButtonPressed,
+              (isStamping || (!isGuest && !canPerformWrites)) && styles.primaryButtonDisabled,
+              pressed && !isStamping && (isGuest || canPerformWrites) && styles.primaryButtonPressed,
             ]}>
             <Feather color="#f5f3ee" name={visited ? 'refresh-cw' : 'check-circle'} size={16} />
             <Text style={styles.primaryButtonLabel}>
-              {isStamping
+              {isGuest
+                ? 'Anmelden zum Stempeln'
+                : isStamping
                 ? 'Stemple...'
                 : visited
                   ? 'Erneut stempeln'
@@ -2222,11 +2297,7 @@ function StampDetailContent() {
 }
 
 export default function StampDetailScreen() {
-  return (
-    <AuthGuard>
-      <StampDetailContent />
-    </AuthGuard>
-  );
+  return <StampDetailContent />;
 }
 
 const styles = StyleSheet.create({

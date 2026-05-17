@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   PanResponder,
@@ -19,7 +19,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
-import { useFilteredStampsOverviewQuery } from '@/lib/queries';
+import { useAuth } from '@/lib/auth';
+import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
 
 type FilterKey = 'all' | 'visited' | 'open' | 'near' | 'relocated';
 type LocationState = 'idle' | 'loading' | 'granted' | 'denied';
@@ -42,6 +43,7 @@ const STAMP_LIST_START_INDEX = 2;
 const FAST_SCROLLER_HIDE_DELAY_MS = 850;
 const FAST_SCROLLER_THUMB_HEIGHT = 44;
 const FAST_SCROLLER_TRACK_HEIGHT = 580;
+const EMPTY_STAMPS: never[] = [];
 const emptySearchIllustration = require('@/assets/images/buddy/telescope.png');
 const emptyVisitedIllustration = require('@/assets/images/buddy/emptyNotebook.png');
 
@@ -106,6 +108,7 @@ function isRelocatedStamp(validTo?: string) {
 
 export default function StampsScreen() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [locationState, setLocationState] = useState<LocationState>('idle');
@@ -121,10 +124,16 @@ export default function StampsScreen() {
   const [previewIndex, setPreviewIndex] = useState(1);
   const backendFilter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated' =
     activeFilter === 'relocated' ? 'relocated' : 'validToday';
-  const { data, error, isFetching, isPending, refetch } = useFilteredStampsOverviewQuery(backendFilter);
+  const authenticatedQuery = useFilteredStampsOverviewQuery(backendFilter, {
+    enabled: isAuthenticated,
+  });
+  const guestQuery = useGuestFilteredStampsOverviewQuery(backendFilter, {
+    enabled: !isAuthenticated,
+  });
+  const { data, error, isFetching, isPending, refetch } = isAuthenticated ? authenticatedQuery : guestQuery;
   const listRef = React.useRef<FlatList<unknown> | null>(null);
   const hideFastScrollerTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const stamps = data?.stamps ?? [];
+  const stamps = data?.stamps ?? EMPTY_STAMPS;
   const lastVisited = data?.lastVisited ?? null;
   const isRefreshing = isFetching && !isPending;
   const blockingError = !data ? error : null;
@@ -174,44 +183,52 @@ export default function StampsScreen() {
     };
   }, []);
 
-  const stampDistances = stamps.map((stamp) => ({
-    stamp,
-    distanceKm: userLocation ? haversineDistanceKm(userLocation, stamp) : null,
-  }));
+  const stampDistances = useMemo(
+    () =>
+      stamps.map((stamp) => ({
+        stamp,
+        distanceKm: userLocation ? haversineDistanceKm(userLocation, stamp) : null,
+      })),
+    [stamps, userLocation]
+  );
 
-  const visitedCount = stamps.filter((stamp) => stamp.hasVisited).length;
+  const visitedCount = useMemo(() => stamps.filter((stamp) => stamp.hasVisited).length, [stamps]);
   const totalCount = stamps.length;
   const progressPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
 
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredStamps = stampDistances.filter(({ stamp, distanceKm }) => {
-    const matchesQuery =
-      normalizedQuery.length === 0 ||
-      stamp.name.toLowerCase().includes(normalizedQuery) ||
-      (stamp.number || '').toLowerCase().includes(normalizedQuery);
+  const normalizedQuery = useMemo(() => query.trim().toLowerCase(), [query]);
+  const filteredStamps = useMemo(
+    () =>
+      stampDistances.filter(({ stamp, distanceKm }) => {
+        const matchesQuery =
+          normalizedQuery.length === 0 ||
+          stamp.name.toLowerCase().includes(normalizedQuery) ||
+          (stamp.number || '').toLowerCase().includes(normalizedQuery);
 
-    if (!matchesQuery) {
-      return false;
-    }
+        if (!matchesQuery) {
+          return false;
+        }
 
-    if (activeFilter === 'visited') {
-      return !!stamp.hasVisited;
-    }
+        if (activeFilter === 'visited') {
+          return !!stamp.hasVisited;
+        }
 
-    if (activeFilter === 'open') {
-      return !stamp.hasVisited;
-    }
+        if (activeFilter === 'open') {
+          return !stamp.hasVisited;
+        }
 
-    if (activeFilter === 'near') {
-      return distanceKm !== null && distanceKm <= NEARBY_DISTANCE_KM;
-    }
+        if (activeFilter === 'near') {
+          return distanceKm !== null && distanceKm <= NEARBY_DISTANCE_KM;
+        }
 
-    if (activeFilter === 'relocated') {
-      return isRelocatedStamp(stamp.validTo);
-    }
+        if (activeFilter === 'relocated') {
+          return isRelocatedStamp(stamp.validTo);
+        }
 
-    return true;
-  });
+        return true;
+      }),
+    [activeFilter, normalizedQuery, stampDistances]
+  );
   const isVisitedEmptyState = activeFilter === 'visited' && visitedCount === 0;
   const isNearEmptyState = activeFilter === 'near' && filteredStamps.length === 0;
   const emptyStateTitle = isVisitedEmptyState
@@ -239,20 +256,25 @@ export default function StampsScreen() {
         stampItem: (typeof filteredStamps)[number];
       };
 
-  const listItems: ListEntry[] = [{ type: 'intro', key: 'intro' }, { type: 'controls', key: 'controls' }];
+  const listItems = useMemo<ListEntry[]>(() => {
+    const items: ListEntry[] = [{ type: 'intro', key: 'intro' }, { type: 'controls', key: 'controls' }];
 
-  if (filteredStamps.length === 0) {
-    listItems.push({ type: 'empty', key: 'empty' });
-  } else {
+    if (filteredStamps.length === 0) {
+      items.push({ type: 'empty', key: 'empty' });
+      return items;
+    }
+
     filteredStamps.forEach((stampItem, stampIndex) => {
-      listItems.push({
+      items.push({
         type: 'stamp',
         key: `stamp-${stampItem.stamp.ID}`,
         stampIndex,
         stampItem,
       });
     });
-  }
+
+    return items;
+  }, [filteredStamps]);
   const headerHeight = LIST_TOP_PADDING + introHeight + controlsHeight;
   const stampStartOffset = LIST_TOP_PADDING + introHeight;
   const estimatedContentHeight =
@@ -410,7 +432,14 @@ export default function StampsScreen() {
     setThumbRatioOverride(null);
   }, [clearFastScrollerHideTimeout, hasScrollableList]);
 
-  const renderIntro = () => (
+  const handleStampPress = useCallback(
+    (stampId: string) => {
+      router.push(`/stamps/${stampId}` as never);
+    },
+    [router]
+  );
+
+  const renderIntro = useCallback(() => (
     <View style={styles.introContent}>
       <View style={styles.titleRow}>
         <Text style={styles.title}>Stempelstellen</Text>
@@ -419,7 +448,7 @@ export default function StampsScreen() {
 
       <Pressable
         accessibilityRole="button"
-        onPress={() => router.push('/profile/timeline/self' as never)}
+        onPress={() => router.push((isAuthenticated ? '/profile/timeline/self' : '/login') as never)}
         style={({ pressed }) => [pressed && styles.progressCardPressed]}>
         <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.progressCard}>
           <Text style={styles.progressEyebrow}>Dein Fortschritt</Text>
@@ -442,9 +471,17 @@ export default function StampsScreen() {
 
       {isRefreshing ? <Text style={styles.refreshHint}>Aktualisiere Daten im Hintergrund...</Text> : null}
     </View>
-  );
+  ), [
+    isAuthenticated,
+    isRefreshing,
+    lastVisited,
+    progressPercent,
+    router,
+    totalCount,
+    visitedCount,
+  ]);
 
-  const renderControls = () => (
+  const renderControls = useCallback(() => (
     <View style={styles.controlsContent}>
       <View style={styles.searchShell}>
         <View style={styles.searchIconWrap}>
@@ -489,7 +526,107 @@ export default function StampsScreen() {
         </Text>
       ) : null}
     </View>
+  ), [activeFilter, locationState, query]);
+
+  const renderListItem = useCallback(
+    ({ item }: { item: ListEntry }) => {
+      if (item.type === 'intro') {
+        return (
+          <View
+            onLayout={(event) => {
+              const nextHeight = event.nativeEvent.layout.height;
+              setIntroHeight((current) =>
+                Math.abs(current - nextHeight) < 0.5 ? current : nextHeight
+              );
+            }}
+            style={styles.introWrap}>
+            {renderIntro()}
+          </View>
+        );
+      }
+
+      if (item.type === 'controls') {
+        return (
+          <View
+            onLayout={(event) => {
+              const nextHeight = event.nativeEvent.layout.height;
+              setControlsHeight((current) =>
+                Math.abs(current - nextHeight) < 0.5 ? current : nextHeight
+              );
+            }}
+            style={styles.controlsWrap}>
+            {renderControls()}
+          </View>
+        );
+      }
+
+      if (item.type === 'empty') {
+        return (
+          <View style={styles.emptyStateWrap}>
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>{emptyStateTitle}</Text>
+              <Image
+                contentFit="contain"
+                source={emptyStateIllustration}
+                style={styles.emptyIllustration}
+              />
+              <Text style={styles.emptyCopy}>{emptyStateCopy}</Text>
+            </View>
+          </View>
+        );
+      }
+
+      return (
+        <View style={styles.stampRow}>
+          <StampListItem
+            index={item.stampIndex}
+            item={item.stampItem.stamp}
+            metaLabel={formatDistance(item.stampItem.distanceKm)}
+            onPress={() => handleStampPress(item.stampItem.stamp.ID)}
+          />
+        </View>
+      );
+    },
+    [
+      emptyStateCopy,
+      emptyStateIllustration,
+      emptyStateTitle,
+      handleStampPress,
+      renderControls,
+      renderIntro,
+    ]
   );
+
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => {
+      if (index === 0) {
+        return { index, length: introHeight, offset: 0 };
+      }
+
+      if (index === 1) {
+        return { index, length: controlsHeight, offset: introHeight };
+      }
+
+      return {
+        index,
+        length: KNOWN_STAMP_ROW_HEIGHT,
+        offset: headerHeight + (index - STAMP_LIST_START_INDEX) * KNOWN_STAMP_ROW_HEIGHT,
+      };
+    },
+    [controlsHeight, headerHeight, introHeight]
+  );
+
+  const handlePullToRefresh = useCallback(() => {
+    void (async () => {
+      setIsPullRefreshing(true);
+      try {
+        await refetch();
+      } finally {
+        setIsPullRefreshing(false);
+      }
+    })();
+  }, [refetch]);
+  const keyExtractor = useCallback((item: ListEntry) => item.key, []);
 
   if (isPending && !data) {
     return (
@@ -595,7 +732,7 @@ export default function StampsScreen() {
         <FlatList
           ref={listRef}
           data={listItems}
-          keyExtractor={(item) => item.key}
+          keyExtractor={keyExtractor}
           onContentSizeChange={(_, height) => {
             setContentHeight(height);
           }}
@@ -624,79 +761,8 @@ export default function StampsScreen() {
               scheduleFastScrollerHide();
             }
           }}
-          renderItem={({ item }) => {
-            if (item.type === 'intro') {
-              return (
-                <View
-                  onLayout={(event) => {
-                    const nextHeight = event.nativeEvent.layout.height;
-                    setIntroHeight((current) =>
-                      Math.abs(current - nextHeight) < 0.5 ? current : nextHeight
-                    );
-                  }}
-                  style={styles.introWrap}>
-                  {renderIntro()}
-                </View>
-              );
-            }
-
-            if (item.type === 'controls') {
-              return (
-                <View
-                  onLayout={(event) => {
-                    const nextHeight = event.nativeEvent.layout.height;
-                    setControlsHeight((current) =>
-                      Math.abs(current - nextHeight) < 0.5 ? current : nextHeight
-                    );
-                  }}
-                  style={styles.controlsWrap}>
-                  {renderControls()}
-                </View>
-              );
-            }
-
-            if (item.type === 'empty') {
-              return (
-                <View style={styles.emptyStateWrap}>
-                  <View style={styles.emptyState}>
-                    <Text style={styles.emptyTitle}>{emptyStateTitle}</Text>
-                    <Image
-                      contentFit="contain"
-                      source={emptyStateIllustration}
-                      style={styles.emptyIllustration}
-                    />
-                    <Text style={styles.emptyCopy}>{emptyStateCopy}</Text>
-                  </View>
-                </View>
-              );
-            }
-
-            return (
-              <View style={styles.stampRow}>
-                <StampListItem
-                  index={item.stampIndex}
-                  item={item.stampItem.stamp}
-                  metaLabel={formatDistance(item.stampItem.distanceKm)}
-                  onPress={() => router.push(`/stamps/${item.stampItem.stamp.ID}` as never)}
-                />
-              </View>
-            );
-          }}
-          getItemLayout={(_, index) => {
-            if (index === 0) {
-              return { index, length: introHeight, offset: 0 };
-            }
-
-            if (index === 1) {
-              return { index, length: controlsHeight, offset: introHeight };
-            }
-
-            return {
-              index,
-              length: KNOWN_STAMP_ROW_HEIGHT,
-              offset: headerHeight + (index - STAMP_LIST_START_INDEX) * KNOWN_STAMP_ROW_HEIGHT,
-            };
-          }}
+          renderItem={renderListItem}
+          getItemLayout={getItemLayout}
           onScrollToIndexFailed={(info) => {
             const fallbackOffset =
               stampStartOffset + Math.max(0, info.index - STAMP_LIST_START_INDEX) * KNOWN_STAMP_ROW_HEIGHT;
@@ -717,16 +783,7 @@ export default function StampsScreen() {
           maxToRenderPerBatch={12}
           refreshControl={
             <RefreshControl
-              onRefresh={() => {
-                void (async () => {
-                  setIsPullRefreshing(true);
-                  try {
-                    await refetch();
-                  } finally {
-                    setIsPullRefreshing(false);
-                  }
-                })();
-              }}
+              onRefresh={handlePullToRefresh}
               refreshing={isPullRefreshing}
               tintColor="#2e6b4b"
             />

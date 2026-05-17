@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import { FriendsList } from '@/components/friends-list';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
 import { Fonts } from '@/constants/theme';
@@ -29,6 +30,7 @@ import {
   type SearchUserResult,
 } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
+import { useRequireSignInAction } from '@/lib/auth-actions';
 import {
   isNetworkUnavailableError,
   OFFLINE_REFRESH_MESSAGE,
@@ -104,7 +106,8 @@ function EmptyState({
 export default function FriendsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { accessToken, canPerformWrites, isOffline, logout } = useAuth();
+  const requireSignIn = useRequireSignInAction();
+  const { accessToken, canPerformWrites, isAuthenticated, isOffline, logout } = useAuth();
   const claims = useIdTokenClaims<{ sub?: string }>();
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<FriendFilter>('friends');
@@ -214,6 +217,11 @@ export default function FriendsScreen() {
 
   const handleAcceptRequest = useCallback(
     async (pendingRequestId: string) => {
+      if (!isAuthenticated) {
+        requireSignIn('Melde dich an, um Freundschaftsanfragen zu verwalten.');
+        return;
+      }
+
       if (!accessToken) {
         return;
       }
@@ -245,11 +253,16 @@ export default function FriendsScreen() {
         setAcceptingPendingRequestId(null);
       }
     },
-    [accessToken, canPerformWrites, claims?.sub, logout, queryClient]
+    [accessToken, canPerformWrites, claims?.sub, isAuthenticated, logout, queryClient, requireSignIn]
   );
 
   const handleCreateRequest = useCallback(
     async (userId: string) => {
+      if (!isAuthenticated) {
+        requireSignIn('Melde dich an, um Freundschaftsanfragen zu senden.');
+        return;
+      }
+
       if (!accessToken) {
         return;
       }
@@ -282,11 +295,16 @@ export default function FriendsScreen() {
         setSubmittingUserId(null);
       }
     },
-    [accessToken, canPerformWrites, claims?.sub, logout, queryClient]
+    [accessToken, canPerformWrites, claims?.sub, isAuthenticated, logout, queryClient, requireSignIn]
   );
 
   const handleRecallRequest = useCallback(
     (friendshipId: string) => {
+      if (!isAuthenticated) {
+        requireSignIn('Melde dich an, um Freundschaftsanfragen zu verwalten.');
+        return;
+      }
+
       if (!accessToken) {
         return;
       }
@@ -336,7 +354,7 @@ export default function FriendsScreen() {
         ]
       );
     },
-    [accessToken, canPerformWrites, claims?.sub, logout, queryClient]
+    [accessToken, canPerformWrites, claims?.sub, isAuthenticated, logout, queryClient, requireSignIn]
   );
 
   const handleInviteFriends = useCallback(async () => {
@@ -401,6 +419,16 @@ export default function FriendsScreen() {
       canPerformWrites,
     ]
   );
+
+  if (!isAuthenticated) {
+    return (
+      <SignInRequiredScreen
+        body="Melde dich an, um Freunde zu suchen, Anfragen zu senden und gemeinsamen Fortschritt zu sehen."
+        onSignIn={() => router.push('/login' as never)}
+        title="Freunde sind mit Konto verfuegbar"
+      />
+    );
+  }
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>

@@ -2331,6 +2331,7 @@ export default function TourDetailScreen() {
   const renderTourMap = (isFullscreen: boolean) => (
     <View style={[styles.mapCard, isFullscreen && styles.mapCardFullscreen]}>
       <MapView
+        attributionPlacement="bottom-right"
         ref={mapRef}
         initialRegion={HARZ_REGION}
         onMapReady={() => setIsMapReady(true)}

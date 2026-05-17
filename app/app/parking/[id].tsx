@@ -17,11 +17,12 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AuthGuard } from '@/components/auth-guard';
+import { LockedGuestRows } from '@/components/auth-locked-state';
 import { CurrentPositionDistanceSection } from '@/components/current-position-distance-section';
 import { DetailOverflowMenu } from '@/components/detail-overflow-menu';
 import { SkeletonBlock } from '@/components/skeleton';
 import { useAdminAccess, useAuth } from '@/lib/auth';
+import { useRequireSignInAction } from '@/lib/auth-actions';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import { useParkingDetailQuery, useRouteToStampFromPositionQuery } from '@/lib/queries';
 
@@ -171,7 +172,8 @@ function ParkingDetailContent() {
     id?: string | string[];
   }>();
   const insets = useSafeAreaInsets();
-  const { accessToken, isOffline } = useAuth();
+  const { accessToken, isAuthenticated, isOffline } = useAuth();
+  const requireSignIn = useRequireSignInAction();
   const { isAdmin } = useAdminAccess();
   const parkingId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { data: detail, error, isFetching, isPending, isPlaceholderData, refetch } =
@@ -187,6 +189,13 @@ function ParkingDetailContent() {
     parkingId,
     userLocation?.latitude,
     userLocation?.longitude
+  );
+  const isGuest = !isAuthenticated;
+  const promptSignIn = React.useCallback(
+    (message?: string) => {
+      requireSignIn(message);
+    },
+    [requireSignIn]
   );
 
   function handleBack() {
@@ -209,6 +218,11 @@ function ParkingDetailContent() {
   }
 
   async function handleRequestRouteToParking() {
+    if (isGuest) {
+      promptSignIn('Melde dich an, um Distanz, Höhenmeter und Reisezeiten zu berechnen.');
+      return;
+    }
+
     if (!detail?.parking.latitude || !detail?.parking.longitude) {
       return;
     }
@@ -419,7 +433,12 @@ function ParkingDetailContent() {
           )}
 
           <Section title="Stempel in der Nähe">
-            {showDeferredSkeletons ? (
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
               <>
                 <SkeletonRow />
                 <SkeletonRow />
@@ -473,7 +492,12 @@ function ParkingDetailContent() {
           </Section>
 
           <Section title="Parkplätze in der Nähe">
-            {showDeferredSkeletons ? (
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
               <>
                 <SkeletonRow />
                 <SkeletonRow />
@@ -507,70 +531,79 @@ function ParkingDetailContent() {
             )}
           </Section>
 
-          <CurrentPositionDistanceSection
-            actionLabel="Distanz berechnen"
-            errorText={routeToCurrentPositionErrorMessage}
-            loadingLineWidths={['72%', '56%']}
-            noCoordinatesText="Für diesen Parkplatz liegen keine Koordinaten vor."
-            onRequestDistance={() => {
-              void handleRequestRouteToParking();
-            }}
-            promptText="Tippe auf den Button, um die Distanz und Höhenmeter von deinem aktuellen Standort zum Parkplatz zu berechnen."
-            retryLabel="Erneut versuchen"
-            title="Von aktueller Position"
-            status={
-              !hasParkingCoordinates
-                ? 'no-coordinates'
-                : locationState === 'idle'
-                  ? 'idle'
-                  : locationState === 'denied'
-                    ? 'denied'
-                    : isRouteToCurrentPositionLoading
-                      ? 'loading'
-                      : routeToCurrentPositionError
-                        ? 'error'
-                        : routeToCurrentPosition
-                          ? 'ready'
-                          : 'error'
-            }>
-            {routeToCurrentPosition ? (
-              <View style={styles.routeSummaryCard}>
-                <View style={[styles.rowBadge, styles.rowBadgeRoute]}>
-                  <Feather color="#b56928" name="map-pin" size={14} />
-                </View>
-                <View style={styles.rowBody}>
-                  <Text style={styles.rowTitle}>Aktuelle Position</Text>
-                  <Text style={styles.rowMeta}>
-                    {formatDistanceMeters(routeToCurrentPosition.distanceMeters)}
-                    {formatElevationSummary(
-                      routeToCurrentPosition.elevationGainMeters,
-                      routeToCurrentPosition.elevationLossMeters
-                    )}
-                  </Text>
-                </View>
-                <Pressable
-                  disabled={routeToCurrentPositionQuery.isFetching || isOffline}
-                  onPress={() => {
-                    if (isOffline) {
-                      return;
-                    }
+          {isGuest ? (
+            <Section title="Von aktueller Position">
+              <LockedGuestRows
+                body="Melde dich an, um Distanz, Höhenmeter und Reisezeit von deinem Standort zu berechnen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            </Section>
+          ) : (
+            <CurrentPositionDistanceSection
+              actionLabel="Distanz berechnen"
+              errorText={routeToCurrentPositionErrorMessage}
+              loadingLineWidths={['72%', '56%']}
+              noCoordinatesText="Für diesen Parkplatz liegen keine Koordinaten vor."
+              onRequestDistance={() => {
+                void handleRequestRouteToParking();
+              }}
+              promptText="Tippe auf den Button, um die Distanz und Höhenmeter von deinem aktuellen Standort zum Parkplatz zu berechnen."
+              retryLabel="Erneut versuchen"
+              title="Von aktueller Position"
+              status={
+                !hasParkingCoordinates
+                  ? 'no-coordinates'
+                  : locationState === 'idle'
+                    ? 'idle'
+                    : locationState === 'denied'
+                      ? 'denied'
+                      : isRouteToCurrentPositionLoading
+                        ? 'loading'
+                        : routeToCurrentPositionError
+                          ? 'error'
+                          : routeToCurrentPosition
+                            ? 'ready'
+                            : 'error'
+              }>
+              {routeToCurrentPosition ? (
+                <View style={styles.routeSummaryCard}>
+                  <View style={[styles.rowBadge, styles.rowBadgeRoute]}>
+                    <Feather color="#b56928" name="map-pin" size={14} />
+                  </View>
+                  <View style={styles.rowBody}>
+                    <Text style={styles.rowTitle}>Aktuelle Position</Text>
+                    <Text style={styles.rowMeta}>
+                      {formatDistanceMeters(routeToCurrentPosition.distanceMeters)}
+                      {formatElevationSummary(
+                        routeToCurrentPosition.elevationGainMeters,
+                        routeToCurrentPosition.elevationLossMeters
+                      )}
+                    </Text>
+                  </View>
+                  <Pressable
+                    disabled={routeToCurrentPositionQuery.isFetching || isOffline}
+                    onPress={() => {
+                      if (isOffline) {
+                        return;
+                      }
 
-                    void routeToCurrentPositionQuery.refetch();
-                  }}
-                  style={({ pressed }) => [
-                    styles.routeRefreshButton,
-                    (routeToCurrentPositionQuery.isFetching || isOffline) && styles.routeRefreshButtonDisabled,
-                    pressed && styles.sectionActionPressed,
-                  ]}>
-                  <Feather
-                    color="#2e3a2e"
-                    name={routeToCurrentPositionQuery.isFetching ? 'refresh-cw' : 'rotate-cw'}
-                    size={14}
-                  />
-                </Pressable>
-              </View>
-            ) : null}
-          </CurrentPositionDistanceSection>
+                      void routeToCurrentPositionQuery.refetch();
+                    }}
+                    style={({ pressed }) => [
+                      styles.routeRefreshButton,
+                      (routeToCurrentPositionQuery.isFetching || isOffline) && styles.routeRefreshButtonDisabled,
+                      pressed && styles.sectionActionPressed,
+                    ]}>
+                    <Feather
+                      color="#2e3a2e"
+                      name={routeToCurrentPositionQuery.isFetching ? 'refresh-cw' : 'rotate-cw'}
+                      size={14}
+                    />
+                  </Pressable>
+                </View>
+              ) : null}
+            </CurrentPositionDistanceSection>
+          )}
         </View>
       </ScrollView>
 
@@ -617,11 +650,7 @@ function ParkingDetailContent() {
 }
 
 export default function ParkingDetailScreen() {
-  return (
-    <AuthGuard>
-      <ParkingDetailContent />
-    </AuthGuard>
-  );
+  return <ParkingDetailContent />;
 }
 
 const styles = StyleSheet.create({

@@ -1,13 +1,18 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Platform } from 'react-native';
 
 import {
   createTour,
   deleteTour,
   fetchAllPointsOfInterest,
   fetchParkingDetail,
+  fetchPublicParkingDetail,
   fetchFriendsOverview,
   fetchLatestVisitedStamp,
   fetchMapData,
+  fetchPublicMapData,
+  fetchPublicStampDetail,
+  fetchPublicStampboxes,
   fetchStampDetail,
   fetchRouteToStampFromPosition,
   fetchTourById,
@@ -41,6 +46,10 @@ type AuthClaims = {
   picture?: string;
 };
 
+const MAP_AND_LIST_QUERY_GC_TIME = Platform.OS === 'web' ? 30 * 60 * 1000 : undefined;
+const DETAIL_QUERY_GC_TIME = Platform.OS === 'web' ? 15 * 60 * 1000 : undefined;
+const ROUTE_QUERY_GC_TIME = Platform.OS === 'web' ? 10 * 60 * 1000 : undefined;
+
 type StampsOverviewData = {
   stamps: Stampbox[];
   lastVisited: LatestVisitedStamp | null;
@@ -64,6 +73,16 @@ export async function fetchStampsOverviewData(
   return {
     stamps,
     lastVisited,
+  };
+}
+
+export async function fetchGuestStampsOverviewData(
+  stampboxFetchMode: StampboxFetchMode = 'default'
+): Promise<StampsOverviewData> {
+  const stamps = await fetchPublicStampboxes(stampboxFetchMode);
+  return {
+    stamps,
+    lastVisited: null,
   };
 }
 
@@ -328,7 +347,10 @@ export function useAdminStampsOverviewQuery(filter: 'validToday' | 'all') {
 }
 
 export function useFilteredStampsOverviewQuery(
-  filter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated'
+  filter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated',
+  options?: {
+    enabled?: boolean;
+  }
 ) {
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
@@ -337,13 +359,32 @@ export function useFilteredStampsOverviewQuery(
 
   return useQuery<StampsOverviewData>({
     queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
+    gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     queryFn: () =>
       authorizedRequest((token) => fetchStampsOverviewData(token, claims?.sub, stampboxFetchMode)),
   });
 }
 
-export function useMapDataQuery() {
+export function useGuestFilteredStampsOverviewQuery(
+  filter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated',
+  options?: {
+    enabled?: boolean;
+  }
+) {
+  const stampboxFetchMode: StampboxFetchMode = filter;
+
+  return useQuery<StampsOverviewData>({
+    queryKey: queryKeys.stampsOverviewByFilter(undefined, filter),
+    enabled: options?.enabled ?? true,
+    gcTime: MAP_AND_LIST_QUERY_GC_TIME,
+    queryFn: () => fetchGuestStampsOverviewData(stampboxFetchMode),
+  });
+}
+
+export function useMapDataQuery(options?: {
+  enabled?: boolean;
+}) {
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
@@ -351,7 +392,8 @@ export function useMapDataQuery() {
 
   return useQuery<MapData>({
     queryKey: queryKeys.mapData(claims?.sub),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
+    gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     placeholderData: () => getCachedMapData(queryClient, claims?.sub),
     queryFn: () =>
       authorizedRequest((token) => {
@@ -371,6 +413,31 @@ export function useMapDataQuery() {
           'validToday'
         );
       }),
+  });
+}
+
+export function useGuestMapDataQuery(options?: {
+  enabled?: boolean;
+}) {
+  const queryClient = useQueryClient();
+
+  return useQuery<MapData>({
+    queryKey: queryKeys.mapData(undefined),
+    enabled: options?.enabled ?? true,
+    gcTime: MAP_AND_LIST_QUERY_GC_TIME,
+    placeholderData: () => getCachedMapData(queryClient, undefined),
+    queryFn: () => {
+      const cachedStampsOverview =
+        queryClient.getQueryData<StampsOverviewData>(
+          queryKeys.stampsOverviewByFilter(undefined, 'validToday')
+        ) ??
+        queryClient.getQueryData<StampsOverviewData>(queryKeys.stampsOverview(undefined));
+
+      return fetchPublicMapData(
+        cachedStampsOverview?.stamps,
+        'validToday'
+      );
+    },
   });
 }
 
@@ -436,7 +503,8 @@ export function useStampDetailQuery(stampId?: string) {
 
   return useQuery<StampDetailData>({
     queryKey: queryKeys.stampDetail(claims?.sub, stampId),
-    enabled: Boolean(accessToken && isAuthenticated && stampId),
+    enabled: Boolean(stampId && (isAuthenticated ? accessToken : true)),
+    gcTime: DETAIL_QUERY_GC_TIME,
     placeholderData: () => {
       if (!stampId) {
         return undefined;
@@ -456,7 +524,10 @@ export function useStampDetailQuery(stampId?: string) {
         myNote: null,
       } satisfies StampDetailData;
     },
-    queryFn: () => authorizedRequest((token) => fetchStampDetail(token, stampId!, claims?.sub)),
+    queryFn: () =>
+      isAuthenticated
+        ? authorizedRequest((token) => fetchStampDetail(token, stampId!, claims?.sub))
+        : fetchPublicStampDetail(stampId!),
   });
 }
 
@@ -468,7 +539,8 @@ export function useParkingDetailQuery(parkingId?: string) {
 
   return useQuery<ParkingDetailData>({
     queryKey: queryKeys.parkingDetail(claims?.sub, parkingId),
-    enabled: Boolean(accessToken && isAuthenticated && parkingId),
+    enabled: Boolean(parkingId && (isAuthenticated ? accessToken : true)),
+    gcTime: DETAIL_QUERY_GC_TIME,
     placeholderData: () => {
       if (!parkingId) {
         return undefined;
@@ -485,7 +557,10 @@ export function useParkingDetailQuery(parkingId?: string) {
         nearbyParking: [],
       } satisfies ParkingDetailData;
     },
-    queryFn: () => authorizedRequest((token) => fetchParkingDetail(token, parkingId!)),
+    queryFn: () =>
+      isAuthenticated
+        ? authorizedRequest((token) => fetchParkingDetail(token, parkingId!))
+        : fetchPublicParkingDetail(parkingId!),
   });
 }
 
@@ -500,6 +575,7 @@ export function useRouteToStampFromPositionQuery(
 
   return useQuery<RouteToStampFromPositionData>({
     queryKey: queryKeys.routeToStampFromPosition(claims?.sub, stampId, latitude, longitude),
+    gcTime: ROUTE_QUERY_GC_TIME,
     enabled:
       Boolean(accessToken && isAuthenticated && stampId) &&
       typeof latitude === 'number' &&

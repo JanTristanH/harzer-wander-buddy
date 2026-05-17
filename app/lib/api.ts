@@ -58,6 +58,7 @@ type ODataCollection<T> = {
 type LegacyQueryEntry = [string, string | number | boolean | undefined];
 type ODataQuery = Partial<QueryOptions<unknown>>;
 type QueryInput = LegacyQueryEntry[] | ODataQuery;
+type ODataServiceSegment = 'api' | 'public';
 
 type NeighborStampRow = {
   ID: string;
@@ -561,8 +562,8 @@ function buildQuery(query?: QueryInput) {
   return buildODataQuery(query);
 }
 
-function buildUrl(path: string, query?: QueryInput) {
-  return `${normalizeBaseUrl(appConfig.backendUrl)}/odata/v4/api/${path}${buildQuery(query)}`;
+function buildUrl(path: string, query?: QueryInput, serviceSegment: ODataServiceSegment = 'api') {
+  return `${normalizeBaseUrl(appConfig.backendUrl)}/odata/v4/${serviceSegment}/${path}${buildQuery(query)}`;
 }
 
 function buildV2Url(path: string) {
@@ -707,6 +708,25 @@ async function fetchOData<T>(accessToken: string, url: string) {
   return (await response.json()) as T;
 }
 
+async function fetchPublicOData<T>(url: string) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    const errorBody = await readErrorBody(response);
+    throw new HttpStatusError(
+      response.status,
+      errorBody || `Request failed with status ${response.status}`,
+      errorBody
+    );
+  }
+
+  return (await response.json()) as T;
+}
+
 async function mutateOData<T>(
   accessToken: string,
   url: string,
@@ -768,6 +788,32 @@ async function fetchCollection<T>(
 ) {
   const payload = await fetchOData<ODataCollection<T>>(accessToken, buildUrl(entitySet, query));
   return payload.value ?? [];
+}
+
+async function fetchPublicCollection<T>(
+  entitySet: string,
+  query?: QueryInput
+) {
+  const payload = await fetchPublicOData<ODataCollection<T>>(buildUrl(entitySet, query, 'public'));
+  return payload.value ?? [];
+}
+
+async function fetchPublicEntityById<T>(
+  entitySet: string,
+  id: string,
+  query?: LegacyQueryEntry[]
+) {
+  const rows = await fetchPublicCollection<T>(entitySet, [
+    ...(query ?? []),
+    ['$filter', `ID eq ${id}`],
+    ['$top', 1],
+  ]);
+
+  if (rows.length > 0) {
+    return rows[0];
+  }
+
+  throw new Error(`${entitySet} ${id} not found`);
 }
 
 async function fetchEntityById<T>(
@@ -1875,24 +1921,35 @@ async function fetchGuidEntitiesByIds<T>(
   return [] as T[];
 }
 
-export async function fetchStampboxes(accessToken: string, mode: StampboxFetchMode = 'default') {
+function buildStampboxModeFilter(mode: StampboxFetchMode) {
   const nowIso = new Date().toISOString();
   const year2000Iso = '2000-01-01T00:00:00Z';
   const now = new Date();
   const startOfTodayIso = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
   const validTodayClause = `(validFrom eq null or validFrom le ${nowIso}) and (validTo eq null or validTo ge ${nowIso})`;
-  const filter =
-    mode === 'validToday'
-      ? validTodayClause
-      : mode === 'all'
-        ? `(validTo eq null or validTo gt ${year2000Iso} or validTo lt ${year2000Iso})`
-        : mode === 'visited'
-          ? `(hasVisited eq true) and ${validTodayClause}`
-          : mode === 'open'
-            ? `((hasVisited eq false or hasVisited eq null) and ${validTodayClause})`
-            : mode === 'relocated'
-              ? `(validTo ne null and validTo lt ${startOfTodayIso})`
-        : undefined;
+  return mode === 'validToday'
+    ? validTodayClause
+    : mode === 'all'
+      ? `(validTo eq null or validTo gt ${year2000Iso} or validTo lt ${year2000Iso})`
+      : mode === 'visited'
+        ? `(hasVisited eq true) and ${validTodayClause}`
+        : mode === 'open'
+          ? `((hasVisited eq false or hasVisited eq null) and ${validTodayClause})`
+          : mode === 'relocated'
+            ? `(validTo ne null and validTo lt ${startOfTodayIso})`
+            : undefined;
+}
+
+function sortStampboxes(rows: Stampbox[]) {
+  return rows.slice().sort((left, right) => {
+    const leftKey = left.orderBy || left.number || '';
+    const rightKey = right.orderBy || right.number || '';
+    return leftKey.localeCompare(rightKey, undefined, { numeric: true });
+  });
+}
+
+export async function fetchStampboxes(accessToken: string, mode: StampboxFetchMode = 'default') {
+  const filter = buildStampboxModeFilter(mode);
 
   const rows = await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
     select: [
@@ -1918,11 +1975,7 @@ export async function fetchStampboxes(accessToken: string, mode: StampboxFetchMo
     ...(filter ? { filter } : {}),
   });
 
-  return rows.slice().sort((left, right) => {
-    const leftKey = left.orderBy || left.number || '';
-    const rightKey = right.orderBy || right.number || '';
-    return leftKey.localeCompare(rightKey, undefined, { numeric: true });
-  });
+  return sortStampboxes(rows);
 }
 
 export async function fetchMapData(
@@ -1967,6 +2020,103 @@ export async function fetchMapData(
       kind: 'parking' as const,
     })),
   } satisfies MapData;
+}
+
+export async function fetchPublicStampboxes(mode: StampboxFetchMode = 'default') {
+  const filter = buildStampboxModeFilter(mode);
+
+  const rows = await fetchPublicCollection<Stampbox>('Stampboxes', {
+    select: [
+      'ID',
+      'number',
+      'orderBy',
+      'name',
+      'description',
+      'heroImageUrl',
+      'image',
+      'imageCaption',
+      'validFrom',
+      'validTo',
+      'latitude',
+      'longitude',
+      'hasVisited',
+      'totalGroupStampings',
+      'stampedUsers',
+      'stampedUserIds',
+    ],
+    orderBy: 'orderBy asc',
+    top: 500,
+    ...(filter ? { filter } : {}),
+  });
+
+  return sortStampboxes(rows).map((stamp) => ({
+    ...stamp,
+    hasVisited: false,
+    totalGroupStampings: 0,
+    stampedUsers: [],
+    stampedUserIds: [],
+  }));
+}
+
+export async function fetchPublicMapData(
+  prefetchedStamps?: Stampbox[],
+  stampboxFetchMode: StampboxFetchMode = 'default'
+) {
+  const [stamps, parkingSpots] = await Promise.all([
+    prefetchedStamps ? Promise.resolve(prefetchedStamps) : fetchPublicStampboxes(stampboxFetchMode),
+    fetchPublicCollection<ParkingSpot>('ParkingSpots', {
+      select: ['ID', 'name', 'description', 'image', 'latitude', 'longitude'],
+      top: 500,
+    }),
+  ]);
+
+  return {
+    stamps: stamps.map((stamp) => ({
+      ...stamp,
+      hasVisited: false,
+      kind: 'open-stamp' as const,
+    })),
+    parkingSpots: parkingSpots.map((parkingSpot) => ({
+      ...parkingSpot,
+      kind: 'parking' as const,
+    })),
+  } satisfies MapData;
+}
+
+export async function fetchPublicStampDetail(stampId: string) {
+  const stamp = await fetchPublicEntityById<Stampbox>('Stampboxes', stampId, [
+    [
+      '$select',
+      'ID,number,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
+    ],
+  ]);
+
+  return {
+    stamp: {
+      ...stamp,
+      hasVisited: false,
+      totalGroupStampings: 0,
+      stampedUsers: [],
+      stampedUserIds: [],
+    },
+    nearbyStamps: [],
+    nearbyParking: [],
+    friendVisits: [],
+    myVisits: [],
+    myNote: null,
+  } satisfies StampDetailData;
+}
+
+export async function fetchPublicParkingDetail(parkingId: string) {
+  const parking = await fetchPublicEntityById<ParkingSpot>('ParkingSpots', parkingId, [
+    ['$select', 'ID,name,description,image,latitude,longitude'],
+  ]);
+
+  return {
+    parking,
+    nearbyStamps: [],
+    nearbyParking: [],
+  } satisfies ParkingDetailData;
 }
 
 function normalizeTourDetailResponse(rawValue: unknown) {

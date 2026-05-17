@@ -38,9 +38,23 @@ const mobileCorsOrigins = (process.env.MOBILE_CORS_ORIGINS || "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+function isAllowedLocalDevOrigin(origin) {
+  return true;
+  if (typeof origin !== "string") {
+    return false;
+  }
+
+  return /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(origin);
+}
+
 const mobileCors = cors({
   origin(origin, callback) {
-    if (!origin || mobileCorsOrigins.length === 0 || mobileCorsOrigins.includes(origin)) {
+    if (
+      !origin ||
+      mobileCorsOrigins.length === 0 ||
+      mobileCorsOrigins.includes(origin) ||
+      isAllowedLocalDevOrigin(origin)
+    ) {
       callback(null, true);
       return;
     }
@@ -256,6 +270,7 @@ cds.on("bootstrap", (app) => {
   app.use(auth(config));
   app.use("/odata/v4/api", mobileCors, bearerAuth);
   app.use("/odata/v2/api", mobileCors, bearerAuth);
+  app.use("/odata/v4/public", mobileCors);
 
   app.use("/app/frontendhwb", requiresAuth(), express.static(__dirname + "/../app/frontendhwb"));
   // RN web owns its Auth0 flow and calls CAP APIs with bearer tokens.
