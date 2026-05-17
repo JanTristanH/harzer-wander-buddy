@@ -100,15 +100,6 @@ type NearestCounterpart = {
   distanceKm: number;
 };
 
-type ClusterMarkerItem = {
-  id: string;
-  kind: 'cluster';
-  clusterKind: MarkerKind;
-  count: number;
-  coordinate: Coordinate;
-  members: MarkerItem[];
-};
-
 const HARZ_REGION: Region = {
   latitude: 51.7544,
   longitude: 10.6182,
@@ -116,9 +107,11 @@ const HARZ_REGION: Region = {
   longitudeDelta: 0.42,
 };
 
-const CLUSTER_MIN_LONGITUDE_DELTA = 0.16;
-const CLUSTER_EXPANDED_LONGITUDE_DELTA = 0.08;
 const PARKING_HIDE_LONGITUDE_DELTA = 0.18;
+const WEB_VIEWPORT_MARKER_PADDING_FACTOR = 0.45;
+const WEB_MARKER_DIAGNOSTIC_INTERVAL_MS = 4000;
+const WEB_MARKER_BUILD_WARN_MS = 14;
+const WEB_LONG_TASK_WARN_MS = 100;
 const MIN_ZOOM_DELTA = 0.0018;
 const MAX_ZOOM_DELTA = 1.2;
 const CAMERA_MIN_ZOOM = 2;
@@ -280,55 +273,19 @@ function createPointRegionAtVerticalRatio(
   };
 }
 
-function createClusterMarkers(items: StampMarkerItem[], region: Region, clusteringEnabled: boolean) {
-  const shouldCluster =
-    clusteringEnabled &&
-    region.longitudeDelta >= CLUSTER_MIN_LONGITUDE_DELTA &&
-    region.longitudeDelta > CLUSTER_EXPANDED_LONGITUDE_DELTA;
+function isCoordinateWithinRegion(
+  coordinate: Coordinate,
+  region: Region,
+  latitudePaddingFactor = 0,
+  longitudePaddingFactor = 0
+) {
+  const latitudeHalfSpan = region.latitudeDelta * (0.5 + latitudePaddingFactor);
+  const longitudeHalfSpan = region.longitudeDelta * (0.5 + longitudePaddingFactor);
 
-  if (!shouldCluster) {
-    return items;
-  }
-
-  const latitudeBucketSize = Math.max(region.latitudeDelta / 6, 0.015);
-  const longitudeBucketSize = Math.max(region.longitudeDelta / 6, 0.015);
-  const buckets = new Map<string, MarkerItem[]>();
-
-  for (const item of items) {
-    const latBucket = Math.floor(item.coordinate.latitude / latitudeBucketSize);
-    const lngBucket = Math.floor(item.coordinate.longitude / longitudeBucketSize);
-    const key = `${item.kind}:${latBucket}:${lngBucket}`;
-    const currentBucket = buckets.get(key);
-
-    if (currentBucket) {
-      currentBucket.push(item);
-    } else {
-      buckets.set(key, [item]);
-    }
-  }
-
-  return Array.from(buckets.entries()).map(([key, members]) => {
-    if (members.length === 1) {
-      return members[0];
-    }
-
-    const coordinate = members.reduce(
-      (accumulator, member) => ({
-        latitude: accumulator.latitude + member.coordinate.latitude / members.length,
-        longitude: accumulator.longitude + member.coordinate.longitude / members.length,
-      }),
-      { latitude: 0, longitude: 0 }
-    );
-
-    return {
-      id: `cluster:${key}`,
-      kind: 'cluster' as const,
-      clusterKind: members[0].kind,
-      count: members.length,
-      coordinate,
-      members,
-    };
-  });
+  return (
+    Math.abs(coordinate.latitude - region.latitude) <= latitudeHalfSpan &&
+    Math.abs(coordinate.longitude - region.longitude) <= longitudeHalfSpan
+  );
 }
 
 function haversineDistanceKm(from: Coordinate, to: Coordinate) {
@@ -399,6 +356,23 @@ function zoomRegion(region: Region, factor: number) {
 
 function normalizeSearchValue(value: string) {
   return value.trim().toLowerCase();
+}
+
+function getNowMs() {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now();
+  }
+
+  return Date.now();
+}
+
+function isLocalhostMapPerfEnabled() {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    return false;
+  }
+
+  const hostName = window.location.hostname;
+  return hostName === 'localhost' || hostName === '127.0.0.1';
 }
 
 function shouldSkipRemotePlaceSearch(normalizedQuery: string) {
@@ -549,7 +523,6 @@ export default function MapScreen() {
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('all');
   const [showStamps, setShowStamps] = useState(true);
   const [showParking, setShowParking] = useState(true);
-  const [clusteringEnabled] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
   const [isStamping, setIsStamping] = useState(false);
@@ -560,8 +533,25 @@ export default function MapScreen() {
   const [mapHeading, setMapHeading] = useState(0);
   const [nearestRouteMetrics, setNearestRouteMetrics] = useState<RouteMetrics | null>(null);
   const suppressSheetCompactUntilRef = useRef(0);
+  const stampMarkerVisualCacheRef = useRef<
+    Map<
+      string,
+      {
+        label: string;
+        image: ReturnType<typeof getPreGeneratedMapMarkerImageSource>;
+      }
+    >
+  >(new Map());
+  const parkingMarkerImageCacheRef = useRef<
+    ReturnType<typeof getPreGeneratedMapMarkerImageSource> | null | undefined
+  >(undefined);
+  const stampMarkerBuildDurationMsRef = useRef(0);
+  const parkingMarkerBuildDurationMsRef = useRef(0);
+  const longTaskCountRef = useRef(0);
+  const maxLongTaskDurationMsRef = useRef(0);
   const showStartupLoading = (isPending && !data) || isPlaceholderData;
   const isMapNorthUp = Math.abs(normalizeHeading(mapHeading)) <= NORTH_HEADING_EPSILON;
+  const localhostPerfEnabled = isLocalhostMapPerfEnabled();
 
   const updateMapRegion = useCallback((nextRegion: Region) => {
     regionRef.current = nextRegion;
@@ -660,6 +650,21 @@ export default function MapScreen() {
     });
   }, [showStamps, stampItems, visitFilter]);
 
+  const viewportStampItems = useMemo(() => {
+    if (Platform.OS !== 'web') {
+      return visibleStampItems;
+    }
+
+    return visibleStampItems.filter((item) =>
+      isCoordinateWithinRegion(
+        item.coordinate,
+        region,
+        WEB_VIEWPORT_MARKER_PADDING_FACTOR,
+        WEB_VIEWPORT_MARKER_PADDING_FACTOR
+      )
+    );
+  }, [region, visibleStampItems]);
+
   const visibleParkingItems = useMemo(() => {
     if (!showParking) {
       return [];
@@ -676,15 +681,255 @@ export default function MapScreen() {
     return parkingItems;
   }, [isParkingRevealPending, parkingItems, region.longitudeDelta, showParking]);
 
+  const viewportParkingItems = useMemo(() => {
+    if (Platform.OS !== 'web') {
+      return visibleParkingItems;
+    }
+
+    return visibleParkingItems.filter((item) =>
+      isCoordinateWithinRegion(
+        item.coordinate,
+        region,
+        WEB_VIEWPORT_MARKER_PADDING_FACTOR,
+        WEB_VIEWPORT_MARKER_PADDING_FACTOR
+      )
+    );
+  }, [region, visibleParkingItems]);
+
   const visibleItems = useMemo<MarkerItem[]>(
     () => [...visibleStampItems, ...visibleParkingItems],
     [visibleParkingItems, visibleStampItems]
   );
 
-  const renderedStampMarkers = useMemo(
-    () => createClusterMarkers(visibleStampItems, region, clusteringEnabled && Platform.OS !== 'web'),
-    [clusteringEnabled, region, visibleStampItems]
+  useEffect(() => {
+    stampMarkerVisualCacheRef.current.clear();
+  }, [stampItems]);
+
+  const getStampMarkerVisual = useCallback((stampItem: StampMarkerItem) => {
+    const cacheKey = `${stampItem.id}:${stampItem.kind}:${stampItem.number ?? '--'}`;
+    const cached = stampMarkerVisualCacheRef.current.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const label = normalizeStampMarkerToken(stampItem.number) || '--';
+    const image = getPreGeneratedMapMarkerImageSource({
+      kind: stampItem.kind,
+      label,
+    });
+    const nextEntry = { label, image };
+    stampMarkerVisualCacheRef.current.set(cacheKey, nextEntry);
+    return nextEntry;
+  }, []);
+
+  const handleMarkerPress = useCallback(
+    (item: MarkerItem) => {
+      lastMarkerPressAtRef.current = Date.now();
+      setSelectedExternalPlace(null);
+      const isSameSelectedItem = selectedItemId === item.id;
+      if (!isSameSelectedItem) {
+        setSelectionSheetMode('expanded');
+      }
+      setSelectedItemId(item.id);
+      const targetDelta = Math.min(regionRef.current.longitudeDelta, SELECTION_TARGET_DELTA);
+      const shouldDelayParkingReveal =
+        item.kind !== 'parking' &&
+        regionRef.current.longitudeDelta >= PARKING_HIDE_LONGITUDE_DELTA &&
+        targetDelta < PARKING_HIDE_LONGITUDE_DELTA;
+      setIsParkingRevealPending(shouldDelayParkingReveal);
+      suppressSelectionSheetCompactionForSelectionMove();
+      const nextRegion = createPointRegionAtVerticalRatio(
+        item.coordinate,
+        targetDelta,
+        SELECTION_TARGET_VERTICAL_RATIO
+      );
+      updateMapRegion(nextRegion);
+      mapRef.current?.animateToRegion(nextRegion, 260);
+    },
+    [selectedItemId, suppressSelectionSheetCompactionForSelectionMove, updateMapRegion]
   );
+
+  const stampMarkerElements = useMemo(() => {
+    const buildStartMs = getNowMs();
+    const elements = viewportStampItems.map((stampItem) => {
+      const colors = markerColors(stampItem.kind);
+      const visual = getStampMarkerVisual(stampItem);
+
+      if (!visual.image) {
+        return (
+          <Marker
+            anchor={MARKER_ANCHOR}
+            coordinate={stampItem.coordinate}
+            key={stampItem.id}
+            onPress={() => handleMarkerPress(stampItem)}
+            zIndex={markerZIndex(stampItem.kind)}>
+            <View collapsable={false} style={styles.pinMarker}>
+              <View
+                style={[
+                  styles.pinHead,
+                  styles.stampMarkerHead,
+                  { backgroundColor: colors.fill, shadowColor: colors.shadow },
+                ]}>
+                <Text style={[styles.stampMarkerText, { color: colors.text }]}>{visual.label}</Text>
+              </View>
+              <View style={styles.pinTipWrap}>
+                <View style={[styles.pinTip, { backgroundColor: colors.fill }]} />
+              </View>
+            </View>
+          </Marker>
+        );
+      }
+
+      return (
+        <Marker
+          anchor={MARKER_ANCHOR}
+          coordinate={stampItem.coordinate}
+          image={visual.image}
+          key={stampItem.id}
+          onPress={() => handleMarkerPress(stampItem)}
+          pinColor={undefined}
+          tracksViewChanges={false}
+          zIndex={markerZIndex(stampItem.kind)}
+        />
+      );
+    });
+
+    stampMarkerBuildDurationMsRef.current = getNowMs() - buildStartMs;
+    return elements;
+  }, [getStampMarkerVisual, handleMarkerPress, viewportStampItems]);
+
+  const parkingMarkerElements = useMemo(() => {
+    const buildStartMs = getNowMs();
+    if (parkingMarkerImageCacheRef.current === undefined) {
+      parkingMarkerImageCacheRef.current = getPreGeneratedMapMarkerImageSource({
+        kind: 'parking',
+        label: 'P',
+      });
+    }
+
+    const markerImage = parkingMarkerImageCacheRef.current;
+    const elements = viewportParkingItems.map((item) => {
+      const colors = markerColors(item.kind);
+
+      if (!markerImage) {
+        return (
+          <Marker
+            anchor={MARKER_ANCHOR}
+            coordinate={item.coordinate}
+            key={item.id}
+            onPress={() => handleMarkerPress(item)}
+            zIndex={markerZIndex(item.kind)}>
+            <View collapsable={false} style={styles.pinMarker}>
+              <View
+                style={[
+                  styles.pinHead,
+                  styles.parkingMarkerHead,
+                  { backgroundColor: colors.fill, shadowColor: colors.shadow },
+                ]}>
+                <Text style={[styles.parkingMarkerText, { color: colors.text }]}>P</Text>
+              </View>
+              <View style={styles.pinTipWrap}>
+                <View style={[styles.pinTip, styles.pinTipCompact, { backgroundColor: colors.fill }]} />
+              </View>
+            </View>
+          </Marker>
+        );
+      }
+
+      return (
+        <Marker
+          anchor={MARKER_ANCHOR}
+          coordinate={item.coordinate}
+          image={markerImage}
+          key={item.id}
+          onPress={() => handleMarkerPress(item)}
+          pinColor={undefined}
+          tracksViewChanges={false}
+          zIndex={markerZIndex(item.kind)}
+        />
+      );
+    });
+
+    parkingMarkerBuildDurationMsRef.current = getNowMs() - buildStartMs;
+    return elements;
+  }, [handleMarkerPress, viewportParkingItems]);
+
+  useEffect(() => {
+    if (!localhostPerfEnabled || typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        if (entry.entryType !== 'longtask') {
+          continue;
+        }
+
+        longTaskCountRef.current += 1;
+        maxLongTaskDurationMsRef.current = Math.max(maxLongTaskDurationMsRef.current, entry.duration);
+      }
+    });
+
+    try {
+      observer.observe({ entryTypes: ['longtask'] });
+    } catch {
+      observer.disconnect();
+      return undefined;
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [localhostPerfEnabled]);
+
+  useEffect(() => {
+    if (!localhostPerfEnabled || typeof window === 'undefined') {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      const performanceWithMemory = performance as Performance & {
+        memory?: { usedJSHeapSize?: number };
+      };
+      const heapUsedBytes = performanceWithMemory.memory?.usedJSHeapSize;
+      const heapUsedMb = typeof heapUsedBytes === 'number' ? (heapUsedBytes / (1024 * 1024)).toFixed(1) : 'n/a';
+      const queryCount = queryClient.getQueryCache().getAll().length;
+      const stampBuildMs = stampMarkerBuildDurationMsRef.current.toFixed(1);
+      const parkingBuildMs = parkingMarkerBuildDurationMsRef.current.toFixed(1);
+      const longTaskCount = longTaskCountRef.current;
+      const maxLongTaskMs = maxLongTaskDurationMsRef.current.toFixed(1);
+      const markerBuildSlow =
+        stampMarkerBuildDurationMsRef.current >= WEB_MARKER_BUILD_WARN_MS ||
+        parkingMarkerBuildDurationMsRef.current >= WEB_MARKER_BUILD_WARN_MS;
+      const longTaskSlow = maxLongTaskDurationMsRef.current >= WEB_LONG_TASK_WARN_MS;
+
+      console.debug(
+        `[map perf] heap=${heapUsedMb}MB stampsRendered=${viewportStampItems.length}/${visibleStampItems.length}/${stampItems.length} parkingRendered=${viewportParkingItems.length}/${visibleParkingItems.length}/${parkingItems.length} markerBuildMs(stamp=${stampBuildMs},parking=${parkingBuildMs}) longTasks(count=${longTaskCount},maxMs=${maxLongTaskMs}) queries=${queryCount}`
+      );
+
+      if (markerBuildSlow || longTaskSlow) {
+        console.warn(
+          `[map perf][warn] slow-frame markerBuildMs(stamp=${stampBuildMs},parking=${parkingBuildMs}) longTasks(count=${longTaskCount},maxMs=${maxLongTaskMs})`
+        );
+      }
+
+      longTaskCountRef.current = 0;
+      maxLongTaskDurationMsRef.current = 0;
+    }, WEB_MARKER_DIAGNOSTIC_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [
+    localhostPerfEnabled,
+    parkingItems.length,
+    queryClient,
+    stampItems.length,
+    viewportParkingItems.length,
+    viewportStampItems.length,
+    visibleParkingItems.length,
+    visibleStampItems.length,
+  ]);
 
   const selectedItem = useMemo(
     () => visibleItems.find((item) => item.id === selectedItemId) ?? null,
@@ -1087,41 +1332,6 @@ export default function MapScreen() {
       })();
     },
     [updateMapRegion]
-  );
-
-  const handleClusterPress = useCallback(
-    (cluster: ClusterMarkerItem) => {
-      lastMarkerPressAtRef.current = Date.now();
-      fitCoordinates(cluster.members.map((member) => member.coordinate));
-    },
-    [fitCoordinates]
-  );
-
-  const handleMarkerPress = useCallback(
-    (item: MarkerItem) => {
-      lastMarkerPressAtRef.current = Date.now();
-      setSelectedExternalPlace(null);
-      const isSameSelectedItem = selectedItemId === item.id;
-      if (!isSameSelectedItem) {
-        setSelectionSheetMode('expanded');
-      }
-      setSelectedItemId(item.id);
-      const targetDelta = Math.min(regionRef.current.longitudeDelta, SELECTION_TARGET_DELTA);
-      const shouldDelayParkingReveal =
-        item.kind !== 'parking' &&
-        regionRef.current.longitudeDelta >= PARKING_HIDE_LONGITUDE_DELTA &&
-        targetDelta < PARKING_HIDE_LONGITUDE_DELTA;
-      setIsParkingRevealPending(shouldDelayParkingReveal);
-      suppressSelectionSheetCompactionForSelectionMove();
-      const nextRegion = createPointRegionAtVerticalRatio(
-        item.coordinate,
-        targetDelta,
-        SELECTION_TARGET_VERTICAL_RATIO
-      );
-      updateMapRegion(nextRegion);
-      mapRef.current?.animateToRegion(nextRegion, 260);
-    },
-    [selectedItemId, suppressSelectionSheetCompactionForSelectionMove, updateMapRegion]
   );
 
   const handleLocateMePress = useCallback(() => {
@@ -1818,124 +2028,8 @@ export default function MapScreen() {
         showsMyLocationButton={false}
         style={StyleSheet.absoluteFill}
         toolbarEnabled={false}>
-        {renderedStampMarkers.map((item) => {
-          if (item.kind === 'cluster') {
-            const colors = markerColors(item.clusterKind);
-            return (
-              <Marker
-                anchor={MARKER_ANCHOR}
-                coordinate={item.coordinate}
-                key={item.id}
-                onPress={() => handleClusterPress(item)}
-                zIndex={markerZIndex(item.clusterKind)}>
-                <View collapsable={false} style={styles.pinMarker}>
-                  <View
-                    style={[
-                      styles.pinHead,
-                      styles.clusterMarkerHead,
-                      { backgroundColor: colors.fill, shadowColor: colors.shadow },
-                    ]}>
-                    <Text style={[styles.clusterMarkerText, { color: colors.text }]}>{item.count}</Text>
-                  </View>
-                  <View style={styles.pinTipWrap}>
-                    <View style={[styles.pinTip, { backgroundColor: colors.fill }]} />
-                  </View>
-                </View>
-              </Marker>
-            );
-          }
-
-          const stampItem = item as StampMarkerItem;
-          const colors = markerColors(stampItem.kind);
-          const markerLabel = normalizeStampMarkerToken(stampItem.number) || '--';
-          const markerImage = getPreGeneratedMapMarkerImageSource({
-            kind: stampItem.kind,
-            label: markerLabel,
-          });
-
-          if (!markerImage) {
-            return (
-              <Marker
-                anchor={MARKER_ANCHOR}
-                coordinate={stampItem.coordinate}
-                key={stampItem.id}
-                onPress={() => handleMarkerPress(stampItem)}
-                zIndex={markerZIndex(stampItem.kind)}>
-                <View collapsable={false} style={styles.pinMarker}>
-                  <View
-                    style={[
-                      styles.pinHead,
-                      styles.stampMarkerHead,
-                      { backgroundColor: colors.fill, shadowColor: colors.shadow },
-                    ]}>
-                    <Text style={[styles.stampMarkerText, { color: colors.text }]}>{markerLabel}</Text>
-                  </View>
-                  <View style={styles.pinTipWrap}>
-                    <View style={[styles.pinTip, { backgroundColor: colors.fill }]} />
-                  </View>
-                </View>
-              </Marker>
-            );
-          }
-
-          return (
-            <Marker
-              anchor={MARKER_ANCHOR}
-              coordinate={stampItem.coordinate}
-              image={markerImage}
-              key={stampItem.id}
-              onPress={() => handleMarkerPress(stampItem)}
-              pinColor={markerImage ? undefined : colors.fill}
-              tracksViewChanges={false}
-              zIndex={markerZIndex(stampItem.kind)}
-            />
-          );
-        })}
-        {visibleParkingItems.map((item) => {
-          const colors = markerColors(item.kind);
-          const markerImage = getPreGeneratedMapMarkerImageSource({
-            kind: item.kind,
-            label: 'P',
-          });
-
-          if (!markerImage) {
-            return (
-              <Marker
-                anchor={MARKER_ANCHOR}
-                coordinate={item.coordinate}
-                key={item.id}
-                onPress={() => handleMarkerPress(item)}
-                zIndex={markerZIndex(item.kind)}>
-                <View collapsable={false} style={styles.pinMarker}>
-                  <View
-                    style={[
-                      styles.pinHead,
-                      styles.parkingMarkerHead,
-                      { backgroundColor: colors.fill, shadowColor: colors.shadow },
-                    ]}>
-                    <Text style={[styles.parkingMarkerText, { color: colors.text }]}>P</Text>
-                  </View>
-                  <View style={styles.pinTipWrap}>
-                    <View style={[styles.pinTip, styles.pinTipCompact, { backgroundColor: colors.fill }]} />
-                  </View>
-                </View>
-              </Marker>
-            );
-          }
-
-          return (
-            <Marker
-              anchor={MARKER_ANCHOR}
-              coordinate={item.coordinate}
-              image={markerImage}
-              key={item.id}
-              onPress={() => handleMarkerPress(item)}
-              pinColor={markerImage ? undefined : colors.fill}
-              tracksViewChanges={false}
-              zIndex={markerZIndex(item.kind)}
-            />
-          );
-        })}
+        {stampMarkerElements}
+        {parkingMarkerElements}
         {selectedExternalPlace ? (
           <Marker
             anchor={MARKER_ANCHOR}
@@ -2477,17 +2571,6 @@ const styles = StyleSheet.create({
   parkingMarkerText: {
     fontSize: 12,
     lineHeight: 14,
-    fontWeight: '700',
-  },
-  clusterMarkerHead: {
-    minWidth: 42,
-    height: 42,
-    borderRadius: 21,
-    paddingHorizontal: 11,
-  },
-  clusterMarkerText: {
-    fontSize: 14,
-    lineHeight: 18,
     fontWeight: '700',
   },
   bottomSheet: {

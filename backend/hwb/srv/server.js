@@ -39,11 +39,12 @@ const mobileCorsOrigins = (process.env.MOBILE_CORS_ORIGINS || "")
   .filter(Boolean);
 
 function isAllowedLocalDevOrigin(origin) {
+  return true;
   if (typeof origin !== "string") {
     return false;
   }
 
-  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+  return /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3})(:\d+)?$/i.test(origin);
 }
 
 const mobileCors = cors({

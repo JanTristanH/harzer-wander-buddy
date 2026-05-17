@@ -103,6 +103,7 @@ const WEB_MARKER_SIZE = 48;
 const WEB_MARKER_SIZE_COMPACT = 24;
 const MIN_ZOOM = 2;
 const MAX_ZOOM = 19;
+const WEB_MAP_DIAGNOSTIC_INTERVAL_MS = 4000;
 const LEAFLET_STYLE_TAG_ID = 'hwb-leaflet-runtime-css';
 const LEAFLET_RUNTIME_CSS = `
 .leaflet-container {
@@ -199,6 +200,25 @@ const LEAFLET_RUNTIME_CSS = `
 `;
 
 const iconCache = new Map<string, L.Icon>();
+const webMapPerfDebugState = {
+  iconCacheHits: 0,
+  iconCacheMisses: 0,
+  markerRenders: 0,
+  markerMounts: 0,
+  markerUnmounts: 0,
+  mapMoveEvents: 0,
+  mapMoveEndEvents: 0,
+  maxMoveDurationMs: 0,
+};
+
+function isLocalhostMapPerfEnabled() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const hostName = window.location.hostname;
+  return hostName === 'localhost' || hostName === '127.0.0.1';
+}
 
 function ensureLeafletRuntimeCss() {
   if (typeof document === 'undefined') {
@@ -383,6 +403,9 @@ function createIcon(options: {
   }x${imageSize?.height ?? ''}`;
   const existing = iconCache.get(cacheKey);
   if (existing) {
+    if (isLocalhostMapPerfEnabled()) {
+      webMapPerfDebugState.iconCacheHits += 1;
+    }
     return existing;
   }
 
@@ -399,6 +422,9 @@ function createIcon(options: {
       });
 
   iconCache.set(cacheKey, icon);
+  if (isLocalhostMapPerfEnabled()) {
+    webMapPerfDebugState.iconCacheMisses += 1;
+  }
   return icon;
 }
 
@@ -408,6 +434,8 @@ function MapEventBridge(props: {
   onRegionChangeComplete?: MapViewProps['onRegionChangeComplete'];
 }) {
   const { onPress, onRegionChange, onRegionChangeComplete } = props;
+  const moveStartAtRef = useRef<number | null>(null);
+  const perfDebugEnabled = isLocalhostMapPerfEnabled();
 
   useMapEvents({
     click(event) {
@@ -418,6 +446,13 @@ function MapEventBridge(props: {
       });
     },
     move(event) {
+      if (perfDebugEnabled) {
+        webMapPerfDebugState.mapMoveEvents += 1;
+        if (moveStartAtRef.current === null) {
+          moveStartAtRef.current = performance.now();
+        }
+      }
+
       if (!onRegionChange) {
         return;
       }
@@ -425,6 +460,18 @@ function MapEventBridge(props: {
       onRegionChange(regionFromMap(event.target));
     },
     moveend(event) {
+      if (perfDebugEnabled) {
+        webMapPerfDebugState.mapMoveEndEvents += 1;
+        if (moveStartAtRef.current !== null) {
+          const durationMs = performance.now() - moveStartAtRef.current;
+          webMapPerfDebugState.maxMoveDurationMs = Math.max(
+            webMapPerfDebugState.maxMoveDurationMs,
+            durationMs
+          );
+          moveStartAtRef.current = null;
+        }
+      }
+
       if (!onRegionChangeComplete) {
         return;
       }
@@ -477,6 +524,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
     attribution: TILE_ATTRIBUTION,
     url: TILE_URL,
   });
+  const perfDebugEnabled = isLocalhostMapPerfEnabled();
 
   const effectiveRegion = initialRegion ?? DEFAULT_REGION;
   const centerTuple = useMemo(
@@ -516,6 +564,31 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
       window.removeEventListener('resize', resizeAndInvalidate);
     };
   }, [map]);
+
+  useEffect(() => {
+    if (!perfDebugEnabled || typeof window === 'undefined') {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      console.debug(
+        `[map perf][leaflet] iconCache(size=${iconCache.size},hits=${webMapPerfDebugState.iconCacheHits},misses=${webMapPerfDebugState.iconCacheMisses}) markers(renders=${webMapPerfDebugState.markerRenders},mounts=${webMapPerfDebugState.markerMounts},unmounts=${webMapPerfDebugState.markerUnmounts}) moves(count=${webMapPerfDebugState.mapMoveEvents},end=${webMapPerfDebugState.mapMoveEndEvents},maxMs=${webMapPerfDebugState.maxMoveDurationMs.toFixed(1)})`
+      );
+
+      webMapPerfDebugState.iconCacheHits = 0;
+      webMapPerfDebugState.iconCacheMisses = 0;
+      webMapPerfDebugState.markerRenders = 0;
+      webMapPerfDebugState.markerMounts = 0;
+      webMapPerfDebugState.markerUnmounts = 0;
+      webMapPerfDebugState.mapMoveEvents = 0;
+      webMapPerfDebugState.mapMoveEndEvents = 0;
+      webMapPerfDebugState.maxMoveDurationMs = 0;
+    }, WEB_MAP_DIAGNOSTIC_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [perfDebugEnabled]);
 
   useImperativeHandle(
     ref,
@@ -692,6 +765,18 @@ function Marker(props: InternalMarkerProps) {
     pinColor,
     zIndex,
   } = props;
+  const perfDebugEnabled = isLocalhostMapPerfEnabled();
+
+  useEffect(() => {
+    if (!perfDebugEnabled) {
+      return undefined;
+    }
+
+    webMapPerfDebugState.markerMounts += 1;
+    return () => {
+      webMapPerfDebugState.markerUnmounts += 1;
+    };
+  }, [perfDebugEnabled]);
 
   const imageSource = resolveImageSource(image);
   const imageUri = imageSource?.uri ?? null;
@@ -712,6 +797,10 @@ function Marker(props: InternalMarkerProps) {
     label: markerLabel,
     size: shouldUseCompactMarker ? WEB_MARKER_SIZE_COMPACT : WEB_MARKER_SIZE,
   });
+
+  if (perfDebugEnabled) {
+    webMapPerfDebugState.markerRenders += 1;
+  }
 
   return (
     <LeafletMarker

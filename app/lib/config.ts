@@ -23,6 +23,14 @@ function readConfig(key: keyof ExtraConfig, envValue?: string) {
   return typeof value === 'string' ? value : '';
 }
 
+function readBackendUrl(envValue?: string) {
+  if (Platform.OS === 'web') {
+    return typeof envValue === 'string' && envValue.length > 0 ? envValue : '';
+  }
+
+  return readConfig('backendUrl', envValue);
+}
+
 function resolveBackendUrlForPlatform(url: string) {
   if (Platform.OS !== 'android') {
     return url;
@@ -32,7 +40,7 @@ function resolveBackendUrlForPlatform(url: string) {
 }
 
 const backendUrl = resolveBackendUrlForPlatform(
-  readConfig('backendUrl', process.env.EXPO_PUBLIC_BACKEND_URL)
+  readBackendUrl(process.env.EXPO_PUBLIC_BACKEND_URL)
 );
 
 export const appConfig = {

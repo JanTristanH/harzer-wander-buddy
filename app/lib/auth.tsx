@@ -26,10 +26,7 @@ const ONBOARDING_STORAGE_KEY = 'hwb-auth-onboarding-complete';
 const WEB_AUTH_PENDING_KEY = 'hwb-auth-pending-web-request';
 const CURRENT_USER_PROFILE_QUERY_KEY_PREFIX = 'current-user-profile';
 const inMemoryStorage = new Map<string, string>();
-const AUTH_DEBUG_ENABLED =
-  typeof __DEV__ !== 'undefined' && __DEV__
-    ? true
-    : process.env.EXPO_PUBLIC_AUTH_DEBUG === 'true';
+const AUTH_DEBUG_ENABLED = false;
 
 type AuthState = {
   accessToken: string;
@@ -506,7 +503,9 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   const discoveryRef = useRef<AuthSession.DiscoveryDocument | null>(null);
   const discoveryPromiseRef = useRef<Promise<AuthSession.DiscoveryDocument | null> | null>(null);
 
-  const missingConfig = getMissingConfig().filter((key) => key !== 'auth0LogoutReturnPath');
+  const missingConfig = getMissingConfig().filter(
+    (key) => key !== 'auth0LogoutReturnPath' && !(Platform.OS === 'web' && key === 'backendUrl')
+  );
   const configError =
     missingConfig.length > 0 ? `Missing Expo config: ${missingConfig.join(', ')}` : null;
   const auth0ClientId = getAuth0ClientIdForPlatform();

@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Platform } from 'react-native';
 
 import {
   createTour,
@@ -44,6 +45,10 @@ type AuthClaims = {
   name?: string;
   picture?: string;
 };
+
+const MAP_AND_LIST_QUERY_GC_TIME = Platform.OS === 'web' ? 30 * 60 * 1000 : undefined;
+const DETAIL_QUERY_GC_TIME = Platform.OS === 'web' ? 15 * 60 * 1000 : undefined;
+const ROUTE_QUERY_GC_TIME = Platform.OS === 'web' ? 10 * 60 * 1000 : undefined;
 
 type StampsOverviewData = {
   stamps: Stampbox[];
@@ -355,6 +360,7 @@ export function useFilteredStampsOverviewQuery(
   return useQuery<StampsOverviewData>({
     queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
+    gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     queryFn: () =>
       authorizedRequest((token) => fetchStampsOverviewData(token, claims?.sub, stampboxFetchMode)),
   });
@@ -371,6 +377,7 @@ export function useGuestFilteredStampsOverviewQuery(
   return useQuery<StampsOverviewData>({
     queryKey: queryKeys.stampsOverviewByFilter(undefined, filter),
     enabled: options?.enabled ?? true,
+    gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     queryFn: () => fetchGuestStampsOverviewData(stampboxFetchMode),
   });
 }
@@ -386,6 +393,7 @@ export function useMapDataQuery(options?: {
   return useQuery<MapData>({
     queryKey: queryKeys.mapData(claims?.sub),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
+    gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     placeholderData: () => getCachedMapData(queryClient, claims?.sub),
     queryFn: () =>
       authorizedRequest((token) => {
@@ -416,6 +424,7 @@ export function useGuestMapDataQuery(options?: {
   return useQuery<MapData>({
     queryKey: queryKeys.mapData(undefined),
     enabled: options?.enabled ?? true,
+    gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     placeholderData: () => getCachedMapData(queryClient, undefined),
     queryFn: () => {
       const cachedStampsOverview =
@@ -495,6 +504,7 @@ export function useStampDetailQuery(stampId?: string) {
   return useQuery<StampDetailData>({
     queryKey: queryKeys.stampDetail(claims?.sub, stampId),
     enabled: Boolean(stampId && (isAuthenticated ? accessToken : true)),
+    gcTime: DETAIL_QUERY_GC_TIME,
     placeholderData: () => {
       if (!stampId) {
         return undefined;
@@ -530,6 +540,7 @@ export function useParkingDetailQuery(parkingId?: string) {
   return useQuery<ParkingDetailData>({
     queryKey: queryKeys.parkingDetail(claims?.sub, parkingId),
     enabled: Boolean(parkingId && (isAuthenticated ? accessToken : true)),
+    gcTime: DETAIL_QUERY_GC_TIME,
     placeholderData: () => {
       if (!parkingId) {
         return undefined;
@@ -564,6 +575,7 @@ export function useRouteToStampFromPositionQuery(
 
   return useQuery<RouteToStampFromPositionData>({
     queryKey: queryKeys.routeToStampFromPosition(claims?.sub, stampId, latitude, longitude),
+    gcTime: ROUTE_QUERY_GC_TIME,
     enabled:
       Boolean(accessToken && isAuthenticated && stampId) &&
       typeof latitude === 'number' &&
