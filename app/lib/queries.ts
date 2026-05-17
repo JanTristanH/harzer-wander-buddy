@@ -5,10 +5,12 @@ import {
   deleteTour,
   fetchAllPointsOfInterest,
   fetchParkingDetail,
+  fetchPublicParkingDetail,
   fetchFriendsOverview,
   fetchLatestVisitedStamp,
   fetchMapData,
   fetchPublicMapData,
+  fetchPublicStampDetail,
   fetchPublicStampboxes,
   fetchStampDetail,
   fetchRouteToStampFromPosition,
@@ -492,7 +494,7 @@ export function useStampDetailQuery(stampId?: string) {
 
   return useQuery<StampDetailData>({
     queryKey: queryKeys.stampDetail(claims?.sub, stampId),
-    enabled: Boolean(accessToken && isAuthenticated && stampId),
+    enabled: Boolean(stampId && (isAuthenticated ? accessToken : true)),
     placeholderData: () => {
       if (!stampId) {
         return undefined;
@@ -512,7 +514,10 @@ export function useStampDetailQuery(stampId?: string) {
         myNote: null,
       } satisfies StampDetailData;
     },
-    queryFn: () => authorizedRequest((token) => fetchStampDetail(token, stampId!, claims?.sub)),
+    queryFn: () =>
+      isAuthenticated
+        ? authorizedRequest((token) => fetchStampDetail(token, stampId!, claims?.sub))
+        : fetchPublicStampDetail(stampId!),
   });
 }
 
@@ -524,7 +529,7 @@ export function useParkingDetailQuery(parkingId?: string) {
 
   return useQuery<ParkingDetailData>({
     queryKey: queryKeys.parkingDetail(claims?.sub, parkingId),
-    enabled: Boolean(accessToken && isAuthenticated && parkingId),
+    enabled: Boolean(parkingId && (isAuthenticated ? accessToken : true)),
     placeholderData: () => {
       if (!parkingId) {
         return undefined;
@@ -541,7 +546,10 @@ export function useParkingDetailQuery(parkingId?: string) {
         nearbyParking: [],
       } satisfies ParkingDetailData;
     },
-    queryFn: () => authorizedRequest((token) => fetchParkingDetail(token, parkingId!)),
+    queryFn: () =>
+      isAuthenticated
+        ? authorizedRequest((token) => fetchParkingDetail(token, parkingId!))
+        : fetchPublicParkingDetail(parkingId!),
   });
 }
 

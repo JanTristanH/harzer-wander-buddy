@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 
+import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import {
   ProfileErrorState,
   ProfileLoadingState,
@@ -31,7 +32,7 @@ const emptyVisitedIllustration = require('@/assets/images/buddy/emptyNotebook.pn
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { currentUserProfile, isOffline, logoutEverywhere, resetApp } = useAuth();
+  const { currentUserProfile, isAuthenticated, isOffline, logoutEverywhere, resetApp } = useAuth();
   const { isAdmin } = useAdminAccess();
   const claims = useIdTokenClaims<ProfileClaims & { sub?: string }>();
   const matchingCurrentUserProfile =
@@ -238,6 +239,16 @@ export default function ProfileScreen() {
     testHapticStrength,
     updateHapticStrength,
   ]);
+
+  if (!isAuthenticated) {
+    return (
+      <SignInRequiredScreen
+        body="Melde dich an, um deinen Fortschritt, deine Besuche und deine Freunde zu sehen."
+        onSignIn={() => router.push('/login' as never)}
+        title="Profil ist mit Konto verfuegbar"
+      />
+    );
+  }
 
   if (isPending && !data) {
     return <ProfileLoadingState label="Profil wird geladen..." />;

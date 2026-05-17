@@ -798,6 +798,24 @@ async function fetchPublicCollection<T>(
   return payload.value ?? [];
 }
 
+async function fetchPublicEntityById<T>(
+  entitySet: string,
+  id: string,
+  query?: LegacyQueryEntry[]
+) {
+  const rows = await fetchPublicCollection<T>(entitySet, [
+    ...(query ?? []),
+    ['$filter', `ID eq ${id}`],
+    ['$top', 1],
+  ]);
+
+  if (rows.length > 0) {
+    return rows[0];
+  }
+
+  throw new Error(`${entitySet} ${id} not found`);
+}
+
 async function fetchEntityById<T>(
   accessToken: string,
   entitySet: string,
@@ -2063,6 +2081,42 @@ export async function fetchPublicMapData(
       kind: 'parking' as const,
     })),
   } satisfies MapData;
+}
+
+export async function fetchPublicStampDetail(stampId: string) {
+  const stamp = await fetchPublicEntityById<Stampbox>('Stampboxes', stampId, [
+    [
+      '$select',
+      'ID,number,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
+    ],
+  ]);
+
+  return {
+    stamp: {
+      ...stamp,
+      hasVisited: false,
+      totalGroupStampings: 0,
+      stampedUsers: [],
+      stampedUserIds: [],
+    },
+    nearbyStamps: [],
+    nearbyParking: [],
+    friendVisits: [],
+    myVisits: [],
+    myNote: null,
+  } satisfies StampDetailData;
+}
+
+export async function fetchPublicParkingDetail(parkingId: string) {
+  const parking = await fetchPublicEntityById<ParkingSpot>('ParkingSpots', parkingId, [
+    ['$select', 'ID,name,description,image,latitude,longitude'],
+  ]);
+
+  return {
+    parking,
+    nearbyStamps: [],
+    nearbyParking: [],
+  } satisfies ParkingDetailData;
 }
 
 function normalizeTourDetailResponse(rawValue: unknown) {

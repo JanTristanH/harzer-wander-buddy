@@ -686,9 +686,7 @@ export default function StampsScreen() {
                   item={item.stampItem.stamp}
                   metaLabel={formatDistance(item.stampItem.distanceKm)}
                   onPress={() =>
-                    router.push(
-                      (isAuthenticated ? `/stamps/${item.stampItem.stamp.ID}` : '/login') as never
-                    )
+                    router.push(`/stamps/${item.stampItem.stamp.ID}` as never)
                   }
                 />
               </View>

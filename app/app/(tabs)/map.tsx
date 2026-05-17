@@ -38,6 +38,7 @@ import {
   type VisitStamping,
 } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
+import { useRequireSignInAction } from '@/lib/auth-actions';
 import { useConnectivity } from '@/lib/connectivity';
 import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images.generated';
 import {
@@ -508,6 +509,7 @@ function rankSearchResult(item: MarkerItem, normalizedQuery: string): SearchResu
 
 export default function MapScreen() {
   const router = useRouter();
+  const requireSignIn = useRequireSignInAction();
   const queryClient = useQueryClient();
   const params = useLocalSearchParams<{
     stampId?: string | string[];
@@ -1134,7 +1136,16 @@ export default function MapScreen() {
   }, [updateMapRegion, userLocation]);
 
   const handleStampVisit = useCallback(async () => {
-    if (!accessToken || !selectedItem || selectedItem.kind === 'parking' || isStamping) {
+    if (!selectedItem || selectedItem.kind === 'parking' || isStamping) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      requireSignIn('Melde dich an, um Besuche an Stempelstellen zu speichern.');
+      return;
+    }
+
+    if (!accessToken) {
       return;
     }
 
@@ -1484,7 +1495,18 @@ export default function MapScreen() {
     } finally {
       setIsStamping(false);
     }
-  }, [accessToken, canPerformWrites, claims?.sub, data?.stamps, isStamping, logout, queryClient, selectedItem]);
+  }, [
+    accessToken,
+    canPerformWrites,
+    claims?.sub,
+    data?.stamps,
+    isAuthenticated,
+    isStamping,
+    logout,
+    queryClient,
+    requireSignIn,
+    selectedItem,
+  ]);
 
   const focusItemOnMap = useCallback((item: MarkerItem) => {
     if (searchBlurTimeoutRef.current) {
@@ -1665,8 +1687,12 @@ export default function MapScreen() {
       return 'Registriere Besuch...';
     }
 
+    if (!isAuthenticated) {
+      return 'Anmelden zum Stempeln';
+    }
+
     return selectedItem.kind === 'visited-stamp' ? 'Bereits gestempelt' : 'Besuch registrieren';
-  }, [isStamping, selectedItem]);
+  }, [isAuthenticated, isStamping, selectedItem]);
 
   const selectionPrimaryActionDisabled = useMemo(() => {
     if (!selectedItem) {
@@ -1677,8 +1703,12 @@ export default function MapScreen() {
       return false;
     }
 
-    return isStamping || selectedItem.kind === 'visited-stamp' || !accessToken || !canPerformWrites;
-  }, [accessToken, canPerformWrites, isStamping, selectedItem]);
+    return (
+      isStamping ||
+      selectedItem.kind === 'visited-stamp' ||
+      (isAuthenticated && (!accessToken || !canPerformWrites))
+    );
+  }, [accessToken, canPerformWrites, isAuthenticated, isStamping, selectedItem]);
 
   const selectionPrimaryActionPress = useMemo(() => {
     if (!selectedItem) {
@@ -2058,11 +2088,9 @@ export default function MapScreen() {
             primaryActionDisabled={selectionPrimaryActionDisabled}
             primaryActionLabel={selectionPrimaryActionLabel}
             onDetailsPress={() =>
-              isAuthenticated
-                ? selectedItem.kind === 'parking'
-                  ? router.push(`/parking/${selectedItem.parkingId}` as never)
-                  : router.push(`/stamps/${selectedItem.stampId}` as never)
-                : router.push('/login' as never)
+              selectedItem.kind === 'parking'
+                ? router.push(`/parking/${selectedItem.parkingId}` as never)
+                : router.push(`/stamps/${selectedItem.stampId}` as never)
             }
             onHeightChange={setSelectedSheetHeight}
             onToggleExpand={handleSelectionSheetToggleExpand}

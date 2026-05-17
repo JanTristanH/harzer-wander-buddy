@@ -1,7 +1,7 @@
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Redirect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
@@ -18,8 +18,10 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SkeletonBlock } from '@/components/skeleton';
+import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import type { Tour } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
+import { useRequireSignInAction } from '@/lib/auth-actions';
 import {
   isNetworkUnavailableError,
   OFFLINE_REFRESH_MESSAGE,
@@ -175,6 +177,7 @@ function TourCard({
 
 export default function ToursTabScreen() {
   const router = useRouter();
+  const requireSignIn = useRequireSignInAction();
   const insets = useSafeAreaInsets();
   const floatingActionBottom = getFloatingActionBottomOffset(insets.bottom);
   const { width: windowWidth } = useWindowDimensions();
@@ -297,6 +300,11 @@ export default function ToursTabScreen() {
   );
 
   const handleQuickstart = async (options?: { startInEditMode?: boolean }) => {
+    if (!isAuthenticated) {
+      requireSignIn('Melde dich an, um eigene Touren zu planen und zu speichern.');
+      return;
+    }
+
     try {
       requireOnlineForWrite(canPerformWrites);
       const created = await createTourMutation.mutateAsync({
@@ -322,6 +330,16 @@ export default function ToursTabScreen() {
       );
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <SignInRequiredScreen
+        body="Melde dich an, um Touren zu planen, zu speichern und deine eigenen Routen zu verwalten."
+        onSignIn={() => router.push('/login' as never)}
+        title="Touren sind mit Konto verfuegbar"
+      />
+    );
+  }
 
   if (isPending && !data) {
     return (
@@ -415,10 +433,6 @@ export default function ToursTabScreen() {
         </View>
       </SafeAreaView>
     );
-  }
-
-  if (!isAuthenticated) {
-    return <Redirect href={'/login' as never} />;
   }
 
   return (
