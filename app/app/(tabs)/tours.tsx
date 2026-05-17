@@ -1,7 +1,7 @@
 import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
@@ -178,7 +178,7 @@ export default function ToursTabScreen() {
   const insets = useSafeAreaInsets();
   const floatingActionBottom = getFloatingActionBottomOffset(insets.bottom);
   const { width: windowWidth } = useWindowDimensions();
-  const { canPerformWrites, isOffline } = useAuth();
+  const { canPerformWrites, isAuthenticated, isOffline } = useAuth();
   const claims = useIdTokenClaims<{ sub?: string }>();
   const currentUserId = claims?.sub;
   const normalizedCurrentUserId = useMemo(() => normalizeUserId(currentUserId), [currentUserId]);
@@ -415,6 +415,10 @@ export default function ToursTabScreen() {
         </View>
       </SafeAreaView>
     );
+  }
+
+  if (!isAuthenticated) {
+    return <Redirect href={'/login' as never} />;
   }
 
   return (

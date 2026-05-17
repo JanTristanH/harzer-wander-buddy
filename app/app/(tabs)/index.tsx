@@ -19,7 +19,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
-import { useFilteredStampsOverviewQuery } from '@/lib/queries';
+import { useAuth } from '@/lib/auth';
+import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
 
 type FilterKey = 'all' | 'visited' | 'open' | 'near' | 'relocated';
 type LocationState = 'idle' | 'loading' | 'granted' | 'denied';
@@ -106,6 +107,7 @@ function isRelocatedStamp(validTo?: string) {
 
 export default function StampsScreen() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [locationState, setLocationState] = useState<LocationState>('idle');
@@ -121,7 +123,13 @@ export default function StampsScreen() {
   const [previewIndex, setPreviewIndex] = useState(1);
   const backendFilter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated' =
     activeFilter === 'relocated' ? 'relocated' : 'validToday';
-  const { data, error, isFetching, isPending, refetch } = useFilteredStampsOverviewQuery(backendFilter);
+  const authenticatedQuery = useFilteredStampsOverviewQuery(backendFilter, {
+    enabled: isAuthenticated,
+  });
+  const guestQuery = useGuestFilteredStampsOverviewQuery(backendFilter, {
+    enabled: !isAuthenticated,
+  });
+  const { data, error, isFetching, isPending, refetch } = isAuthenticated ? authenticatedQuery : guestQuery;
   const listRef = React.useRef<FlatList<unknown> | null>(null);
   const hideFastScrollerTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const stamps = data?.stamps ?? [];
@@ -419,7 +427,7 @@ export default function StampsScreen() {
 
       <Pressable
         accessibilityRole="button"
-        onPress={() => router.push('/profile/timeline/self' as never)}
+        onPress={() => router.push((isAuthenticated ? '/profile/timeline/self' : '/login') as never)}
         style={({ pressed }) => [pressed && styles.progressCardPressed]}>
         <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.progressCard}>
           <Text style={styles.progressEyebrow}>Dein Fortschritt</Text>
@@ -677,7 +685,11 @@ export default function StampsScreen() {
                   index={item.stampIndex}
                   item={item.stampItem.stamp}
                   metaLabel={formatDistance(item.stampItem.distanceKm)}
-                  onPress={() => router.push(`/stamps/${item.stampItem.stamp.ID}` as never)}
+                  onPress={() =>
+                    router.push(
+                      (isAuthenticated ? `/stamps/${item.stampItem.stamp.ID}` : '/login') as never
+                    )
+                  }
                 />
               </View>
             );

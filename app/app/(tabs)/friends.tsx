@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -104,7 +104,7 @@ function EmptyState({
 export default function FriendsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { accessToken, canPerformWrites, isOffline, logout } = useAuth();
+  const { accessToken, canPerformWrites, isAuthenticated, isOffline, logout } = useAuth();
   const claims = useIdTokenClaims<{ sub?: string }>();
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<FriendFilter>('friends');
@@ -401,6 +401,10 @@ export default function FriendsScreen() {
       canPerformWrites,
     ]
   );
+
+  if (!isAuthenticated) {
+    return <Redirect href={'/login' as never} />;
+  }
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>

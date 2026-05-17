@@ -626,3 +626,37 @@ service api @(requires: 'authenticated-user') {
 //    };
 
 }
+
+service public {
+    @readonly
+    entity Stampboxes as
+        projection on db.Stampboxes {
+            ID,
+            number,
+            orderBy,
+            name,
+            description,
+            heroImageUrl,
+            image,
+            imageCaption,
+            validFrom,
+            validTo,
+            latitude,
+            longitude,
+            false as hasVisited         : Boolean,
+            0     as totalGroupStampings: Integer,
+            ''    as stampedUsers       : String,
+            ''    as stampedUserIds     : String
+        };
+
+    @readonly
+    entity ParkingSpots as
+        projection on db.ParkingSpots {
+            ID,
+            name,
+            description,
+            image,
+            latitude,
+            longitude
+        };
+}

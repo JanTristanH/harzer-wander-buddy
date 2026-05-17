@@ -8,6 +8,8 @@ import {
   fetchFriendsOverview,
   fetchLatestVisitedStamp,
   fetchMapData,
+  fetchPublicMapData,
+  fetchPublicStampboxes,
   fetchStampDetail,
   fetchRouteToStampFromPosition,
   fetchTourById,
@@ -64,6 +66,16 @@ export async function fetchStampsOverviewData(
   return {
     stamps,
     lastVisited,
+  };
+}
+
+export async function fetchGuestStampsOverviewData(
+  stampboxFetchMode: StampboxFetchMode = 'default'
+): Promise<StampsOverviewData> {
+  const stamps = await fetchPublicStampboxes(stampboxFetchMode);
+  return {
+    stamps,
+    lastVisited: null,
   };
 }
 
@@ -328,7 +340,10 @@ export function useAdminStampsOverviewQuery(filter: 'validToday' | 'all') {
 }
 
 export function useFilteredStampsOverviewQuery(
-  filter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated'
+  filter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated',
+  options?: {
+    enabled?: boolean;
+  }
 ) {
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
@@ -337,13 +352,30 @@ export function useFilteredStampsOverviewQuery(
 
   return useQuery<StampsOverviewData>({
     queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
     queryFn: () =>
       authorizedRequest((token) => fetchStampsOverviewData(token, claims?.sub, stampboxFetchMode)),
   });
 }
 
-export function useMapDataQuery() {
+export function useGuestFilteredStampsOverviewQuery(
+  filter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated',
+  options?: {
+    enabled?: boolean;
+  }
+) {
+  const stampboxFetchMode: StampboxFetchMode = filter;
+
+  return useQuery<StampsOverviewData>({
+    queryKey: queryKeys.stampsOverviewByFilter(undefined, filter),
+    enabled: options?.enabled ?? true,
+    queryFn: () => fetchGuestStampsOverviewData(stampboxFetchMode),
+  });
+}
+
+export function useMapDataQuery(options?: {
+  enabled?: boolean;
+}) {
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
@@ -351,7 +383,7 @@ export function useMapDataQuery() {
 
   return useQuery<MapData>({
     queryKey: queryKeys.mapData(claims?.sub),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
     placeholderData: () => getCachedMapData(queryClient, claims?.sub),
     queryFn: () =>
       authorizedRequest((token) => {
@@ -371,6 +403,30 @@ export function useMapDataQuery() {
           'validToday'
         );
       }),
+  });
+}
+
+export function useGuestMapDataQuery(options?: {
+  enabled?: boolean;
+}) {
+  const queryClient = useQueryClient();
+
+  return useQuery<MapData>({
+    queryKey: queryKeys.mapData(undefined),
+    enabled: options?.enabled ?? true,
+    placeholderData: () => getCachedMapData(queryClient, undefined),
+    queryFn: () => {
+      const cachedStampsOverview =
+        queryClient.getQueryData<StampsOverviewData>(
+          queryKeys.stampsOverviewByFilter(undefined, 'validToday')
+        ) ??
+        queryClient.getQueryData<StampsOverviewData>(queryKeys.stampsOverview(undefined));
+
+      return fetchPublicMapData(
+        cachedStampsOverview?.stamps,
+        'validToday'
+      );
+    },
   });
 }
 

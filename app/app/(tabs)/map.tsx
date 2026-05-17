@@ -46,7 +46,7 @@ import {
   requireOnlineForWrite,
 } from '@/lib/offline-write';
 import { replaceTimelineEntry, upsertTimelineEntry } from '@/lib/profile-timeline';
-import { queryKeys, useMapDataQuery } from '@/lib/queries';
+import { queryKeys, useGuestMapDataQuery, useMapDataQuery } from '@/lib/queries';
 import { getMapSheetBottomOffset } from '@/lib/tab-bar-layout';
 
 type VisitFilter = 'all' | 'visited' | 'open';
@@ -513,7 +513,7 @@ export default function MapScreen() {
     stampId?: string | string[];
     parkingId?: string | string[];
   }>();
-  const { accessToken, canPerformWrites, logout } = useAuth();
+  const { accessToken, canPerformWrites, isAuthenticated, logout } = useAuth();
   const { isOnline } = useConnectivity();
   const claims = useIdTokenClaims<AuthClaims>();
   const insets = useSafeAreaInsets();
@@ -529,7 +529,11 @@ export default function MapScreen() {
   const handledRequestedStampIdRef = useRef<string | null>(null);
   const handledRequestedParkingIdRef = useRef<string | null>(null);
   const searchBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { data, error, isFetching, isPending, isPlaceholderData } = useMapDataQuery();
+  const authenticatedMapQuery = useMapDataQuery({ enabled: isAuthenticated });
+  const guestMapQuery = useGuestMapDataQuery({ enabled: !isAuthenticated });
+  const { data, error, isFetching, isPending, isPlaceholderData } = isAuthenticated
+    ? authenticatedMapQuery
+    : guestMapQuery;
   const [region, setRegion] = useState<Region>(initialRegion);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [selectedExternalPlace, setSelectedExternalPlace] = useState<PlaceSearchResult | null>(null);
@@ -2054,9 +2058,11 @@ export default function MapScreen() {
             primaryActionDisabled={selectionPrimaryActionDisabled}
             primaryActionLabel={selectionPrimaryActionLabel}
             onDetailsPress={() =>
-              selectedItem.kind === 'parking'
-                ? router.push(`/parking/${selectedItem.parkingId}` as never)
-                : router.push(`/stamps/${selectedItem.stampId}` as never)
+              isAuthenticated
+                ? selectedItem.kind === 'parking'
+                  ? router.push(`/parking/${selectedItem.parkingId}` as never)
+                  : router.push(`/stamps/${selectedItem.stampId}` as never)
+                : router.push('/login' as never)
             }
             onHeightChange={setSelectedSheetHeight}
             onToggleExpand={handleSelectionSheetToggleExpand}
