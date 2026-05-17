@@ -931,6 +931,15 @@ function StampDetailContent() {
     }
   }
 
+  const handlePrimaryStampButtonPress = () => {
+    if (isGuest) {
+      router.push('/login' as never);
+      return;
+    }
+
+    void handleStampVisit();
+  };
+
   async function handleDeleteVisit(stampingId: string) {
     if (!accessToken || busyVisitId) {
       return;
@@ -2026,7 +2035,7 @@ function StampDetailContent() {
           </View>
           <Pressable
             disabled={isStamping || (!isGuest && !canPerformWrites)}
-            onPress={handleStampVisit}
+            onPress={handlePrimaryStampButtonPress}
             style={({ pressed }) => [
               styles.primaryButton,
               styles.primaryButtonWithIcon,

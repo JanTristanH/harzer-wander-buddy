@@ -1920,17 +1920,23 @@ export default function MapScreen() {
     );
   }, [accessToken, canPerformWrites, isAuthenticated, isStamping, selectedItem]);
 
-  const selectionPrimaryActionPress = useMemo(() => {
+  const selectionPrimaryActionPress = useCallback(() => {
     if (!selectedItem) {
-      return undefined;
+      return;
     }
 
     if (selectedItem.kind === 'parking') {
-      return handleStartSelectedParkingNavigation;
+      handleStartSelectedParkingNavigation();
+      return;
     }
 
-    return handleStampVisit;
-  }, [handleStampVisit, handleStartSelectedParkingNavigation, selectedItem]);
+    if (!isAuthenticated) {
+      router.push('/login' as never);
+      return;
+    }
+
+    void handleStampVisit();
+  }, [handleStampVisit, handleStartSelectedParkingNavigation, isAuthenticated, router, selectedItem]);
 
   const handleManualRefresh = useCallback(() => {
     if (!isOnline) {

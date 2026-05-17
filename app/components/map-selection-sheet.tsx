@@ -46,74 +46,77 @@ export function MapSelectionSheet({
   const handleSheetPress = isCompact ? onToggleExpand : onDetailsPress;
 
   return (
-    <Pressable
+    <View
       onLayout={(event: LayoutChangeEvent) => onHeightChange?.(event.nativeEvent.layout.height)}
-      onPress={handleSheetPress}
-      style={({ pressed }) => [
-        styles.bottomSheet,
-        { bottom: bottomOffset },
-        pressed && (isCompact || isInteractive) && styles.pressed,
-      ]}>
-      <View pointerEvents="none" style={[styles.detailRow, isCompact && styles.detailRowCompact]}>
-        {isCompact ? null : imageSource ? (
-          <Image cachePolicy="disk" contentFit="cover" source={imageSource} style={styles.detailArtwork} />
-        ) : (
-          <LinearGradient
-            colors={
-              item.kind === 'visited-stamp'
-                ? ['#4b875f', '#8fd2a4']
-                : item.kind === 'open-stamp'
-                  ? ['#ab8d7d', '#dbc6b7']
-                  : ['#2f7dd7', '#6cb1ff']
-            }
-            style={styles.detailArtwork}
-          />
-        )}
-        <View style={styles.detailCopy}>
-          <Text numberOfLines={1} style={styles.detailTitle}>
-            {item.title}
-          </Text>
-          {!isCompact && item.description?.trim() ? (
-            <Text numberOfLines={2} style={styles.detailDescription}>
-              {item.description}
+      style={[styles.bottomSheet, { bottom: bottomOffset }]}>
+      <Pressable
+        disabled={!handleSheetPress}
+        onPress={handleSheetPress}
+        style={({ pressed }) => [
+          styles.sheetBody,
+          pressed && (isCompact || isInteractive) && styles.pressed,
+        ]}>
+        <View pointerEvents="none" style={[styles.detailRow, isCompact && styles.detailRowCompact]}>
+          {isCompact ? null : imageSource ? (
+            <Image cachePolicy="disk" contentFit="cover" source={imageSource} style={styles.detailArtwork} />
+          ) : (
+            <LinearGradient
+              colors={
+                item.kind === 'visited-stamp'
+                  ? ['#4b875f', '#8fd2a4']
+                  : item.kind === 'open-stamp'
+                    ? ['#ab8d7d', '#dbc6b7']
+                    : ['#2f7dd7', '#6cb1ff']
+              }
+              style={styles.detailArtwork}
+            />
+          )}
+          <View style={styles.detailCopy}>
+            <Text numberOfLines={1} style={styles.detailTitle}>
+              {item.title}
             </Text>
-          ) : null}
-        </View>
+            {!isCompact && item.description?.trim() ? (
+              <Text numberOfLines={2} style={styles.detailDescription}>
+                {item.description}
+              </Text>
+            ) : null}
+          </View>
 
-        <View
-          style={[
-            styles.detailBadge,
-            item.kind === 'visited-stamp'
-              ? styles.detailBadgeVisited
-              : item.kind === 'open-stamp'
-                ? styles.detailBadgeOpen
-                : styles.detailBadgeParking,
-          ]}>
-          <Text
+          <View
             style={[
-              styles.detailBadgeText,
+              styles.detailBadge,
               item.kind === 'visited-stamp'
-                ? styles.detailBadgeTextVisited
+                ? styles.detailBadgeVisited
                 : item.kind === 'open-stamp'
-                  ? styles.detailBadgeTextOpen
-                  : styles.detailBadgeTextParking,
+                  ? styles.detailBadgeOpen
+                  : styles.detailBadgeParking,
             ]}>
-            {item.kind === 'visited-stamp'
-              ? 'Besucht'
-              : item.kind === 'open-stamp'
-                ? 'Unbesucht'
-                : 'Parkplatz'}
-          </Text>
+            <Text
+              style={[
+                styles.detailBadgeText,
+                item.kind === 'visited-stamp'
+                  ? styles.detailBadgeTextVisited
+                  : item.kind === 'open-stamp'
+                    ? styles.detailBadgeTextOpen
+                    : styles.detailBadgeTextParking,
+              ]}>
+              {item.kind === 'visited-stamp'
+                ? 'Besucht'
+                : item.kind === 'open-stamp'
+                  ? 'Unbesucht'
+                  : 'Parkplatz'}
+            </Text>
+          </View>
         </View>
-      </View>
 
-      {!isCompact && metadata?.trim() ? (
-        <View pointerEvents="none" style={styles.detailMetaRow}>
-          <Text numberOfLines={2} style={styles.detailMeta}>
-            {metadata}
-          </Text>
-        </View>
-      ) : null}
+        {!isCompact && metadata?.trim() ? (
+          <View pointerEvents="none" style={styles.detailMetaRow}>
+            <Text numberOfLines={2} style={styles.detailMeta}>
+              {metadata}
+            </Text>
+          </View>
+        ) : null}
+      </Pressable>
 
       {!isCompact && (primaryActionLabel || onDetailsPress) ? (
         <View style={styles.actionRow}>
@@ -138,7 +141,7 @@ export function MapSelectionSheet({
           ) : null}
         </View>
       ) : null}
-    </Pressable>
+    </View>
   );
 }
 
@@ -158,6 +161,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 24,
     elevation: 6,
+  },
+  sheetBody: {
+    gap: 10,
   },
   bottomSheetHandle: {
     width: 42,
