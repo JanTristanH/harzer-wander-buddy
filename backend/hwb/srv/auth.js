@@ -1,3 +1,4 @@
+const cds = require("@sap/cds");
 const { buildCapUserFromClaims } = require("./auth-utils");
 
 function sendODataError(res, statusCode, message) {
@@ -12,6 +13,7 @@ function sendODataError(res, statusCode, message) {
 function capAuth0(req, res, next) {
   const requestPath = `${req.originalUrl || ''} ${req.baseUrl || ''} ${req.path || ''} ${req.url || ''}`;
   if (requestPath.includes('/odata/v4/public')) {
+    req.user = cds.User.anonymous;
     return next();
   }
 

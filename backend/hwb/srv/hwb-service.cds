@@ -627,7 +627,7 @@ service api @(requires: 'authenticated-user') {
 
 }
 
-service public {
+service public @(requires: 'any') {
     @readonly
     entity Stampboxes as
         projection on db.Stampboxes {
