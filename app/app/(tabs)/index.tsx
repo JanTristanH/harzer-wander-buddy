@@ -46,8 +46,10 @@ const STAMP_LIST_START_INDEX = 2;
 const FAST_SCROLLER_HIDE_DELAY_MS = 850;
 const FAST_SCROLLER_THUMB_HEIGHT = 44;
 const FAST_SCROLLER_TRACK_HEIGHT = 580;
-const PROGRESS_FILL_DURATION_MS = 3000;
-const VISITED_COUNT_ROLL_OVER_DURATION_MS = 2800;
+const PROGRESS_FILL_DURATION_MS = 3900;
+const VISITED_COUNT_ROLL_OVER_DURATION_MS = 3900;
+const PROGRESS_FILL_EASING = Easing.out(Easing.poly(3.5));
+const VISITED_COUNT_ROLL_OVER_EASING = Easing.out(Easing.poly(3.5));
 const EMPTY_STAMPS: never[] = [];
 const emptySearchIllustration = require('@/assets/images/buddy/telescope.png');
 const emptyVisitedIllustration = require('@/assets/images/buddy/emptyNotebook.png');
@@ -459,7 +461,7 @@ export default function StampsScreen() {
         return;
       }
 
-      const nextCount = Math.max(0, Math.min(visitedCount, Math.round(value)));
+      const nextCount = Math.max(0, Math.min(visitedCount, Math.floor(value)));
       setAnimatedVisitedCount(nextCount);
     });
 
@@ -480,13 +482,13 @@ export default function StampsScreen() {
       Animated.timing(progressFillAnimation, {
         toValue: progressRatio,
         duration: PROGRESS_FILL_DURATION_MS,
-        easing: Easing.out(Easing.cubic),
+        easing: PROGRESS_FILL_EASING,
         useNativeDriver: false,
       }),
       Animated.timing(visitedCountAnimation, {
         toValue: visitedCount,
         duration: VISITED_COUNT_ROLL_OVER_DURATION_MS,
-        easing: Easing.out(Easing.cubic),
+        easing: VISITED_COUNT_ROLL_OVER_EASING,
         useNativeDriver: false,
       }),
     ]).start(({ finished }) => {
