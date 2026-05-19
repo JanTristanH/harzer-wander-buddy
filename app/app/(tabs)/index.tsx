@@ -5,6 +5,8 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Animated,
+  Easing,
   FlatList,
   PanResponder,
   Pressable,
@@ -17,8 +19,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CompletionConfetti, useCompletionConfetti } from '@/components/completion-confetti';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
+import type { Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
 
@@ -43,9 +47,30 @@ const STAMP_LIST_START_INDEX = 2;
 const FAST_SCROLLER_HIDE_DELAY_MS = 850;
 const FAST_SCROLLER_THUMB_HEIGHT = 44;
 const FAST_SCROLLER_TRACK_HEIGHT = 580;
+const PROGRESS_FILL_DURATION_MS = 3900;
+const VISITED_COUNT_ROLL_OVER_DURATION_MS = 3900;
+const PROGRESS_FILL_EASING = Easing.out(Easing.poly(3.5));
+const VISITED_COUNT_ROLL_OVER_EASING = Easing.out(Easing.poly(3.5));
+const COMPLETION_STAMP_COUNT = 222;
 const EMPTY_STAMPS: never[] = [];
 const emptySearchIllustration = require('@/assets/images/buddy/telescope.png');
 const emptyVisitedIllustration = require('@/assets/images/buddy/emptyNotebook.png');
+
+type StampWithDistance = {
+  stamp: Stampbox;
+  distanceKm: number | null;
+};
+
+type ListEntry =
+  | { type: 'intro'; key: 'intro' }
+  | { type: 'controls'; key: 'controls' }
+  | { type: 'empty'; key: 'empty' }
+  | {
+      type: 'stamp';
+      key: string;
+      stampIndex: number;
+      stampItem: StampWithDistance;
+    };
 
 function haversineDistanceKm(
   from: { latitude: number; longitude: number },
@@ -122,6 +147,14 @@ export default function StampsScreen() {
   const [isThumbDragging, setIsThumbDragging] = useState(false);
   const [thumbRatioOverride, setThumbRatioOverride] = useState<number | null>(null);
   const [previewIndex, setPreviewIndex] = useState(1);
+  const [progressTrackWidth, setProgressTrackWidth] = useState(0);
+  const [animatedVisitedCount, setAnimatedVisitedCount] = useState(0);
+  const [progressAnimationRunId, setProgressAnimationRunId] = useState(0);
+  const {
+    isVisible: isCompletionConfettiVisible,
+    play: playCompletionConfetti,
+    progress: completionConfettiProgress,
+  } = useCompletionConfetti();
   const backendFilter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated' =
     activeFilter === 'relocated' ? 'relocated' : 'validToday';
   const authenticatedQuery = useFilteredStampsOverviewQuery(backendFilter, {
@@ -131,7 +164,7 @@ export default function StampsScreen() {
     enabled: !isAuthenticated,
   });
   const { data, error, isFetching, isPending, refetch } = isAuthenticated ? authenticatedQuery : guestQuery;
-  const listRef = React.useRef<FlatList<unknown> | null>(null);
+  const listRef = React.useRef<FlatList<ListEntry> | null>(null);
   const hideFastScrollerTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const stamps = data?.stamps ?? EMPTY_STAMPS;
   const lastVisited = data?.lastVisited ?? null;
@@ -195,6 +228,15 @@ export default function StampsScreen() {
   const visitedCount = useMemo(() => stamps.filter((stamp) => stamp.hasVisited).length, [stamps]);
   const totalCount = stamps.length;
   const progressPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
+  const hasCompletedAllStamps =
+    visitedCount >= COMPLETION_STAMP_COUNT && totalCount >= COMPLETION_STAMP_COUNT;
+  const progressRatio = totalCount > 0 ? visitedCount / totalCount : 0;
+  const progressFillAnimation = React.useRef(new Animated.Value(0)).current;
+  const visitedCountAnimation = React.useRef(new Animated.Value(0)).current;
+  const animatedProgressWidth = progressFillAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, progressTrackWidth],
+  });
 
   const normalizedQuery = useMemo(() => query.trim().toLowerCase(), [query]);
   const filteredStamps = useMemo(
@@ -244,17 +286,6 @@ export default function StampsScreen() {
         : `Aktiviere deinen Standort, dann suchen wir im Umkreis von ${NEARBY_DISTANCE_KM} km.`
       : 'Probier eine andere Suche oder waehle einen anderen Filter.';
   const emptyStateIllustration = isVisitedEmptyState ? emptyVisitedIllustration : emptySearchIllustration;
-
-  type ListEntry =
-    | { type: 'intro'; key: 'intro' }
-    | { type: 'controls'; key: 'controls' }
-    | { type: 'empty'; key: 'empty' }
-    | {
-        type: 'stamp';
-        key: string;
-        stampIndex: number;
-        stampItem: (typeof filteredStamps)[number];
-      };
 
   const listItems = useMemo<ListEntry[]>(() => {
     const items: ListEntry[] = [{ type: 'intro', key: 'intro' }, { type: 'controls', key: 'controls' }];
@@ -432,6 +463,70 @@ export default function StampsScreen() {
     setThumbRatioOverride(null);
   }, [clearFastScrollerHideTimeout, hasScrollableList]);
 
+  useEffect(() => {
+    let isActive = true;
+    const listenerId = visitedCountAnimation.addListener(({ value }) => {
+      if (!isActive) {
+        return;
+      }
+
+      const nextCount = Math.max(0, Math.min(visitedCount, Math.floor(value)));
+      setAnimatedVisitedCount(nextCount);
+    });
+
+    progressFillAnimation.stopAnimation();
+    visitedCountAnimation.stopAnimation();
+    progressFillAnimation.setValue(0);
+    visitedCountAnimation.setValue(0);
+    setAnimatedVisitedCount(0);
+
+    if (totalCount === 0) {
+      return () => {
+        isActive = false;
+        visitedCountAnimation.removeListener(listenerId);
+      };
+    }
+
+    Animated.parallel([
+      Animated.timing(progressFillAnimation, {
+        toValue: progressRatio,
+        duration: PROGRESS_FILL_DURATION_MS,
+        easing: PROGRESS_FILL_EASING,
+        useNativeDriver: false,
+      }),
+      Animated.timing(visitedCountAnimation, {
+        toValue: visitedCount,
+        duration: VISITED_COUNT_ROLL_OVER_DURATION_MS,
+        easing: VISITED_COUNT_ROLL_OVER_EASING,
+        useNativeDriver: false,
+      }),
+    ]).start(({ finished }) => {
+      if (finished && isActive) {
+        setAnimatedVisitedCount(visitedCount);
+
+        if (hasCompletedAllStamps) {
+          playCompletionConfetti();
+        }
+      }
+    });
+
+    return () => {
+      isActive = false;
+      progressFillAnimation.stopAnimation();
+      visitedCountAnimation.stopAnimation();
+      visitedCountAnimation.removeListener(listenerId);
+    };
+  }, [
+    hasCompletedAllStamps,
+    playCompletionConfetti,
+    progressFillAnimation,
+    progressRatio,
+    progressAnimationRunId,
+    totalCount,
+    visitedCount,
+    visitedCountAnimation,
+  ]);
+
   const handleStampPress = useCallback(
     (stampId: string) => {
       router.push(`/stamps/${stampId}` as never);
@@ -453,11 +548,18 @@ export default function StampsScreen() {
         <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.progressCard}>
           <Text style={styles.progressEyebrow}>Dein Fortschritt</Text>
           <Text style={styles.progressTitle}>
-            {visitedCount} von {totalCount} Stempelstellen
+            {animatedVisitedCount} von {totalCount} Stempelstellen
           </Text>
           <View style={styles.progressRow}>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
+            <View
+              onLayout={(event) => {
+                const nextWidth = event.nativeEvent.layout.width;
+                setProgressTrackWidth((current) =>
+                  Math.abs(current - nextWidth) < 0.5 ? current : nextWidth
+                );
+              }}
+              style={styles.progressTrack}>
+              <Animated.View style={[styles.progressFill, { width: animatedProgressWidth }]} />
             </View>
             <Text style={styles.progressPercent}>{progressPercent}%</Text>
           </View>
@@ -475,10 +577,11 @@ export default function StampsScreen() {
     isAuthenticated,
     isRefreshing,
     lastVisited,
+    animatedProgressWidth,
+    animatedVisitedCount,
     progressPercent,
     router,
     totalCount,
-    visitedCount,
   ]);
 
   const renderControls = useCallback(() => (
@@ -622,6 +725,7 @@ export default function StampsScreen() {
       try {
         await refetch();
       } finally {
+        setProgressAnimationRunId((current) => current + 1);
         setIsPullRefreshing(false);
       }
     })();
@@ -813,6 +917,7 @@ export default function StampsScreen() {
             </View>
           </View>
         ) : null}
+        <CompletionConfetti visible={isCompletionConfettiVisible} progress={completionConfettiProgress} />
       </View>
     </SafeAreaView>
   );

@@ -11,6 +11,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   Animated,
+  Easing,
   FlatList,
   type GestureResponderEvent,
   type LayoutChangeEvent,
@@ -32,6 +33,7 @@ import {
 import Markdown from 'react-native-markdown-display';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AnimatedStamp, ANIMATED_STAMP_WIDTH } from '@/components/animated-stamp';
 import { LockedGuestRows } from '@/components/auth-locked-state';
 import { CurrentPositionDistanceSection } from '@/components/current-position-distance-section';
 import { DetailOverflowMenu } from '@/components/detail-overflow-menu';
@@ -61,6 +63,7 @@ import {
 } from '@/lib/offline-write';
 import {
   replaceTimelineEntry,
+  sortTimelineEntries,
   updateTimelineEntryTimestamp,
   upsertTimelineEntry,
 } from '@/lib/profile-timeline';
@@ -90,6 +93,23 @@ const CAROUSEL_PAN_THRESHOLD = 2;
 const WEB_CAROUSEL_MIN_HEIGHT = 320;
 const WEBSITE_BASE_URL = 'https://www.harzer-wander-buddy.de';
 const STAMP_NOTE_MAX_LENGTH = 500;
+const STAMP_BUTTON_PRESS_DEPTH = 5;
+
+const STAMP_ANIMATION_SPEED = 1.5;
+
+
+const STAMP_DROP_IN_MS = STAMP_ANIMATION_SPEED * 460;
+const STAMP_IMPACT_MS = STAMP_ANIMATION_SPEED * 120;
+const STAMP_BUTTON_PRESS_DELAY_MS = STAMP_ANIMATION_SPEED * 340;
+const STAMP_BUTTON_PRESS_MS = STAMP_ANIMATION_SPEED * 300;
+const STAMP_RELEASE_SETTLE_MS = STAMP_ANIMATION_SPEED * 160;
+const STAMP_PEEL_MS = STAMP_ANIMATION_SPEED * 180;
+const STAMP_EXIT_MS = STAMP_ANIMATION_SPEED * 420;
+const STAMP_BUTTON_RELEASE_HOLD_MS = STAMP_ANIMATION_SPEED * 70;
+const STAMP_BUTTON_RELEASE_MS = STAMP_ANIMATION_SPEED * 260;
+const STAMP_FADE_OUT_DELAY_MS = STAMP_ANIMATION_SPEED * 560;
+const STAMP_FADE_OUT_MS = STAMP_ANIMATION_SPEED * 120;
+
 const emptyNearbyStampsIllustration = require('@/assets/images/buddy/telescope.png');
 
 function formatDistance(distanceKm: number | null) {
@@ -322,6 +342,8 @@ function StampDetailContent() {
   const [carouselImageViewport, setCarouselImageViewport] = useState({ width: windowWidth, height: windowHeight });
   const [locationState, setLocationState] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [primaryButtonWidth, setPrimaryButtonWidth] = useState(0);
+  const [isPrimaryButtonTouchActive, setIsPrimaryButtonTouchActive] = useState(false);
   const carouselListRef = useRef<FlatList<CarouselImageItem> | null>(null);
   const lastCarouselTapRef = useRef<{ timestamp: number; imageId: string | null }>({
     timestamp: 0,
@@ -329,6 +351,13 @@ function StampDetailContent() {
   });
   const carouselImagePan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const carouselImagePanOffsetRef = useRef({ x: 0, y: 0 });
+  const stampButtonPress = useRef(new Animated.Value(0)).current;
+  const stampMotion = useRef(new Animated.Value(0)).current;
+  const stampLandingTranslateX = useRef(new Animated.Value(0)).current;
+  const stampOpacity = useRef(new Animated.Value(0)).current;
+  const hasStampAnimationStartedRef = useRef(false);
+  const stampPressStartedAtRef = useRef<number | null>(null);
+  const stampReleaseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pickerState, setPickerState] = useState<{
     visitId: string;
     value: Date;
@@ -548,6 +577,10 @@ function StampDetailContent() {
 
   async function refreshAfterVisitMutation() {
     await queryClient.invalidateQueries({
+      queryKey: queryKeys.stampDetail(claims?.sub, stampId),
+      exact: true,
+    });
+    await queryClient.invalidateQueries({
       queryKey: queryKeys.stampsOverview(claims?.sub),
       exact: true,
     });
@@ -558,6 +591,128 @@ function StampDetailContent() {
     await queryClient.invalidateQueries({
       queryKey: queryKeys.profileOverview(claims?.sub),
       exact: true,
+    });
+  }
+
+  function removeVisitFromCaches(stampingId: string) {
+    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId);
+    const mapDataKey = queryKeys.mapData(claims?.sub);
+    const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub);
+    const profileOverviewKey = queryKeys.profileOverview(claims?.sub);
+    const currentDetail = queryClient.getQueryData<StampDetailData>(stampDetailKey) ?? detail;
+    const remainingVisits = [...(currentDetail?.myVisits ?? [])]
+      .filter((visit) => visit.ID !== stampingId)
+      .sort(
+        (left, right) =>
+          new Date(getVisitTimestamp(right) || 0).getTime() -
+          new Date(getVisitTimestamp(left) || 0).getTime()
+      );
+    const hasRemainingVisits = remainingVisits.length > 0;
+    const nextVisitedAt = hasRemainingVisits ? getVisitTimestamp(remainingVisits[0]) : undefined;
+
+    setVisitDrafts((current) => {
+      const { [stampingId]: _removedVisitDraft, ...nextDrafts } = current;
+      return nextDrafts;
+    });
+
+    queryClient.setQueryData<StampDetailData>(stampDetailKey, (cachedDetail) => {
+      if (!cachedDetail) {
+        return cachedDetail;
+      }
+
+      return {
+        ...cachedDetail,
+        stamp: {
+          ...cachedDetail.stamp,
+          hasVisited: hasRemainingVisits,
+          visitedAt: nextVisitedAt,
+        },
+        myVisits: remainingVisits,
+      };
+    });
+
+    queryClient.setQueryData<MapData>(mapDataKey, (currentMapData) => {
+      if (!currentMapData || !stampId) {
+        return currentMapData;
+      }
+
+      return {
+        ...currentMapData,
+        stamps: currentMapData.stamps.map((stamp) =>
+          stamp.ID === stampId
+            ? {
+                ...stamp,
+                hasVisited: hasRemainingVisits,
+                visitedAt: nextVisitedAt,
+                kind: hasRemainingVisits ? ('visited-stamp' as const) : ('open-stamp' as const),
+              }
+            : stamp
+        ),
+      };
+    });
+
+    queryClient.setQueryData<StampsOverviewData>(stampsOverviewKey, (currentStampsOverview) => {
+      if (!currentStampsOverview || !stampId) {
+        return currentStampsOverview;
+      }
+
+      const deletedVisitWasLastVisited =
+        currentStampsOverview.lastVisited?.stampId === stampId &&
+        currentDetail?.myVisits.some((visit) => visit.ID === stampingId);
+
+      return {
+        ...currentStampsOverview,
+        stamps: currentStampsOverview.stamps.map((stamp) =>
+          stamp.ID === stampId
+            ? {
+                ...stamp,
+                hasVisited: hasRemainingVisits,
+              }
+            : stamp
+        ),
+        lastVisited:
+          deletedVisitWasLastVisited && !hasRemainingVisits
+            ? null
+            : currentStampsOverview.lastVisited,
+      };
+    });
+
+    queryClient.setQueryData<ProfileOverviewData>(profileOverviewKey, (currentProfileOverview) => {
+      if (!currentProfileOverview) {
+        return currentProfileOverview;
+      }
+
+      const stampBeforeUpdate = currentProfileOverview.stamps.find((stamp) => stamp.ID === stampId);
+      const wasVisited = Boolean(stampBeforeUpdate?.hasVisited);
+      const nextVisitedCount =
+        wasVisited && !hasRemainingVisits
+          ? Math.max(0, currentProfileOverview.visitedCount - 1)
+          : currentProfileOverview.visitedCount;
+      const nextOpenCount = Math.max(0, currentProfileOverview.totalCount - nextVisitedCount);
+      const nextCompletionPercent =
+        currentProfileOverview.totalCount > 0
+          ? Math.round((nextVisitedCount / currentProfileOverview.totalCount) * 100)
+          : 0;
+      const nextStampings = sortTimelineEntries(
+        getProfileTimelineEntries(currentProfileOverview).filter((visit) => visit.id !== stampingId)
+      );
+
+      return {
+        ...currentProfileOverview,
+        visitedCount: nextVisitedCount,
+        openCount: nextOpenCount,
+        completionPercent: nextCompletionPercent,
+        stamps: currentProfileOverview.stamps.map((stamp) =>
+          stamp.ID === stampId
+            ? {
+                ...stamp,
+                hasVisited: hasRemainingVisits,
+              }
+            : stamp
+        ),
+        stampings: nextStampings,
+        latestVisits: nextStampings.slice(0, 3),
+      };
     });
   }
 
@@ -940,6 +1095,124 @@ function StampDetailContent() {
     void handleStampVisit();
   };
 
+  function handlePrimaryButtonLayout(event: LayoutChangeEvent) {
+    setPrimaryButtonWidth(event.nativeEvent.layout.width);
+  }
+
+  function getPrimaryButtonLandingX(event: GestureResponderEvent) {
+    const buttonWidth = primaryButtonWidth || Math.max(1, windowWidth - 36);
+    const buttonLeftOnScreen = Math.max(0, (windowWidth - buttonWidth) / 2);
+
+    return event.nativeEvent.pageX - buttonLeftOnScreen;
+  }
+
+  function handlePrimaryButtonPressIn(event: GestureResponderEvent) {
+    if (isStamping || (!isGuest && !canPerformWrites)) {
+      return;
+    }
+
+    setIsPrimaryButtonTouchActive(true);
+    stampButtonPress.stopAnimation();
+    stampMotion.stopAnimation();
+    stampOpacity.stopAnimation();
+    hasStampAnimationStartedRef.current = true;
+    stampLandingTranslateX.setValue(getPrimaryButtonLandingX(event) - ANIMATED_STAMP_WIDTH / 2);
+    stampButtonPress.setValue(0);
+    stampMotion.setValue(0);
+    stampOpacity.setValue(1);
+
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(stampMotion, {
+          duration: STAMP_DROP_IN_MS,
+          easing: Easing.out(Easing.cubic),
+          toValue: 0.52,
+          useNativeDriver: true,
+        }),
+        Animated.timing(stampMotion, {
+          duration: STAMP_IMPACT_MS,
+          easing: Easing.in(Easing.quad),
+          toValue: 0.64,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.delay(STAMP_BUTTON_PRESS_DELAY_MS),
+        Animated.timing(stampButtonPress, {
+          duration: STAMP_BUTTON_PRESS_MS,
+          easing: Easing.out(Easing.quad),
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }
+
+  function handlePrimaryButtonPressOut() {
+    if (!hasStampAnimationStartedRef.current) {
+      return;
+    }
+
+    setIsPrimaryButtonTouchActive(false);
+    stampButtonPress.stopAnimation();
+    stampMotion.stopAnimation();
+    stampOpacity.stopAnimation();
+
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(stampMotion, {
+          duration: STAMP_RELEASE_SETTLE_MS,
+          easing: Easing.out(Easing.quad),
+          toValue: 0.64,
+          useNativeDriver: true,
+        }),
+        Animated.timing(stampMotion, {
+          duration: STAMP_PEEL_MS,
+          easing: Easing.out(Easing.sin),
+          toValue: 0.78,
+          useNativeDriver: true,
+        }),
+        Animated.timing(stampMotion, {
+          duration: STAMP_EXIT_MS,
+          easing: Easing.in(Easing.cubic),
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.timing(stampButtonPress, {
+          duration: STAMP_RELEASE_SETTLE_MS,
+          easing: Easing.out(Easing.quad),
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+        Animated.delay(STAMP_BUTTON_RELEASE_HOLD_MS),
+        Animated.timing(stampButtonPress, {
+          duration: STAMP_BUTTON_RELEASE_MS,
+          easing: Easing.out(Easing.back(1.2)),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.delay(STAMP_FADE_OUT_DELAY_MS),
+        Animated.timing(stampOpacity, {
+          duration: STAMP_FADE_OUT_MS,
+          easing: Easing.out(Easing.quad),
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(({ finished }) => {
+      if (!finished) {
+        return;
+      }
+
+      stampOpacity.setValue(0);
+      hasStampAnimationStartedRef.current = false;
+    });
+  }
+
   async function handleDeleteVisit(stampingId: string) {
     if (!accessToken || busyVisitId) {
       return;
@@ -949,6 +1222,7 @@ function StampDetailContent() {
       requireOnlineForWrite(canPerformWrites, 'Besuche koennen nur online geloescht werden.');
       setBusyVisitId(stampingId);
       await deleteStamping(accessToken, stampingId);
+      removeVisitFromCaches(stampingId);
       await refreshAfterVisitMutation();
     } catch (nextError) {
       if (isNetworkUnavailableError(nextError)) {
@@ -1577,6 +1851,60 @@ function StampDetailContent() {
     isImageCarouselVisible && activeCarouselItem?.kind === 'nearby';
   const bottomInset = Math.max(insets.bottom, 0);
   const isPullRefreshing = isFetching && !isPending;
+  const primaryButtonAnimatedStyle = {
+    transform: [
+      {
+        translateY: stampButtonPress.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, STAMP_BUTTON_PRESS_DEPTH],
+        }),
+      },
+      {
+        scale: stampButtonPress.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 0.985],
+        }),
+      },
+    ],
+  };
+  const stampActorStyle = {
+    opacity: stampOpacity,
+    transform: [
+      {
+        translateX: Animated.add(
+          stampMotion.interpolate({
+            inputRange: [0, 0.38, 0.58, 0.78, 1],
+            outputRange: [windowWidth * 0.82, 42, 0, -92, -windowWidth * 0.9],
+          }),
+          Animated.multiply(
+            stampLandingTranslateX,
+            stampMotion.interpolate({
+              inputRange: [0, 0.25, 0.38, 0.78, 0.95, 1],
+              outputRange: [0, 0.6, 1, 1, 0.35, 0],
+            })
+          )
+        ),
+      },
+      {
+        translateY: stampMotion.interpolate({
+          inputRange: [0, 0.38, 0.58, 0.78, 1],
+          outputRange: [-20, -46, 3, -20, -28],
+        }),
+      },
+      {
+        rotate: stampMotion.interpolate({
+          inputRange: [0, 0.38, 0.58, 0.78, 1],
+          outputRange: ['10deg', '-5deg', '-7deg', '-20deg', '-28deg'],
+        }),
+      },
+      {
+        scale: stampMotion.interpolate({
+          inputRange: [0, 0.38, 0.58, 0.78, 1],
+          outputRange: [0.92, 1.06, 1, 1.03, 0.96],
+        }),
+      },
+    ],
+  };
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
@@ -2033,26 +2361,39 @@ function StampDetailContent() {
               <Text style={styles.secondaryButtonLabel}>Auf Karte anzeigen</Text>
             </Pressable>
           </View>
-          <Pressable
-            disabled={isStamping || (!isGuest && !canPerformWrites)}
-            onPress={handlePrimaryStampButtonPress}
-            style={({ pressed }) => [
-              styles.primaryButton,
-              styles.primaryButtonWithIcon,
-              (isStamping || (!isGuest && !canPerformWrites)) && styles.primaryButtonDisabled,
-              pressed && !isStamping && (isGuest || canPerformWrites) && styles.primaryButtonPressed,
-            ]}>
-            <Feather color="#f5f3ee" name={visited ? 'refresh-cw' : 'check-circle'} size={16} />
-            <Text style={styles.primaryButtonLabel}>
-              {isGuest
-                ? 'Anmelden zum Stempeln'
-                : isStamping
-                ? 'Stemple...'
-                : visited
-                  ? 'Erneut stempeln'
-                  : 'Besuch stempeln'}
-            </Text>
-          </Pressable>
+          <View style={styles.primaryStampStage}>
+            <Animated.View
+              style={[
+                styles.primaryButtonShadow,
+                isPrimaryButtonTouchActive && styles.primaryButtonShadowPressed,
+                primaryButtonAnimatedStyle,
+              ]}>
+              <Pressable
+                disabled={isStamping || (!isGuest && !canPerformWrites)}
+                onLayout={handlePrimaryButtonLayout}
+                onPress={handlePrimaryStampButtonPress}
+                onPressIn={handlePrimaryButtonPressIn}
+                onPressOut={handlePrimaryButtonPressOut}
+                style={({ pressed }) => [
+                  styles.primaryButton,
+                  styles.primaryButtonWithIcon,
+                  (isStamping || (!isGuest && !canPerformWrites)) && styles.primaryButtonDisabled,
+                  pressed && !isStamping && (isGuest || canPerformWrites) && styles.primaryButtonPressed,
+                ]}>
+                <Feather color="#f5f3ee" name={visited ? 'refresh-cw' : 'check-circle'} size={16} />
+                <Text style={styles.primaryButtonLabel}>
+                  {isGuest
+                    ? 'Anmelden zum Stempeln'
+                    : isStamping
+                    ? 'Stemple...'
+                    : visited
+                      ? 'Erneut stempeln'
+                      : 'Besuch stempeln'}
+                </Text>
+              </Pressable>
+            </Animated.View>
+            <AnimatedStamp style={stampActorStyle} />
+          </View>
         </View>
       </View>
 
@@ -2661,9 +3002,11 @@ const styles = StyleSheet.create({
     left: 18,
     right: 18,
     bottom: 18,
+    overflow: 'visible',
   },
   bottomActions: {
     gap: 8,
+    overflow: 'visible',
   },
   secondaryButtonRow: {
     flexDirection: 'row',
@@ -2693,6 +3036,25 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     textAlign: 'center',
   },
+  primaryStampStage: {
+    position: 'relative',
+    overflow: 'visible',
+  },
+  primaryButtonShadow: {
+    borderRadius: 14,
+    backgroundColor: '#2e6b4b',
+    shadowColor: '#132217',
+    shadowOffset: { width: 0, height: 9 },
+    shadowOpacity: 0.28,
+    shadowRadius: 13,
+    elevation: 7,
+  },
+  primaryButtonShadowPressed: {
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 3,
+  },
   primaryButton: {
     height: 48,
     borderRadius: 14,
@@ -2710,6 +3072,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonPressed: {
     opacity: 0.92,
+    transform: [{ translateY: 2 }, { scale: 0.99 }],
   },
   primaryButtonLabel: {
     color: '#f5f3ee',

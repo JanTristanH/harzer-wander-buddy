@@ -576,6 +576,11 @@ async function updateTourByPOIList(req) {
   return handleTourByPOIList.call(this, req, { persist: true });
 }
 
+function getApiEntities(service) {
+  const entities = service.entities;
+  return typeof entities === "function" ? entities(service.name) : entities;
+}
+
 function isDriveTravelMode(travelMode) {
   const normalized = String(travelMode || "").trim().toLowerCase();
   return normalized.includes("drive");
@@ -586,8 +591,20 @@ async function handleTourByPOIList(req, options = { persist: true }) {
   let id = req.data.TourID;
   let poiList = req.data.POIList;
 
-  const { typedTravelTimes } = this.api.entities;
+  const { typedTravelTimes } = getApiEntities(this) || {};
   const { Stampboxes, ParkingSpots, TravelTimes, Tour2TravelTime, Tours, Stampings } = this.entities('hwb.db');
+  if (!typedTravelTimes) {
+    req.error(500, "Unable to resolve travel time view.");
+    return;
+  }
+  if (!id) {
+    req.error(400, "TourID is required.");
+    return;
+  }
+  if (!poiList) {
+    req.error(400, "POIList is required.");
+    return;
+  }
 
   const existingTour = await SELECT.one.from(Tours).where({ ID: id });
   if (!existingTour) {
@@ -602,7 +619,8 @@ async function handleTourByPOIList(req, options = { persist: true }) {
   let aPois = poiList.split(";").filter(p => !!p);
   aPois = removeAdjacentDuplicates(aPois);
   if (aPois.length < 2) {
-    throw new Error("At least 2 POIs are required to create a tour");
+    req.error(400, "At least 2 POIs are required to create a tour.");
+    return;
   }
   let aPoiPairs = [];
   let aParkingSpots = await SELECT.from(ParkingSpots);
@@ -829,7 +847,11 @@ async function getTourByIdListTravelTimes(req) {
     return {};
   }
   const { TravelTimes, Stampboxes, Stampings } = this.entities('hwb.db');
-  const { typedTravelTimes } = this.api.entities;
+  const { typedTravelTimes } = getApiEntities(this) || {};
+  if (!typedTravelTimes) {
+    req.error(500, "Unable to resolve travel time view.");
+    return;
+  }
 
   let aPathIds = id.split(";").filter(Boolean);
   aPathIds.unshift("xx");
@@ -923,7 +945,11 @@ async function calculateHikingRoute(req) {
   const db = this.entities('hwb.db');
   // req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
   console.log(req.data);
-  const { typedTravelTimes, Stampboxes, Stampings } = this.api.entities;
+  const { typedTravelTimes, Stampboxes, Stampings } = getApiEntities(this) || {};
+  if (!typedTravelTimes) {
+    req.error(500, "Unable to resolve travel time view.");
+    return;
+  }
   if (aTravelTimesGlobal.length == 0) {
     aTravelTimesGlobal = await SELECT
       .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')

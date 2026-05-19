@@ -118,6 +118,9 @@ export default function ProfileScreen() {
       },
       avatarColor: '#dde9df',
       avatarImage: profilePicture,
+      installAppBanner: {
+        visible: true,
+      },
       stats: [
         { label: 'Besucht', value: String(data.visitedCount) },
         { label: 'Abschluss', value: `${data.completionPercent}%` },

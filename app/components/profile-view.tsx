@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FriendsList } from '@/components/friends-list';
+import { InstallAppBanner } from '@/components/profile/install-app-banner';
 import { ProfileTimelineSummarySection } from '@/components/profile-timeline-summary-section';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
 import { useAuth } from '@/lib/auth';
@@ -80,6 +81,9 @@ export type ProfileViewModel = {
   headerAction?: HeaderAction;
   avatarColor?: string;
   avatarImage?: string;
+  installAppBanner?: {
+    visible: boolean;
+  };
   stats: {
     label: string;
     value: string;
@@ -586,6 +590,8 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
         scrollIndicatorInsets={{ bottom: 160 }}
         showsVerticalScrollIndicator={false}
         style={styles.scrollView}>
+        <InstallAppBanner visible={data.installAppBanner?.visible} />
+
         <View style={styles.headerRow}>
           {data.headerAction?.type === 'back' ? (
             <Pressable

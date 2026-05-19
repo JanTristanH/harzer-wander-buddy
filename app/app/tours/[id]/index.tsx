@@ -199,6 +199,32 @@ function formatDistanceKm(distanceKm: number) {
   return `${distanceKm.toFixed(1).replace('.', ',')} km`;
 }
 
+function getReadableHttpErrorMessage(error: HttpStatusError) {
+  const body = error.body.trim();
+  if (!body) {
+    return error.message;
+  }
+
+  try {
+    const parsed = JSON.parse(body) as {
+      error?: {
+        message?: string | { value?: string };
+      };
+    };
+    const message = parsed.error?.message;
+    if (typeof message === 'string') {
+      return message;
+    }
+    if (message?.value) {
+      return message.value;
+    }
+  } catch {
+    return error.message;
+  }
+
+  return error.message;
+}
+
 function buildGoogleMapsDirectionsUrl(locations: string[]) {
   if (locations.length === 0) {
     return null;
@@ -767,7 +793,7 @@ export default function TourDetailScreen() {
   const [livePathEntries, setLivePathEntries] = useState<TourPathEntry[]>([]);
   const [lastSaveErrorCode, setLastSaveErrorCode] = useState<403 | 404 | 422 | null>(null);
   const [blockingErrorCode, setBlockingErrorCode] = useState<403 | 404 | null>(null);
-  const [, setStatusMessage] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isViewOverflowOpen, setIsViewOverflowOpen] = useState(false);
@@ -1757,6 +1783,10 @@ export default function TourDetailScreen() {
             setStatusMessage('Route unvollstaendig berechenbar');
             return false;
           }
+
+          const message = getReadableHttpErrorMessage(nextError);
+          setStatusMessage(message || 'Speichern fehlgeschlagen');
+          return false;
         }
 
         setStatusMessage('Speichern fehlgeschlagen');
@@ -2326,6 +2356,9 @@ export default function TourDetailScreen() {
     if (saveStatus === 'saved') {
       return 'Alle Änderungen gespeichert!';
     }
+    if (saveStatus === 'error') {
+      return statusMessage || 'Speichern fehlgeschlagen';
+    }
     return null;
   })();
   const renderTourMap = (isFullscreen: boolean) => (
@@ -2805,6 +2838,14 @@ export default function TourDetailScreen() {
             <Text style={styles.warningBody}>
               Die Route kann mit dieser Reihenfolge nicht vollstaendig berechnet werden. Bitte Reihenfolge
               oder Punkte anpassen.
+            </Text>
+          </View>
+        ) : null}
+        {saveStatus === 'error' && !blockingErrorCode && lastSaveErrorCode !== 422 ? (
+          <View style={styles.warningBanner}>
+            <Text style={styles.warningTitle}>Speichern fehlgeschlagen</Text>
+            <Text style={styles.warningBody}>
+              {statusMessage || 'Die Tour konnte nicht gespeichert werden. Bitte spaeter erneut versuchen.'}
             </Text>
           </View>
         ) : null}
