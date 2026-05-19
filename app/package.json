@@ -1,7 +1,7 @@
 {
   "name": "harzer-wander-buddy-app",
   "main": "expo-router/entry",
-  "version": "1.4.3",
+  "version": "1.5.1",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
@@ -9,6 +9,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web --port 8081",
+    "build:preview:android:local": "EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de npx eas build --platform android --profile preview --local",
+    "update:preview:android": "EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de npx eas update --channel preview --platform android",
     "lint": "expo lint",
     "postinstall": "patch-package"
   },

@@ -65,7 +65,7 @@ Join our community of developers creating universal apps.
 `app.json` file contains the configuration.
 
 ```
-      "backendUrl": "http://localhost:4004", => change to remote url when deploying
+      "backendUrl": "https://app.harzer-wander-buddy.de",
       "auth0Domain": "dev-ijucl08spdudaszc.us.auth0.com",
       "auth0ClientId": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh", => legacy fallback
       "auth0ClientIdNative": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh", => needs to be a native app
@@ -73,6 +73,12 @@ Join our community of developers creating universal apps.
       "auth0Audience": "https://app.harzer-wander-buddy.de/api/v2/",
       "auth0Scope": "openid profile email offline_access",
       "auth0LogoutReturnPath": "auth/logout",
+```
+
+For local development against a local backend, start Expo with:
+
+```bash
+EXPO_PUBLIC_BACKEND_URL=http://localhost:4004 npx expo start
 ```
 
 ## Android Maps Config
@@ -102,7 +108,7 @@ For `eas build --local`, EAS cannot read variables with `secret` visibility. Exp
 ## Internal Distribution
 ```
 eas build --platform android --profile preview
-````
+```
 
 npx eas update --channel preview --platform android --message "Message"
 
