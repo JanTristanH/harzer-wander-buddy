@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CompletionConfetti, useCompletionConfetti } from '@/components/completion-confetti';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
 import type { Stampbox } from '@/lib/api';
@@ -50,6 +51,7 @@ const PROGRESS_FILL_DURATION_MS = 3900;
 const VISITED_COUNT_ROLL_OVER_DURATION_MS = 3900;
 const PROGRESS_FILL_EASING = Easing.out(Easing.poly(3.5));
 const VISITED_COUNT_ROLL_OVER_EASING = Easing.out(Easing.poly(3.5));
+const COMPLETION_STAMP_COUNT = 222;
 const EMPTY_STAMPS: never[] = [];
 const emptySearchIllustration = require('@/assets/images/buddy/telescope.png');
 const emptyVisitedIllustration = require('@/assets/images/buddy/emptyNotebook.png');
@@ -148,6 +150,11 @@ export default function StampsScreen() {
   const [progressTrackWidth, setProgressTrackWidth] = useState(0);
   const [animatedVisitedCount, setAnimatedVisitedCount] = useState(0);
   const [progressAnimationRunId, setProgressAnimationRunId] = useState(0);
+  const {
+    isVisible: isCompletionConfettiVisible,
+    play: playCompletionConfetti,
+    progress: completionConfettiProgress,
+  } = useCompletionConfetti();
   const backendFilter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated' =
     activeFilter === 'relocated' ? 'relocated' : 'validToday';
   const authenticatedQuery = useFilteredStampsOverviewQuery(backendFilter, {
@@ -221,6 +228,8 @@ export default function StampsScreen() {
   const visitedCount = useMemo(() => stamps.filter((stamp) => stamp.hasVisited).length, [stamps]);
   const totalCount = stamps.length;
   const progressPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
+  const hasCompletedAllStamps =
+    visitedCount >= COMPLETION_STAMP_COUNT && totalCount >= COMPLETION_STAMP_COUNT;
   const progressRatio = totalCount > 0 ? visitedCount / totalCount : 0;
   const progressFillAnimation = React.useRef(new Animated.Value(0)).current;
   const visitedCountAnimation = React.useRef(new Animated.Value(0)).current;
@@ -494,6 +503,10 @@ export default function StampsScreen() {
     ]).start(({ finished }) => {
       if (finished && isActive) {
         setAnimatedVisitedCount(visitedCount);
+
+        if (hasCompletedAllStamps) {
+          playCompletionConfetti();
+        }
       }
     });
 
@@ -504,6 +517,8 @@ export default function StampsScreen() {
       visitedCountAnimation.removeListener(listenerId);
     };
   }, [
+    hasCompletedAllStamps,
+    playCompletionConfetti,
     progressFillAnimation,
     progressRatio,
     progressAnimationRunId,
@@ -902,6 +917,7 @@ export default function StampsScreen() {
             </View>
           </View>
         ) : null}
+        <CompletionConfetti visible={isCompletionConfettiVisible} progress={completionConfettiProgress} />
       </View>
     </SafeAreaView>
   );
