@@ -1,8 +1,9 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { StampPressStage } from '@/components/stamp-press-stage';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 
@@ -17,6 +18,7 @@ export function MapSelectionSheet({
   primaryActionLabel,
   onPrimaryActionPress,
   primaryActionDisabled,
+  enablePrimaryStampAnimation,
   onDetailsPress,
   onToggleExpand,
   onHeightChange,
@@ -33,6 +35,7 @@ export function MapSelectionSheet({
   primaryActionLabel?: string;
   onPrimaryActionPress?: () => void;
   primaryActionDisabled?: boolean;
+  enablePrimaryStampAnimation?: boolean;
   onDetailsPress?: () => void;
   onToggleExpand?: () => void;
   onHeightChange?: (height: number) => void;
@@ -44,6 +47,7 @@ export function MapSelectionSheet({
     ? buildAuthenticatedImageSource(item.imageUrl, accessToken)
     : null;
   const handleSheetPress = isCompact ? onToggleExpand : onDetailsPress;
+  const isPrimaryStampAnimationEnabled = Boolean(enablePrimaryStampAnimation && !primaryActionDisabled);
 
   return (
     <View
@@ -121,16 +125,24 @@ export function MapSelectionSheet({
       {!isCompact && (primaryActionLabel || onDetailsPress) ? (
         <View style={styles.actionRow}>
           {primaryActionLabel ? (
-            <Pressable
-              disabled={primaryActionDisabled}
-              onPress={onPrimaryActionPress}
-              style={({ pressed }) => [
-                styles.primaryAction,
-                primaryActionDisabled && styles.primaryActionDisabled,
-                pressed && !primaryActionDisabled && styles.pressed,
-              ]}>
-              <Text style={styles.primaryActionLabel}>{primaryActionLabel}</Text>
-            </Pressable>
+            <StampPressStage enabled={isPrimaryStampAnimationEnabled} style={styles.primaryActionStage}>
+              {({ buttonAnimatedStyle, onPressIn, onPressOut }) => (
+                <Animated.View style={[styles.primaryActionAnimated, buttonAnimatedStyle]}>
+                  <Pressable
+                    disabled={primaryActionDisabled}
+                    onPress={onPrimaryActionPress}
+                    onPressIn={onPressIn}
+                    onPressOut={onPressOut}
+                    style={({ pressed }) => [
+                      styles.primaryAction,
+                      primaryActionDisabled && styles.primaryActionDisabled,
+                      pressed && !primaryActionDisabled && styles.pressed,
+                    ]}>
+                    <Text style={styles.primaryActionLabel}>{primaryActionLabel}</Text>
+                  </Pressable>
+                </Animated.View>
+              )}
+            </StampPressStage>
           ) : null}
           {onDetailsPress ? (
             <Pressable
@@ -241,6 +253,14 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     gap: 10,
+  },
+  primaryActionStage: {
+    flex: 1,
+    position: 'relative',
+    overflow: 'visible',
+  },
+  primaryActionAnimated: {
+    flex: 1,
   },
   primaryAction: {
     flex: 1,

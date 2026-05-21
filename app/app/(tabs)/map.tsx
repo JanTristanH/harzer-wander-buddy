@@ -68,6 +68,7 @@ type StampsOverviewData = {
   stamps: Stampbox[];
   lastVisited: LatestVisitedStamp | null;
 };
+type StampOverviewFilter = 'validToday' | 'all' | 'visited' | 'open' | 'relocated';
 
 type BaseMarkerItem = {
   id: string;
@@ -140,6 +141,12 @@ const VISIT_FILTERS: { key: VisitFilter; label: string }[] = [
   { key: 'all', label: 'Alle' },
   { key: 'visited', label: 'Besucht' },
   { key: 'open', label: 'Unbesucht' },
+];
+const STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT: StampOverviewFilter[] = [
+  'validToday',
+  'all',
+  'visited',
+  'open',
 ];
 
 function toFiniteCoordinateNumber(value?: number | string) {
@@ -344,6 +351,36 @@ function createOfflineRouteMetrics(distanceKm: number | null) {
     elevationGainMeters: null,
     elevationLossMeters: null,
   } satisfies RouteMetrics;
+}
+
+function markStampVisitedInStampsOverview(
+  currentStampsOverview: StampsOverviewData | undefined,
+  stampId: string,
+  lastVisited: LatestVisitedStamp,
+  filter?: StampOverviewFilter
+) {
+  if (!currentStampsOverview) {
+    return currentStampsOverview;
+  }
+
+  const nextStamps = currentStampsOverview.stamps
+    .map((stamp) => {
+      if (stamp.ID !== stampId) {
+        return stamp;
+      }
+
+      return {
+        ...stamp,
+        hasVisited: true,
+      };
+    })
+    .filter((stamp) => !(filter === 'open' && stamp.ID === stampId));
+
+  return {
+    ...currentStampsOverview,
+    stamps: nextStamps,
+    lastVisited,
+  };
 }
 
 function zoomRegion(region: Region, factor: number) {
@@ -700,6 +737,10 @@ export default function MapScreen() {
     () => [...visibleStampItems, ...visibleParkingItems],
     [visibleParkingItems, visibleStampItems]
   );
+  const allItems = useMemo<MarkerItem[]>(
+    () => [...stampItems, ...parkingItems],
+    [parkingItems, stampItems]
+  );
 
   useEffect(() => {
     stampMarkerVisualCacheRef.current.clear();
@@ -760,7 +801,7 @@ export default function MapScreen() {
           <Marker
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
-            key={stampItem.id}
+            key={`${stampItem.id}:${stampItem.kind}`}
             onPress={() => handleMarkerPress(stampItem)}
             zIndex={markerZIndex(stampItem.kind)}>
             <View collapsable={false} style={styles.pinMarker}>
@@ -785,7 +826,7 @@ export default function MapScreen() {
           anchor={MARKER_ANCHOR}
           coordinate={stampItem.coordinate}
           image={visual.image}
-          key={stampItem.id}
+          key={`${stampItem.id}:${stampItem.kind}`}
           onPress={() => handleMarkerPress(stampItem)}
           pinColor={undefined}
           tracksViewChanges={false}
@@ -932,8 +973,8 @@ export default function MapScreen() {
   ]);
 
   const selectedItem = useMemo(
-    () => visibleItems.find((item) => item.id === selectedItemId) ?? null,
-    [selectedItemId, visibleItems]
+    () => allItems.find((item) => item.id === selectedItemId) ?? null,
+    [allItems, selectedItemId]
   );
 
   useEffect(() => {
@@ -999,11 +1040,11 @@ export default function MapScreen() {
       return;
     }
 
-    const itemStillVisible = visibleItems.some((item) => item.id === selectedItemId);
-    if (!itemStillVisible) {
+    const itemStillExists = allItems.some((item) => item.id === selectedItemId);
+    if (!itemStillExists) {
       setSelectedItemId(null);
     }
-  }, [selectedItemId, visibleItems]);
+  }, [allItems, selectedItemId]);
 
   useEffect(() => {
     if (!selectedItem) {
@@ -1381,6 +1422,10 @@ export default function MapScreen() {
     };
     const mapDataKey = queryKeys.mapData(claims?.sub);
     const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub);
+    const filteredStampsOverviewKeys = STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT.map((filter) => ({
+      filter,
+      queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter),
+    }));
     const profileOverviewKey = queryKeys.profileOverview(claims?.sub);
     const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId);
     const optimisticLastVisited: LatestVisitedStamp = {
@@ -1398,12 +1443,17 @@ export default function MapScreen() {
       await Promise.all([
         queryClient.cancelQueries({ queryKey: mapDataKey }),
         queryClient.cancelQueries({ queryKey: stampsOverviewKey }),
+        ...filteredStampsOverviewKeys.map(({ queryKey }) => queryClient.cancelQueries({ queryKey })),
         queryClient.cancelQueries({ queryKey: profileOverviewKey }),
         queryClient.cancelQueries({ queryKey: stampDetailKey }),
       ]);
 
       const previousMapData = queryClient.getQueryData<MapData>(mapDataKey);
       const previousStampsOverview = queryClient.getQueryData<StampsOverviewData>(stampsOverviewKey);
+      const previousFilteredStampsOverviews = filteredStampsOverviewKeys.map(({ queryKey }) => ({
+        queryKey,
+        value: queryClient.getQueryData<StampsOverviewData>(queryKey),
+      }));
       const previousProfileOverview = queryClient.getQueryData<ProfileOverviewData>(profileOverviewKey);
       const previousStampDetail = queryClient.getQueryData<StampDetailData>(stampDetailKey);
 
@@ -1419,6 +1469,9 @@ export default function MapScreen() {
       rollbackOptimisticUpdates = () => {
         rollbackQueryData(mapDataKey, previousMapData);
         rollbackQueryData(stampsOverviewKey, previousStampsOverview);
+        previousFilteredStampsOverviews.forEach(({ queryKey, value }) => {
+          rollbackQueryData(queryKey, value);
+        });
         rollbackQueryData(profileOverviewKey, previousProfileOverview);
         rollbackQueryData(stampDetailKey, previousStampDetail);
       };
@@ -1454,32 +1507,12 @@ export default function MapScreen() {
       });
 
       queryClient.setQueryData<StampsOverviewData>(stampsOverviewKey, (currentStampsOverview) => {
-        if (!currentStampsOverview) {
-          return currentStampsOverview;
-        }
-
-        let hasUpdatedStamp = false;
-        const nextStamps = currentStampsOverview.stamps.map((stamp) => {
-          if (stamp.ID !== stampId) {
-            return stamp;
-          }
-
-          hasUpdatedStamp = true;
-          return {
-            ...stamp,
-            hasVisited: true,
-          };
+        return markStampVisitedInStampsOverview(currentStampsOverview, stampId, optimisticLastVisited);
+      });
+      filteredStampsOverviewKeys.forEach(({ filter, queryKey }) => {
+        queryClient.setQueryData<StampsOverviewData>(queryKey, (currentStampsOverview) => {
+          return markStampVisitedInStampsOverview(currentStampsOverview, stampId, optimisticLastVisited, filter);
         });
-
-        if (!hasUpdatedStamp) {
-          return currentStampsOverview;
-        }
-
-        return {
-          ...currentStampsOverview,
-          stamps: nextStamps,
-          lastVisited: optimisticLastVisited,
-        };
       });
 
       queryClient.setQueryData<ProfileOverviewData>(profileOverviewKey, (currentProfileOverview) => {
@@ -1610,6 +1643,11 @@ export default function MapScreen() {
           lastVisited: persistedLastVisited,
         };
       });
+      filteredStampsOverviewKeys.forEach(({ filter, queryKey }) => {
+        queryClient.setQueryData<StampsOverviewData>(queryKey, (currentStampsOverview) => {
+          return markStampVisitedInStampsOverview(currentStampsOverview, stampId, persistedLastVisited, filter);
+        });
+      });
 
       queryClient.setQueryData<ProfileOverviewData>(profileOverviewKey, (currentProfileOverview) => {
         if (!currentProfileOverview) {
@@ -1687,12 +1725,12 @@ export default function MapScreen() {
         .catch(() => undefined);
       setIsStampSuccessToastVisible(true);
     } catch (nextError) {
+      rollbackOptimisticUpdates();
       if (isNetworkUnavailableError(nextError)) {
         Alert.alert('Offline', nextError.message);
         return;
       }
 
-      rollbackOptimisticUpdates();
       if (nextError instanceof Error && nextError.name === 'UnauthorizedError') {
         await logout();
         return;
@@ -2187,6 +2225,7 @@ export default function MapScreen() {
             onPrimaryActionPress={selectionPrimaryActionPress}
             primaryActionDisabled={selectionPrimaryActionDisabled}
             primaryActionLabel={selectionPrimaryActionLabel}
+            enablePrimaryStampAnimation={isAuthenticated && selectedItem.kind === 'open-stamp'}
             onDetailsPress={() =>
               selectedItem.kind === 'parking'
                 ? router.push(`/parking/${selectedItem.parkingId}` as never)
