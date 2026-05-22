@@ -76,6 +76,7 @@ type StampsOverviewData = {
   stamps: Stampbox[];
   lastVisited: LatestVisitedStamp | null;
 };
+type StampOverviewFilter = 'validToday' | 'all' | 'visited' | 'open' | 'relocated';
 
 type CarouselImageItem = {
   id: string;
@@ -92,6 +93,13 @@ const CAROUSEL_PAN_THRESHOLD = 2;
 const WEB_CAROUSEL_MIN_HEIGHT = 320;
 const WEBSITE_BASE_URL = 'https://www.harzer-wander-buddy.de';
 const STAMP_NOTE_MAX_LENGTH = 500;
+const STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT: StampOverviewFilter[] = [
+  'validToday',
+  'all',
+  'visited',
+  'open',
+  'relocated',
+];
 
 const emptyNearbyStampsIllustration = require('@/assets/images/buddy/telescope.png');
 
@@ -550,28 +558,43 @@ function StampDetailContent() {
   }
 
   async function refreshAfterVisitMutation() {
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.stampDetail(claims?.sub, stampId),
-      exact: true,
-    });
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.stampsOverview(claims?.sub),
-      exact: true,
-    });
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.mapData(claims?.sub),
-      exact: true,
-    });
-    await queryClient.invalidateQueries({
-      queryKey: queryKeys.profileOverview(claims?.sub),
-      exact: true,
-    });
+    const filteredStampsOverviewKeys = STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT.map((filter) =>
+      queryKeys.stampsOverviewByFilter(claims?.sub, filter)
+    );
+
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stampDetail(claims?.sub, stampId),
+        exact: true,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stampsOverview(claims?.sub),
+        exact: true,
+      }),
+      ...filteredStampsOverviewKeys.map((queryKey) =>
+        queryClient.invalidateQueries({
+          queryKey,
+          exact: true,
+        })
+      ),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.mapData(claims?.sub),
+        exact: true,
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.profileOverview(claims?.sub),
+        exact: true,
+      }),
+    ]);
   }
 
   function removeVisitFromCaches(stampingId: string) {
     const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId);
     const mapDataKey = queryKeys.mapData(claims?.sub);
     const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub);
+    const filteredStampsOverviewKeys = STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT.map((filter) =>
+      queryKeys.stampsOverviewByFilter(claims?.sub, filter)
+    );
     const profileOverviewKey = queryKeys.profileOverview(claims?.sub);
     const currentDetail = queryClient.getQueryData<StampDetailData>(stampDetailKey) ?? detail;
     const remainingVisits = [...(currentDetail?.myVisits ?? [])]
@@ -649,6 +672,33 @@ function StampDetailContent() {
             ? null
             : currentStampsOverview.lastVisited,
       };
+    });
+    filteredStampsOverviewKeys.forEach((queryKey) => {
+      queryClient.setQueryData<StampsOverviewData>(queryKey, (currentStampsOverview) => {
+        if (!currentStampsOverview || !stampId) {
+          return currentStampsOverview;
+        }
+
+        const deletedVisitWasLastVisited =
+          currentStampsOverview.lastVisited?.stampId === stampId &&
+          currentDetail?.myVisits.some((visit) => visit.ID === stampingId);
+
+        return {
+          ...currentStampsOverview,
+          stamps: currentStampsOverview.stamps.map((stamp) =>
+            stamp.ID === stampId
+              ? {
+                  ...stamp,
+                  hasVisited: hasRemainingVisits,
+                }
+              : stamp
+          ),
+          lastVisited:
+            deletedVisitWasLastVisited && !hasRemainingVisits
+              ? null
+              : currentStampsOverview.lastVisited,
+        };
+      });
     });
 
     queryClient.setQueryData<ProfileOverviewData>(profileOverviewKey, (currentProfileOverview) => {

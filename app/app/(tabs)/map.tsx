@@ -564,7 +564,6 @@ export default function MapScreen() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [isStamping, setIsStamping] = useState(false);
   const [isStampSuccessToastVisible, setIsStampSuccessToastVisible] = useState(false);
-  const [isParkingRevealPending, setIsParkingRevealPending] = useState(false);
   const [selectedSheetHeight, setSelectedSheetHeight] = useState(0);
   const [selectionSheetMode, setSelectionSheetMode] = useState<SelectionSheetMode>('expanded');
   const [mapHeading, setMapHeading] = useState(0);
@@ -707,16 +706,12 @@ export default function MapScreen() {
       return [];
     }
 
-    if (isParkingRevealPending) {
-      return [];
-    }
-
     if (region.longitudeDelta >= PARKING_HIDE_LONGITUDE_DELTA) {
       return [];
     }
 
     return parkingItems;
-  }, [isParkingRevealPending, parkingItems, region.longitudeDelta, showParking]);
+  }, [parkingItems, region.longitudeDelta, showParking]);
 
   const viewportParkingItems = useMemo(() => {
     if (Platform.OS !== 'web') {
@@ -773,11 +768,6 @@ export default function MapScreen() {
       }
       setSelectedItemId(item.id);
       const targetDelta = Math.min(regionRef.current.longitudeDelta, SELECTION_TARGET_DELTA);
-      const shouldDelayParkingReveal =
-        item.kind !== 'parking' &&
-        regionRef.current.longitudeDelta >= PARKING_HIDE_LONGITUDE_DELTA &&
-        targetDelta < PARKING_HIDE_LONGITUDE_DELTA;
-      setIsParkingRevealPending(shouldDelayParkingReveal);
       suppressSelectionSheetCompactionForSelectionMove();
       const nextRegion = createPointRegionAtVerticalRatio(
         item.coordinate,
@@ -1770,12 +1760,6 @@ export default function MapScreen() {
     setSearchQuery('');
     setIsSearchFocused(false);
     searchInputRef.current?.blur();
-    const shouldDelayParkingReveal =
-      item.kind !== 'parking' &&
-      regionRef.current.longitudeDelta >= PARKING_HIDE_LONGITUDE_DELTA &&
-      SEARCH_TARGET_DELTA < PARKING_HIDE_LONGITUDE_DELTA;
-    setIsParkingRevealPending(shouldDelayParkingReveal);
-
     const nextRegion = {
       ...createPointRegionAtVerticalRatio(
         item.coordinate,
@@ -1800,7 +1784,6 @@ export default function MapScreen() {
     setIsSearchFocused(false);
     setSearchQuery(place.name);
     searchInputRef.current?.blur();
-    setIsParkingRevealPending(false);
     const nextRegion = createPointRegionAtVerticalRatio(
       { latitude: place.latitude, longitude: place.longitude },
       SEARCH_TARGET_DELTA,
@@ -1891,7 +1874,6 @@ export default function MapScreen() {
 
   const handleRegionChangeComplete = useCallback((nextRegion: Region) => {
     updateMapRegion(nextRegion);
-    setIsParkingRevealPending(false);
     void syncMapHeading();
   }, [syncMapHeading, updateMapRegion]);
 

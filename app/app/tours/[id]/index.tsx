@@ -25,6 +25,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import MapView, { Marker, Polyline, type MapViewRef, type Region } from '@/components/maps/map-primitives';
 import { SkeletonBlock } from '@/components/skeleton';
+import { StampingSuccessToast } from '@/components/stamping-success-toast';
 import {
   HttpStatusError,
   type PlaceSearchResult,
@@ -88,6 +89,7 @@ const WEBSITE_BASE_URL = 'https://www.harzer-wander-buddy.de';
 const DIGITS_ONLY_PATTERN = /^\d+$/;
 const STAMP_TOKEN_PATTERN = /\b(?:[A-Za-z]{1,3}\d{1,4}|\d{1,4}[A-Za-z]{1,3}|\d{1,4}|[A-Za-z]{1,3})\b/g;
 const STAMP_TOKEN_IGNORED = new Set(['P', 'POI']);
+const METRIC_VALUE_LINE_HEIGHT = 16;
 
 type Coordinate = {
   latitude: number;
@@ -185,6 +187,190 @@ function formatElevation(value: number | null) {
   }
 
   return `${Math.round(value)} m`;
+}
+
+type RollingMetricValueProps = {
+  value: string;
+  textStyle?: React.ComponentProps<typeof Text>['style'];
+};
+
+function RollingMetricValue({ value, textStyle }: RollingMetricValueProps) {
+  const [currentValue, setCurrentValue] = useState(value);
+  const [nextValue, setNextValue] = useState<string | null>(null);
+  const transitionProgress = useRef(new RNAnimated.Value(0)).current;
+  const isFirstRenderRef = useRef(true);
+  const transitionAnimationRef = useRef<RNAnimated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    return () => {
+      transitionAnimationRef.current?.stop();
+      transitionProgress.stopAnimation();
+    };
+  }, [transitionProgress]);
+
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      setCurrentValue(value);
+      return;
+    }
+
+    if (value === currentValue) {
+      return;
+    }
+
+    transitionAnimationRef.current?.stop();
+    transitionProgress.stopAnimation();
+    transitionProgress.setValue(0);
+    setNextValue(value);
+
+    const animation = RNAnimated.timing(transitionProgress, {
+      toValue: 1,
+      duration: 240,
+      easing: RNEasing.out(RNEasing.cubic),
+      useNativeDriver: true,
+    });
+    transitionAnimationRef.current = animation;
+    animation.start(({ finished }) => {
+      if (!finished) {
+        return;
+      }
+
+      setCurrentValue(value);
+      setNextValue(null);
+      transitionProgress.setValue(0);
+    });
+  }, [currentValue, transitionProgress, value]);
+
+  if (nextValue === null) {
+    return (
+      <View style={styles.metricInlineRollContainer}>
+        <Text style={[styles.cardLine, styles.metricValueText, textStyle]}>{currentValue}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.metricInlineRollContainer}>
+      <RNAnimated.View
+        style={{
+          transform: [
+            {
+              translateY: transitionProgress.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, -METRIC_VALUE_LINE_HEIGHT],
+              }),
+            },
+          ],
+        }}>
+        <Text style={[styles.cardLine, styles.metricValueText, textStyle]}>{currentValue}</Text>
+        <Text style={[styles.cardLine, styles.metricValueText, textStyle]}>{nextValue}</Text>
+      </RNAnimated.View>
+    </View>
+  );
+}
+
+type PopMetricValueProps = {
+  value: string;
+  numericValue: number | null;
+  textStyle?: React.ComponentProps<typeof Text>['style'];
+};
+
+function PopMetricValue({ value, numericValue, textStyle }: PopMetricValueProps) {
+  const [displayValue, setDisplayValue] = useState(value);
+  const popScale = useRef(new RNAnimated.Value(1)).current;
+  const popTranslateY = useRef(new RNAnimated.Value(0)).current;
+  const isFirstRenderRef = useRef(true);
+  const previousNumericValueRef = useRef<number | null>(numericValue);
+  const popAnimationRef = useRef<RNAnimated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    return () => {
+      popAnimationRef.current?.stop();
+      popScale.stopAnimation();
+      popTranslateY.stopAnimation();
+    };
+  }, [popScale, popTranslateY]);
+
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      setDisplayValue(value);
+      previousNumericValueRef.current = numericValue;
+      return;
+    }
+
+    if (value === displayValue) {
+      previousNumericValueRef.current = numericValue;
+      return;
+    }
+
+    const previousNumericValue = previousNumericValueRef.current;
+    const isGrowingValue =
+      typeof previousNumericValue === 'number' &&
+      Number.isFinite(previousNumericValue) &&
+      typeof numericValue === 'number' &&
+      Number.isFinite(numericValue) &&
+      numericValue > previousNumericValue;
+
+    previousNumericValueRef.current = numericValue;
+    setDisplayValue(value);
+
+    popAnimationRef.current?.stop();
+    popScale.stopAnimation();
+    popTranslateY.stopAnimation();
+
+    popScale.setValue(isGrowingValue ? 0.82 : 0.9);
+    popTranslateY.setValue(4);
+
+    const animation = RNAnimated.sequence([
+      RNAnimated.parallel([
+        RNAnimated.timing(popScale, {
+          toValue: isGrowingValue ? 1.18 : 1.08,
+          duration: 130,
+          easing: RNEasing.out(RNEasing.cubic),
+          useNativeDriver: true,
+        }),
+        RNAnimated.timing(popTranslateY, {
+          toValue: -2,
+          duration: 130,
+          easing: RNEasing.out(RNEasing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+      RNAnimated.parallel([
+        RNAnimated.spring(popScale, {
+          toValue: 1,
+          speed: 20,
+          bounciness: 9,
+          useNativeDriver: true,
+        }),
+        RNAnimated.spring(popTranslateY, {
+          toValue: 0,
+          speed: 20,
+          bounciness: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]);
+
+    popAnimationRef.current = animation;
+    animation.start();
+  }, [displayValue, numericValue, popScale, popTranslateY, value]);
+
+  return (
+    <RNAnimated.Text
+      style={[
+        styles.cardLine,
+        styles.metricValueText,
+        textStyle,
+        {
+          transform: [{ scale: popScale }, { translateY: popTranslateY }],
+        },
+      ]}>
+      {displayValue}
+    </RNAnimated.Text>
+  );
 }
 
 function formatDistanceKm(distanceKm: number) {
@@ -796,6 +982,7 @@ export default function TourDetailScreen() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [isMapFullscreen, setIsMapFullscreen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaveSuccessToastVisible, setIsSaveSuccessToastVisible] = useState(false);
   const [isViewOverflowOpen, setIsViewOverflowOpen] = useState(false);
   const [isRemoveVisitDialogOpen, setIsRemoveVisitDialogOpen] = useState(false);
   const [tourNameDraft, setTourNameDraft] = useState('');
@@ -818,6 +1005,8 @@ export default function TourDetailScreen() {
   const poiAddedFeedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const poiAddedFeedbackProgress = useRef(new RNAnimated.Value(1)).current;
   const tourMetricsGlowProgress = useRef(new RNAnimated.Value(0)).current;
+  const saveToastResetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previousSaveStatusRef = useRef<SaveStatus>('idle');
   const fullscreenProgress = useSharedValue(0);
   const addPoiButtonScale = useSharedValue(1);
   const fullscreenAnimatedStyle = useAnimatedStyle(() => ({
@@ -866,6 +1055,7 @@ export default function TourDetailScreen() {
     setLastSaveErrorCode(null);
     setStatusMessage(null);
     setSaveStatus('idle');
+    setIsSaveSuccessToastVisible(false);
     setIsEditMode(false);
     setSelectedExternalPlace(null);
     setRemoteSearchResults([]);
@@ -886,6 +1076,10 @@ export default function TourDetailScreen() {
     if (poiAddedFeedbackTimeoutRef.current) {
       clearTimeout(poiAddedFeedbackTimeoutRef.current);
       poiAddedFeedbackTimeoutRef.current = null;
+    }
+    if (saveToastResetTimeoutRef.current) {
+      clearTimeout(saveToastResetTimeoutRef.current);
+      saveToastResetTimeoutRef.current = null;
     }
     if (searchBlurTimeoutRef.current) {
       clearTimeout(searchBlurTimeoutRef.current);
@@ -909,10 +1103,34 @@ export default function TourDetailScreen() {
         clearTimeout(searchBlurTimeoutRef.current);
         searchBlurTimeoutRef.current = null;
       }
+      if (saveToastResetTimeoutRef.current) {
+        clearTimeout(saveToastResetTimeoutRef.current);
+        saveToastResetTimeoutRef.current = null;
+      }
       poiAddedFeedbackProgress.stopAnimation();
       tourMetricsGlowProgress.stopAnimation();
     };
   }, [poiAddedFeedbackProgress, tourMetricsGlowProgress]);
+
+  useEffect(() => {
+    if (saveStatus === 'saved' && previousSaveStatusRef.current !== 'saved') {
+      if (isSaveSuccessToastVisible) {
+        setIsSaveSuccessToastVisible(false);
+        if (saveToastResetTimeoutRef.current) {
+          clearTimeout(saveToastResetTimeoutRef.current);
+          saveToastResetTimeoutRef.current = null;
+        }
+        saveToastResetTimeoutRef.current = setTimeout(() => {
+          saveToastResetTimeoutRef.current = null;
+          setIsSaveSuccessToastVisible(true);
+        }, 0);
+      } else {
+        setIsSaveSuccessToastVisible(true);
+      }
+    }
+
+    previousSaveStatusRef.current = saveStatus;
+  }, [isSaveSuccessToastVisible, saveStatus]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -2346,21 +2564,6 @@ export default function TourDetailScreen() {
     );
   }
 
-  const footerSaveLabel = (() => {
-    if (!isEditMode) {
-      return null;
-    }
-    if (saveStatus === 'saving' || saveStatus === 'pending') {
-      return 'Änderungen werden gespeichert...';
-    }
-    if (saveStatus === 'saved') {
-      return 'Alle Änderungen gespeichert!';
-    }
-    if (saveStatus === 'error') {
-      return statusMessage || 'Speichern fehlgeschlagen';
-    }
-    return null;
-  })();
   const renderTourMap = (isFullscreen: boolean) => (
     <View style={[styles.mapCard, isFullscreen && styles.mapCardFullscreen]}>
       <MapView
@@ -2686,6 +2889,12 @@ export default function TourDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StampingSuccessToast
+        message="Tour erfolgreich gespeichert."
+        onHide={() => setIsSaveSuccessToastVisible(false)}
+        topOffset={insets.top + 10}
+        visible={isSaveSuccessToastVisible}
+      />
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: footerReservedHeight }]}
         showsVerticalScrollIndicator={false}>
@@ -2754,9 +2963,12 @@ export default function TourDetailScreen() {
           </View>
 
           <View style={styles.tourMetricsLineWrap}>
-            <Text style={styles.cardLine}>
-              {`Distanz: ${formatDistance(tourMetrics.distance)} • Dauer: ${formatDuration(tourMetrics.duration)}`}
-            </Text>
+            <View style={styles.metricLineRow}>
+              <Text style={styles.cardLine}>Distanz: </Text>
+              <PopMetricValue numericValue={tourMetrics.distance} value={formatDistance(tourMetrics.distance)} />
+              <Text style={styles.cardLine}> • Dauer: </Text>
+              <PopMetricValue numericValue={tourMetrics.duration} value={formatDuration(tourMetrics.duration)} />
+            </View>
             {shouldShowTourMetricsGlow ? (
               <RNAnimated.View
                 pointerEvents="none"
@@ -2776,9 +2988,12 @@ export default function TourDetailScreen() {
           </View>
 
           <View style={styles.tourMetricsLineWrap}>
-            <Text style={styles.cardLine}>
-              {`Höhenprofil: ↑${formatElevation(tourMetrics.totalElevationGain)} • ↓${formatElevation(tourMetrics.totalElevationLoss)}`}
-            </Text>
+            <View style={styles.metricLineRow}>
+              <Text style={styles.cardLine}>Höhenprofil: ↑</Text>
+              <RollingMetricValue value={formatElevation(tourMetrics.totalElevationGain)} />
+              <Text style={styles.cardLine}> • ↓</Text>
+              <RollingMetricValue value={formatElevation(tourMetrics.totalElevationLoss)} />
+            </View>
             {shouldShowTourMetricsGlow ? (
               <RNAnimated.View
                 pointerEvents="none"
@@ -2798,9 +3013,12 @@ export default function TourDetailScreen() {
           </View>
 
           <View style={styles.tourMetricsLineWrap}>
-            <Text style={styles.cardLine}>
-              {`Stempel gesamt: ${tourMetrics.stampCount ?? 0} • Neue Stempel für mich: ${tourMetrics.newStampCountForUser ?? 0}`}
-            </Text>
+            <View style={styles.metricLineRow}>
+              <Text style={styles.cardLine}>Stempel gesamt: </Text>
+              <RollingMetricValue value={`${tourMetrics.stampCount ?? 0}`} />
+              <Text style={styles.cardLine}> • Neue Stempel für mich: </Text>
+              <RollingMetricValue value={`${tourMetrics.newStampCountForUser ?? 0}`} />
+            </View>
             {shouldShowTourMetricsGlow ? (
               <RNAnimated.View
                 pointerEvents="none"
@@ -2999,11 +3217,7 @@ export default function TourDetailScreen() {
       <View style={[styles.floatingFooterShell, { paddingBottom: footerBottomInset }]}>
         <View style={styles.floatingFooterBar}>
           {isEditMode ? (
-            footerSaveLabel ? (
-              <Text style={styles.footerEditHint}>{footerSaveLabel}</Text>
-            ) : (
-              <View style={styles.footerEditHintPlaceholder} />
-            )
+            <View style={styles.footerEditHintPlaceholder} />
           ) : (
             <Pressable
               disabled={!mapsDirectionsUrl || footerActionsDisabled}
@@ -3428,6 +3642,20 @@ const styles = StyleSheet.create({
     color: '#6b7a6b',
     fontSize: 12,
     lineHeight: 16,
+  },
+  metricLineRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'flex-end',
+  },
+  metricValueText: {
+    color: '#536253',
+    fontWeight: '700',
+  },
+  metricInlineRollContainer: {
+    height: METRIC_VALUE_LINE_HEIGHT,
+    overflow: 'hidden',
+    justifyContent: 'center',
   },
   tourMetricsLineWrap: {
     position: 'relative',
@@ -3891,13 +4119,6 @@ const styles = StyleSheet.create({
   },
   footerPrimaryButtonLabelSecondary: {
     color: '#4d6d56',
-  },
-  footerEditHint: {
-    flex: 1,
-    color: '#4d6d56',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '600',
   },
   footerEditHintPlaceholder: {
     flex: 1,
