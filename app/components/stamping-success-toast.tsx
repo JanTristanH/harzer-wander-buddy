@@ -18,6 +18,11 @@ export function StampingSuccessToast({
 }: StampingSuccessToastProps) {
   const progress = useRef(new Animated.Value(1)).current;
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onHideRef = useRef(onHide);
+
+  useEffect(() => {
+    onHideRef.current = onHide;
+  }, [onHide]);
 
   useEffect(() => {
     if (!visible) {
@@ -39,7 +44,7 @@ export function StampingSuccessToast({
 
     hideTimeoutRef.current = setTimeout(() => {
       hideTimeoutRef.current = null;
-      onHide();
+      onHideRef.current();
     }, durationMs);
 
     return () => {
@@ -49,7 +54,7 @@ export function StampingSuccessToast({
         hideTimeoutRef.current = null;
       }
     };
-  }, [durationMs, onHide, progress, visible]);
+  }, [durationMs, progress, visible]);
 
   if (!visible) {
     return null;

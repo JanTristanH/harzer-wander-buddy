@@ -129,6 +129,9 @@ const SELECTION_TARGET_VERTICAL_RATIO = 0.3;
 const SINGLE_POINT_FOCUS_OFFSET_RATIO = 0.15;
 const NORTH_HEADING_EPSILON = 2;
 const PROGRAMMATIC_SELECTION_MOVE_SUPPRESS_MS = 420;
+const PROGRAMMATIC_AUTOZOOM_SUPPRESS_MS = 900;
+const SHEET_COMPACT_CENTER_SHIFT_RATIO = 0.035;
+const SHEET_COMPACT_MIN_CENTER_SHIFT_DEGREES = 0.00012;
 const MARKER_ANCHOR = { x: 0.5, y: 1 };
 const MARKER_Z_INDEX_PARKING = 10;
 const MARKER_Z_INDEX_STAMP = 20;
@@ -594,9 +597,18 @@ export default function MapScreen() {
     setRegion(nextRegion);
     lastMapRegion = nextRegion;
   }, []);
-  const suppressSelectionSheetCompactionForSelectionMove = useCallback((durationMs = PROGRAMMATIC_SELECTION_MOVE_SUPPRESS_MS) => {
-    suppressSheetCompactUntilRef.current = Date.now() + durationMs;
-  }, []);
+  const suppressSelectionSheetCompactionForProgrammaticMove = useCallback(
+    (durationMs: number) => {
+      suppressSheetCompactUntilRef.current = Date.now() + durationMs;
+    },
+    []
+  );
+  const suppressSelectionSheetCompactionForSelectionMove = useCallback(() => {
+    suppressSelectionSheetCompactionForProgrammaticMove(PROGRAMMATIC_SELECTION_MOVE_SUPPRESS_MS);
+  }, [suppressSelectionSheetCompactionForProgrammaticMove]);
+  const suppressSelectionSheetCompactionForAutoZoom = useCallback(() => {
+    suppressSelectionSheetCompactionForProgrammaticMove(PROGRAMMATIC_AUTOZOOM_SUPPRESS_MS);
+  }, [suppressSelectionSheetCompactionForProgrammaticMove]);
 
   const fitCoordinates = useCallback((coordinates: Coordinate[]) => {
     if (!mapRef.current || coordinates.length === 0) {
@@ -606,16 +618,18 @@ export default function MapScreen() {
     if (coordinates.length === 1) {
       const [coordinate] = coordinates;
       const nextRegion = createSinglePointRegion(coordinate, 0.08);
+      suppressSelectionSheetCompactionForAutoZoom();
       updateMapRegion(nextRegion);
       mapRef.current.animateToRegion(nextRegion, 250);
       return;
     }
 
+    suppressSelectionSheetCompactionForAutoZoom();
     mapRef.current.fitToCoordinates(coordinates, {
       edgePadding: MAP_EDGE_PADDING,
       animated: true,
     });
-  }, [updateMapRegion]);
+  }, [suppressSelectionSheetCompactionForAutoZoom, updateMapRegion]);
 
   const stampItems = useMemo<StampMarkerItem[]>(() => {
     if (!data) {
@@ -1344,6 +1358,7 @@ export default function MapScreen() {
           if (typeof camera.zoom === 'number' && Number.isFinite(camera.zoom)) {
             const zoomDelta = -Math.log2(Math.max(0.000001, factor));
             const nextZoom = Math.max(CAMERA_MIN_ZOOM, Math.min(CAMERA_MAX_ZOOM, camera.zoom + zoomDelta));
+            suppressSelectionSheetCompactionForAutoZoom();
             map.animateCamera(
               {
                 center: camera.center,
@@ -1358,11 +1373,12 @@ export default function MapScreen() {
         }
 
         const nextRegion = zoomRegion(regionRef.current, factor);
+        suppressSelectionSheetCompactionForAutoZoom();
         updateMapRegion(nextRegion);
         map.animateToRegion(nextRegion, 180);
       })();
     },
-    [updateMapRegion]
+    [suppressSelectionSheetCompactionForAutoZoom, updateMapRegion]
   );
 
   const handleLocateMePress = useCallback(() => {
@@ -1372,9 +1388,10 @@ export default function MapScreen() {
 
     const targetDelta = Math.min(regionRef.current.longitudeDelta, LOCATE_ME_TARGET_DELTA);
     const nextRegion = createSinglePointRegion(userLocation, targetDelta);
+    suppressSelectionSheetCompactionForAutoZoom();
     updateMapRegion(nextRegion);
     mapRef.current?.animateToRegion(nextRegion, 260);
-  }, [updateMapRegion, userLocation]);
+  }, [suppressSelectionSheetCompactionForAutoZoom, updateMapRegion, userLocation]);
 
   const handleStampVisit = useCallback(async () => {
     if (!selectedItem || selectedItem.kind === 'parking' || isStamping) {
@@ -1877,12 +1894,28 @@ export default function MapScreen() {
     void syncMapHeading();
   }, [syncMapHeading, updateMapRegion]);
 
-  const handleRegionChange = useCallback(() => {
+  const handleRegionChange = useCallback((nextRegion: Region) => {
     if (!selectedItem || selectionSheetMode === 'compact') {
       return;
     }
 
     if (Date.now() < suppressSheetCompactUntilRef.current) {
+      return;
+    }
+
+    const latitudeThreshold = Math.max(
+      SHEET_COMPACT_MIN_CENTER_SHIFT_DEGREES,
+      nextRegion.latitudeDelta * SHEET_COMPACT_CENTER_SHIFT_RATIO
+    );
+    const longitudeThreshold = Math.max(
+      SHEET_COMPACT_MIN_CENTER_SHIFT_DEGREES,
+      nextRegion.longitudeDelta * SHEET_COMPACT_CENTER_SHIFT_RATIO
+    );
+    const hasMeaningfulCenterShift =
+      Math.abs(nextRegion.latitude - regionRef.current.latitude) > latitudeThreshold ||
+      Math.abs(nextRegion.longitude - regionRef.current.longitude) > longitudeThreshold;
+
+    if (!hasMeaningfulCenterShift) {
       return;
     }
 
@@ -1894,6 +1927,7 @@ export default function MapScreen() {
   }, []);
 
   const handleResetNorthPress = useCallback(() => {
+    suppressSelectionSheetCompactionForAutoZoom();
     mapRef.current?.animateCamera(
       {
         heading: 0,
@@ -1902,7 +1936,7 @@ export default function MapScreen() {
       { duration: 220 }
     );
     setMapHeading(0);
-  }, []);
+  }, [suppressSelectionSheetCompactionForAutoZoom]);
 
   const selectionPrimaryActionLabel = useMemo(() => {
     if (!selectedItem) {

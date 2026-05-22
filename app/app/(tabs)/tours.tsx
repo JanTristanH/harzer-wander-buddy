@@ -133,7 +133,7 @@ function TourCard({
   const showOwnBadge = createdBy.isOwnTour && createdBy.label !== 'Du';
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
       <View style={styles.cardHeaderRow}>
         <Text numberOfLines={1} style={styles.cardTitle}>
           {item.name}
@@ -892,6 +892,14 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 2,
     gap: 6,
+  },
+  cardPressed: {
+    backgroundColor: '#ecf2ea',
+    borderColor: '#2e6b4b',
+    borderWidth: 1,
+    shadowOpacity: 0.18,
+    elevation: 4,
+    transform: [{ scale: 0.99 }],
   },
   cardHeaderRow: {
     flexDirection: 'row',
