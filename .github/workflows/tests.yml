@@ -29,12 +29,18 @@ jobs:
         working-directory: app
 
       - name: Run app tests
-        run: npm test -- --runInBand
+        run: npm test -- --runInBand --config jest.config.js
         working-directory: app
 
   backend-tests:
     name: Backend CAP tests
     runs-on: ubuntu-latest
+    env:
+      SECRET: ci-test-secret-at-least-32-characters
+      BASE_URL: http://localhost:4004
+      CLIENT_ID: ci-test-client
+      ISSUER_BASE_URL: https://example.eu.auth0.com
+      AUDIENCE: https://ci.harzer-wander-buddy.test/api
 
     steps:
       - name: Checkout repository
