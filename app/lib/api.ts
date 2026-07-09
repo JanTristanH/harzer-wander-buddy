@@ -171,6 +171,7 @@ type User = {
   name?: string;
   picture?: string;
   isFriend?: boolean;
+  onboardingCompleted?: boolean;
   roles?: string | string[];
   friends?: User[];
   Friends?: User[];
@@ -309,6 +310,7 @@ export type CurrentUserProfileData = {
   id: string;
   name: string;
   picture?: string;
+  onboardingCompleted?: boolean;
   roles?: string[];
 };
 
@@ -674,6 +676,24 @@ function unwrapNumericODataResult(payload: unknown) {
   return null;
 }
 
+function normalizeBoolean(value: unknown) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') {
+      return true;
+    }
+    if (normalized === 'false') {
+      return false;
+    }
+  }
+
+  return undefined;
+}
+
 async function readErrorBody(response: Response) {
   try {
     return (await response.text()).trim();
@@ -867,7 +887,7 @@ async function fetchCurrentUserRecord(accessToken: string) {
   const payload = await fetchOData<unknown>(
     accessToken,
     buildUrl('getCurrentUser()', {
-      select: ['ID', 'name', 'picture', 'isFriend', 'roles'],
+      select: ['ID', 'name', 'picture', 'isFriend', 'onboardingCompleted', 'roles'],
     })
   );
 
@@ -893,6 +913,7 @@ async function fetchCurrentUserRecord(accessToken: string) {
     name: safeTrim(nestedRecord.name) || safeTrim(nestedRecord.nickname) || undefined,
     picture: safeTrim(nestedRecord.picture) || undefined,
     isFriend: typeof nestedRecord.isFriend === 'boolean' ? nestedRecord.isFriend : undefined,
+    onboardingCompleted: normalizeBoolean(nestedRecord.onboardingCompleted),
     roles:
       Array.isArray(rawRoles) || typeof rawRoles === 'string'
         ? (rawRoles as string | string[])
@@ -2520,6 +2541,7 @@ export async function fetchCurrentUserProfile(accessToken: string) {
     id: currentUser.ID,
     name: currentUser.name || currentUser.ID,
     picture: currentUser.picture,
+    onboardingCompleted: currentUser.onboardingCompleted,
     roles: normalizeRoleTokens(currentUser.roles),
   } satisfies CurrentUserProfileData;
 }
@@ -3672,6 +3694,19 @@ export async function updateCurrentUserProfile(
   return mutateOData<User>(accessToken, buildUrl(buildStringKeyPath('Users', resolvedCurrentUserId)), {
     method: 'PATCH',
     body: JSON.stringify(updates),
+  });
+}
+
+export async function updateCurrentUserOnboardingCompleted(
+  accessToken: string,
+  onboardingCompleted: boolean,
+  currentUserId?: string
+) {
+  const resolvedCurrentUserId = safeTrim(currentUserId) || (await fetchCurrentUserRecord(accessToken)).ID;
+
+  return mutateOData<User>(accessToken, buildUrl(buildStringKeyPath('Users', resolvedCurrentUserId)), {
+    method: 'PATCH',
+    body: JSON.stringify({ onboardingCompleted }),
   });
 }
 

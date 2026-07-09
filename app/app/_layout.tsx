@@ -4,7 +4,7 @@ import {
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus, Platform } from 'react-native';
@@ -120,6 +120,23 @@ function CoreOfflineSyncBridge() {
   return null;
 }
 
+function OnboardingRouteSync() {
+  const { hasCompletedOnboarding, isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
+  const rootSegment = segments[0];
+
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || hasCompletedOnboarding || rootSegment === 'onboarding') {
+      return;
+    }
+
+    router.replace('/onboarding' as never);
+  }, [hasCompletedOnboarding, isAuthenticated, isLoading, rootSegment, router]);
+
+  return null;
+}
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
@@ -156,6 +173,7 @@ export default function RootLayout() {
             <WebDocumentBehavior />
             <QueryFocusBridge />
             <CoreOfflineSyncBridge />
+            <OnboardingRouteSync />
             <OfflineBanner />
           </AuthProvider>
         </GestureHandlerRootView>

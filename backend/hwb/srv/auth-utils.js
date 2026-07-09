@@ -200,6 +200,7 @@ async function upsertExternalUser(claims = {}) {
       picture: existingUser?.picture ?? claims.picture ?? null,
       sid: claims.sid ?? existingUser?.sid ?? null,
       sub: claims.sub,
+      onboardingCompleted: existingUser?.onboardingCompleted ?? false,
       updated_at_iso_string: claims.updated_at ?? existingUser?.updated_at_iso_string ?? null,
     };
 

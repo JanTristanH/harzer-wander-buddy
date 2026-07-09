@@ -28,6 +28,7 @@ entity ExternalUsers : cuid {
     picture               : String(255);
     sid                   : String(255);
     sub                   : String(255);
+    onboardingCompleted   : Boolean default false;
     updated_at_iso_string : String(255);
     updated_at            : Timestamp   @cds.on.insert: $now;
 }
