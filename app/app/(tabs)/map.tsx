@@ -68,6 +68,7 @@ type StampsOverviewData = {
   stamps: Stampbox[];
   lastVisited: LatestVisitedStamp | null;
 };
+type StampOverviewFilter = 'validToday' | 'all' | 'visited' | 'open' | 'relocated';
 
 type BaseMarkerItem = {
   id: string;
@@ -128,6 +129,9 @@ const SELECTION_TARGET_VERTICAL_RATIO = 0.3;
 const SINGLE_POINT_FOCUS_OFFSET_RATIO = 0.15;
 const NORTH_HEADING_EPSILON = 2;
 const PROGRAMMATIC_SELECTION_MOVE_SUPPRESS_MS = 420;
+const PROGRAMMATIC_AUTOZOOM_SUPPRESS_MS = 900;
+const SHEET_COMPACT_CENTER_SHIFT_RATIO = 0.035;
+const SHEET_COMPACT_MIN_CENTER_SHIFT_DEGREES = 0.00012;
 const MARKER_ANCHOR = { x: 0.5, y: 1 };
 const MARKER_Z_INDEX_PARKING = 10;
 const MARKER_Z_INDEX_STAMP = 20;
@@ -140,6 +144,12 @@ const VISIT_FILTERS: { key: VisitFilter; label: string }[] = [
   { key: 'all', label: 'Alle' },
   { key: 'visited', label: 'Besucht' },
   { key: 'open', label: 'Unbesucht' },
+];
+const STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT: StampOverviewFilter[] = [
+  'validToday',
+  'all',
+  'visited',
+  'open',
 ];
 
 function toFiniteCoordinateNumber(value?: number | string) {
@@ -346,6 +356,36 @@ function createOfflineRouteMetrics(distanceKm: number | null) {
   } satisfies RouteMetrics;
 }
 
+function markStampVisitedInStampsOverview(
+  currentStampsOverview: StampsOverviewData | undefined,
+  stampId: string,
+  lastVisited: LatestVisitedStamp,
+  filter?: StampOverviewFilter
+) {
+  if (!currentStampsOverview) {
+    return currentStampsOverview;
+  }
+
+  const nextStamps = currentStampsOverview.stamps
+    .map((stamp) => {
+      if (stamp.ID !== stampId) {
+        return stamp;
+      }
+
+      return {
+        ...stamp,
+        hasVisited: true,
+      };
+    })
+    .filter((stamp) => !(filter === 'open' && stamp.ID === stampId));
+
+  return {
+    ...currentStampsOverview,
+    stamps: nextStamps,
+    lastVisited,
+  };
+}
+
 function zoomRegion(region: Region, factor: number) {
   return {
     ...region,
@@ -527,7 +567,6 @@ export default function MapScreen() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [isStamping, setIsStamping] = useState(false);
   const [isStampSuccessToastVisible, setIsStampSuccessToastVisible] = useState(false);
-  const [isParkingRevealPending, setIsParkingRevealPending] = useState(false);
   const [selectedSheetHeight, setSelectedSheetHeight] = useState(0);
   const [selectionSheetMode, setSelectionSheetMode] = useState<SelectionSheetMode>('expanded');
   const [mapHeading, setMapHeading] = useState(0);
@@ -558,9 +597,18 @@ export default function MapScreen() {
     setRegion(nextRegion);
     lastMapRegion = nextRegion;
   }, []);
-  const suppressSelectionSheetCompactionForSelectionMove = useCallback((durationMs = PROGRAMMATIC_SELECTION_MOVE_SUPPRESS_MS) => {
-    suppressSheetCompactUntilRef.current = Date.now() + durationMs;
-  }, []);
+  const suppressSelectionSheetCompactionForProgrammaticMove = useCallback(
+    (durationMs: number) => {
+      suppressSheetCompactUntilRef.current = Date.now() + durationMs;
+    },
+    []
+  );
+  const suppressSelectionSheetCompactionForSelectionMove = useCallback(() => {
+    suppressSelectionSheetCompactionForProgrammaticMove(PROGRAMMATIC_SELECTION_MOVE_SUPPRESS_MS);
+  }, [suppressSelectionSheetCompactionForProgrammaticMove]);
+  const suppressSelectionSheetCompactionForAutoZoom = useCallback(() => {
+    suppressSelectionSheetCompactionForProgrammaticMove(PROGRAMMATIC_AUTOZOOM_SUPPRESS_MS);
+  }, [suppressSelectionSheetCompactionForProgrammaticMove]);
 
   const fitCoordinates = useCallback((coordinates: Coordinate[]) => {
     if (!mapRef.current || coordinates.length === 0) {
@@ -570,16 +618,18 @@ export default function MapScreen() {
     if (coordinates.length === 1) {
       const [coordinate] = coordinates;
       const nextRegion = createSinglePointRegion(coordinate, 0.08);
+      suppressSelectionSheetCompactionForAutoZoom();
       updateMapRegion(nextRegion);
       mapRef.current.animateToRegion(nextRegion, 250);
       return;
     }
 
+    suppressSelectionSheetCompactionForAutoZoom();
     mapRef.current.fitToCoordinates(coordinates, {
       edgePadding: MAP_EDGE_PADDING,
       animated: true,
     });
-  }, [updateMapRegion]);
+  }, [suppressSelectionSheetCompactionForAutoZoom, updateMapRegion]);
 
   const stampItems = useMemo<StampMarkerItem[]>(() => {
     if (!data) {
@@ -670,16 +720,12 @@ export default function MapScreen() {
       return [];
     }
 
-    if (isParkingRevealPending) {
-      return [];
-    }
-
     if (region.longitudeDelta >= PARKING_HIDE_LONGITUDE_DELTA) {
       return [];
     }
 
     return parkingItems;
-  }, [isParkingRevealPending, parkingItems, region.longitudeDelta, showParking]);
+  }, [parkingItems, region.longitudeDelta, showParking]);
 
   const viewportParkingItems = useMemo(() => {
     if (Platform.OS !== 'web') {
@@ -699,6 +745,10 @@ export default function MapScreen() {
   const visibleItems = useMemo<MarkerItem[]>(
     () => [...visibleStampItems, ...visibleParkingItems],
     [visibleParkingItems, visibleStampItems]
+  );
+  const allItems = useMemo<MarkerItem[]>(
+    () => [...stampItems, ...parkingItems],
+    [parkingItems, stampItems]
   );
 
   useEffect(() => {
@@ -732,11 +782,6 @@ export default function MapScreen() {
       }
       setSelectedItemId(item.id);
       const targetDelta = Math.min(regionRef.current.longitudeDelta, SELECTION_TARGET_DELTA);
-      const shouldDelayParkingReveal =
-        item.kind !== 'parking' &&
-        regionRef.current.longitudeDelta >= PARKING_HIDE_LONGITUDE_DELTA &&
-        targetDelta < PARKING_HIDE_LONGITUDE_DELTA;
-      setIsParkingRevealPending(shouldDelayParkingReveal);
       suppressSelectionSheetCompactionForSelectionMove();
       const nextRegion = createPointRegionAtVerticalRatio(
         item.coordinate,
@@ -760,7 +805,7 @@ export default function MapScreen() {
           <Marker
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
-            key={stampItem.id}
+            key={`${stampItem.id}:${stampItem.kind}`}
             onPress={() => handleMarkerPress(stampItem)}
             zIndex={markerZIndex(stampItem.kind)}>
             <View collapsable={false} style={styles.pinMarker}>
@@ -785,7 +830,7 @@ export default function MapScreen() {
           anchor={MARKER_ANCHOR}
           coordinate={stampItem.coordinate}
           image={visual.image}
-          key={stampItem.id}
+          key={`${stampItem.id}:${stampItem.kind}`}
           onPress={() => handleMarkerPress(stampItem)}
           pinColor={undefined}
           tracksViewChanges={false}
@@ -932,8 +977,8 @@ export default function MapScreen() {
   ]);
 
   const selectedItem = useMemo(
-    () => visibleItems.find((item) => item.id === selectedItemId) ?? null,
-    [selectedItemId, visibleItems]
+    () => allItems.find((item) => item.id === selectedItemId) ?? null,
+    [allItems, selectedItemId]
   );
 
   useEffect(() => {
@@ -999,11 +1044,11 @@ export default function MapScreen() {
       return;
     }
 
-    const itemStillVisible = visibleItems.some((item) => item.id === selectedItemId);
-    if (!itemStillVisible) {
+    const itemStillExists = allItems.some((item) => item.id === selectedItemId);
+    if (!itemStillExists) {
       setSelectedItemId(null);
     }
-  }, [selectedItemId, visibleItems]);
+  }, [allItems, selectedItemId]);
 
   useEffect(() => {
     if (!selectedItem) {
@@ -1313,6 +1358,7 @@ export default function MapScreen() {
           if (typeof camera.zoom === 'number' && Number.isFinite(camera.zoom)) {
             const zoomDelta = -Math.log2(Math.max(0.000001, factor));
             const nextZoom = Math.max(CAMERA_MIN_ZOOM, Math.min(CAMERA_MAX_ZOOM, camera.zoom + zoomDelta));
+            suppressSelectionSheetCompactionForAutoZoom();
             map.animateCamera(
               {
                 center: camera.center,
@@ -1327,11 +1373,12 @@ export default function MapScreen() {
         }
 
         const nextRegion = zoomRegion(regionRef.current, factor);
+        suppressSelectionSheetCompactionForAutoZoom();
         updateMapRegion(nextRegion);
         map.animateToRegion(nextRegion, 180);
       })();
     },
-    [updateMapRegion]
+    [suppressSelectionSheetCompactionForAutoZoom, updateMapRegion]
   );
 
   const handleLocateMePress = useCallback(() => {
@@ -1341,9 +1388,10 @@ export default function MapScreen() {
 
     const targetDelta = Math.min(regionRef.current.longitudeDelta, LOCATE_ME_TARGET_DELTA);
     const nextRegion = createSinglePointRegion(userLocation, targetDelta);
+    suppressSelectionSheetCompactionForAutoZoom();
     updateMapRegion(nextRegion);
     mapRef.current?.animateToRegion(nextRegion, 260);
-  }, [updateMapRegion, userLocation]);
+  }, [suppressSelectionSheetCompactionForAutoZoom, updateMapRegion, userLocation]);
 
   const handleStampVisit = useCallback(async () => {
     if (!selectedItem || selectedItem.kind === 'parking' || isStamping) {
@@ -1381,6 +1429,10 @@ export default function MapScreen() {
     };
     const mapDataKey = queryKeys.mapData(claims?.sub);
     const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub);
+    const filteredStampsOverviewKeys = STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT.map((filter) => ({
+      filter,
+      queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter),
+    }));
     const profileOverviewKey = queryKeys.profileOverview(claims?.sub);
     const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId);
     const optimisticLastVisited: LatestVisitedStamp = {
@@ -1398,12 +1450,17 @@ export default function MapScreen() {
       await Promise.all([
         queryClient.cancelQueries({ queryKey: mapDataKey }),
         queryClient.cancelQueries({ queryKey: stampsOverviewKey }),
+        ...filteredStampsOverviewKeys.map(({ queryKey }) => queryClient.cancelQueries({ queryKey })),
         queryClient.cancelQueries({ queryKey: profileOverviewKey }),
         queryClient.cancelQueries({ queryKey: stampDetailKey }),
       ]);
 
       const previousMapData = queryClient.getQueryData<MapData>(mapDataKey);
       const previousStampsOverview = queryClient.getQueryData<StampsOverviewData>(stampsOverviewKey);
+      const previousFilteredStampsOverviews = filteredStampsOverviewKeys.map(({ queryKey }) => ({
+        queryKey,
+        value: queryClient.getQueryData<StampsOverviewData>(queryKey),
+      }));
       const previousProfileOverview = queryClient.getQueryData<ProfileOverviewData>(profileOverviewKey);
       const previousStampDetail = queryClient.getQueryData<StampDetailData>(stampDetailKey);
 
@@ -1419,6 +1476,9 @@ export default function MapScreen() {
       rollbackOptimisticUpdates = () => {
         rollbackQueryData(mapDataKey, previousMapData);
         rollbackQueryData(stampsOverviewKey, previousStampsOverview);
+        previousFilteredStampsOverviews.forEach(({ queryKey, value }) => {
+          rollbackQueryData(queryKey, value);
+        });
         rollbackQueryData(profileOverviewKey, previousProfileOverview);
         rollbackQueryData(stampDetailKey, previousStampDetail);
       };
@@ -1454,32 +1514,12 @@ export default function MapScreen() {
       });
 
       queryClient.setQueryData<StampsOverviewData>(stampsOverviewKey, (currentStampsOverview) => {
-        if (!currentStampsOverview) {
-          return currentStampsOverview;
-        }
-
-        let hasUpdatedStamp = false;
-        const nextStamps = currentStampsOverview.stamps.map((stamp) => {
-          if (stamp.ID !== stampId) {
-            return stamp;
-          }
-
-          hasUpdatedStamp = true;
-          return {
-            ...stamp,
-            hasVisited: true,
-          };
+        return markStampVisitedInStampsOverview(currentStampsOverview, stampId, optimisticLastVisited);
+      });
+      filteredStampsOverviewKeys.forEach(({ filter, queryKey }) => {
+        queryClient.setQueryData<StampsOverviewData>(queryKey, (currentStampsOverview) => {
+          return markStampVisitedInStampsOverview(currentStampsOverview, stampId, optimisticLastVisited, filter);
         });
-
-        if (!hasUpdatedStamp) {
-          return currentStampsOverview;
-        }
-
-        return {
-          ...currentStampsOverview,
-          stamps: nextStamps,
-          lastVisited: optimisticLastVisited,
-        };
       });
 
       queryClient.setQueryData<ProfileOverviewData>(profileOverviewKey, (currentProfileOverview) => {
@@ -1610,6 +1650,11 @@ export default function MapScreen() {
           lastVisited: persistedLastVisited,
         };
       });
+      filteredStampsOverviewKeys.forEach(({ filter, queryKey }) => {
+        queryClient.setQueryData<StampsOverviewData>(queryKey, (currentStampsOverview) => {
+          return markStampVisitedInStampsOverview(currentStampsOverview, stampId, persistedLastVisited, filter);
+        });
+      });
 
       queryClient.setQueryData<ProfileOverviewData>(profileOverviewKey, (currentProfileOverview) => {
         if (!currentProfileOverview) {
@@ -1687,12 +1732,12 @@ export default function MapScreen() {
         .catch(() => undefined);
       setIsStampSuccessToastVisible(true);
     } catch (nextError) {
+      rollbackOptimisticUpdates();
       if (isNetworkUnavailableError(nextError)) {
         Alert.alert('Offline', nextError.message);
         return;
       }
 
-      rollbackOptimisticUpdates();
       if (nextError instanceof Error && nextError.name === 'UnauthorizedError') {
         await logout();
         return;
@@ -1732,12 +1777,6 @@ export default function MapScreen() {
     setSearchQuery('');
     setIsSearchFocused(false);
     searchInputRef.current?.blur();
-    const shouldDelayParkingReveal =
-      item.kind !== 'parking' &&
-      regionRef.current.longitudeDelta >= PARKING_HIDE_LONGITUDE_DELTA &&
-      SEARCH_TARGET_DELTA < PARKING_HIDE_LONGITUDE_DELTA;
-    setIsParkingRevealPending(shouldDelayParkingReveal);
-
     const nextRegion = {
       ...createPointRegionAtVerticalRatio(
         item.coordinate,
@@ -1762,7 +1801,6 @@ export default function MapScreen() {
     setIsSearchFocused(false);
     setSearchQuery(place.name);
     searchInputRef.current?.blur();
-    setIsParkingRevealPending(false);
     const nextRegion = createPointRegionAtVerticalRatio(
       { latitude: place.latitude, longitude: place.longitude },
       SEARCH_TARGET_DELTA,
@@ -1853,16 +1891,31 @@ export default function MapScreen() {
 
   const handleRegionChangeComplete = useCallback((nextRegion: Region) => {
     updateMapRegion(nextRegion);
-    setIsParkingRevealPending(false);
     void syncMapHeading();
   }, [syncMapHeading, updateMapRegion]);
 
-  const handleRegionChange = useCallback(() => {
+  const handleRegionChange = useCallback((nextRegion: Region) => {
     if (!selectedItem || selectionSheetMode === 'compact') {
       return;
     }
 
     if (Date.now() < suppressSheetCompactUntilRef.current) {
+      return;
+    }
+
+    const latitudeThreshold = Math.max(
+      SHEET_COMPACT_MIN_CENTER_SHIFT_DEGREES,
+      nextRegion.latitudeDelta * SHEET_COMPACT_CENTER_SHIFT_RATIO
+    );
+    const longitudeThreshold = Math.max(
+      SHEET_COMPACT_MIN_CENTER_SHIFT_DEGREES,
+      nextRegion.longitudeDelta * SHEET_COMPACT_CENTER_SHIFT_RATIO
+    );
+    const hasMeaningfulCenterShift =
+      Math.abs(nextRegion.latitude - regionRef.current.latitude) > latitudeThreshold ||
+      Math.abs(nextRegion.longitude - regionRef.current.longitude) > longitudeThreshold;
+
+    if (!hasMeaningfulCenterShift) {
       return;
     }
 
@@ -1874,6 +1927,7 @@ export default function MapScreen() {
   }, []);
 
   const handleResetNorthPress = useCallback(() => {
+    suppressSelectionSheetCompactionForAutoZoom();
     mapRef.current?.animateCamera(
       {
         heading: 0,
@@ -1882,7 +1936,7 @@ export default function MapScreen() {
       { duration: 220 }
     );
     setMapHeading(0);
-  }, []);
+  }, [suppressSelectionSheetCompactionForAutoZoom]);
 
   const selectionPrimaryActionLabel = useMemo(() => {
     if (!selectedItem) {
@@ -2187,6 +2241,7 @@ export default function MapScreen() {
             onPrimaryActionPress={selectionPrimaryActionPress}
             primaryActionDisabled={selectionPrimaryActionDisabled}
             primaryActionLabel={selectionPrimaryActionLabel}
+            enablePrimaryStampAnimation={isAuthenticated && selectedItem.kind === 'open-stamp'}
             onDetailsPress={() =>
               selectedItem.kind === 'parking'
                 ? router.push(`/parking/${selectedItem.parkingId}` as never)

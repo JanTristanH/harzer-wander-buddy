@@ -531,16 +531,26 @@ function extractFilters(filters, operator) {
 }
 
 async function addIsFriend(users, req) {
-  const { MyFriends } = this.api.entities;
+  const { MyFriends } = getApiEntities(this) || {};
+  if (!MyFriends || !users) {
+    return users;
+  }
+
+  const usersList = Array.isArray(users) ? users : [users];
+  if (usersList.length === 0 || !usersList[0]?.ID) {
+    return users;
+  }
+
   const aFriendships = await SELECT.from(MyFriends).where({ createdBy: req.user.id });
-  const aFriendIds = aFriendships
+  const aFriendIds = new Set(
+    aFriendships
     .filter(f => f.status === 'accepted')
-    .map(f => f.ID);
-  return users.map(user => {
-    user.isFriend = aFriendIds.includes(user.ID);
-    user.isAllowedFor
-    return user;
+    .map(f => f.ID)
+  );
+  usersList.forEach(user => {
+    user.isFriend = aFriendIds.has(user.ID);
   });
+  return Array.isArray(users) ? usersList : usersList[0];
 }
 
 function upsertTourDetailsById(req, entities) {
@@ -577,8 +587,12 @@ async function updateTourByPOIList(req) {
 }
 
 function getApiEntities(service) {
-  const entities = service.entities;
-  return typeof entities === "function" ? entities(service.name) : entities;
+  if (!service) {
+    return {};
+  }
+
+  const entities = service.entities || service.api?.entities;
+  return typeof entities === "function" ? entities(service.name) : entities || {};
 }
 
 function isDriveTravelMode(travelMode) {
@@ -1145,8 +1159,11 @@ async function determineStartingParking(params) {
     }
     await INSERT(calculationRequest).into(RouteCalculationRequest);
 
-
-    const { NeighborsCalculationRequestParking } = this.api.entities
+    const { NeighborsCalculationRequestParking } = getApiEntities(this) || {};
+    if (!NeighborsCalculationRequestParking) {
+      reject(new Error("Unable to resolve NeighborsCalculationRequestParking view."));
+      return;
+    }
     let parking = await SELECT.from(NeighborsCalculationRequestParking)
       .where({ ID: calculationRequest.ID })
       .limit(2);
@@ -1171,7 +1188,10 @@ async function calculateTravelTimesNNearestNeighbors(req) {
 
 function processTravelTimes(nearestNeighborsCount, processor, routeBudget = createRouteBudget()) {
   const { Stampboxes, TravelTimes, ParkingSpots } = this.entities('hwb.db')
-  const { NeighborsStampStamp, NeighborsStampParking, NeighborsParkingStamp, NeighborsParkingParking } = this.api.entities
+  const { NeighborsStampStamp, NeighborsStampParking, NeighborsParkingStamp, NeighborsParkingParking } = getApiEntities(this) || {};
+  if (!NeighborsStampStamp || !NeighborsStampParking || !NeighborsParkingStamp || !NeighborsParkingParking) {
+    throw new Error("Unable to resolve neighbors views.");
+  }
   let missingTravelTimesCount = 0;
   return new Promise(async (resolve, reject) => {
     // s -> s walk
@@ -1866,7 +1886,11 @@ async function backfillMissingVisitedAt(req) {
 
 async function getStampFriendVisits(req) {
   const { Stampings, ExternalUsers } = this.entities('hwb.db');
-  const { MyFriends } = this.api.entities;
+  const { MyFriends } = getApiEntities(this) || {};
+  if (!MyFriends) {
+    req.error(500, 'Unable to resolve friends view.');
+    return JSON.stringify([]);
+  }
   const { sStampId, sGroupUserIds } = req.data || {};
 
   if (!sStampId) {

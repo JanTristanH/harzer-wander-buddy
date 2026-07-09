@@ -1,6 +1,5 @@
 const cds = require("@sap/cds");
 const { auth, requiresAuth } = require("express-openid-connect");
-const jsonwebtoken = require("jsonwebtoken");
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -26,6 +25,7 @@ const config = {
     audience: process.env.AUDIENCE,
   },
   afterCallback: async (req, tokenSet, userInfo) => {
+    const jsonwebtoken = require("jsonwebtoken");
     // save / update user in our database after login
     let userFromToken = jsonwebtoken.decode(userInfo.id_token);
     await upsertExternalUser(userFromToken);
@@ -263,16 +263,28 @@ function isHtmlNavigationRequest(req) {
   return accept.includes("text/html");
 }
 
+function isMockedCapAuth() {
+  return cds.env.requires?.auth?.kind === "mocked";
+}
+
+function skipOidcAuth(req, res, next) {
+  req.oidc = req.oidc || { isAuthenticated: () => false };
+  next();
+}
+
 cds.on("bootstrap", (app) => {
   // ✅ Serve manifest.json publicly before authentication middleware
   app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));
 
-  app.use(auth(config));
+  const useOidcAuth = !isMockedCapAuth();
+  const requireStaticAuth = useOidcAuth ? requiresAuth() : skipOidcAuth;
+
+  app.use(useOidcAuth ? auth(config) : skipOidcAuth);
   app.use("/odata/v4/api", mobileCors, bearerAuth);
   app.use("/odata/v2/api", mobileCors, bearerAuth);
   app.use("/odata/v4/public", mobileCors);
 
-  app.use("/app/frontendhwb", requiresAuth(), express.static(__dirname + "/../app/frontendhwb"));
+  app.use("/app/frontendhwb", requireStaticAuth, express.static(__dirname + "/../app/frontendhwb"));
   // RN web owns its Auth0 flow and calls CAP APIs with bearer tokens.
   app.use(RN_WEB_MOUNT_PATH, express.static(RN_WEB_DIST_PATH, { extensions: ["html"] }));
   app.get(/^\/app\/rnweb(?:\/.*)?$/, (req, res, next) => {
@@ -283,7 +295,7 @@ cds.on("bootstrap", (app) => {
 
     res.sendFile(RN_WEB_INDEX_PATH);
   });
-  app.use("/app/dependencies", requiresAuth(), express.static(__dirname + "/../app/dependencies"));
+  app.use("/app/dependencies", requireStaticAuth, express.static(__dirname + "/../app/dependencies"));
   registerCsvExportRoutes(app);
 
   // rewrite ui5 dist path

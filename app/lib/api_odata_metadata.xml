@@ -206,6 +206,7 @@
         <Property Name="ID" Type="Edm.String" MaxLength="255" Nullable="false"/>
         <Property Name="name" Type="Edm.String" MaxLength="255"/>
         <Property Name="picture" Type="Edm.String" MaxLength="255"/>
+        <Property Name="onboardingCompleted" Type="Edm.Boolean"/>
         <Property Name="isFriend" Type="Edm.Boolean"/>
         <Property Name="roles" Type="Edm.String"/>
       </EntityType>

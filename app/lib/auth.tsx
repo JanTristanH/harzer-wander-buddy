@@ -7,7 +7,11 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { AppState, type AppStateStatus, Platform } from 'react-native';
 
 import { extractRolesFromClaims, hasAdminRole } from '@/lib/admin-access';
-import { fetchCurrentUserProfile, type CurrentUserProfileData } from '@/lib/api';
+import {
+  fetchCurrentUserProfile,
+  updateCurrentUserOnboardingCompleted,
+  type CurrentUserProfileData,
+} from '@/lib/api';
 import { appConfig, getAuth0ClientIdForPlatform, getMissingConfig } from '@/lib/config';
 import { useConnectivity } from '@/lib/connectivity';
 import { clearPersistedQueryCache } from '@/lib/query-persistence';
@@ -23,6 +27,7 @@ const TOKEN_ACCESS_TOKEN_STORAGE_KEY = 'hwb-auth-token-response-access-token';
 const TOKEN_ID_TOKEN_STORAGE_KEY = 'hwb-auth-token-response-id-token';
 const TOKEN_REFRESH_TOKEN_STORAGE_KEY = 'hwb-auth-token-response-refresh-token';
 const ONBOARDING_STORAGE_KEY = 'hwb-auth-onboarding-complete';
+const ONBOARDING_STORAGE_KEY_PREFIX = 'hwb-auth-onboarding-complete-user';
 const WEB_AUTH_PENDING_KEY = 'hwb-auth-pending-web-request';
 const CURRENT_USER_PROFILE_QUERY_KEY_PREFIX = 'current-user-profile';
 const inMemoryStorage = new Map<string, string>();
@@ -369,13 +374,45 @@ async function clearTokenResponse() {
   ]);
 }
 
-async function saveOnboardingState(hasCompletedOnboarding: boolean) {
-  await setStoredValue(ONBOARDING_STORAGE_KEY, hasCompletedOnboarding ? 'true' : 'false');
+function parseStoredOnboardingState(storedValue: string | null) {
+  if (storedValue === 'true') {
+    return true;
+  }
+
+  if (storedValue === 'false') {
+    return false;
+  }
+
+  return null;
 }
 
-async function loadOnboardingState() {
-  const storedValue = await getStoredValue(ONBOARDING_STORAGE_KEY);
-  return storedValue === 'true';
+function getOnboardingStorageKeyForUser(userId: string) {
+  return `${ONBOARDING_STORAGE_KEY_PREFIX}:${encodeURIComponent(userId)}`;
+}
+
+async function saveOnboardingState(hasCompletedOnboarding: boolean, userId?: string | null) {
+  const storageKey = userId ? getOnboardingStorageKeyForUser(userId) : ONBOARDING_STORAGE_KEY;
+  await setStoredValue(storageKey, hasCompletedOnboarding ? 'true' : 'false');
+}
+
+async function loadOnboardingState(userId?: string | null) {
+  if (userId) {
+    const userStoredValue = await getStoredValue(getOnboardingStorageKeyForUser(userId));
+    const userState = parseStoredOnboardingState(userStoredValue);
+    if (userState !== null) {
+      return userState;
+    }
+  }
+
+  return parseStoredOnboardingState(await getStoredValue(ONBOARDING_STORAGE_KEY));
+}
+
+function getTokenSubject(accessToken: string | null) {
+  if (!accessToken) {
+    return null;
+  }
+
+  return decodeJwt<{ sub?: string }>(accessToken)?.sub ?? null;
 }
 
 function isMissingCurrentUserProfile(error: unknown) {
@@ -389,6 +426,22 @@ function isMissingCurrentUserProfile(error: unknown) {
 function getCurrentUserProfileQueryKey(accessToken: string) {
   const claims = decodeJwt<{ sub?: string }>(accessToken);
   return [CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, claims?.sub ?? accessToken.slice(-16)] as const;
+}
+
+async function loadInitialOnboardingState(accessToken: string | null) {
+  if (!accessToken) {
+    return (await loadOnboardingState()) ?? false;
+  }
+
+  const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(
+    getCurrentUserProfileQueryKey(accessToken)
+  );
+  if (typeof cachedProfile?.onboardingCompleted === 'boolean') {
+    return cachedProfile.onboardingCompleted;
+  }
+
+  const storedAccountState = await loadOnboardingState(getTokenSubject(accessToken));
+  return storedAccountState ?? true;
 }
 
 function toAuthState(tokenResponse: AuthSession.TokenResponse): AuthState {
@@ -545,6 +598,40 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     });
   }, [configError, resolveDiscovery]);
 
+  const applyCurrentUserProfileState = useCallback(
+    (profile: CurrentUserProfileData | null, accessToken?: string | null) => {
+      if (!profile) {
+        setCurrentUserProfile(null);
+        return;
+      }
+
+      const existingProfile = queryClient.getQueryData<CurrentUserProfileData>([
+        CURRENT_USER_PROFILE_QUERY_KEY_PREFIX,
+        profile.id,
+      ]);
+      const resolvedProfile =
+        typeof profile.onboardingCompleted === 'boolean' ||
+        typeof existingProfile?.onboardingCompleted !== 'boolean'
+          ? profile
+          : {
+              ...profile,
+              onboardingCompleted: existingProfile.onboardingCompleted,
+            };
+
+      setCurrentUserProfile(resolvedProfile);
+      queryClient.setQueryData([CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, resolvedProfile.id], resolvedProfile);
+      if (accessToken) {
+        queryClient.setQueryData(getCurrentUserProfileQueryKey(accessToken), resolvedProfile);
+      }
+
+      if (typeof resolvedProfile.onboardingCompleted === 'boolean') {
+        setHasCompletedOnboarding(resolvedProfile.onboardingCompleted);
+        void saveOnboardingState(resolvedProfile.onboardingCompleted, resolvedProfile.id);
+      }
+    },
+    []
+  );
+
   const preloadCurrentUserProfileForToken = useCallback(async (accessToken: string | null) => {
     if (!accessToken) {
       setCurrentUserProfile(null);
@@ -554,7 +641,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     const queryKey = getCurrentUserProfileQueryKey(accessToken);
     const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(queryKey);
     if (cachedProfile) {
-      setCurrentUserProfile(cachedProfile);
+      applyCurrentUserProfileState(cachedProfile, accessToken);
       return cachedProfile;
     }
 
@@ -565,7 +652,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         staleTime: Number.POSITIVE_INFINITY,
         gcTime: 14 * 24 * 60 * 60 * 1000,
       });
-      setCurrentUserProfile(profile);
+      applyCurrentUserProfileState(profile, accessToken);
       return profile;
     } catch (error) {
       if (error instanceof Error && error.name === 'UnauthorizedError') {
@@ -576,24 +663,24 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         queryClient.removeQueries({ queryKey, exact: true });
         setCurrentUserProfile(null);
         setHasCompletedOnboarding(false);
-        await saveOnboardingState(false);
+        await saveOnboardingState(false, getTokenSubject(accessToken));
         return null;
       }
 
       throw error;
     }
-  }, []);
+  }, [applyCurrentUserProfileState]);
 
   const preloadCurrentUserProfile = useCallback(async () => {
     return preloadCurrentUserProfileForToken(authState?.accessToken ?? null);
   }, [authState?.accessToken, preloadCurrentUserProfileForToken]);
 
-  const updateCurrentUserProfileState = useCallback((profile: CurrentUserProfileData | null) => {
-    setCurrentUserProfile(profile);
-    if (profile) {
-      queryClient.setQueryData([CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, profile.id], profile);
-    }
-  }, []);
+  const updateCurrentUserProfileState = useCallback(
+    (profile: CurrentUserProfileData | null) => {
+      applyCurrentUserProfileState(profile, authState?.accessToken ?? null);
+    },
+    [applyCurrentUserProfileState, authState?.accessToken]
+  );
 
   const resolveValidTokenResponse = useCallback(
     async (options?: { forceRefresh?: boolean }) => {
@@ -748,13 +835,12 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       };
 
       try {
-        const storedOnboardingState = await loadOnboardingState();
-        if (isMounted) {
-          setHasCompletedOnboarding(storedOnboardingState);
-        }
-
         const cachedTokenResponse = await loadTokenResponse();
         if (!cachedTokenResponse) {
+          const storedOnboardingState = await loadInitialOnboardingState(null);
+          if (isMounted) {
+            setHasCompletedOnboarding(storedOnboardingState);
+          }
           logTokenResponseMetadata('startup restore no cached token', null);
           applySessionFromToken(null, 'online');
           return;
@@ -768,6 +854,9 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         }
 
         logTokenResponseMetadata('startup restored cached token', cachedTokenResponse);
+        if (isMounted) {
+          setHasCompletedOnboarding(await loadInitialOnboardingState(cachedTokenResponse.accessToken));
+        }
         applySessionFromToken(cachedTokenResponse, isOffline ? 'offline_grace' : 'online');
       } catch (error) {
         const shouldInvalidateSession = isUnauthorizedError(error);
@@ -1060,9 +1149,30 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   }, [authenticate]);
 
   const completeOnboarding = useCallback(async () => {
-    await saveOnboardingState(true);
+    const accessToken = authState?.accessToken ?? null;
+    let completedUserId = currentUserProfile?.id ?? getTokenSubject(accessToken);
+
+    if (accessToken) {
+      const updatedUser = await updateCurrentUserOnboardingCompleted(
+        accessToken,
+        true,
+        completedUserId ?? undefined
+      );
+      completedUserId = updatedUser?.ID ?? completedUserId;
+    }
+
+    await saveOnboardingState(true, completedUserId);
     setHasCompletedOnboarding(true);
-  }, []);
+    if (currentUserProfile) {
+      applyCurrentUserProfileState(
+        {
+          ...currentUserProfile,
+          onboardingCompleted: true,
+        },
+        accessToken
+      );
+    }
+  }, [applyCurrentUserProfileState, authState?.accessToken, currentUserProfile]);
 
   const clearLocalSession = useCallback(async () => {
     setAuthError(null);
@@ -1102,11 +1212,22 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   }, [auth0ClientId, clearLocalSession, configError]);
 
   const resetApp = useCallback(async () => {
-    await saveOnboardingState(false);
+    const accessToken = authState?.accessToken ?? null;
+    const userId = currentUserProfile?.id ?? getTokenSubject(accessToken);
+
+    if (accessToken) {
+      try {
+        await updateCurrentUserOnboardingCompleted(accessToken, false, userId ?? undefined);
+      } catch (error) {
+        console.warn('Failed to reset onboarding state on the server.', error);
+      }
+    }
+
+    await saveOnboardingState(false, userId);
     setHasCompletedOnboarding(false);
     setCurrentUserProfile(null);
     await clearLocalSession();
-  }, [clearLocalSession]);
+  }, [authState?.accessToken, clearLocalSession, currentUserProfile?.id]);
 
   const contextValue = useMemo<AuthContextValue>(
     () => ({

@@ -186,6 +186,7 @@ service api @(requires: 'authenticated-user') {
             ID,
             name,
             picture,
+            onboardingCompleted,
             false as isFriend : Boolean,
             '[]'  as roles    : String
         };

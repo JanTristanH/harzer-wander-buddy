@@ -43,6 +43,8 @@ export function DetailOverflowMenu({ actions, topOffset }: DetailOverflowMenuPro
   return (
     <>
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Aktionen"
         hitSlop={10}
         onPress={openMenu}
         style={({ pressed }) => [styles.overflowHeaderButton, pressed && styles.headerButtonPressed]}>
