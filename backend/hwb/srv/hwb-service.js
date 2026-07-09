@@ -587,8 +587,12 @@ async function updateTourByPOIList(req) {
 }
 
 function getApiEntities(service) {
-  const entities = service.entities;
-  return typeof entities === "function" ? entities(service.name) : entities;
+  if (!service) {
+    return {};
+  }
+
+  const entities = service.entities || service.api?.entities;
+  return typeof entities === "function" ? entities(service.name) : entities || {};
 }
 
 function isDriveTravelMode(travelMode) {

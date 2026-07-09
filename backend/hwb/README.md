@@ -13,6 +13,35 @@
   - to configure `production` the postgres location, you can use the `.cdsrc.json` file. `postgres.cdsrc.json` contains the connection details if a container is run from the `pg.yml` file. (`docker-compose -f pg.yml up -d`)
 - building and publishing the final docker container is handled via github actions via tags
 
+## React Native Web via CAP
+
+Do not use the Expo web dev server for local Auth0 login. The Auth0 SPA configuration is meant for the RN web build served by the CAP server.
+
+Build and copy the RN web HTML/assets into the CAP app folder from the repository root:
+
+```bash
+./scripts/build-and-copy-rnweb.sh
+```
+
+The script runs `npx expo export --platform web` in `app/` and replaces `backend/hwb/app/rnweb` with the generated `app/dist` output.
+
+Then start CAP:
+
+```bash
+cd backend/hwb
+npm run watch
+```
+
+Open the RN web app through CAP:
+
+- http://localhost:4004/app/rnweb
+
+Auth0 local development settings for this CAP-served entry point:
+
+- Allowed Callback URLs: `http://localhost:4004/app/rnweb/auth/callback`
+- Allowed Logout URLs: `http://localhost:4004/app/rnweb/auth/logout`
+- Allowed Web Origins: `http://localhost:4004`
+
 ## Needed Environment variables
 
 Rename the file `sample.env` to `.env` for development. You must also provide a api key in the `app/frontendhwb/index.html` to load the google maps script.
