@@ -40,7 +40,7 @@ import {
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useRequireSignInAction } from '@/lib/auth-actions';
 import { useConnectivity } from '@/lib/connectivity';
-import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images.generated';
+import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images';
 import {
   isNetworkUnavailableError,
   OFFLINE_REFRESH_MESSAGE,
@@ -109,7 +109,6 @@ const HARZ_REGION: Region = {
 };
 
 const PARKING_HIDE_LONGITUDE_DELTA = 0.18;
-const WEB_VIEWPORT_MARKER_PADDING_FACTOR = 0.45;
 const WEB_MARKER_DIAGNOSTIC_INTERVAL_MS = 4000;
 const WEB_MARKER_BUILD_WARN_MS = 14;
 const WEB_LONG_TASK_WARN_MS = 100;
@@ -125,7 +124,7 @@ const REMOTE_PLACE_SEARCH_MIN_QUERY_LENGTH = 4;
 const SEARCH_TARGET_DELTA = 0.02;
 const SELECTION_TARGET_DELTA = 0.08;
 const LOCATE_ME_TARGET_DELTA = 0.05;
-const SELECTION_TARGET_VERTICAL_RATIO = 0.3;
+const SELECTION_TARGET_VERTICAL_RATIO = 0.35;
 const SINGLE_POINT_FOCUS_OFFSET_RATIO = 0.15;
 const NORTH_HEADING_EPSILON = 2;
 const PROGRAMMATIC_SELECTION_MOVE_SUPPRESS_MS = 420;
@@ -269,33 +268,26 @@ function createSinglePointRegion(coordinate: Coordinate, longitudeDelta: number)
 function createPointRegionAtVerticalRatio(
   coordinate: Coordinate,
   longitudeDelta: number,
-  verticalRatio: number
+  verticalRatio: number,
+  latitudeDelta = longitudeDelta
 ): Region {
   const clampedLongitudeDelta = clampDelta(longitudeDelta);
-  const latitudeDelta = clampDelta(clampedLongitudeDelta);
+  const clampedLatitudeDelta = clampDelta(latitudeDelta);
   const centerOffsetRatio = verticalRatio - 0.5;
 
   return {
-    latitude: coordinate.latitude + latitudeDelta * centerOffsetRatio,
+    latitude: coordinate.latitude + clampedLatitudeDelta * centerOffsetRatio,
     longitude: coordinate.longitude,
-    latitudeDelta,
+    latitudeDelta: clampedLatitudeDelta,
     longitudeDelta: clampedLongitudeDelta,
   };
 }
 
-function isCoordinateWithinRegion(
-  coordinate: Coordinate,
-  region: Region,
-  latitudePaddingFactor = 0,
-  longitudePaddingFactor = 0
-) {
-  const latitudeHalfSpan = region.latitudeDelta * (0.5 + latitudePaddingFactor);
-  const longitudeHalfSpan = region.longitudeDelta * (0.5 + longitudePaddingFactor);
+function scaleLatitudeDeltaForRegion(region: Region, longitudeDelta: number) {
+  const longitudeToLatitudeRatio =
+    region.longitudeDelta > 0 ? region.latitudeDelta / region.longitudeDelta : 1;
 
-  return (
-    Math.abs(coordinate.latitude - region.latitude) <= latitudeHalfSpan &&
-    Math.abs(coordinate.longitude - region.longitude) <= longitudeHalfSpan
-  );
+  return clampDelta(longitudeDelta * longitudeToLatitudeRatio);
 }
 
 function haversineDistanceKm(from: Coordinate, to: Coordinate) {
@@ -619,7 +611,6 @@ export default function MapScreen() {
       const [coordinate] = coordinates;
       const nextRegion = createSinglePointRegion(coordinate, 0.08);
       suppressSelectionSheetCompactionForAutoZoom();
-      updateMapRegion(nextRegion);
       mapRef.current.animateToRegion(nextRegion, 250);
       return;
     }
@@ -629,7 +620,7 @@ export default function MapScreen() {
       edgePadding: MAP_EDGE_PADDING,
       animated: true,
     });
-  }, [suppressSelectionSheetCompactionForAutoZoom, updateMapRegion]);
+  }, [suppressSelectionSheetCompactionForAutoZoom]);
 
   const stampItems = useMemo<StampMarkerItem[]>(() => {
     if (!data) {
@@ -701,19 +692,8 @@ export default function MapScreen() {
   }, [showStamps, stampItems, visitFilter]);
 
   const viewportStampItems = useMemo(() => {
-    if (Platform.OS !== 'web') {
-      return visibleStampItems;
-    }
-
-    return visibleStampItems.filter((item) =>
-      isCoordinateWithinRegion(
-        item.coordinate,
-        region,
-        WEB_VIEWPORT_MARKER_PADDING_FACTOR,
-        WEB_VIEWPORT_MARKER_PADDING_FACTOR
-      )
-    );
-  }, [region, visibleStampItems]);
+    return visibleStampItems;
+  }, [visibleStampItems]);
 
   const visibleParkingItems = useMemo(() => {
     if (!showParking) {
@@ -728,19 +708,8 @@ export default function MapScreen() {
   }, [parkingItems, region.longitudeDelta, showParking]);
 
   const viewportParkingItems = useMemo(() => {
-    if (Platform.OS !== 'web') {
-      return visibleParkingItems;
-    }
-
-    return visibleParkingItems.filter((item) =>
-      isCoordinateWithinRegion(
-        item.coordinate,
-        region,
-        WEB_VIEWPORT_MARKER_PADDING_FACTOR,
-        WEB_VIEWPORT_MARKER_PADDING_FACTOR
-      )
-    );
-  }, [region, visibleParkingItems]);
+    return visibleParkingItems;
+  }, [visibleParkingItems]);
 
   const visibleItems = useMemo<MarkerItem[]>(
     () => [...visibleStampItems, ...visibleParkingItems],
@@ -786,12 +755,12 @@ export default function MapScreen() {
       const nextRegion = createPointRegionAtVerticalRatio(
         item.coordinate,
         targetDelta,
-        SELECTION_TARGET_VERTICAL_RATIO
+        SELECTION_TARGET_VERTICAL_RATIO,
+        scaleLatitudeDeltaForRegion(regionRef.current, targetDelta)
       );
-      updateMapRegion(nextRegion);
       mapRef.current?.animateToRegion(nextRegion, 260);
     },
-    [selectedItemId, suppressSelectionSheetCompactionForSelectionMove, updateMapRegion]
+    [selectedItemId, suppressSelectionSheetCompactionForSelectionMove]
   );
 
   const stampMarkerElements = useMemo(() => {
@@ -1374,11 +1343,10 @@ export default function MapScreen() {
 
         const nextRegion = zoomRegion(regionRef.current, factor);
         suppressSelectionSheetCompactionForAutoZoom();
-        updateMapRegion(nextRegion);
         map.animateToRegion(nextRegion, 180);
       })();
     },
-    [suppressSelectionSheetCompactionForAutoZoom, updateMapRegion]
+    [suppressSelectionSheetCompactionForAutoZoom]
   );
 
   const handleLocateMePress = useCallback(() => {
@@ -1389,9 +1357,8 @@ export default function MapScreen() {
     const targetDelta = Math.min(regionRef.current.longitudeDelta, LOCATE_ME_TARGET_DELTA);
     const nextRegion = createSinglePointRegion(userLocation, targetDelta);
     suppressSelectionSheetCompactionForAutoZoom();
-    updateMapRegion(nextRegion);
     mapRef.current?.animateToRegion(nextRegion, 260);
-  }, [suppressSelectionSheetCompactionForAutoZoom, updateMapRegion, userLocation]);
+  }, [suppressSelectionSheetCompactionForAutoZoom, userLocation]);
 
   const handleStampVisit = useCallback(async () => {
     if (!selectedItem || selectedItem.kind === 'parking' || isStamping) {
@@ -1777,18 +1744,17 @@ export default function MapScreen() {
     setSearchQuery('');
     setIsSearchFocused(false);
     searchInputRef.current?.blur();
-    const nextRegion = {
-      ...createPointRegionAtVerticalRatio(
-        item.coordinate,
-        SEARCH_TARGET_DELTA,
-        SELECTION_TARGET_VERTICAL_RATIO
-      ),
-    };
+    const targetDelta = Math.min(regionRef.current.longitudeDelta, SEARCH_TARGET_DELTA);
+    const nextRegion = createPointRegionAtVerticalRatio(
+      item.coordinate,
+      targetDelta,
+      SELECTION_TARGET_VERTICAL_RATIO,
+      scaleLatitudeDeltaForRegion(regionRef.current, targetDelta)
+    );
 
     suppressSelectionSheetCompactionForSelectionMove();
-    updateMapRegion(nextRegion);
     mapRef.current?.animateToRegion(nextRegion, 260);
-  }, [selectedItemId, suppressSelectionSheetCompactionForSelectionMove, updateMapRegion]);
+  }, [selectedItemId, suppressSelectionSheetCompactionForSelectionMove]);
 
   const focusExternalPlaceOnMap = useCallback((place: PlaceSearchResult) => {
     if (searchBlurTimeoutRef.current) {
@@ -1801,14 +1767,15 @@ export default function MapScreen() {
     setIsSearchFocused(false);
     setSearchQuery(place.name);
     searchInputRef.current?.blur();
+    const targetDelta = Math.min(regionRef.current.longitudeDelta, SEARCH_TARGET_DELTA);
     const nextRegion = createPointRegionAtVerticalRatio(
       { latitude: place.latitude, longitude: place.longitude },
-      SEARCH_TARGET_DELTA,
-      SELECTION_TARGET_VERTICAL_RATIO
+      targetDelta,
+      SELECTION_TARGET_VERTICAL_RATIO,
+      scaleLatitudeDeltaForRegion(regionRef.current, targetDelta)
     );
-    updateMapRegion(nextRegion);
     mapRef.current?.animateToRegion(nextRegion, 260);
-  }, [updateMapRegion]);
+  }, []);
 
   const handleOpenExternalPlaceInGoogleMaps = useCallback(async () => {
     if (!selectedExternalPlace) {

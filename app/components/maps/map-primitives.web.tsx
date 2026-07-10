@@ -197,9 +197,16 @@ const LEAFLET_RUNTIME_CSS = `
   max-width: none !important;
   width: auto;
 }
+.hwb-leaflet-div-icon {
+  background: transparent;
+  border: 0;
+}
+.hwb-leaflet-div-icon svg {
+  pointer-events: none;
+}
 `;
 
-const iconCache = new Map<string, L.Icon>();
+const iconCache = new Map<string, L.Icon | L.DivIcon>();
 const webMapPerfDebugState = {
   iconCacheHits: 0,
   iconCacheMisses: 0,
@@ -243,9 +250,13 @@ function clampZoom(value: number) {
   return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, value));
 }
 
-function zoomFromLongitudeDelta(longitudeDelta: number) {
+function zoomFromLongitudeDelta(longitudeDelta: number, viewportWidth = 256) {
   const normalized = Math.max(0.000001, longitudeDelta);
-  return clampZoom(Math.log2(360 / normalized));
+  const normalizedViewportWidth = Number.isFinite(viewportWidth)
+    ? Math.max(1, viewportWidth)
+    : 256;
+
+  return clampZoom(Math.log2((360 * normalizedViewportWidth) / (256 * normalized)));
 }
 
 function regionFromMap(map: LeafletMap): Region {
@@ -286,6 +297,22 @@ function normalizeMarkerLabel(value: string | null) {
   return normalized.slice(0, 4);
 }
 
+function markerBadgeRadiusForLabel(label: string) {
+  if (label.length <= 1) {
+    return 8.6;
+  }
+
+  if (label.length === 2) {
+    return 10.9;
+  }
+
+  if (label.length === 3) {
+    return 12.8;
+  }
+
+  return 14.6;
+}
+
 function extractMarkerLabel(children: React.ReactNode): string | null {
   if (children == null || typeof children === 'boolean') {
     return null;
@@ -320,13 +347,13 @@ function createPinSvg(color: string, size: number, label?: string | null) {
 
   const escapedLabel = normalizeMarkerLabel(label ?? null);
   const renderedLabel = escapedLabel ? escapeXmlText(escapedLabel) : null;
-  const labelFontSize = renderedLabel && renderedLabel.length >= 3 ? 8.4 : 9.6;
+  const badgeRadius = renderedLabel ? markerBadgeRadiusForLabel(renderedLabel) : 8.6;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round(size * 1.35)}" viewBox="0 0 28 38"><path fill="${color}" d="M14 1C6.82 1 1 6.82 1 14c0 9.94 12.01 22.45 12.52 22.98a.7.7 0 0 0 .96 0C14.99 36.45 27 23.94 27 14 27 6.82 21.18 1 14 1Z"/>${
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round((size * 60) / 56)}" viewBox="0 0 56 60"><defs><filter id="marker-shadow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="2.2" flood-color="#141e14" flood-opacity="0.24"/></filter></defs><g filter="url(#marker-shadow)"><path d="M28 4C17.5066 4 9 12.5066 9 23c0 14.25 19 33 19 33s19-18.75 19-33C47 12.5066 38.4934 4 28 4Zm0 27.5c-4.6944 0-8.5-3.8056-8.5-8.5s3.8056-8.5 8.5-8.5 8.5 3.8056 8.5 8.5-3.8056 8.5-8.5 8.5Z" fill="${color}" stroke="#ffffff" stroke-width="2"/><ellipse cx="28" cy="23" rx="${badgeRadius}" ry="8.7" fill="#ffffff"/>${
     renderedLabel
-      ? `<circle cx="14" cy="14" r="7.1" fill="white"/><text x="14" y="14.6" fill="#1f2f1f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="${labelFontSize}" font-weight="700" text-anchor="middle" dominant-baseline="middle">${renderedLabel}</text>`
-      : '<circle cx="14" cy="14" r="5.25" fill="white"/>'
-  }</svg>`;
+      ? `<text x="28" y="23.5" fill="#111111" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle">${renderedLabel}</text>`
+      : ''
+  }</g></svg>`;
 }
 
 type ResolvedImageSource = {
@@ -415,10 +442,11 @@ function createIcon(options: {
         iconSize: [width, height],
         iconUrl: imageUri,
       })
-    : L.icon({
+    : L.divIcon({
+        className: 'hwb-leaflet-div-icon',
+        html: createPinSvg(color, size, normalizedLabel),
         iconAnchor,
         iconSize: [width, height],
-        iconUrl: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(createPinSvg(color, size, normalizedLabel))}`,
       });
 
   iconCache.set(cacheKey, icon);
@@ -598,9 +626,13 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           return;
         }
 
-        map.flyTo(coordinateToTuple(region), zoomFromLongitudeDelta(region.longitudeDelta), {
-          duration: Math.max(0, duration) / 1000,
-        });
+        map.flyTo(
+          coordinateToTuple(region),
+          zoomFromLongitudeDelta(region.longitudeDelta, map.getSize().x),
+          {
+            duration: Math.max(0, duration) / 1000,
+          }
+        );
       },
       fitToCoordinates(coordinates, options) {
         if (!map || coordinates.length === 0) {
