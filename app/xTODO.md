@@ -1,3 +1,7 @@
+- neue freundschafsanfragen presenter darstellen (notification unten und im freundes tab)
+- Bug report, irgendwas spring links und rechts
+- mehr analytics App / WEbsite
+
 ## 📊 Neu priorisierte TODOs (offen, V2)
 
 | Prio | Thema | Nutzen | Aufwand | Kategorie | Status | Begründung |
