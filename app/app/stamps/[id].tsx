@@ -1879,6 +1879,85 @@ function StampDetailContent() {
             <Text style={styles.description}>Keine Beschreibung fuer diese Stempelstelle verfuegbar.</Text>
           )}
 
+          {isGuest || detail.myVisits.length > 0 ? (
+            <Section
+              title="Meine bisherigen Besuche"
+              action={
+                !isGuest && detail.myVisits.length > 0 ? (
+                  <Pressable
+                    disabled={!!busyVisitId || !canPerformWrites}
+                    onPress={handleToggleVisitEditing}
+                    style={({ pressed }) => [
+                      styles.sectionAction,
+                      (busyVisitId || !canPerformWrites) && styles.visitActionDisabled,
+                      pressed && canPerformWrites && styles.sectionActionPressed,
+                    ]}>
+                    <Text style={styles.sectionActionLabel}>
+                      {isEditingVisits ? 'Fertig' : 'Bearbeiten'}
+                    </Text>
+                  </Pressable>
+                ) : null
+              }>
+              {isGuest ? (
+                <LockedGuestRows
+                  body="Melde dich an, um deine Besuche zu speichern und zu verwalten."
+                  onSignIn={() => router.push('/login' as never)}
+                />
+              ) : showDeferredSkeletons ? (
+                <>
+                  <SkeletonLine width="72%" />
+                  <SkeletonLine width="58%" />
+                </>
+              ) : (
+                detail.myVisits.map((visit) => (
+                  <View key={visit.ID} style={styles.visitCard}>
+                    {isEditingVisits ? (
+                      <View style={styles.visitInlineRow}>
+                        <Pressable
+                          disabled={busyVisitId === visit.ID || !canPerformWrites}
+                          onPress={() => openVisitPicker(visit.ID, visitDrafts[visit.ID])}
+                          style={({ pressed }) => [
+                            styles.visitPickerButton,
+                            (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
+                            pressed &&
+                            busyVisitId !== visit.ID &&
+                            canPerformWrites &&
+                            styles.sectionActionPressed,
+                          ]}>
+                          <Text style={styles.visitPickerLabel}>
+                            {visitDrafts[visit.ID]
+                              ? formatEditableVisitDate(visitDrafts[visit.ID])
+                              : 'Zeit waehlen'}
+                          </Text>
+                          <Feather color="#637062" name="calendar" size={16} />
+                        </Pressable>
+                        <Pressable
+                          disabled={busyVisitId === visit.ID || !canPerformWrites}
+                          onPress={() => confirmDeleteVisit(visit.ID)}
+                          style={({ pressed }) => [
+                            styles.visitActionButton,
+                            styles.visitDeleteButton,
+                            styles.visitInlineAction,
+                            pressed &&
+                            busyVisitId !== visit.ID &&
+                            canPerformWrites &&
+                            styles.sectionActionPressed,
+                            (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
+                          ]}>
+                          <Text style={styles.visitDeleteLabel}>Löschen</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Text style={styles.simpleItemTitle}>
+                        {formatVisitDate(getVisitTimestamp(visit))}
+                      </Text>
+                    )}
+                  </View>
+                ))
+              )}
+            </Section>
+          ) : null}
+
           {isGuest ? (
             <Section title="Meine Notiz">
               <LockedGuestRows
@@ -1900,108 +1979,6 @@ function StampDetailContent() {
               }}
             />
           )}
-
-          <Section title="Stempel in der Nähe">
-            {isGuest ? (
-              <LockedGuestRows
-                body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            ) : showDeferredSkeletons ? (
-              <>
-                <SkeletonRow />
-                <SkeletonRow />
-                <SkeletonRow />
-              </>
-            ) : detail.nearbyStamps.length > 0 ? (
-              detail.nearbyStamps.map((neighbor) => (
-                <Pressable
-                  key={neighbor.ID}
-                  onPress={() =>
-                    handleAttemptNavigateAway(() => {
-                      router.push(`/stamps/${neighbor.ID}` as never);
-                    })
-                  }
-                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
-                  {neighbor.heroImageUrl ? (
-                    <Image
-                      cachePolicy="disk"
-                      contentFit="cover"
-                      source={buildAuthenticatedImageSource(neighbor.heroImageUrl, accessToken)}
-                      style={styles.rowArtwork}
-                    />
-                  ) : (
-                    <View style={[styles.rowBadge, styles.rowBadgeStamp]}>
-                      <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelStamp]}>{neighbor.number || '--'}</Text>
-                    </View>
-                  )}
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>
-                      {neighbor.number || '--'} {'\u2022'} {neighbor.name}
-                    </Text>
-                    <Text style={styles.rowMeta}>
-                      {formatDistance(neighbor.distanceKm)}
-                      {neighbor.durationMinutes ? ` • ${formatDuration(neighbor.durationMinutes)}` : ''}
-                      {formatElevationSummary(neighbor.elevationGainMeters, neighbor.elevationLossMeters)}
-                    </Text>
-                  </View>
-                  <Feather color="#8b957f" name="chevron-right" size={18} />
-                </Pressable>
-              ))
-            ) : (
-              <View style={styles.emptyNearbyStampsState}>
-                <Image
-                  contentFit="contain"
-                  source={emptyNearbyStampsIllustration}
-                  style={styles.emptyNearbyStampsIllustration}
-                />
-                <Text style={[styles.emptySectionText, styles.emptyNearbyStampsText]}>
-                  Keine Stempel in der Nähe gefunden.
-                </Text>
-              </View>
-            )}
-          </Section>
-
-          <Section title="Parkplätze in der Nähe">
-            {isGuest ? (
-              <LockedGuestRows
-                body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            ) : showDeferredSkeletons ? (
-              <>
-                <SkeletonLine width="86%" />
-                <SkeletonLine width="78%" />
-                <SkeletonLine width="82%" />
-              </>
-            ) : detail.nearbyParking.length > 0 ? (
-              detail.nearbyParking.map((parking) => (
-                <Pressable
-                  key={parking.ID}
-                  onPress={() =>
-                    handleAttemptNavigateAway(() => {
-                      router.push(`/parking/${parking.ID}` as never);
-                    })
-                  }
-                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
-                  <View style={[styles.rowBadge, styles.rowBadgeParking]}>
-                    <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelParking]}>P</Text>
-                  </View>
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>{parking.name}</Text>
-                    <Text style={styles.rowMeta}>
-                      {formatDistance(parking.distanceKm)}
-                      {parking.durationMinutes ? ` • ${formatDuration(parking.durationMinutes)}` : ''}
-                      {formatElevationSummary(parking.elevationGainMeters, parking.elevationLossMeters)}
-                    </Text>
-                  </View>
-                  <Feather color="#8b957f" name="chevron-right" size={18} />
-                </Pressable>
-              ))
-            ) : (
-              <Text style={styles.emptySectionText}>Keine Parkplätze in der Nähe gefunden.</Text>
-            )}
-          </Section>
 
           {isGuest ? (
             <Section title="Von aktueller Position">
@@ -2081,6 +2058,108 @@ function StampDetailContent() {
             </CurrentPositionDistanceSection>
           )}
 
+          <Section title="Parkplätze in der Nähe">
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
+              <>
+                <SkeletonLine width="86%" />
+                <SkeletonLine width="78%" />
+                <SkeletonLine width="82%" />
+              </>
+            ) : detail.nearbyParking.length > 0 ? (
+              detail.nearbyParking.map((parking) => (
+                <Pressable
+                  key={parking.ID}
+                  onPress={() =>
+                    handleAttemptNavigateAway(() => {
+                      router.push(`/parking/${parking.ID}` as never);
+                    })
+                  }
+                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
+                  <View style={[styles.rowBadge, styles.rowBadgeParking]}>
+                    <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelParking]}>P</Text>
+                  </View>
+                  <View style={styles.rowBody}>
+                    <Text style={styles.rowTitle}>{parking.name}</Text>
+                    <Text style={styles.rowMeta}>
+                      {formatDistance(parking.distanceKm)}
+                      {parking.durationMinutes ? ` • ${formatDuration(parking.durationMinutes)}` : ''}
+                      {formatElevationSummary(parking.elevationGainMeters, parking.elevationLossMeters)}
+                    </Text>
+                  </View>
+                  <Feather color="#8b957f" name="chevron-right" size={18} />
+                </Pressable>
+              ))
+            ) : (
+              <Text style={styles.emptySectionText}>Keine Parkplätze in der Nähe gefunden.</Text>
+            )}
+          </Section>
+
+          <Section title="Stempel in der Nähe">
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
+              <>
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </>
+            ) : detail.nearbyStamps.length > 0 ? (
+              detail.nearbyStamps.map((neighbor) => (
+                <Pressable
+                  key={neighbor.ID}
+                  onPress={() =>
+                    handleAttemptNavigateAway(() => {
+                      router.push(`/stamps/${neighbor.ID}` as never);
+                    })
+                  }
+                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
+                  {neighbor.heroImageUrl ? (
+                    <Image
+                      cachePolicy="disk"
+                      contentFit="cover"
+                      source={buildAuthenticatedImageSource(neighbor.heroImageUrl, accessToken)}
+                      style={styles.rowArtwork}
+                    />
+                  ) : (
+                    <View style={[styles.rowBadge, styles.rowBadgeStamp]}>
+                      <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelStamp]}>{neighbor.number || '--'}</Text>
+                    </View>
+                  )}
+                  <View style={styles.rowBody}>
+                    <Text style={styles.rowTitle}>
+                      {neighbor.number || '--'} {'\u2022'} {neighbor.name}
+                    </Text>
+                    <Text style={styles.rowMeta}>
+                      {formatDistance(neighbor.distanceKm)}
+                      {neighbor.durationMinutes ? ` • ${formatDuration(neighbor.durationMinutes)}` : ''}
+                      {formatElevationSummary(neighbor.elevationGainMeters, neighbor.elevationLossMeters)}
+                    </Text>
+                  </View>
+                  <Feather color="#8b957f" name="chevron-right" size={18} />
+                </Pressable>
+              ))
+            ) : (
+              <View style={styles.emptyNearbyStampsState}>
+                <Image
+                  contentFit="contain"
+                  source={emptyNearbyStampsIllustration}
+                  style={styles.emptyNearbyStampsIllustration}
+                />
+                <Text style={[styles.emptySectionText, styles.emptyNearbyStampsText]}>
+                  Keine Stempel in der Nähe gefunden.
+                </Text>
+              </View>
+            )}
+          </Section>
+
           <Section title="Freunde hier gewesen">
             {isGuest ? (
               <LockedGuestRows
@@ -2106,84 +2185,6 @@ function StampDetailContent() {
             )}
           </Section>
 
-          <Section
-            title="Meine bisherigen Besuche"
-            action={
-              !isGuest && detail.myVisits.length > 0 ? (
-                <Pressable
-                  disabled={!!busyVisitId || !canPerformWrites}
-                  onPress={handleToggleVisitEditing}
-                  style={({ pressed }) => [
-                    styles.sectionAction,
-                    (busyVisitId || !canPerformWrites) && styles.visitActionDisabled,
-                    pressed && canPerformWrites && styles.sectionActionPressed,
-                  ]}>
-                  <Text style={styles.sectionActionLabel}>
-                    {isEditingVisits ? 'Fertig' : 'Bearbeiten'}
-                  </Text>
-                </Pressable>
-              ) : null
-            }>
-            {isGuest ? (
-              <LockedGuestRows
-                body="Melde dich an, um deine Besuche zu speichern und zu verwalten."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            ) : showDeferredSkeletons ? (
-              <>
-                <SkeletonLine width="72%" />
-                <SkeletonLine width="58%" />
-              </>
-            ) : detail.myVisits.length > 0 ? (
-              detail.myVisits.map((visit) => (
-                <View key={visit.ID} style={styles.visitCard}>
-                  {isEditingVisits ? (
-                    <View style={styles.visitInlineRow}>
-                      <Pressable
-                        disabled={busyVisitId === visit.ID || !canPerformWrites}
-                        onPress={() => openVisitPicker(visit.ID, visitDrafts[visit.ID])}
-                        style={({ pressed }) => [
-                          styles.visitPickerButton,
-                          (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
-                          pressed &&
-                          busyVisitId !== visit.ID &&
-                          canPerformWrites &&
-                          styles.sectionActionPressed,
-                        ]}>
-                        <Text style={styles.visitPickerLabel}>
-                          {visitDrafts[visit.ID]
-                            ? formatEditableVisitDate(visitDrafts[visit.ID])
-                            : 'Zeit waehlen'}
-                        </Text>
-                        <Feather color="#637062" name="calendar" size={16} />
-                      </Pressable>
-                      <Pressable
-                        disabled={busyVisitId === visit.ID || !canPerformWrites}
-                        onPress={() => confirmDeleteVisit(visit.ID)}
-                        style={({ pressed }) => [
-                          styles.visitActionButton,
-                          styles.visitDeleteButton,
-                          styles.visitInlineAction,
-                          pressed &&
-                          busyVisitId !== visit.ID &&
-                          canPerformWrites &&
-                          styles.sectionActionPressed,
-                          (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
-                        ]}>
-                        <Text style={styles.visitDeleteLabel}>Löschen</Text>
-                      </Pressable>
-                    </View>
-                  ) : (
-                    <Text style={styles.simpleItemTitle}>
-                      {formatVisitDate(getVisitTimestamp(visit))}
-                    </Text>
-                  )}
-                </View>
-              ))
-            ) : (
-              <Text style={styles.emptySectionText}>Du hast diese Stempelstelle noch nicht gestempelt.</Text>
-            )}
-          </Section>
         </View>
       </ScrollView>
 
