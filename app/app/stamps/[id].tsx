@@ -55,6 +55,7 @@ import {
 import { useAdminAccess, useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useRequireSignInAction } from '@/lib/auth-actions';
 import { buildAuthenticatedImageSource } from '@/lib/images';
+import { confirmAction } from '@/lib/confirm-action';
 import {
   isNetworkUnavailableError,
   OFFLINE_REFRESH_MESSAGE,
@@ -1156,23 +1157,15 @@ function StampDetailContent() {
       return;
     }
 
-    Alert.alert(
-      'Besuch löschen?',
-      'Dieser Besuchseintrag wird dauerhaft entfernt.',
-      [
-        {
-          text: 'Abbrechen',
-          style: 'cancel',
-        },
-        {
-          text: 'Löschen',
-          style: 'destructive',
-          onPress: () => {
-            void handleDeleteVisit(stampingId);
-          },
-        },
-      ]
-    );
+    confirmAction({
+      title: 'Besuch löschen?',
+      message: 'Dieser Besuchseintrag wird dauerhaft entfernt.',
+      confirmText: 'Löschen',
+      destructive: true,
+      onConfirm: () => {
+        void handleDeleteVisit(stampingId);
+      },
+    });
   }
 
   async function persistVisitDate(stampingId: string, nextVisitedAt: string) {
