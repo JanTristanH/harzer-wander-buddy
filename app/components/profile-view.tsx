@@ -43,6 +43,10 @@ type ProfileActionCard =
       toggleLabel: string;
       value: boolean;
       busy?: boolean;
+      groupLabel?: string;
+      groupSelected?: boolean;
+      groupDisabled?: boolean;
+      onGroupToggle?: () => void;
       removeLabel: string;
       onToggle: (value: boolean) => void;
       onRemove: () => void;
@@ -660,6 +664,32 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                   <View style={styles.statusTile}>
                     <Text style={styles.statusTileLabel}>{actionCard.statusLabel}</Text>
                   </View>
+                  {actionCard.groupLabel && actionCard.onGroupToggle ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: actionCard.groupSelected }}
+                      disabled={actionCard.groupDisabled}
+                      onPress={actionCard.onGroupToggle}
+                      style={({ pressed }) => [
+                        styles.groupButton,
+                        actionCard.groupSelected && styles.groupButtonSelected,
+                        actionCard.groupDisabled && styles.actionPrimaryButtonDisabled,
+                        pressed && styles.pressed,
+                      ]}>
+                      <Feather
+                        color={actionCard.groupSelected ? '#f5f3ee' : '#2e6b4b'}
+                        name={actionCard.groupSelected ? 'user-minus' : 'user-plus'}
+                        size={18}
+                      />
+                      <Text
+                        style={[
+                          styles.groupButtonLabel,
+                          actionCard.groupSelected && styles.groupButtonLabelSelected,
+                        ]}>
+                        {actionCard.groupLabel}
+                      </Text>
+                    </Pressable>
+                  ) : null}
                   <View style={styles.toggleTile}>
                     <View style={styles.toggleHeader}>
                       <Text style={styles.toggleLabel}>{actionCard.toggleLabel}</Text>
@@ -1244,6 +1274,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     textAlign: 'center',
+  },
+  groupButton: {
+    minHeight: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#2e6b4b',
+    backgroundColor: '#f5f3ee',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  groupButtonSelected: {
+    backgroundColor: '#2e6b4b',
+  },
+  groupButtonLabel: {
+    color: '#2e6b4b',
+    fontSize: 13,
+    lineHeight: 16,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  groupButtonLabelSelected: {
+    color: '#f5f3ee',
   },
   toggleTile: {
     minHeight: 56,

@@ -20,10 +20,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CompletionConfetti, useCompletionConfetti } from '@/components/completion-confetti';
+import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
 import type { Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useHikingGroup } from '@/lib/hiking-group';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
 
 type FilterKey = 'all' | 'visited' | 'open' | 'near' | 'relocated';
@@ -44,6 +46,7 @@ const KNOWN_STAMP_ROW_HEIGHT = 112;
 const DEFAULT_INTRO_HEIGHT = 220;
 const DEFAULT_CONTROLS_HEIGHT = 124;
 const STAMP_LIST_START_INDEX = 2;
+const GROUP_STAMP_ROW_HEIGHT = 176;
 const FAST_SCROLLER_HIDE_DELAY_MS = 850;
 const FAST_SCROLLER_THUMB_HEIGHT = 44;
 const FAST_SCROLLER_TRACK_HEIGHT = 580;
@@ -133,7 +136,10 @@ function isRelocatedStamp(validTo?: string) {
 
 export default function StampsScreen() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { currentUserProfile, isAuthenticated } = useAuth();
+  const { groupUserIds, selectedFriendIds, selectedMembers } = useHikingGroup();
+  const isGroupActive = isAuthenticated && selectedFriendIds.length > 0;
+  const stampRowHeight = isGroupActive ? GROUP_STAMP_ROW_HEIGHT : KNOWN_STAMP_ROW_HEIGHT;
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   const [locationState, setLocationState] = useState<LocationState>('idle');
@@ -159,6 +165,7 @@ export default function StampsScreen() {
     activeFilter === 'relocated' ? 'relocated' : 'validToday';
   const authenticatedQuery = useFilteredStampsOverviewQuery(backendFilter, {
     enabled: isAuthenticated,
+    groupUserIds,
   });
   const guestQuery = useGuestFilteredStampsOverviewQuery(backendFilter, {
     enabled: !isAuthenticated,
@@ -309,7 +316,7 @@ export default function StampsScreen() {
   const headerHeight = LIST_TOP_PADDING + introHeight + controlsHeight;
   const stampStartOffset = LIST_TOP_PADDING + introHeight;
   const estimatedContentHeight =
-    headerHeight + filteredStamps.length * KNOWN_STAMP_ROW_HEIGHT + LIST_BOTTOM_PADDING;
+    headerHeight + filteredStamps.length * stampRowHeight + LIST_BOTTOM_PADDING;
   const maxScrollY = Math.max(0, Math.max(contentHeight, estimatedContentHeight) - viewportHeight);
   const hasScrollableList = filteredStamps.length > 0 && maxScrollY > 0;
   const trackHeight = FAST_SCROLLER_TRACK_HEIGHT;
@@ -369,11 +376,11 @@ export default function StampsScreen() {
     }
 
     const adjustedOffset = Math.max(0, offsetY - stampStartOffset);
-    const zeroBasedIndex = Math.floor(adjustedOffset / KNOWN_STAMP_ROW_HEIGHT);
+    const zeroBasedIndex = Math.floor(adjustedOffset / stampRowHeight);
     const clamped = Math.max(0, Math.min(filteredStamps.length - 1, zeroBasedIndex));
     const nextIndex = clamped + 1;
     setPreviewIndex((current) => (current === nextIndex ? current : nextIndex));
-  }, [filteredStamps.length, stampStartOffset]);
+  }, [filteredStamps.length, stampRowHeight, stampStartOffset]);
 
   const updateScrollFromTouch = React.useCallback(
     (touchY: number) => {
@@ -623,13 +630,20 @@ export default function StampsScreen() {
         })}
       </ScrollView>
 
+      {isAuthenticated ? (
+        <View style={styles.groupSelectorSection}>
+          <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
+          <GroupSelector />
+        </View>
+      ) : null}
+
       {activeFilter === 'near' && locationState !== 'granted' ? (
         <Text style={styles.filterHint}>
           Standortfreigabe fehlt. Aktiviere sie im Onboarding oder in den Systemeinstellungen.
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, locationState, query]);
+  ), [activeFilter, isAuthenticated, locationState, query]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {
@@ -680,8 +694,15 @@ export default function StampsScreen() {
       }
 
       return (
-        <View style={styles.stampRow}>
+        <View style={[styles.stampRow, { height: stampRowHeight }]}>
           <StampListItem
+            currentUser={{
+              name: currentUserProfile?.name,
+              picture: currentUserProfile?.picture,
+            }}
+            groupActive={isGroupActive}
+            groupMembers={selectedMembers}
+            groupSize={groupUserIds.length}
             index={item.stampIndex}
             item={item.stampItem.stamp}
             metaLabel={formatDistance(item.stampItem.distanceKm)}
@@ -695,8 +716,14 @@ export default function StampsScreen() {
       emptyStateIllustration,
       emptyStateTitle,
       handleStampPress,
+      currentUserProfile?.name,
+      currentUserProfile?.picture,
+      groupUserIds.length,
+      isGroupActive,
       renderControls,
       renderIntro,
+      selectedMembers,
+      stampRowHeight,
     ]
   );
 
@@ -712,11 +739,11 @@ export default function StampsScreen() {
 
       return {
         index,
-        length: KNOWN_STAMP_ROW_HEIGHT,
-        offset: headerHeight + (index - STAMP_LIST_START_INDEX) * KNOWN_STAMP_ROW_HEIGHT,
+        length: stampRowHeight,
+        offset: headerHeight + (index - STAMP_LIST_START_INDEX) * stampRowHeight,
       };
     },
-    [controlsHeight, headerHeight, introHeight]
+    [controlsHeight, headerHeight, introHeight, stampRowHeight]
   );
 
   const handlePullToRefresh = useCallback(() => {
@@ -784,6 +811,12 @@ export default function StampsScreen() {
                 </View>
               ))}
             </ScrollView>
+            {isAuthenticated ? (
+              <View style={styles.groupSelectorSection}>
+                <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
+                <GroupSelector />
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.loadingCards}>
@@ -869,7 +902,7 @@ export default function StampsScreen() {
           getItemLayout={getItemLayout}
           onScrollToIndexFailed={(info) => {
             const fallbackOffset =
-              stampStartOffset + Math.max(0, info.index - STAMP_LIST_START_INDEX) * KNOWN_STAMP_ROW_HEIGHT;
+              stampStartOffset + Math.max(0, info.index - STAMP_LIST_START_INDEX) * stampRowHeight;
             listRef.current?.scrollToOffset({
               animated: false,
               offset: Math.min(maxScrollY, fallbackOffset),
@@ -1119,6 +1152,17 @@ const styles = StyleSheet.create({
   },
   filterScroll: {
     height: 40,
+  },
+  groupSelectorSection: {
+    gap: 6,
+  },
+  groupSelectorLabel: {
+    color: '#5f705f',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '700',
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
   },
   filterPill: {
     height: 32,

@@ -30,6 +30,14 @@ jest.mock('@/lib/queries', () => ({
     mockUseGuestFilteredStampsOverviewQuery(...args),
 }));
 
+jest.mock('@/lib/hiking-group', () => ({
+  useHikingGroup: () => ({
+    groupUserIds: [],
+    selectedFriendIds: [],
+    selectedMembers: [],
+  }),
+}));
+
 // The screen reads the location permission on mount; default to "not granted"
 // so the guest view renders without requesting a real device location.
 jest.mock('expo-location', () => ({

@@ -17,11 +17,13 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import type { Tour } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useRequireSignInAction } from '@/lib/auth-actions';
+import { useHikingGroup } from '@/lib/hiking-group';
 import {
   isNetworkUnavailableError,
   OFFLINE_REFRESH_MESSAGE,
@@ -120,11 +122,13 @@ function resolveCreatedBy(item: Tour, normalizedCurrentUserId: string | null) {
   };
 }
 
-function TourCard({
+export function TourCard({
+  groupActive,
   item,
   onPress,
   normalizedCurrentUserId,
 }: {
+  groupActive?: boolean;
   item: Tour;
   onPress: () => void;
   normalizedCurrentUserId: string | null;
@@ -147,8 +151,14 @@ function TourCard({
       </View>
 
       <Text style={styles.cardMeta}>
-        {`Stempel gesamt: ${item.stampCount ?? 0} • Neue Stempel fuer mich: ${item.newStampCountForUser ?? 0}`}
+        {`Stempel gesamt: ${item.stampCount ?? 0} • Neue Stempel für mich: ${item.newStampCountForUser ?? 0}`}
       </Text>
+
+      {groupActive ? (
+        <Text style={styles.cardGroupProgress}>
+          {`Gruppenfortschritt: ${item.averageGroupStampings ?? 0} / ${item.stampCount ?? 0}`}
+        </Text>
+      ) : null}
 
       <View style={styles.cardCreatorRow}>
         <Text numberOfLines={1} style={styles.cardCreatorText}>{`Von: ${createdBy.label}`}</Text>
@@ -182,6 +192,8 @@ export default function ToursTabScreen() {
   const floatingActionBottom = getFloatingActionBottomOffset(insets.bottom);
   const { width: windowWidth } = useWindowDimensions();
   const { canPerformWrites, isAuthenticated, isOffline } = useAuth();
+  const { groupUserIds, selectedFriendIds } = useHikingGroup();
+  const isGroupActive = selectedFriendIds.length > 0;
   const claims = useIdTokenClaims<{ sub?: string }>();
   const currentUserId = claims?.sub;
   const normalizedCurrentUserId = useMemo(() => normalizeUserId(currentUserId), [currentUserId]);
@@ -190,7 +202,9 @@ export default function ToursTabScreen() {
   const [activeSort, setActiveSort] = useState<SortKey>('newest');
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
-  const { data, error, isPending, isFetching, refetch } = useToursOverviewQuery();
+  const { data, error, isPending, isFetching, refetch } = useToursOverviewQuery({
+    groupUserIds,
+  });
   const createTourMutation = useCreateTourMutation();
   const isCreateDisabled = createTourMutation.isPending || !canPerformWrites;
   const tours = useMemo(() => data ?? [], [data]);
@@ -351,6 +365,11 @@ export default function ToursTabScreen() {
               <Text style={styles.totalLabel}>-- gesamt</Text>
             </View>
 
+            <View style={styles.groupSelectorSection}>
+              <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
+              <GroupSelector />
+            </View>
+
             <Pressable
               accessibilityLabel="Neue Tour planen"
               accessibilityRole="button"
@@ -448,6 +467,10 @@ export default function ToursTabScreen() {
               <Text style={styles.totalLabel}>{`${tours.length} gesamt`}</Text>
             </View>
 
+            <View style={styles.groupSelectorSection}>
+              <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
+              <GroupSelector />
+            </View>
 
             <Pressable
               accessibilityLabel="Neue Tour planen"
@@ -552,6 +575,7 @@ export default function ToursTabScreen() {
           return (
             <View style={styles.cardRow}>
               <TourCard
+                groupActive={isGroupActive}
                 item={item.tour}
                 normalizedCurrentUserId={normalizedCurrentUserId}
                 onPress={() => handleOpenTour(item.tour)}
@@ -687,6 +711,17 @@ const styles = StyleSheet.create({
     color: '#6b7a6b',
     fontSize: 12,
     lineHeight: 16,
+  },
+  groupSelectorSection: {
+    gap: 6,
+  },
+  groupSelectorLabel: {
+    color: '#5f705f',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '700',
+    letterSpacing: 0.7,
+    textTransform: 'uppercase',
   },
   quickstartCard: {
     borderRadius: 22,
@@ -920,6 +955,17 @@ const styles = StyleSheet.create({
     color: '#6b7a6b',
     fontSize: 12,
     lineHeight: 16,
+  },
+  cardGroupProgress: {
+    alignSelf: 'flex-start',
+    color: '#805f12',
+    backgroundColor: '#fff1cc',
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
   },
   cardCreatorText: {
     color: '#5d6f5d',

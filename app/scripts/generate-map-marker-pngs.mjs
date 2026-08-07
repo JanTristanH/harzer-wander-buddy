@@ -23,6 +23,7 @@ const PLACEHOLDERS = {
   y: '__LABEL_Y__',
   x: '__LABEL_X__',
   badgeRx: '__BADGE_RX__',
+  badgeFill: '__BADGE_FILL__',
 };
 
 const markerVariants = [
@@ -43,6 +44,20 @@ const markerVariants = [
       '--',
       ...Array.from({ length: STAMP_MAX - STAMP_MIN + 1 }, (_, index) => String(index + STAMP_MIN)),
     ],
+  },
+  {
+    kind: 'group-open-stamp',
+    fillColor: '#b9574d',
+    textColor: 'transparent',
+    badgeFill: 'transparent',
+    labels: ['--'],
+  },
+  {
+    kind: 'group-partial-stamp',
+    fillColor: '#d59a2f',
+    textColor: 'transparent',
+    badgeFill: 'transparent',
+    labels: ['--'],
   },
   {
     kind: 'parking',
@@ -92,7 +107,7 @@ function filenameForLabel(label) {
   return label.toLowerCase();
 }
 
-function renderSvg(template, { fillColor, textColor, label }) {
+function renderSvg(template, { fillColor, textColor, badgeFill = '#ffffff', label }) {
   const safeLabel = label.trim() || '--';
   const escapedLabel = escapeXmlText(safeLabel);
   const labelStyle = resolveLabelStyle(safeLabel);
@@ -100,6 +115,7 @@ function renderSvg(template, { fillColor, textColor, label }) {
   return template
     .replaceAll(PLACEHOLDERS.fill, fillColor)
     .replaceAll(PLACEHOLDERS.textColor, textColor)
+    .replaceAll(PLACEHOLDERS.badgeFill, badgeFill)
     .replaceAll(PLACEHOLDERS.label, escapedLabel)
     .replaceAll(PLACEHOLDERS.fontSize, labelStyle.fontSize)
     .replaceAll(PLACEHOLDERS.x, labelStyle.x)
@@ -134,7 +150,7 @@ function createMappingFile(entries) {
 
 import { type ImageRequireSource } from 'react-native';
 
-type MarkerVisualKind = 'visited-stamp' | 'open-stamp' | 'parking' | 'parking-order' | 'tour-order';
+type MarkerVisualKind = 'visited-stamp' | 'open-stamp' | 'group-open-stamp' | 'group-partial-stamp' | 'parking' | 'parking-order' | 'tour-order';
 
 const MAP_MARKER_IMAGE_SOURCE_BY_KEY: Record<string, ImageRequireSource> = {
 ${markerRecord}
@@ -164,6 +180,10 @@ export function getPreGeneratedMapMarkerImageSource(input: {
 
   if (input.kind === 'parking') {
     return sourceMap['parking:P'];
+  }
+
+  if (input.kind === 'group-open-stamp' || input.kind === 'group-partial-stamp') {
+    return sourceMap[\`${'${input.kind}'}:--\`];
   }
 
   const normalizedStampLabel = normalizeStampLabel(input.label);
@@ -218,6 +238,7 @@ async function main() {
       const renderedSvg = renderSvg(svgTemplate, {
         fillColor: variant.fillColor,
         textColor: variant.textColor,
+        badgeFill: variant.badgeFill,
         label,
       });
 

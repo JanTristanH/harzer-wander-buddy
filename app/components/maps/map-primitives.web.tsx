@@ -1,4 +1,4 @@
-import type { Map as LeafletMap } from 'leaflet';
+import type { LeafletEventHandlerFnMap, Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
@@ -10,6 +10,9 @@ import {
   useMapEvents,
 } from 'react-leaflet';
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';
+
+import { areMapCoordinatesEqual } from '@/lib/map-viewport';
+import { createCssMapMarkerHtml, normalizeWebMarkerLabel } from '@/lib/web-map-marker';
 
 export type LatLng = {
   latitude: number;
@@ -70,6 +73,7 @@ type MapViewProps = {
 };
 
 type MarkerProps = {
+  accessibilityLabel?: string;
   anchor?: { x: number; y: number };
   children?: React.ReactNode;
   coordinate: LatLng;
@@ -192,6 +196,17 @@ const LEAFLET_RUNTIME_CSS = `
 }
 .leaflet-tile-loaded { visibility: inherit; }
 .leaflet-zoom-animated { transform-origin: 0 0; }
+svg.leaflet-zoom-animated { will-change: transform; }
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.25s cubic-bezier(0, 0, 0.25, 1);
+}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+  transition: none;
+}
+.leaflet-zoom-anim .leaflet-zoom-hide {
+  visibility: hidden;
+}
 .leaflet-container img {
   max-height: none;
   max-width: none !important;
@@ -200,9 +215,63 @@ const LEAFLET_RUNTIME_CSS = `
 .hwb-leaflet-div-icon {
   background: transparent;
   border: 0;
+  overflow: visible;
 }
-.hwb-leaflet-div-icon svg {
+.hwb-css-marker {
+  --hwb-marker-color: #2e6b4b;
+  display: block;
+  height: 52px;
   pointer-events: none;
+  position: relative;
+  width: 48px;
+}
+.hwb-css-marker::before {
+  background: var(--hwb-marker-color);
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  box-sizing: border-box;
+  content: "";
+  height: 34px;
+  left: 7px;
+  position: absolute;
+  top: 5px;
+  transform: rotate(-45deg);
+  width: 34px;
+  z-index: 0;
+}
+.hwb-css-marker__label {
+  align-items: center;
+  background: #fff;
+  border-radius: 999px;
+  box-sizing: border-box;
+  color: #111;
+  display: flex;
+  font: 700 14px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  height: 18px;
+  justify-content: center;
+  left: 7px;
+  padding: 0 2px;
+  position: absolute;
+  right: 7px;
+  top: 12px;
+  z-index: 1;
+}
+.hwb-css-marker--wide-label .hwb-css-marker__label {
+  font-size: 11px;
+}
+.hwb-css-marker--compact {
+  height: 100%;
+  width: 100%;
+}
+.hwb-css-marker--compact::before {
+  border-radius: 50%;
+  height: auto;
+  inset: 2px;
+  transform: none;
+  width: auto;
+}
+.hwb-css-marker--compact .hwb-css-marker__label {
+  display: none;
 }
 `;
 
@@ -275,42 +344,21 @@ function coordinateToTuple(coordinate: LatLng): [number, number] {
   return [coordinate.latitude, coordinate.longitude];
 }
 
-function escapeXmlText(value: string) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;');
-}
-
-function normalizeMarkerLabel(value: string | null) {
-  if (!value) {
-    return null;
+function moveMapEfficiently(
+  map: LeafletMap,
+  center: L.LatLngExpression,
+  zoom: number,
+  durationMs: number
+) {
+  if (Math.abs(map.getZoom() - zoom) > 0.000001) {
+    map.setView(center, zoom, { animate: durationMs > 0 });
+    return;
   }
 
-  const normalized = value.trim().toUpperCase();
-  if (!normalized) {
-    return null;
-  }
-
-  return normalized.slice(0, 4);
-}
-
-function markerBadgeRadiusForLabel(label: string) {
-  if (label.length <= 1) {
-    return 8.6;
-  }
-
-  if (label.length === 2) {
-    return 10.9;
-  }
-
-  if (label.length === 3) {
-    return 12.8;
-  }
-
-  return 14.6;
+  map.panTo(center, {
+    animate: durationMs > 0,
+    duration: Math.max(0, durationMs) / 1000,
+  });
 }
 
 function extractMarkerLabel(children: React.ReactNode): string | null {
@@ -338,22 +386,6 @@ function extractMarkerLabel(children: React.ReactNode): string | null {
   }
 
   return null;
-}
-
-function createPinSvg(color: string, size: number, label?: string | null) {
-  if (size <= 18) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="${color}" stroke="white" stroke-width="2"/></svg>`;
-  }
-
-  const escapedLabel = normalizeMarkerLabel(label ?? null);
-  const renderedLabel = escapedLabel ? escapeXmlText(escapedLabel) : null;
-  const badgeRadius = renderedLabel ? markerBadgeRadiusForLabel(renderedLabel) : 8.6;
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round((size * 60) / 56)}" viewBox="0 0 56 60"><defs><filter id="marker-shadow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="2.2" flood-color="#141e14" flood-opacity="0.24"/></filter></defs><g filter="url(#marker-shadow)"><path d="M28 4C17.5066 4 9 12.5066 9 23c0 14.25 19 33 19 33s19-18.75 19-33C47 12.5066 38.4934 4 28 4Zm0 27.5c-4.6944 0-8.5-3.8056-8.5-8.5s3.8056-8.5 8.5-8.5 8.5 3.8056 8.5 8.5-3.8056 8.5-8.5 8.5Z" fill="${color}" stroke="#ffffff" stroke-width="2"/><ellipse cx="28" cy="23" rx="${badgeRadius}" ry="8.7" fill="#ffffff"/>${
-    renderedLabel
-      ? `<text x="28" y="23.5" fill="#111111" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle">${renderedLabel}</text>`
-      : ''
-  }</g></svg>`;
 }
 
 type ResolvedImageSource = {
@@ -418,14 +450,14 @@ function createIcon(options: {
     ? Math.round(width * inferredImageRatio)
     : size <= 18
       ? size
-      : Math.round(size * 1.35);
+      : Math.round((size * 52) / 48);
   const iconAnchor: [number, number] = [
     Math.round((anchor?.x ?? 0.5) * width),
     Math.round((anchor?.y ?? 1) * height),
   ];
 
-  const normalizedLabel = normalizeMarkerLabel(label ?? null);
-  const cacheKey = `${imageUri ?? 'svg'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
+  const normalizedLabel = normalizeWebMarkerLabel(label ?? null);
+  const cacheKey = `${imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
     imageSize?.width ?? ''
   }x${imageSize?.height ?? ''}`;
   const existing = iconCache.get(cacheKey);
@@ -444,7 +476,7 @@ function createIcon(options: {
       })
     : L.divIcon({
         className: 'hwb-leaflet-div-icon',
-        html: createPinSvg(color, size, normalizedLabel),
+        html: createCssMapMarkerHtml({ color, label: normalizedLabel, size }),
         iconAnchor,
         iconSize: [width, height],
       });
@@ -548,6 +580,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
   } = props;
   const [map, setMap] = useState<LeafletMap | null>(null);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
+  const lastUserLocationRef = useRef<LatLng | null>(null);
+  const onUserLocationChangeRef = useRef(onUserLocationChange);
   const [tileSource, setTileSource] = useState<{ attribution: string; url: string }>({
     attribution: TILE_ATTRIBUTION,
     url: TILE_URL,
@@ -567,6 +601,10 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
   useEffect(() => {
     ensureLeafletRuntimeCss();
   }, []);
+
+  useEffect(() => {
+    onUserLocationChangeRef.current = onUserLocationChange;
+  }, [onUserLocationChange]);
 
   useEffect(() => {
     if (!map) {
@@ -626,12 +664,11 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           return;
         }
 
-        map.flyTo(
+        moveMapEfficiently(
+          map,
           coordinateToTuple(region),
           zoomFromLongitudeDelta(region.longitudeDelta, map.getSize().x),
-          {
-            duration: Math.max(0, duration) / 1000,
-          }
+          duration
         );
       },
       fitToCoordinates(coordinates, options) {
@@ -680,16 +717,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
         const center = camera.center ? coordinateToTuple(camera.center) : map.getCenter();
         const zoom = typeof camera.zoom === 'number' ? clampZoom(camera.zoom) : map.getZoom();
 
-        map.flyTo(center, zoom, {
-          duration: Math.max(0, options?.duration ?? 250) / 1000,
-        });
+        moveMapEfficiently(map, center, zoom, options?.duration ?? 250);
       },
     }),
     [effectiveRegion.latitude, effectiveRegion.longitude, initialZoom, map]
   );
 
   useEffect(() => {
-    if (!showsUserLocation && !onUserLocationChange) {
+    if (!showsUserLocation) {
       return;
     }
 
@@ -704,8 +739,17 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           longitude: position.coords.longitude,
         };
 
+        if (
+          !Number.isFinite(coordinate.latitude) ||
+          !Number.isFinite(coordinate.longitude) ||
+          areMapCoordinatesEqual(lastUserLocationRef.current, coordinate)
+        ) {
+          return;
+        }
+
+        lastUserLocationRef.current = coordinate;
         setUserLocation(coordinate);
-        onUserLocationChange?.({ nativeEvent: { coordinate } });
+        onUserLocationChangeRef.current?.({ nativeEvent: { coordinate } });
       },
       () => {
         // Web geolocation can be denied by browser policy/user settings.
@@ -719,8 +763,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
 
     return () => {
       navigator.geolocation.clearWatch(watchId);
+      lastUserLocationRef.current = null;
     };
-  }, [onUserLocationChange, showsUserLocation]);
+  }, [showsUserLocation]);
 
   if (typeof window === 'undefined') {
     return <View style={style} />;
@@ -733,9 +778,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           attributionPlacement === 'below-zoom' ? 'hwb-attribution-below-zoom' : 'hwb-attribution-bottom-right'
         }`}
         center={centerTuple}
+        fadeAnimation={false}
+        markerZoomAnimation
         style={MAP_CONTAINER_STYLE}
+        wheelDebounceTime={120}
+        wheelPxPerZoomLevel={100}
         zoom={initialZoom}
-        zoomSnap={0}
+        zoomAnimation
+        zoomSnap={1}
         zoomControl={false}>
         <MapInstanceBridge
           onMapReady={(nextMap) => {
@@ -759,6 +809,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
               });
             },
           }}
+          updateWhenZooming={true}
           url={tileSource.url}
         />
         <MapEventBridge
@@ -789,6 +840,7 @@ type InternalMarkerProps = MarkerProps & {
 
 function Marker(props: InternalMarkerProps) {
   const {
+    accessibilityLabel,
     anchor,
     children,
     coordinate,
@@ -798,6 +850,28 @@ function Marker(props: InternalMarkerProps) {
     zIndex,
   } = props;
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
+  const markerRef = useRef<L.Marker | null>(null);
+  const onPressRef = useRef(onPress);
+  onPressRef.current = onPress;
+  const isPressable = Boolean(onPress);
+  const markerLatitude = coordinate.latitude;
+  const markerLongitude = coordinate.longitude;
+  const markerEventHandlers = useMemo<LeafletEventHandlerFnMap | undefined>(
+    () =>
+      isPressable
+        ? {
+            click(event) {
+              event.originalEvent?.stopPropagation?.();
+              onPressRef.current?.();
+            },
+          }
+        : undefined,
+    [isPressable]
+  );
+  const position = useMemo<[number, number]>(
+    () => [markerLatitude, markerLongitude],
+    [markerLatitude, markerLongitude]
+  );
 
   useEffect(() => {
     if (!perfDebugEnabled) {
@@ -809,6 +883,25 @@ function Marker(props: InternalMarkerProps) {
       webMapPerfDebugState.markerUnmounts += 1;
     };
   }, [perfDebugEnabled]);
+
+  useEffect(() => {
+    const markerElement = markerRef.current?.getElement();
+    if (!markerElement) {
+      return;
+    }
+
+    if (accessibilityLabel) {
+      markerElement.setAttribute('aria-label', accessibilityLabel);
+    } else {
+      markerElement.removeAttribute('aria-label');
+    }
+
+    if (isPressable) {
+      markerElement.setAttribute('role', 'button');
+    } else {
+      markerElement.removeAttribute('role');
+    }
+  }, [accessibilityLabel, isPressable]);
 
   const imageSource = resolveImageSource(image);
   const imageUri = imageSource?.uri ?? null;
@@ -836,18 +929,12 @@ function Marker(props: InternalMarkerProps) {
 
   return (
     <LeafletMarker
-      eventHandlers={
-        onPress
-          ? {
-              click(event) {
-                event.originalEvent?.stopPropagation?.();
-                onPress();
-              },
-            }
-          : undefined
-      }
+      alt={accessibilityLabel}
+      eventHandlers={markerEventHandlers}
       icon={icon}
-      position={coordinateToTuple(coordinate)}
+      position={position}
+      ref={markerRef}
+      title={accessibilityLabel}
       zIndexOffset={typeof zIndex === 'number' ? zIndex : 0}
     />
   );

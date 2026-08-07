@@ -19,6 +19,9 @@ export function MapSelectionSheet({
   onPrimaryActionPress,
   primaryActionDisabled,
   enablePrimaryStampAnimation,
+  groupActionLabel,
+  onGroupActionPress,
+  groupActionDisabled,
   onDetailsPress,
   onToggleExpand,
   onHeightChange,
@@ -36,6 +39,9 @@ export function MapSelectionSheet({
   onPrimaryActionPress?: () => void;
   primaryActionDisabled?: boolean;
   enablePrimaryStampAnimation?: boolean;
+  groupActionLabel?: string;
+  onGroupActionPress?: () => void;
+  groupActionDisabled?: boolean;
   onDetailsPress?: () => void;
   onToggleExpand?: () => void;
   onHeightChange?: (height: number) => void;
@@ -47,7 +53,11 @@ export function MapSelectionSheet({
     ? buildAuthenticatedImageSource(item.imageUrl, accessToken)
     : null;
   const handleSheetPress = isCompact ? onToggleExpand : onDetailsPress;
-  const isPrimaryStampAnimationEnabled = Boolean(enablePrimaryStampAnimation && !primaryActionDisabled);
+  const showGroupAction = Boolean(groupActionLabel);
+  const showPrimaryAction = Boolean(primaryActionLabel) && !showGroupAction;
+  const isPrimaryStampAnimationEnabled = Boolean(
+    showPrimaryAction && enablePrimaryStampAnimation && !primaryActionDisabled
+  );
 
   return (
     <View
@@ -122,9 +132,21 @@ export function MapSelectionSheet({
         ) : null}
       </Pressable>
 
-      {!isCompact && (primaryActionLabel || onDetailsPress) ? (
+      {!isCompact && (showPrimaryAction || showGroupAction || onDetailsPress) ? (
         <View style={styles.actionRow}>
-          {primaryActionLabel ? (
+          {showGroupAction ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={groupActionDisabled}
+              onPress={onGroupActionPress}
+              style={({ pressed }) => [
+                styles.groupAction,
+                groupActionDisabled && styles.groupActionDisabled,
+                pressed && !groupActionDisabled && styles.pressed,
+              ]}>
+              <Text style={styles.groupActionLabel}>{groupActionLabel}</Text>
+            </Pressable>
+          ) : showPrimaryAction ? (
             <StampPressStage enabled={isPrimaryStampAnimationEnabled} style={styles.primaryActionStage}>
               {({ buttonAnimatedStyle, onPressIn, onPressOut }) => (
                 <Animated.View style={[styles.primaryActionAnimated, buttonAnimatedStyle]}>
@@ -252,6 +274,7 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
   },
   primaryActionStage: {
@@ -279,6 +302,26 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',
+  },
+  groupAction: {
+    flex: 1,
+    minWidth: 110,
+    backgroundColor: '#e9e2d6',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  groupActionDisabled: {
+    opacity: 0.55,
+  },
+  groupActionLabel: {
+    color: '#59483f',
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   detailAction: {
     flex: 1,

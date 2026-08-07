@@ -3,9 +3,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Image,
   Linking,
   Modal,
   Platform,
@@ -19,6 +20,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MapSelectionSheet } from '@/components/map-selection-sheet';
+import { GroupSelector } from '@/components/group-selector';
+import { GroupStampDialog } from '@/components/group-stamp-dialog';
 import MapView, { Marker, type MapViewRef, type Region } from '@/components/maps/map-primitives';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
 import {
@@ -40,7 +43,13 @@ import {
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useRequireSignInAction } from '@/lib/auth-actions';
 import { useConnectivity } from '@/lib/connectivity';
+import {
+  resolveStampMarkerVisualKind,
+  type StampMarkerVisualKind,
+} from '@/lib/group-marker';
+import { useHikingGroup } from '@/lib/hiking-group';
 import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images';
+import { areMapCoordinatesEqual, isCoordinateInPaddedRegion } from '@/lib/map-viewport';
 import {
   isNetworkUnavailableError,
   OFFLINE_REFRESH_MESSAGE,
@@ -84,6 +93,8 @@ type StampMarkerItem = BaseMarkerItem & {
   number?: string;
   stampId: string;
   visitedAt?: string;
+  groupSize?: number;
+  totalGroupStampings?: number;
 };
 
 type ParkingMarkerItem = BaseMarkerItem & {
@@ -210,7 +221,27 @@ function preventCancelableDefault(event: Event) {
   }
 }
 
-function markerColors(kind: MarkerKind) {
+function markerColors(kind: MarkerKind | StampMarkerVisualKind) {
+  if (kind === 'group-open-stamp') {
+    return {
+      fill: '#b9574d',
+      shadow: 'rgba(91,34,28,0.22)',
+      text: '#fff8f4',
+      badgeFill: '#f4dedb',
+      badgeText: '#8f332c',
+    };
+  }
+
+  if (kind === 'group-partial-stamp') {
+    return {
+      fill: '#d59a2f',
+      shadow: 'rgba(107,72,12,0.22)',
+      text: '#fffaf0',
+      badgeFill: '#f6e8c8',
+      badgeText: '#7f590f',
+    };
+  }
+
   if (kind === 'visited-stamp') {
     return {
       fill: '#2e6b4b',
@@ -450,6 +481,47 @@ function normalizeStampMarkerToken(value?: string | null): string | null {
   return null;
 }
 
+function groupMarkerBadgeWidth(label: string) {
+  if (label.length <= 1) {
+    return 15;
+  }
+
+  if (label.length === 2) {
+    return 19;
+  }
+
+  if (label.length === 3) {
+    return 22;
+  }
+
+  return 25;
+}
+
+function stampMarkerAccessibilityLabel(
+  item: StampMarkerItem,
+  visualKind: StampMarkerVisualKind,
+  groupActive: boolean
+) {
+  const number = normalizeStampMarkerToken(item.number) ?? '--';
+
+  if (!groupActive) {
+    return `Stempel ${number}: ${item.title}, ${
+      item.kind === 'visited-stamp' ? 'besucht' : 'unbesucht'
+    }`;
+  }
+
+  const groupSize = Math.max(1, item.groupSize ?? 1);
+  const visitedCount = Math.max(0, Math.min(groupSize, item.totalGroupStampings ?? 0));
+  const groupStatus =
+    visualKind === 'visited-stamp'
+      ? 'vollständig besucht'
+      : visualKind === 'group-partial-stamp'
+        ? 'teilweise besucht'
+        : 'unbesucht';
+
+  return `Stempel ${number}: ${item.title}, Wandergruppe ${groupStatus}, ${visitedCount} von ${groupSize} besucht`;
+}
+
 type SearchResultRank = {
   matchTier: number;
   matchIndex: number;
@@ -522,6 +594,8 @@ export default function MapScreen() {
     parkingId?: string | string[];
   }>();
   const { accessToken, canPerformWrites, isAuthenticated, logout } = useAuth();
+  const { groupUserIds, selectedFriendIds } = useHikingGroup();
+  const isGroupActive = selectedFriendIds.length > 0;
   const { isOnline } = useConnectivity();
   const claims = useIdTokenClaims<AuthClaims>();
   const insets = useSafeAreaInsets();
@@ -537,13 +611,17 @@ export default function MapScreen() {
   const handledRequestedStampIdRef = useRef<string | null>(null);
   const handledRequestedParkingIdRef = useRef<string | null>(null);
   const searchBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const authenticatedMapQuery = useMapDataQuery({ enabled: isAuthenticated });
+  const authenticatedMapQuery = useMapDataQuery({
+    enabled: isAuthenticated,
+    groupUserIds,
+  });
   const guestMapQuery = useGuestMapDataQuery({ enabled: !isAuthenticated });
   const { data, error, isFetching, isPending, isPlaceholderData } = isAuthenticated
     ? authenticatedMapQuery
     : guestMapQuery;
   const [region, setRegion] = useState<Region>(initialRegion);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const selectedItemIdRef = useRef<string | null>(selectedItemId);
   const [selectedExternalPlace, setSelectedExternalPlace] = useState<PlaceSearchResult | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -559,6 +637,8 @@ export default function MapScreen() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [isStamping, setIsStamping] = useState(false);
   const [isStampSuccessToastVisible, setIsStampSuccessToastVisible] = useState(false);
+  const [stampSuccessMessage, setStampSuccessMessage] = useState('Stempel erfolgreich gesetzt.');
+  const [isGroupStampDialogVisible, setIsGroupStampDialogVisible] = useState(false);
   const [selectedSheetHeight, setSelectedSheetHeight] = useState(0);
   const [selectionSheetMode, setSelectionSheetMode] = useState<SelectionSheetMode>('expanded');
   const [mapHeading, setMapHeading] = useState(0);
@@ -570,6 +650,7 @@ export default function MapScreen() {
       {
         label: string;
         image: ReturnType<typeof getPreGeneratedMapMarkerImageSource>;
+        visualKind: StampMarkerVisualKind;
       }
     >
   >(new Map());
@@ -584,10 +665,20 @@ export default function MapScreen() {
   const isMapNorthUp = Math.abs(normalizeHeading(mapHeading)) <= NORTH_HEADING_EPSILON;
   const localhostPerfEnabled = isLocalhostMapPerfEnabled();
 
+  useEffect(() => {
+    selectedItemIdRef.current = selectedItemId;
+  }, [selectedItemId]);
+
   const updateMapRegion = useCallback((nextRegion: Region) => {
     regionRef.current = nextRegion;
-    setRegion(nextRegion);
     lastMapRegion = nextRegion;
+
+    if (Platform.OS === 'web') {
+      startTransition(() => setRegion(nextRegion));
+      return;
+    }
+
+    setRegion(nextRegion);
   }, []);
   const suppressSelectionSheetCompactionForProgrammaticMove = useCallback(
     (durationMs: number) => {
@@ -644,6 +735,8 @@ export default function MapScreen() {
           number: stamp.number,
           stampId: stamp.ID,
           visitedAt: stamp.visitedAt,
+          groupSize: stamp.groupSize,
+          totalGroupStampings: stamp.totalGroupStampings,
         } satisfies StampMarkerItem;
       })
       .filter((item): item is StampMarkerItem => item !== null);
@@ -692,8 +785,12 @@ export default function MapScreen() {
   }, [showStamps, stampItems, visitFilter]);
 
   const viewportStampItems = useMemo(() => {
-    return visibleStampItems;
-  }, [visibleStampItems]);
+    if (Platform.OS !== 'web') {
+      return visibleStampItems;
+    }
+
+    return visibleStampItems.filter((item) => isCoordinateInPaddedRegion(item.coordinate, region));
+  }, [region, visibleStampItems]);
 
   const visibleParkingItems = useMemo(() => {
     if (!showParking) {
@@ -708,8 +805,12 @@ export default function MapScreen() {
   }, [parkingItems, region.longitudeDelta, showParking]);
 
   const viewportParkingItems = useMemo(() => {
-    return visibleParkingItems;
-  }, [visibleParkingItems]);
+    if (Platform.OS !== 'web') {
+      return visibleParkingItems;
+    }
+
+    return visibleParkingItems.filter((item) => isCoordinateInPaddedRegion(item.coordinate, region));
+  }, [region, visibleParkingItems]);
 
   const visibleItems = useMemo<MarkerItem[]>(
     () => [...visibleStampItems, ...visibleParkingItems],
@@ -724,31 +825,41 @@ export default function MapScreen() {
     stampMarkerVisualCacheRef.current.clear();
   }, [stampItems]);
 
-  const getStampMarkerVisual = useCallback((stampItem: StampMarkerItem) => {
-    const cacheKey = `${stampItem.id}:${stampItem.kind}:${stampItem.number ?? '--'}`;
-    const cached = stampMarkerVisualCacheRef.current.get(cacheKey);
-    if (cached) {
-      return cached;
-    }
+  const getStampMarkerVisual = useCallback(
+    (stampItem: StampMarkerItem) => {
+      const label = normalizeStampMarkerToken(stampItem.number) || '--';
+      const visualKind = resolveStampMarkerVisualKind({
+        groupActive: isGroupActive,
+        groupSize: stampItem.groupSize ?? groupUserIds.length,
+        personalKind: stampItem.kind,
+        totalGroupStampings: stampItem.totalGroupStampings ?? 0,
+      });
+      const cacheKey = `${stampItem.id}:${visualKind}:${label}`;
+      const cached = stampMarkerVisualCacheRef.current.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
 
-    const label = normalizeStampMarkerToken(stampItem.number) || '--';
-    const image = getPreGeneratedMapMarkerImageSource({
-      kind: stampItem.kind,
-      label,
-    });
-    const nextEntry = { label, image };
-    stampMarkerVisualCacheRef.current.set(cacheKey, nextEntry);
-    return nextEntry;
-  }, []);
+      const image = getPreGeneratedMapMarkerImageSource({
+        kind: visualKind,
+        label,
+      });
+      const nextEntry = { image, label, visualKind };
+      stampMarkerVisualCacheRef.current.set(cacheKey, nextEntry);
+      return nextEntry;
+    },
+    [groupUserIds.length, isGroupActive]
+  );
 
   const handleMarkerPress = useCallback(
     (item: MarkerItem) => {
       lastMarkerPressAtRef.current = Date.now();
       setSelectedExternalPlace(null);
-      const isSameSelectedItem = selectedItemId === item.id;
+      const isSameSelectedItem = selectedItemIdRef.current === item.id;
       if (!isSameSelectedItem) {
         setSelectionSheetMode('expanded');
       }
+      selectedItemIdRef.current = item.id;
       setSelectedItemId(item.id);
       const targetDelta = Math.min(regionRef.current.longitudeDelta, SELECTION_TARGET_DELTA);
       suppressSelectionSheetCompactionForSelectionMove();
@@ -760,22 +871,63 @@ export default function MapScreen() {
       );
       mapRef.current?.animateToRegion(nextRegion, 260);
     },
-    [selectedItemId, suppressSelectionSheetCompactionForSelectionMove]
+    [suppressSelectionSheetCompactionForSelectionMove]
   );
 
   const stampMarkerElements = useMemo(() => {
     const buildStartMs = getNowMs();
     const elements = viewportStampItems.map((stampItem) => {
-      const colors = markerColors(stampItem.kind);
       const visual = getStampMarkerVisual(stampItem);
+      const colors = markerColors(visual.visualKind);
+      const accessibilityLabel = stampMarkerAccessibilityLabel(
+        stampItem,
+        visual.visualKind,
+        isGroupActive
+      );
+      const usesGeneratedGroupBackground =
+        visual.visualKind === 'group-open-stamp' ||
+        visual.visualKind === 'group-partial-stamp';
+
+      if (usesGeneratedGroupBackground && visual.image) {
+        return (
+          <Marker
+            accessibilityLabel={accessibilityLabel}
+            anchor={MARKER_ANCHOR}
+            coordinate={stampItem.coordinate}
+            key={`${stampItem.id}:${visual.visualKind}`}
+            onPress={() => handleMarkerPress(stampItem)}
+            tracksViewChanges={false}
+            zIndex={markerZIndex(stampItem.kind)}>
+            <View collapsable={false} style={styles.generatedGroupMarker}>
+              <Image
+                resizeMode="stretch"
+                source={visual.image}
+                style={styles.generatedGroupMarkerBackground}
+              />
+              <View style={styles.generatedGroupMarkerBadgePositioner}>
+                <View
+                  style={[
+                    styles.generatedGroupMarkerBadge,
+                    { width: groupMarkerBadgeWidth(visual.label) },
+                  ]}>
+                  <Text style={styles.generatedGroupMarkerLabel}>{visual.label}</Text>
+                </View>
+              </View>
+            </View>
+          </Marker>
+        );
+      }
 
       if (!visual.image) {
         return (
           <Marker
+            accessibilityLabel={accessibilityLabel}
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
-            key={`${stampItem.id}:${stampItem.kind}`}
+            key={`${stampItem.id}:${visual.visualKind}:fallback`}
             onPress={() => handleMarkerPress(stampItem)}
+            pinColor={Platform.OS === 'web' ? colors.fill : undefined}
+            tracksViewChanges={false}
             zIndex={markerZIndex(stampItem.kind)}>
             <View collapsable={false} style={styles.pinMarker}>
               <View
@@ -796,10 +948,11 @@ export default function MapScreen() {
 
       return (
         <Marker
+          accessibilityLabel={accessibilityLabel}
           anchor={MARKER_ANCHOR}
           coordinate={stampItem.coordinate}
           image={visual.image}
-          key={`${stampItem.id}:${stampItem.kind}`}
+          key={`${stampItem.id}:${visual.visualKind}`}
           onPress={() => handleMarkerPress(stampItem)}
           pinColor={undefined}
           tracksViewChanges={false}
@@ -810,7 +963,7 @@ export default function MapScreen() {
 
     stampMarkerBuildDurationMsRef.current = getNowMs() - buildStartMs;
     return elements;
-  }, [getStampMarkerVisual, handleMarkerPress, viewportStampItems]);
+  }, [getStampMarkerVisual, handleMarkerPress, isGroupActive, viewportStampItems]);
 
   const parkingMarkerElements = useMemo(() => {
     const buildStartMs = getNowMs();
@@ -828,6 +981,7 @@ export default function MapScreen() {
       if (!markerImage) {
         return (
           <Marker
+            accessibilityLabel={`Parkplatz: ${item.title}`}
             anchor={MARKER_ANCHOR}
             coordinate={item.coordinate}
             key={item.id}
@@ -852,6 +1006,7 @@ export default function MapScreen() {
 
       return (
         <Marker
+          accessibilityLabel={`Parkplatz: ${item.title}`}
           anchor={MARKER_ANCHOR}
           coordinate={item.coordinate}
           image={markerImage}
@@ -964,6 +1119,7 @@ export default function MapScreen() {
 
     async function loadLocation() {
       try {
+        setLocationState('loading');
         let permission = await Location.getForegroundPermissionsAsync();
         if (!permission.granted && permission.canAskAgain) {
           permission = await Location.requestForegroundPermissionsAsync();
@@ -974,23 +1130,11 @@ export default function MapScreen() {
         }
 
         if (!permission.granted) {
+          setUserLocation(null);
           setLocationState(permission.status === 'denied' ? 'denied' : 'idle');
           return;
         }
 
-        setLocationState('loading');
-        const currentPosition = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-
-        if (!isMounted) {
-          return;
-        }
-
-        setUserLocation({
-          latitude: currentPosition.coords.latitude,
-          longitude: currentPosition.coords.longitude,
-        });
         setLocationState('granted');
       } catch {
         if (!isMounted) {
@@ -1007,6 +1151,27 @@ export default function MapScreen() {
       isMounted = false;
     };
   }, []);
+
+  const handleUserLocationChange = useCallback(
+    (event: { nativeEvent: { coordinate?: Coordinate } }) => {
+      const coordinate = event.nativeEvent.coordinate;
+      if (
+        !coordinate ||
+        !Number.isFinite(coordinate.latitude) ||
+        !Number.isFinite(coordinate.longitude)
+      ) {
+        return;
+      }
+
+      setUserLocation((currentCoordinate) =>
+        areMapCoordinatesEqual(currentCoordinate, coordinate) ? currentCoordinate : coordinate
+      );
+      setLocationState((currentState) =>
+        currentState === 'granted' ? currentState : 'granted'
+      );
+    },
+    []
+  );
 
   useEffect(() => {
     if (!selectedItemId) {
@@ -1315,7 +1480,7 @@ export default function MapScreen() {
   }, []);
 
   const zoomBy = useCallback(
-    (factor: number) => {
+    (zoomDelta: number) => {
       const map = mapRef.current;
       if (!map) {
         return;
@@ -1325,7 +1490,6 @@ export default function MapScreen() {
         try {
           const camera = await map.getCamera();
           if (typeof camera.zoom === 'number' && Number.isFinite(camera.zoom)) {
-            const zoomDelta = -Math.log2(Math.max(0.000001, factor));
             const nextZoom = Math.max(CAMERA_MIN_ZOOM, Math.min(CAMERA_MAX_ZOOM, camera.zoom + zoomDelta));
             suppressSelectionSheetCompactionForAutoZoom();
             map.animateCamera(
@@ -1333,7 +1497,7 @@ export default function MapScreen() {
                 center: camera.center,
                 zoom: nextZoom,
               },
-              { duration: 180 }
+              { duration: Platform.OS === 'web' ? 250 : 180 }
             );
             return;
           }
@@ -1341,9 +1505,9 @@ export default function MapScreen() {
           // Fall back to region animation when camera zoom is unavailable.
         }
 
-        const nextRegion = zoomRegion(regionRef.current, factor);
+        const nextRegion = zoomRegion(regionRef.current, 2 ** -zoomDelta);
         suppressSelectionSheetCompactionForAutoZoom();
-        map.animateToRegion(nextRegion, 180);
+        map.animateToRegion(nextRegion, Platform.OS === 'web' ? 250 : 180);
       })();
     },
     [suppressSelectionSheetCompactionForAutoZoom]
@@ -1394,14 +1558,14 @@ export default function MapScreen() {
       visitedAt: nowIsoTimestamp,
       createdAt: nowIsoTimestamp,
     };
-    const mapDataKey = queryKeys.mapData(claims?.sub);
-    const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub);
+    const mapDataKey = queryKeys.mapData(claims?.sub, groupUserIds);
+    const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub, groupUserIds);
     const filteredStampsOverviewKeys = STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT.map((filter) => ({
       filter,
-      queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter),
+      queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter, groupUserIds),
     }));
     const profileOverviewKey = queryKeys.profileOverview(claims?.sub);
-    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId);
+    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId, groupUserIds);
     const optimisticLastVisited: LatestVisitedStamp = {
       stampId,
       stampNumber: stampSnapshot?.number,
@@ -1694,9 +1858,10 @@ export default function MapScreen() {
       void queryClient
         .prefetchQuery({
           queryKey: stampDetailKey,
-          queryFn: () => fetchStampDetail(accessToken, stampId, claims?.sub),
+          queryFn: () => fetchStampDetail(accessToken, stampId, claims?.sub, groupUserIds),
         })
         .catch(() => undefined);
+      setStampSuccessMessage('Stempel erfolgreich gesetzt.');
       setIsStampSuccessToastVisible(true);
     } catch (nextError) {
       rollbackOptimisticUpdates();
@@ -1722,6 +1887,7 @@ export default function MapScreen() {
     canPerformWrites,
     claims?.sub,
     data?.stamps,
+    groupUserIds,
     isAuthenticated,
     isStamping,
     logout,
@@ -1941,6 +2107,11 @@ export default function MapScreen() {
     );
   }, [accessToken, canPerformWrites, isAuthenticated, isStamping, selectedItem]);
 
+  const showGroupStampAction =
+    isAuthenticated &&
+    isGroupActive &&
+    Boolean(selectedItem && selectedItem.kind !== 'parking');
+
   const selectionPrimaryActionPress = useCallback(() => {
     if (!selectedItem) {
       return;
@@ -1959,6 +2130,35 @@ export default function MapScreen() {
     void handleStampVisit();
   }, [handleStampVisit, handleStartSelectedParkingNavigation, isAuthenticated, router, selectedItem]);
 
+  const selectionMetadata = useMemo(() => {
+    if (!selectedItem) {
+      return undefined;
+    }
+
+    const visitMetadata =
+      selectedItem.kind === 'parking'
+        ? selectedItem.description?.trim()
+        : formatVisitDate(selectedItem.visitedAt)
+          ? `Besucht am ${formatVisitDate(selectedItem.visitedAt)}`
+          : 'Noch kein Besuchsdatum vorhanden.';
+    const groupMetadata =
+      selectedItem.kind !== 'parking' && selectedFriendIds.length > 0
+        ? `Gruppe: ${selectedItem.totalGroupStampings ?? 0} von ${
+            selectedItem.groupSize ?? groupUserIds.length
+          } besucht`
+        : null;
+
+    return [groupMetadata, nearestCounterpartMeta || visitMetadata].filter(Boolean).join(' • ');
+  }, [groupUserIds.length, nearestCounterpartMeta, selectedFriendIds.length, selectedItem]);
+
+  const handleGroupStampPress = useCallback(() => {
+    if (!selectedItem || selectedItem.kind === 'parking') {
+      return;
+    }
+
+    setIsGroupStampDialogVisible(true);
+  }, [selectedItem]);
+
   const handleManualRefresh = useCallback(() => {
     if (!isOnline) {
       Alert.alert('Offline', OFFLINE_REFRESH_MESSAGE);
@@ -1966,11 +2166,13 @@ export default function MapScreen() {
     }
 
     void Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.stampsOverview(claims?.sub) }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.mapData(claims?.sub) }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.stampsOverview(claims?.sub, groupUserIds),
+      }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.mapData(claims?.sub, groupUserIds) }),
       queryClient.invalidateQueries({ queryKey: queryKeys.profileOverview(claims?.sub) }),
     ]);
-  }, [claims?.sub, isOnline, queryClient]);
+  }, [claims?.sub, groupUserIds, isOnline, queryClient]);
 
   const showOfflineSearchHint =
     isSearchFocused &&
@@ -2015,7 +2217,7 @@ export default function MapScreen() {
         </View>
       ) : null}
       <StampingSuccessToast
-        message="Stempel erfolgreich gesetzt."
+        message={stampSuccessMessage}
         onHide={() => setIsStampSuccessToastVisible(false)}
         topOffset={insets.top + 64}
         visible={isStampSuccessToastVisible}
@@ -2028,17 +2230,7 @@ export default function MapScreen() {
           setIsMapReady(true);
           void syncMapHeading();
         }}
-        onUserLocationChange={(event) => {
-          if (!event.nativeEvent.coordinate) {
-            return;
-          }
-
-          setUserLocation({
-            latitude: event.nativeEvent.coordinate.latitude,
-            longitude: event.nativeEvent.coordinate.longitude,
-          });
-          setLocationState('granted');
-        }}
+        onUserLocationChange={handleUserLocationChange}
         onPress={() => {
           if (Date.now() - lastMarkerPressAtRef.current < 250) {
             return;
@@ -2051,7 +2243,7 @@ export default function MapScreen() {
         onRegionChangeComplete={handleRegionChangeComplete}
         onRegionChange={handleRegionChange}
         showsCompass={false}
-        showsUserLocation={locationState !== 'denied'}
+        showsUserLocation={locationState === 'granted'}
         showsMyLocationButton={false}
         style={StyleSheet.absoluteFill}
         toolbarEnabled={false}>
@@ -2160,6 +2352,12 @@ export default function MapScreen() {
           </Pressable>
         </View>
 
+        {isAuthenticated ? (
+          <View style={[styles.groupControl, { top: insets.top + 64 }]}>
+            <GroupSelector />
+          </View>
+        ) : null}
+
         {!isMapNorthUp ? (
           <View style={[styles.compassControl, { top: compassButtonTopOffset }]}>
             <Pressable onPress={handleResetNorthPress} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
@@ -2179,10 +2377,10 @@ export default function MapScreen() {
             ]}>
             <Feather color={userLocation ? '#2e3a2e' : '#9ba59a'} name="crosshair" size={19} />
           </Pressable>
-          <Pressable onPress={() => zoomBy(0.8)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
+          <Pressable onPress={() => zoomBy(1)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
             <Text style={styles.zoomButtonLabel}>+</Text>
           </Pressable>
-          <Pressable onPress={() => zoomBy(1.25)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
+          <Pressable onPress={() => zoomBy(-1)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
             <Text style={styles.zoomButtonLabel}>−</Text>
           </Pressable>
         </View>
@@ -2194,21 +2392,32 @@ export default function MapScreen() {
             item={{
               kind: selectedItem.kind,
               title: selectedItem.title,
-              description: selectedItem.kind === 'parking' ? undefined : selectedItem.description,
+              description:
+                selectedItem.kind === 'parking' ? undefined : selectedItem.description,
               imageUrl: selectedItem.imageUrl,
             }}
-            metadata={
-              nearestCounterpartMeta ||
-              (selectedItem.kind === 'parking'
-                ? selectedItem.description?.trim()
-                : formatVisitDate(selectedItem.visitedAt)
-                  ? `Besucht am ${formatVisitDate(selectedItem.visitedAt)}`
-                  : 'Noch kein Besuchsdatum vorhanden.')
+            metadata={selectionMetadata}
+            onPrimaryActionPress={
+              showGroupStampAction ? undefined : selectionPrimaryActionPress
             }
-            onPrimaryActionPress={selectionPrimaryActionPress}
-            primaryActionDisabled={selectionPrimaryActionDisabled}
-            primaryActionLabel={selectionPrimaryActionLabel}
-            enablePrimaryStampAnimation={isAuthenticated && selectedItem.kind === 'open-stamp'}
+            primaryActionDisabled={
+              showGroupStampAction ? undefined : selectionPrimaryActionDisabled
+            }
+            primaryActionLabel={
+              showGroupStampAction ? undefined : selectionPrimaryActionLabel
+            }
+            enablePrimaryStampAnimation={
+              !showGroupStampAction &&
+              isAuthenticated &&
+              selectedItem.kind === 'open-stamp'
+            }
+            groupActionDisabled={
+              showGroupStampAction ? !accessToken || !canPerformWrites : undefined
+            }
+            groupActionLabel={showGroupStampAction ? 'Gruppe stempeln' : undefined}
+            onGroupActionPress={
+              showGroupStampAction ? handleGroupStampPress : undefined
+            }
             onDetailsPress={() =>
               selectedItem.kind === 'parking'
                 ? router.push(`/parking/${selectedItem.parkingId}` as never)
@@ -2241,6 +2450,23 @@ export default function MapScreen() {
           </View>
         ) : null}
       </View>
+
+      {selectedItem && selectedItem.kind !== 'parking' ? (
+        <GroupStampDialog
+          currentUserAlreadyStamped={selectedItem.kind === 'visited-stamp'}
+          includeCurrentUser={selectedItem.kind === 'open-stamp'}
+          onClose={() => setIsGroupStampDialogVisible(false)}
+          onSuccess={() => {
+            setIsGroupStampDialogVisible(false);
+            setStampSuccessMessage('Gruppenstempel erfolgreich gesetzt.');
+            setIsStampSuccessToastVisible(true);
+            void authenticatedMapQuery.refetch();
+          }}
+          stampId={selectedItem.stampId}
+          stampName={selectedItem.title}
+          visible={isGroupStampDialogVisible}
+        />
+      ) : null}
 
       <Modal animationType="fade" onRequestClose={() => setIsFilterOpen(false)} transparent visible={isFilterOpen}>
         <View style={styles.modalBackdrop}>
@@ -2368,6 +2594,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  groupControl: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 3,
   },
   searchBarWrap: {
     flex: 1,
@@ -2555,6 +2786,37 @@ const styles = StyleSheet.create({
     height: 60,
     alignItems: 'center',
     justifyContent: 'flex-end',
+  },
+  generatedGroupMarker: {
+    height: 52,
+    width: 48,
+  },
+  generatedGroupMarkerBackground: {
+    height: 52,
+    left: 0,
+    position: 'absolute',
+    top: 0,
+    width: 48,
+  },
+  generatedGroupMarkerBadgePositioner: {
+    alignItems: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 12,
+  },
+  generatedGroupMarkerBadge: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    height: 15,
+    justifyContent: 'center',
+  },
+  generatedGroupMarkerLabel: {
+    color: '#111111',
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 14,
   },
   pinHead: {
     alignItems: 'center',
