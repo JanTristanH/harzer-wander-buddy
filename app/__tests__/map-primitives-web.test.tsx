@@ -31,11 +31,13 @@ describe('web map primitives', () => {
   const watchPosition = jest.fn();
   const clearWatch = jest.fn();
   let injectedStyle: { id: string; textContent: string } | null;
+  let originalNavigatorDescriptor: PropertyDescriptor | undefined;
 
   beforeEach(() => {
     jest.clearAllMocks();
     injectedStyle = null;
     watchPosition.mockReturnValue(73);
+    originalNavigatorDescriptor = Object.getOwnPropertyDescriptor(global, 'navigator');
     Object.defineProperty(global, 'document', {
       configurable: true,
       value: {
@@ -52,11 +54,13 @@ describe('web map primitives', () => {
       configurable: true,
       value: { hostname: 'example.test' },
     });
-    Object.defineProperty(global.navigator, 'geolocation', {
+    Object.defineProperty(global, 'navigator', {
       configurable: true,
       value: {
-        clearWatch,
-        watchPosition,
+        geolocation: {
+          clearWatch,
+          watchPosition,
+        },
       },
     });
   });
@@ -66,10 +70,11 @@ describe('web map primitives', () => {
       configurable: true,
       value: undefined,
     });
-    Object.defineProperty(global.navigator, 'geolocation', {
-      configurable: true,
-      value: undefined,
-    });
+    if (originalNavigatorDescriptor) {
+      Object.defineProperty(global, 'navigator', originalNavigatorDescriptor);
+    } else {
+      Reflect.deleteProperty(global, 'navigator');
+    }
   });
 
   it('keeps one geolocation watch, calls the newest callback, and deduplicates coordinates', () => {
