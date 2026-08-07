@@ -128,6 +128,9 @@ const MAX_ZOOM_DELTA = 1.2;
 const CAMERA_MIN_ZOOM = 2;
 const CAMERA_MAX_ZOOM = 19;
 const MAP_EDGE_PADDING = { top: 140, right: 64, bottom: 260, left: 64 };
+const MAP_TOP_CONTROLS_TOP = 12;
+const MAP_TOP_CONTROLS_HEIGHT = 90;
+const MAP_TOP_CONTROLS_CLEARANCE = 12;
 const ZOOM_CONTROLS_GAP = 16;
 const SEARCH_RESULT_LIMIT = 6;
 const REMOTE_SEARCH_DEBOUNCE_MS = 350;
@@ -1464,7 +1467,8 @@ export default function MapScreen() {
         ? externalSheetHeight + ZOOM_CONTROLS_GAP
         : ZOOM_CONTROLS_GAP);
   const filterPopoverWidth = useMemo(() => Math.min(300, Math.max(windowWidth - 32, 0)), [windowWidth]);
-  const compassButtonTopOffset = insets.top + 64;
+  const topOverlayContentOffset =
+    insets.top + MAP_TOP_CONTROLS_TOP + MAP_TOP_CONTROLS_HEIGHT + MAP_TOP_CONTROLS_CLEARANCE;
 
   const syncMapHeading = useCallback(async () => {
     if (!mapRef.current) {
@@ -2210,7 +2214,7 @@ export default function MapScreen() {
   return (
     <View style={styles.screen}>
       {showStartupLoading || isFetching ? (
-        <View style={styles.refreshBadge}>
+        <View style={[styles.refreshBadge, { top: topOverlayContentOffset }]}>
           <Text style={styles.refreshBadgeText}>
             {showStartupLoading ? 'Lade Kartenpunkte...' : 'Aktualisiere Kartenpunkte...'}
           </Text>
@@ -2219,7 +2223,7 @@ export default function MapScreen() {
       <StampingSuccessToast
         message={stampSuccessMessage}
         onHide={() => setIsStampSuccessToastVisible(false)}
-        topOffset={insets.top + 64}
+        topOffset={topOverlayContentOffset}
         visible={isStampSuccessToastVisible}
       />
       <MapView
@@ -2264,102 +2268,101 @@ export default function MapScreen() {
       </MapView>
 
       <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, styles.overlayUiLayer]}>
-        <View style={[styles.topControls, { top: insets.top + 12 }]}>
-          <View style={styles.searchBarWrap}>
-            <View style={styles.searchBar}>
-              <TextInput
-                ref={searchInputRef}
-                onBlur={() => {
-                  if (searchBlurTimeoutRef.current) {
-                    clearTimeout(searchBlurTimeoutRef.current);
-                  }
+        <View style={[styles.topControls, { top: insets.top + MAP_TOP_CONTROLS_TOP }]}>
+          <View style={styles.primaryControlsRow}>
+            <View style={styles.searchBarWrap}>
+              <View style={styles.searchBar}>
+                <TextInput
+                  ref={searchInputRef}
+                  onBlur={() => {
+                    if (searchBlurTimeoutRef.current) {
+                      clearTimeout(searchBlurTimeoutRef.current);
+                    }
 
-                  searchBlurTimeoutRef.current = setTimeout(() => {
-                    setIsSearchFocused(false);
-                    searchBlurTimeoutRef.current = null;
-                  }, 140);
-                }}
-                onChangeText={setSearchQuery}
-                onFocus={() => {
-                  if (searchBlurTimeoutRef.current) {
-                    clearTimeout(searchBlurTimeoutRef.current);
-                    searchBlurTimeoutRef.current = null;
-                  }
+                    searchBlurTimeoutRef.current = setTimeout(() => {
+                      setIsSearchFocused(false);
+                      searchBlurTimeoutRef.current = null;
+                    }, 140);
+                  }}
+                  onChangeText={setSearchQuery}
+                  onFocus={() => {
+                    if (searchBlurTimeoutRef.current) {
+                      clearTimeout(searchBlurTimeoutRef.current);
+                      searchBlurTimeoutRef.current = null;
+                    }
 
-                  setIsSearchFocused(true);
-                }}
-                placeholder="Suche Stempel oder Parkplatz"
-                placeholderTextColor="#7b8776"
-                style={styles.searchInput}
-                value={searchQuery}
-              />
-            </View>
-
-            {isSearchFocused &&
-            (localSearchResults.length > 0 ||
-              remoteSearchResults.length > 0 ||
-              isRemoteSearchLoading ||
-              remoteSearchError ||
-              showOfflineSearchHint) ? (
-              <View style={styles.searchResultsPopover}>
-                {localSearchResults.length > 0 ? <Text style={styles.searchSectionTitle}>Kartenpunkte</Text> : null}
-                {localSearchResults.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    onPress={() => focusItemOnMap(item)}
-                    style={({ pressed }) => [styles.searchResultRow, pressed && styles.pressed]}>
-                    <Text numberOfLines={1} style={styles.searchResultTitle}>
-                      {item.title}
-                    </Text>
-                    <Text numberOfLines={1} style={styles.searchResultMeta}>
-                      {item.kind === 'parking' ? 'Parkplatz' : item.kind === 'visited-stamp' ? 'Besucht' : 'Unbesucht'}
-                    </Text>
-                  </Pressable>
-                ))}
-                {remoteSearchResults.length > 0 ? <Text style={styles.searchSectionTitle}>Orte</Text> : null}
-                {remoteSearchResults.map((place) => (
-                  <Pressable
-                    key={`external:${place.placeId}`}
-                    onPress={() => focusExternalPlaceOnMap(place)}
-                    style={({ pressed }) => [styles.searchResultRow, pressed && styles.pressed]}>
-                    <Text numberOfLines={1} style={styles.searchResultTitle}>
-                      {place.name}
-                    </Text>
-                    <Text numberOfLines={1} style={styles.searchResultMeta}>
-                      {place.formattedAddress || 'Ort'}
-                    </Text>
-                  </Pressable>
-                ))}
-                {isRemoteSearchLoading ? (
-                  <Text style={styles.searchStatusText}>Suche Orte...</Text>
-                ) : null}
-                {showOfflineSearchHint ? (
-                  <Text style={styles.searchStatusText}>Offline: nur lokale Treffer werden angezeigt.</Text>
-                ) : null}
-                {!isRemoteSearchLoading && remoteSearchError ? (
-                  <Text style={styles.searchStatusText}>{remoteSearchError}</Text>
-                ) : null}
+                    setIsSearchFocused(true);
+                  }}
+                  placeholder="Suche Stempel oder Parkplatz"
+                  placeholderTextColor="#7b8776"
+                  style={styles.searchInput}
+                  value={searchQuery}
+                />
               </View>
-            ) : null}
+
+              {isSearchFocused &&
+              (localSearchResults.length > 0 ||
+                remoteSearchResults.length > 0 ||
+                isRemoteSearchLoading ||
+                remoteSearchError ||
+                showOfflineSearchHint) ? (
+                <View style={styles.searchResultsPopover}>
+                  {localSearchResults.length > 0 ? <Text style={styles.searchSectionTitle}>Kartenpunkte</Text> : null}
+                  {localSearchResults.map((item) => (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => focusItemOnMap(item)}
+                      style={({ pressed }) => [styles.searchResultRow, pressed && styles.pressed]}>
+                      <Text numberOfLines={1} style={styles.searchResultTitle}>
+                        {item.title}
+                      </Text>
+                      <Text numberOfLines={1} style={styles.searchResultMeta}>
+                        {item.kind === 'parking' ? 'Parkplatz' : item.kind === 'visited-stamp' ? 'Besucht' : 'Unbesucht'}
+                      </Text>
+                    </Pressable>
+                  ))}
+                  {remoteSearchResults.length > 0 ? <Text style={styles.searchSectionTitle}>Orte</Text> : null}
+                  {remoteSearchResults.map((place) => (
+                    <Pressable
+                      key={`external:${place.placeId}`}
+                      onPress={() => focusExternalPlaceOnMap(place)}
+                      style={({ pressed }) => [styles.searchResultRow, pressed && styles.pressed]}>
+                      <Text numberOfLines={1} style={styles.searchResultTitle}>
+                        {place.name}
+                      </Text>
+                      <Text numberOfLines={1} style={styles.searchResultMeta}>
+                        {place.formattedAddress || 'Ort'}
+                      </Text>
+                    </Pressable>
+                  ))}
+                  {isRemoteSearchLoading ? (
+                    <Text style={styles.searchStatusText}>Suche Orte...</Text>
+                  ) : null}
+                  {showOfflineSearchHint ? (
+                    <Text style={styles.searchStatusText}>Offline: nur lokale Treffer werden angezeigt.</Text>
+                  ) : null}
+                  {!isRemoteSearchLoading && remoteSearchError ? (
+                    <Text style={styles.searchStatusText}>{remoteSearchError}</Text>
+                  ) : null}
+                </View>
+              ) : null}
+            </View>
+            {isAuthenticated ? <GroupSelector /> : null}
           </View>
 
-          <Pressable onPress={() => setIsFilterOpen(true)} style={({ pressed }) => [styles.filterButton, pressed && styles.pressed]}>
-            <Feather color="#1e2a1e" name="sliders" size={14} />
-            <Text style={styles.filterButtonLabel}>Filter</Text>
-          </Pressable>
-          <Pressable onPress={handleManualRefresh} style={({ pressed }) => [styles.quickRefreshButton, pressed && styles.pressed]}>
-            <Feather color="#1e2a1e" name="refresh-cw" size={14} />
-          </Pressable>
+          <View style={styles.secondaryControlsRow}>
+            <Pressable onPress={handleManualRefresh} style={({ pressed }) => [styles.quickRefreshButton, pressed && styles.pressed]}>
+              <Feather color="#1e2a1e" name="refresh-cw" size={14} />
+            </Pressable>
+            <Pressable onPress={() => setIsFilterOpen(true)} style={({ pressed }) => [styles.filterButton, pressed && styles.pressed]}>
+              <Feather color="#1e2a1e" name="sliders" size={14} />
+              <Text style={styles.filterButtonLabel}>Filter</Text>
+            </Pressable>
+          </View>
         </View>
 
-        {isAuthenticated ? (
-          <View style={[styles.groupControl, { top: insets.top + 64 }]}>
-            <GroupSelector />
-          </View>
-        ) : null}
-
         {!isMapNorthUp ? (
-          <View style={[styles.compassControl, { top: compassButtonTopOffset }]}>
+          <View style={[styles.compassControl, { top: topOverlayContentOffset }]}>
             <Pressable onPress={handleResetNorthPress} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
               <Feather color="#2e3a2e" name="compass" size={18} />
             </Pressable>
@@ -2471,7 +2474,7 @@ export default function MapScreen() {
       <Modal animationType="fade" onRequestClose={() => setIsFilterOpen(false)} transparent visible={isFilterOpen}>
         <View style={styles.modalBackdrop}>
           <Pressable onPress={() => setIsFilterOpen(false)} style={StyleSheet.absoluteFill} />
-          <View style={[styles.filterPopover, { top: insets.top + 72, width: filterPopoverWidth }]}>
+          <View style={[styles.filterPopover, { top: topOverlayContentOffset, width: filterPopoverWidth }]}>
             <Text style={styles.filterTitle}>Filter</Text>
 
             <Text style={styles.filterSectionLabel}>Status</Text>
@@ -2539,7 +2542,6 @@ const styles = StyleSheet.create({
   },
   refreshBadge: {
     position: 'absolute',
-    top: 56,
     alignSelf: 'center',
     zIndex: 20,
     paddingHorizontal: 14,
@@ -2591,14 +2593,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
+    gap: 10,
+  },
+  primaryControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  groupControl: {
-    position: 'absolute',
-    left: 16,
-    zIndex: 3,
+  secondaryControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-end',
+    gap: 10,
   },
   searchBarWrap: {
     flex: 1,
