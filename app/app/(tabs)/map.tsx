@@ -50,6 +50,7 @@ import {
 import { useHikingGroup } from '@/lib/hiking-group';
 import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images';
 import { areMapCoordinatesEqual, isCoordinateInPaddedRegion } from '@/lib/map-viewport';
+import { canCreateMapVisit, getMapPrimaryActionLabel } from '@/lib/map-stamp-action';
 import {
   isNetworkUnavailableError,
   OFFLINE_REFRESH_MESSAGE,
@@ -1529,7 +1530,12 @@ export default function MapScreen() {
   }, [suppressSelectionSheetCompactionForAutoZoom, userLocation]);
 
   const handleStampVisit = useCallback(async () => {
-    if (!selectedItem || selectedItem.kind === 'parking' || isStamping) {
+    if (
+      !selectedItem ||
+      selectedItem.kind === 'parking' ||
+      !canCreateMapVisit(selectedItem.kind) ||
+      isStamping
+    ) {
       return;
     }
 
@@ -1539,10 +1545,6 @@ export default function MapScreen() {
     }
 
     if (!accessToken) {
-      return;
-    }
-
-    if (selectedItem.kind === 'visited-stamp') {
       return;
     }
 
@@ -2080,19 +2082,11 @@ export default function MapScreen() {
       return undefined;
     }
 
-    if (selectedItem.kind === 'parking') {
-      return 'Navigation starten';
-    }
-
-    if (isStamping) {
-      return 'Registriere Besuch...';
-    }
-
-    if (!isAuthenticated) {
-      return 'Anmelden zum Stempeln';
-    }
-
-    return selectedItem.kind === 'visited-stamp' ? 'Bereits gestempelt' : 'Besuch registrieren';
+    return getMapPrimaryActionLabel({
+      isAuthenticated,
+      isStamping,
+      kind: selectedItem.kind,
+    });
   }, [isAuthenticated, isStamping, selectedItem]);
 
   const selectionPrimaryActionDisabled = useMemo(() => {
@@ -2106,7 +2100,6 @@ export default function MapScreen() {
 
     return (
       isStamping ||
-      selectedItem.kind === 'visited-stamp' ||
       (isAuthenticated && (!accessToken || !canPerformWrites))
     );
   }, [accessToken, canPerformWrites, isAuthenticated, isStamping, selectedItem]);
@@ -2268,8 +2261,11 @@ export default function MapScreen() {
       </MapView>
 
       <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, styles.overlayUiLayer]}>
-        <View style={[styles.topControls, { top: insets.top + MAP_TOP_CONTROLS_TOP }]}>
-          <View style={styles.primaryControlsRow}>
+        <View
+          pointerEvents="box-none"
+          style={[styles.topControls, { top: insets.top + MAP_TOP_CONTROLS_TOP }]}
+          testID="map-top-controls">
+          <View style={styles.primaryControlsRow} testID="map-primary-controls-row">
             <View style={styles.searchBarWrap}>
               <View style={styles.searchBar}>
                 <TextInput
@@ -2347,10 +2343,10 @@ export default function MapScreen() {
                 </View>
               ) : null}
             </View>
-            {isAuthenticated ? <GroupSelector /> : null}
+            {isAuthenticated ? <GroupSelector testID="map-header-group-selector" /> : null}
           </View>
 
-          <View style={styles.secondaryControlsRow}>
+          <View style={styles.secondaryControlsRow} testID="map-secondary-controls-row">
             <Pressable onPress={handleManualRefresh} style={({ pressed }) => [styles.quickRefreshButton, pressed && styles.pressed]}>
               <Feather color="#1e2a1e" name="refresh-cw" size={14} />
             </Pressable>
@@ -2412,7 +2408,7 @@ export default function MapScreen() {
             enablePrimaryStampAnimation={
               !showGroupStampAction &&
               isAuthenticated &&
-              selectedItem.kind === 'open-stamp'
+              selectedItem.kind !== 'parking'
             }
             groupActionDisabled={
               showGroupStampAction ? !accessToken || !canPerformWrites : undefined

@@ -5,9 +5,17 @@ import {
   canonicalGroupUserIds,
   getReusableQueryData,
   queryKeys,
+  REMOTE_VISIT_REFETCH_OPTIONS,
 } from '@/lib/queries';
 
 describe('group-aware query keys', () => {
+  it('refreshes remote visit state when the app regains focus or connectivity', () => {
+    expect(REMOTE_VISIT_REFETCH_OPTIONS).toEqual({
+      refetchOnReconnect: 'always',
+      refetchOnWindowFocus: 'always',
+    });
+  });
+
   it('normalizes, deduplicates, sorts, and always includes the current user', () => {
     expect(
       canonicalGroupUserIds(' self-id ', ['friend-b', ' friend-a ', 'self-id', 'friend-b'])

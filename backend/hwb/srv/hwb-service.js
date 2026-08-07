@@ -1811,52 +1811,64 @@ function isInsideHarzRadius(place) {
 }
 
 async function stampForGroup(req) {
-  const { Stampings, Friendships } = this.entities('hwb.db');
+  const { Stampboxes, Stampings, Friendships } = this.entities('hwb.db');
   const { sStampId, sGroupUserIds, bStampForUser } = req.data;
+  const tx = cds.tx(req);
   const nowIso = new Date().toISOString();
 
-  // Extract group user IDs into an array
-  const groupUserIds = sGroupUserIds?.split(',') || [];
+  const groupUserIds = Array.from(new Set(
+    (typeof sGroupUserIds === 'string' ? sGroupUserIds.split(',') : [])
+      .map(userId => userId.trim())
+      .filter(Boolean)
+  ));
 
-  // Find friends allowed to stamp for the current user
-  const friendsAllowedToStamp = await SELECT
-    .from(Friendships)
-    .where({
-      isAllowedToStampForFriend: true,
-      toUser_ID: req.user.id,
-      fromUser_ID: { in: groupUserIds }
-    });
+  const stampbox = await tx.run(
+    SELECT.one.from(Stampboxes).columns('ID').where({ ID: sStampId })
+  );
+  if (!stampbox) {
+    req.reject(404, `Stampbox with ID ${sStampId} does not exist.`);
+  }
 
-  // Prepare stampings for friends and optionally for the current user
-  const stampings = friendsAllowedToStamp.map(friend => ({
+  const friendsAllowedToStamp = groupUserIds.length > 0
+    ? await tx.run(
+      SELECT
+        .from(Friendships)
+        .columns('fromUser_ID')
+        .where({
+          status: 'accepted',
+          isAllowedToStampForFriend: true,
+          toUser_ID: req.user.id,
+          fromUser_ID: { in: groupUserIds }
+        })
+    )
+    : [];
+  const allowedFriendIds = new Set(
+    friendsAllowedToStamp.map(friendship => friendship.fromUser_ID)
+  );
+  const unauthorizedFriendIds = groupUserIds.filter(userId => !allowedFriendIds.has(userId));
+
+  if (unauthorizedFriendIds.length > 0) {
+    req.reject(403, 'Not allowed to stamp for one or more requested users.');
+  }
+
+  const targetUserIds = new Set(groupUserIds);
+
+  if (bStampForUser) {
+    targetUserIds.add(req.user.id);
+  }
+
+  if (targetUserIds.size === 0) {
+    req.reject(400, 'At least one group member or the current user is required.');
+  }
+
+  const stampings = Array.from(targetUserIds, createdBy => ({
+    ID: uuidv4(),
     stamp_ID: sStampId,
-    createdBy: friend.fromUser_ID,
+    createdBy,
     visitedAt: nowIso
   }));
 
-  if (bStampForUser) {
-    stampings.push({ 
-      stamp_ID: sStampId,
-      createdBy: req.user.id,
-      visitedAt: nowIso
-    });
-  }
-
-  // Filter out existing stampings to avoid duplicates
-  const existingStampings = await SELECT
-    .from(Stampings)
-    .where({
-      stamp_ID: sStampId,
-      createdBy: { in: stampings.map(stamping => stamping.createdBy) }
-    });
-
-  const existingStampingIds = existingStampings.map(stamping => `${stamping.stamp_ID}-${stamping.createdBy}`);
-  const newStampings = stampings.filter(stamping => !existingStampingIds.includes(`${stamping.stamp_ID}-${stamping.createdBy}`));
-
-  // Insert new stampings
-  if (newStampings.length > 0) {
-    await INSERT.into(Stampings).entries(newStampings);
-  }
+  await tx.run(INSERT.into(Stampings).entries(stampings));
 
   return "ok";
 }

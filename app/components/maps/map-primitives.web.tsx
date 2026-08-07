@@ -219,6 +219,7 @@ svg.leaflet-zoom-animated { will-change: transform; }
 }
 .hwb-css-marker {
   --hwb-marker-color: #2e6b4b;
+  --hwb-marker-badge-width: 15px;
   display: block;
   height: 52px;
   pointer-events: none;
@@ -231,12 +232,12 @@ svg.leaflet-zoom-animated { will-change: transform; }
   border-radius: 50% 50% 50% 0;
   box-sizing: border-box;
   content: "";
-  height: 34px;
-  left: 7px;
+  height: 32px;
+  left: 8px;
   position: absolute;
-  top: 5px;
-  transform: rotate(-45deg);
-  width: 34px;
+  top: 10px;
+  transform: scaleX(0.72) rotate(-45deg);
+  width: 32px;
   z-index: 0;
 }
 .hwb-css-marker__label {
@@ -246,18 +247,16 @@ svg.leaflet-zoom-animated { will-change: transform; }
   box-sizing: border-box;
   color: #111;
   display: flex;
-  font: 700 14px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  height: 18px;
+  font: 700 12px/1 Arial, Helvetica, sans-serif;
+  height: 15px;
   justify-content: center;
-  left: 7px;
-  padding: 0 2px;
+  left: 50%;
+  padding: 0;
   position: absolute;
-  right: 7px;
   top: 12px;
+  transform: translateX(-50%);
+  width: var(--hwb-marker-badge-width);
   z-index: 1;
-}
-.hwb-css-marker--wide-label .hwb-css-marker__label {
-  font-size: 11px;
 }
 .hwb-css-marker--compact {
   height: 100%;

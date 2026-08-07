@@ -56,6 +56,10 @@ type AuthClaims = {
 const MAP_AND_LIST_QUERY_GC_TIME = Platform.OS === 'web' ? 30 * 60 * 1000 : undefined;
 const DETAIL_QUERY_GC_TIME = Platform.OS === 'web' ? 15 * 60 * 1000 : undefined;
 const ROUTE_QUERY_GC_TIME = Platform.OS === 'web' ? 10 * 60 * 1000 : undefined;
+export const REMOTE_VISIT_REFETCH_OPTIONS = {
+  refetchOnReconnect: 'always',
+  refetchOnWindowFocus: 'always',
+} as const;
 
 export function canonicalGroupUserIds(currentUserId?: string, groupUserIds?: readonly string[]) {
   return [
@@ -420,6 +424,7 @@ export function useStampsOverviewQuery() {
   const authorizedRequest = useAuthorizedRequest();
 
   return useQuery<StampsOverviewData>({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampsOverview(claims?.sub),
     enabled: Boolean(accessToken && isAuthenticated),
     queryFn: () => authorizedRequest((token) => fetchStampsOverviewData(token, claims?.sub)),
@@ -452,6 +457,7 @@ export function useFilteredStampsOverviewQuery(
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<StampsOverviewData>({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter, groupUserIds),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
@@ -489,6 +495,7 @@ export function useMapDataQuery(options?: {
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<MapData>({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.mapData(claims?.sub, groupUserIds),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
@@ -546,6 +553,7 @@ export function useFriendsOverviewQuery() {
   const authorizedRequest = useAuthorizedRequest();
 
   return useQuery<FriendsOverviewData>({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.friendsOverview(claims?.sub),
     enabled: Boolean(accessToken && isAuthenticated),
     queryFn: () => authorizedRequest((token) => fetchFriendsOverview(token, claims?.sub)),
@@ -561,6 +569,7 @@ export function useProfileOverviewQuery() {
     claims?.sub && currentUserProfile?.id === claims.sub ? currentUserProfile : null;
 
   return useQuery<ProfileOverviewData>({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.profileOverview(claims?.sub),
     enabled: Boolean(accessToken && isAuthenticated),
     placeholderData: () =>
@@ -607,6 +616,7 @@ export function useStampDetailQuery(
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<StampDetailData>({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampDetail(claims?.sub, stampId, groupUserIds),
     enabled: Boolean(stampId && (isAuthenticated ? accessToken : true)),
     gcTime: DETAIL_QUERY_GC_TIME,
@@ -708,6 +718,7 @@ export function useUserProfileOverviewQuery(targetUserId?: string) {
   const queryClient = useQueryClient();
 
   return useQuery<UserProfileOverviewData>({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.userProfileOverview(claims?.sub, targetUserId),
     enabled: Boolean(accessToken && isAuthenticated && targetUserId),
     placeholderData: () => {
@@ -758,6 +769,7 @@ export function useToursOverviewQuery(options?: {
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<Tour[]>({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.toursOverview(claims?.sub, groupUserIds),
     enabled: Boolean(accessToken && isAuthenticated),
     queryFn: () =>
@@ -780,6 +792,7 @@ export function useTourDetailQuery(
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<TourDetailData>({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.tourDetail(claims?.sub, tourId, groupUserIds),
     enabled: Boolean(accessToken && isAuthenticated && tourId),
     placeholderData: () => {
