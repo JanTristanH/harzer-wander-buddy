@@ -55,11 +55,13 @@ describe('web map primitives', () => {
       configurable: true,
       value: { hostname: 'example.test' },
     });
-    Object.defineProperty(global.navigator, 'geolocation', {
+    Object.defineProperty(global, 'navigator', {
       configurable: true,
       value: {
-        clearWatch,
-        watchPosition,
+        geolocation: {
+          clearWatch,
+          watchPosition,
+        },
       },
     });
   });
@@ -69,7 +71,7 @@ describe('web map primitives', () => {
       configurable: true,
       value: undefined,
     });
-    Object.defineProperty(global.navigator, 'geolocation', {
+    Object.defineProperty(global, 'navigator', {
       configurable: true,
       value: undefined,
     });
