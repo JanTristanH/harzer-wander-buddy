@@ -1,11 +1,11 @@
 import type { LeafletEventHandlerFnMap, Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
+import '@maplibre/maplibre-gl-leaflet';
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Marker as LeafletMarker,
   Polyline as LeafletPolyline,
   MapContainer,
-  TileLayer,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
@@ -98,11 +98,9 @@ const DEFAULT_REGION: Region = {
 };
 
 const MAP_CONTAINER_STYLE = { height: '100%', width: '100%' } as const;
-const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const TILE_ATTRIBUTION = '&copy; OpenStreetMap contributors';
-const FALLBACK_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-const FALLBACK_TILE_ATTRIBUTION =
-  '&copy; OpenStreetMap contributors &copy; CARTO';
+const OPEN_FREE_MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+const OPEN_FREE_MAP_ATTRIBUTION =
+  '<a href="https://openfreemap.org/">OpenFreeMap</a> <a href="https://openmaptiles.org/">&copy; OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>';
 const WEB_MARKER_SIZE = 48;
 const WEB_MARKER_SIZE_COMPACT = 24;
 const MIN_ZOOM = 2;
@@ -175,10 +173,56 @@ const LEAFLET_RUNTIME_CSS = `
 .leaflet-control-attribution a:hover {
   text-decoration: underline;
 }
+.hwb-map-attribution {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid #2f9bff;
+  border-radius: 999px;
+  box-sizing: border-box;
+  display: flex;
+  min-height: 42px;
+  overflow: hidden;
+}
+.hwb-map-attribution-toggle {
+  align-items: center;
+  background: #171717;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font: 700 25px/1 Arial, sans-serif;
+  height: 32px;
+  justify-content: center;
+  margin: 3px;
+  padding: 0;
+  width: 32px;
+}
+.hwb-map-attribution-content {
+  color: #333;
+  font: 14px/1.25 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-width 180ms ease, opacity 140ms ease, padding-right 180ms ease;
+  white-space: nowrap;
+}
+.hwb-map-attribution.is-expanded .hwb-map-attribution-content {
+  max-width: min(680px, calc(100vw - 80px));
+  opacity: 1;
+  padding-right: 10px;
+}
+.hwb-map-attribution-content a {
+  color: #1b63c3;
+  text-decoration: none;
+}
+.hwb-map-attribution-content a:hover {
+  text-decoration: underline;
+}
 .hwb-leaflet-map.hwb-attribution-below-zoom .leaflet-bottom.leaflet-right {
   display: none;
 }
-.hwb-leaflet-map.hwb-attribution-below-zoom .leaflet-bottom.leaflet-left .leaflet-control-attribution {
+.hwb-leaflet-map.hwb-attribution-below-zoom .leaflet-bottom.leaflet-left .hwb-map-attribution {
   margin-bottom: 100px;
   margin-left: 10px;
 }
@@ -565,6 +609,61 @@ function MapInstanceBridge(props: { onMapReady?: (map: LeafletMap) => void }) {
   return null;
 }
 
+function OpenFreeMapLayer() {
+  const map = useMap();
+
+  useEffect(() => {
+    const layer = L.maplibreGL({
+      attributionControl: { customAttribution: OPEN_FREE_MAP_ATTRIBUTION },
+      style: OPEN_FREE_MAP_STYLE_URL,
+    }).addTo(map);
+
+    return () => {
+      layer.remove();
+    };
+  }, [map]);
+
+  return null;
+}
+
+function OpenFreeMapAttribution({ attributionPlacement }: Pick<MapViewProps, 'attributionPlacement'>) {
+  const map = useMap();
+
+  useEffect(() => {
+    const control = new L.Control({
+      position: attributionPlacement === 'below-zoom' ? 'bottomleft' : 'bottomright',
+    });
+
+    control.onAdd = () => {
+      const container = L.DomUtil.create('div', 'leaflet-control hwb-map-attribution');
+      const toggle = L.DomUtil.create('button', 'hwb-map-attribution-toggle', container);
+      const content = L.DomUtil.create('span', 'hwb-map-attribution-content', container);
+
+      toggle.type = 'button';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'Karten-Attribution anzeigen');
+      toggle.textContent = 'i';
+      content.innerHTML = OPEN_FREE_MAP_ATTRIBUTION;
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.on(toggle, 'click', () => {
+        const expanded = container.classList.toggle('is-expanded');
+        toggle.setAttribute('aria-expanded', String(expanded));
+        toggle.setAttribute('aria-label', expanded ? 'Karten-Attribution ausblenden' : 'Karten-Attribution anzeigen');
+      });
+
+      return container;
+    };
+
+    control.addTo(map);
+    return () => {
+      control.remove();
+    };
+  }, [attributionPlacement, map]);
+
+  return null;
+}
+
 const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref) {
   const {
     attributionPlacement = 'bottom-right',
@@ -579,13 +678,10 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
     style,
   } = props;
   const [map, setMap] = useState<LeafletMap | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
   const lastUserLocationRef = useRef<LatLng | null>(null);
   const onUserLocationChangeRef = useRef(onUserLocationChange);
-  const [tileSource, setTileSource] = useState<{ attribution: string; url: string }>({
-    attribution: TILE_ATTRIBUTION,
-    url: TILE_URL,
-  });
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
 
   const effectiveRegion = initialRegion ?? DEFAULT_REGION;
@@ -600,18 +696,12 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
 
   useEffect(() => {
     ensureLeafletRuntimeCss();
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
     onUserLocationChangeRef.current = onUserLocationChange;
   }, [onUserLocationChange]);
-
-  useEffect(() => {
-    if (!map) {
-      return;
-    }
-    map.attributionControl.setPosition(attributionPlacement === 'below-zoom' ? 'bottomleft' : 'bottomright');
-  }, [attributionPlacement, map]);
 
   useEffect(() => {
     if (!map) {
@@ -767,7 +857,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
     };
   }, [showsUserLocation]);
 
-  if (typeof window === 'undefined') {
+  if (!isClient) {
     return <View style={style} />;
   }
 
@@ -778,6 +868,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           attributionPlacement === 'below-zoom' ? 'hwb-attribution-below-zoom' : 'hwb-attribution-bottom-right'
         }`}
         center={centerTuple}
+        attributionControl={false}
         fadeAnimation={false}
         markerZoomAnimation
         style={MAP_CONTAINER_STYLE}
@@ -793,25 +884,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
             onMapReady?.();
           }}
         />
-        <TileLayer
-          attribution={tileSource.attribution}
-          eventHandlers={{
-            tileerror() {
-              setTileSource((current) => {
-                if (current.url === FALLBACK_TILE_URL) {
-                  return current;
-                }
-
-                return {
-                  attribution: FALLBACK_TILE_ATTRIBUTION,
-                  url: FALLBACK_TILE_URL,
-                };
-              });
-            },
-          }}
-          updateWhenZooming={true}
-          url={tileSource.url}
-        />
+        <OpenFreeMapLayer />
+        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} />
         <MapEventBridge
           onPress={onPress}
           onRegionChange={onRegionChange}

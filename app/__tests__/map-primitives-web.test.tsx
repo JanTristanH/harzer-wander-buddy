@@ -5,6 +5,7 @@ import MapView, { Marker } from '@/components/maps/map-primitives.web';
 
 const mockDivIcon = jest.fn((options: unknown) => ({ options, type: 'div-icon' }));
 const mockIcon = jest.fn((options: unknown) => ({ options, type: 'icon' }));
+const mockMaplibreGL = jest.fn((_options: unknown) => ({ addTo: jest.fn(() => ({ remove: jest.fn() })) }));
 const mockMapContainer = jest.fn((_props: unknown) => null);
 
 jest.mock('leaflet', () => ({
@@ -13,15 +14,17 @@ jest.mock('leaflet', () => ({
     divIcon: (options: unknown) => mockDivIcon(options),
     icon: (options: unknown) => mockIcon(options),
     latLngBounds: jest.fn(),
+    maplibreGL: (options: unknown) => mockMaplibreGL(options),
   },
 }));
+
+jest.mock('@maplibre/maplibre-gl-leaflet', () => ({}));
 
 jest.mock('react-leaflet', () => {
   return {
     MapContainer: (props: unknown) => mockMapContainer(props),
     Marker: () => null,
     Polyline: () => null,
-    TileLayer: () => null,
     useMap: jest.fn(),
     useMapEvents: jest.fn(),
   };
