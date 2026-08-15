@@ -4,9 +4,11 @@
 
 import { type ImageRequireSource } from 'react-native';
 
-type MarkerVisualKind = 'visited-stamp' | 'open-stamp' | 'parking' | 'parking-order' | 'tour-order';
+type MarkerVisualKind = 'visited-stamp' | 'open-stamp' | 'group-open-stamp' | 'group-partial-stamp' | 'parking' | 'parking-order' | 'tour-order';
 
 const MAP_MARKER_IMAGE_SOURCE_BY_KEY: Record<string, ImageRequireSource> = {
+  'group-open-stamp:--': require('../assets/images/map/generated/group-open-stamp/fallback.png'),
+  'group-partial-stamp:--': require('../assets/images/map/generated/group-partial-stamp/fallback.png'),
   'open-stamp:--': require('../assets/images/map/generated/open-stamp/fallback.png'),
   'open-stamp:1': require('../assets/images/map/generated/open-stamp/001.png'),
   'open-stamp:10': require('../assets/images/map/generated/open-stamp/010.png'),
@@ -480,6 +482,10 @@ export function getPreGeneratedMapMarkerImageSource(input: {
 
   if (input.kind === 'parking') {
     return sourceMap['parking:P'];
+  }
+
+  if (input.kind === 'group-open-stamp' || input.kind === 'group-partial-stamp') {
+    return sourceMap[`${input.kind}:--`];
   }
 
   const normalizedStampLabel = normalizeStampLabel(input.label);

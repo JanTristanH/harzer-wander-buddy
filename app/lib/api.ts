@@ -3,6 +3,12 @@ import { appConfig } from '@/lib/config';
 import { prepareProfileImageForUpload, type UploadableImage } from '@/lib/image-upload';
 import buildODataQuery, { type QueryOptions } from 'odata-query';
 
+export type StampedUser = {
+  ID: string;
+  name?: string;
+  picture?: string;
+};
+
 export type Stampbox = {
   ID: string;
   number: string;
@@ -17,8 +23,9 @@ export type Stampbox = {
   latitude?: number;
   longitude?: number;
   hasVisited?: boolean;
+  groupSize?: number;
   totalGroupStampings?: number;
-  stampedUsers?: string | string[];
+  stampedUsers?: string | (string | StampedUser)[];
   stampedUserIds?: string | string[];
 };
 
@@ -278,6 +285,9 @@ export type FriendsOverviewData = {
     id: string;
     name: string;
     picture?: string;
+    friendshipId: string;
+    isAllowedToStampForMe: boolean;
+    isAllowedToStampForFriend: boolean;
     visitedCount: number;
     completionPercent: number;
   }[];
@@ -923,6 +933,24 @@ async function fetchCurrentUserRecord(accessToken: string) {
 
 function normalizeIdList(ids: string[]) {
   return [...new Set(ids.map((id) => safeTrim(id)).filter(Boolean))];
+}
+
+function buildGroupStampingsFilter(groupUserIds?: string[]) {
+  const groupFilter = normalizeIdList(groupUserIds ?? []).join(',');
+  return groupFilter
+    ? buildStringNotEqualsFilter('groupFilterStampings', groupFilter)
+    : undefined;
+}
+
+function combineODataFilters(...filters: (string | undefined)[]) {
+  const activeFilters = filters.filter((filter): filter is string => Boolean(filter));
+  if (activeFilters.length === 0) {
+    return undefined;
+  }
+
+  // Keep the synthetic groupFilterStampings comparison at the top expression
+  // level. The CAP read handler scans that level to extract the CSV payload.
+  return activeFilters.join(' and ');
 }
 
 function toFiniteNumber(value: unknown) {
@@ -1830,27 +1858,44 @@ function pickCurrentUserStampNote(notes: StampNote[], currentUserId?: string) {
 async function fetchStampWithRecentStampings(
   accessToken: string,
   stampId: string,
-  currentUserId?: string
+  currentUserId?: string,
+  groupUserIds?: string[]
 ) {
+  const groupFilter = buildGroupStampingsFilter(groupUserIds);
+  const stampFilter = combineODataFilters(groupFilter, `ID eq ${stampId}`);
+  const stampSelect = [
+    'ID',
+    'number',
+    'orderBy',
+    'name',
+    'description',
+    'heroImageUrl',
+    'image',
+    'imageCaption',
+    'validFrom',
+    'validTo',
+    'latitude',
+    'longitude',
+    'hasVisited',
+    'groupFilterStampings',
+    'groupSize',
+    'totalGroupStampings',
+    'stampedUsers',
+    'stampedUserIds',
+  ];
+
   try {
     const [rows, stampNotes] = await Promise.all([
-      fetchGuidFilteredCollection<StampboxWithExpandedData>(
-        accessToken,
-        'Stampboxes',
-        'ID',
-        stampId,
-        [
-          [
-            '$select',
-            'ID,number,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
-          ],
-          [
-            '$expand',
-            'Stampings($select=ID,visitedAt,createdAt,createdBy,stamp_ID)',
-          ],
-          ['$top', 1],
-        ]
-      ),
+      fetchCollection<StampboxWithExpandedData>(accessToken, 'Stampboxes', {
+        select: stampSelect,
+        expand: {
+          Stampings: {
+            select: ['ID', 'visitedAt', 'createdAt', 'createdBy', 'stamp_ID'],
+          },
+        },
+        filter: stampFilter,
+        top: 1,
+      }),
       fetchGuidFilteredCollection<StampNote>(accessToken, 'StampNotes', 'stamp_ID', stampId, {
         select: ['ID', 'stamp_ID', 'note', 'createdBy', 'createdAt', 'modifiedAt'],
         orderBy: 'modifiedAt desc,createdAt desc',
@@ -1889,24 +1934,31 @@ async function fetchStampWithRecentStampings(
     // Fallback below for services that do not support this expand shape.
   }
 
-  const [stamp, stampings, stampNotes] = await Promise.all([
-    fetchEntityById<Stampbox>(accessToken, 'Stampboxes', stampId, [
-      [
-        '$select',
-        'ID,number,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
-      ],
-    ]),
-    fetchGuidFilteredCollection<Stamping>(accessToken, 'Stampings', 'stamp_ID', stampId, [
-      ['$select', 'ID,visitedAt,createdAt,createdBy,stamp_ID'],
-      ['$orderby', 'visitedAt desc,createdAt desc'],
-      ['$top', 200],
-    ]),
+  const [stampRows, stampings, stampNotes] = await Promise.all([
+    fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
+      select: stampSelect,
+      filter: stampFilter,
+      top: 1,
+    }),
+    currentUserId
+      ? fetchCollection<Stamping>(accessToken, 'Stampings', {
+          select: ['ID', 'visitedAt', 'createdAt', 'createdBy', 'stamp_ID'],
+          filter: `stamp_ID eq ${stampId} and createdBy eq '${escapeODataString(currentUserId)}'`,
+          orderBy: 'visitedAt desc,createdAt desc',
+          top: 200,
+        })
+      : Promise.resolve([] as Stamping[]),
     fetchGuidFilteredCollection<StampNote>(accessToken, 'StampNotes', 'stamp_ID', stampId, {
       select: ['ID', 'stamp_ID', 'note', 'createdBy', 'createdAt', 'modifiedAt'],
       orderBy: 'modifiedAt desc,createdAt desc',
       top: 50,
     }),
   ]);
+
+  const stamp = stampRows[0];
+  if (!stamp) {
+    throw new Error(`Stampboxes ${stampId} not found`);
+  }
 
   return { stamp, stampings, myNote: pickCurrentUserStampNote(stampNotes, currentUserId) };
 }
@@ -1969,8 +2021,15 @@ function sortStampboxes(rows: Stampbox[]) {
   });
 }
 
-export async function fetchStampboxes(accessToken: string, mode: StampboxFetchMode = 'default') {
-  const filter = buildStampboxModeFilter(mode);
+export async function fetchStampboxes(
+  accessToken: string,
+  mode: StampboxFetchMode = 'default',
+  groupUserIds?: string[]
+) {
+  const filter = combineODataFilters(
+    buildGroupStampingsFilter(groupUserIds),
+    buildStampboxModeFilter(mode)
+  );
 
   const rows = await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
     select: [
@@ -1987,6 +2046,7 @@ export async function fetchStampboxes(accessToken: string, mode: StampboxFetchMo
       'latitude',
       'longitude',
       'hasVisited',
+      'groupSize',
       'totalGroupStampings',
       'stampedUsers',
       'stampedUserIds',
@@ -2004,10 +2064,17 @@ export async function fetchMapData(
   currentUserId?: string,
   prefetchedStamps?: Stampbox[],
   prefetchedLatestVisited?: LatestVisitedStamp | null,
-  stampboxFetchMode: StampboxFetchMode = 'default'
+  stampboxFetchMode: StampboxFetchMode = 'default',
+  groupUserIds?: string[]
 ) {
+  const effectiveGroupUserIds = normalizeIdList([
+    ...(currentUserId ? [currentUserId] : []),
+    ...(groupUserIds ?? []),
+  ]);
   const [stamps, parkingSpots, latestVisited] = await Promise.all([
-    prefetchedStamps ? Promise.resolve(prefetchedStamps) : fetchStampboxes(accessToken, stampboxFetchMode),
+    prefetchedStamps
+      ? Promise.resolve(prefetchedStamps)
+      : fetchStampboxes(accessToken, stampboxFetchMode, effectiveGroupUserIds),
     fetchCollection<ParkingSpot>(accessToken, 'ParkingSpots', {
       select: ['ID', 'name', 'description', 'image', 'latitude', 'longitude'],
       top: 500,
@@ -2724,9 +2791,18 @@ function normalizeAdminParkingSpotUpdatePayload(payload: Partial<AdminParkingSpo
   return updatePayload;
 }
 
-export async function fetchStampDetail(accessToken: string, stampId: string, currentUserId?: string) {
+export async function fetchStampDetail(
+  accessToken: string,
+  stampId: string,
+  currentUserId?: string,
+  groupUserIds?: string[]
+) {
+  const effectiveGroupUserIds = normalizeIdList([
+    ...(currentUserId ? [currentUserId] : []),
+    ...(groupUserIds ?? []),
+  ]);
   const [{ stamp, stampings, myNote }, neighborStampRows, neighborParkingRows, friendships] = await Promise.all([
-    fetchStampWithRecentStampings(accessToken, stampId, currentUserId),
+    fetchStampWithRecentStampings(accessToken, stampId, currentUserId, effectiveGroupUserIds),
     fetchGuidFilteredCollection<NeighborStampRow>(accessToken, 'NeighborsStampStamp', 'ID', stampId, {
       orderBy: 'distanceKm asc',
       top: 3,
@@ -3436,7 +3512,20 @@ export async function fetchFriendsOverview(accessToken: string, currentUserId?: 
 
   const acceptedFriendships = friendships.filter((friend) => friend.status === 'accepted');
   const pendingSentFriendships = friendships.filter((friend) => friend.status === 'pending');
-  const mappedFriends = await buildFriendProgress(accessToken, acceptedFriendships);
+  const friendProgress = await buildFriendProgress(accessToken, acceptedFriendships);
+  const acceptedFriendshipByUserId = new Map(
+    acceptedFriendships.map((friendship) => [friendship.ID, friendship])
+  );
+  const mappedFriends = friendProgress.map((friend) => {
+    const friendship = acceptedFriendshipByUserId.get(friend.id);
+    return {
+      ...friend,
+      friendshipId: safeTrim(friendship?.FriendshipID),
+      isAllowedToStampForMe: normalizeBoolean(friendship?.isAllowedToStampForMe) ?? false,
+      isAllowedToStampForFriend:
+        normalizeBoolean(friendship?.isAllowedToStampForFriend) ?? false,
+    };
+  });
 
   const resolvedCurrentUserId = currentUserId || (await fetchCurrentUserRecord(accessToken)).ID;
   const incomingRequests = pendingRequests
@@ -3770,6 +3859,29 @@ export async function updateFriendshipPermission(
     method: 'PATCH',
     body: JSON.stringify({
       isAllowedToStampForFriend,
+    }),
+  });
+}
+
+export async function stampForGroup(
+  accessToken: string,
+  payload: {
+    stampId: string;
+    friendIds: string[];
+    includeCurrentUser: boolean;
+  }
+) {
+  const stampId = safeTrim(payload.stampId);
+  if (!stampId) {
+    throw new Error('Stamp ID is required');
+  }
+
+  return mutateOData<unknown>(accessToken, buildUrl('stampForGroup'), {
+    method: 'POST',
+    body: JSON.stringify({
+      sStampId: stampId,
+      bStampForUser: Boolean(payload.includeCurrentUser),
+      sGroupUserIds: normalizeIdList(payload.friendIds).join(','),
     }),
   });
 }

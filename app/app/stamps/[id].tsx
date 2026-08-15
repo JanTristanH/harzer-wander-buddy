@@ -36,6 +36,9 @@ import { LockedGuestRows } from '@/components/auth-locked-state';
 import { CurrentPositionDistanceSection } from '@/components/current-position-distance-section';
 import { DetailOverflowMenu } from '@/components/detail-overflow-menu';
 import { FriendsList } from '@/components/friends-list';
+import { GroupMemberStatusAvatar } from '@/components/group-member-status-avatar';
+import { GroupSelector } from '@/components/group-selector';
+import { GroupStampDialog } from '@/components/group-stamp-dialog';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampPressStage } from '@/components/stamp-press-stage';
 import { StampNoteSection } from '@/components/stamp-note-section';
@@ -55,6 +58,8 @@ import {
 import { useAdminAccess, useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useRequireSignInAction } from '@/lib/auth-actions';
 import { buildAuthenticatedImageSource } from '@/lib/images';
+import { confirmAction } from '@/lib/confirm-action';
+import { useHikingGroup } from '@/lib/hiking-group';
 import {
   isNetworkUnavailableError,
   OFFLINE_REFRESH_MESSAGE,
@@ -215,6 +220,35 @@ function formatEditableVisitDate(value?: string) {
   return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
 }
 
+function getStampedUserIdSet(stamp: Stampbox) {
+  if (Array.isArray(stamp.stampedUserIds)) {
+    return new Set(stamp.stampedUserIds.map((value) => value.trim()).filter(Boolean));
+  }
+
+  const rawValue = stamp.stampedUserIds?.trim();
+  if (!rawValue) {
+    return new Set<string>();
+  }
+
+  if (rawValue.startsWith('[')) {
+    try {
+      const parsedValue = JSON.parse(rawValue);
+      if (Array.isArray(parsedValue)) {
+        return new Set(
+          parsedValue
+            .filter((value): value is string => typeof value === 'string')
+            .map((value) => value.trim())
+            .filter(Boolean)
+        );
+      }
+    } catch {
+      // Older service variants expose the same value as comma-separated text.
+    }
+  }
+
+  return new Set(rawValue.split(',').map((value) => value.trim()).filter(Boolean));
+}
+
 function heroGradient(visited: boolean) {
   return visited
     ? (['#4f8b67', '#79af82', '#d8c88f'] as const)
@@ -307,18 +341,28 @@ function StampDetailContent() {
   const params = useLocalSearchParams<{
     id?: string | string[];
   }>();
-  const { accessToken, canPerformWrites, isAuthenticated, isOffline, logout } = useAuth();
+  const {
+    accessToken,
+    canPerformWrites,
+    currentUserProfile,
+    isAuthenticated,
+    isOffline,
+    logout,
+  } = useAuth();
   const requireSignIn = useRequireSignInAction();
   const claims = useIdTokenClaims<IdClaims>();
   const queryClient = useQueryClient();
+  const { groupUserIds, selectedFriendIds, selectedMembers } = useHikingGroup();
   const stampId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { data: detail, error, isFetching, isPending, isPlaceholderData, refetch } =
-    useStampDetailQuery(stampId);
+    useStampDetailQuery(stampId, { groupUserIds });
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { isAdmin } = useAdminAccess();
   const [isStamping, setIsStamping] = useState(false);
   const [isStampSuccessToastVisible, setIsStampSuccessToastVisible] = useState(false);
+  const [stampSuccessMessage, setStampSuccessMessage] = useState('Stempel erfolgreich gesetzt.');
+  const [isGroupStampDialogVisible, setIsGroupStampDialogVisible] = useState(false);
   const [isEditingVisits, setIsEditingVisits] = useState(false);
   const [visitDrafts, setVisitDrafts] = useState<Record<string, string>>({});
   const [busyVisitId, setBusyVisitId] = useState<string | null>(null);
@@ -408,7 +452,7 @@ function StampDetailContent() {
       return false;
     }
 
-    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId);
+    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId, groupUserIds);
 
     try {
       requireOnlineForWrite(canPerformWrites, 'Notizen koennen nur online gespeichert werden.');
@@ -463,6 +507,7 @@ function StampDetailContent() {
     detail?.myNote?.ID,
     detail?.myNote?.createdAt,
     detail?.myNote?.note,
+    groupUserIds,
     isSavingNote,
     isAuthenticated,
     logout,
@@ -559,16 +604,16 @@ function StampDetailContent() {
 
   async function refreshAfterVisitMutation() {
     const filteredStampsOverviewKeys = STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT.map((filter) =>
-      queryKeys.stampsOverviewByFilter(claims?.sub, filter)
+      queryKeys.stampsOverviewByFilter(claims?.sub, filter, groupUserIds)
     );
 
     await Promise.all([
       queryClient.invalidateQueries({
-        queryKey: queryKeys.stampDetail(claims?.sub, stampId),
+        queryKey: queryKeys.stampDetail(claims?.sub, stampId, groupUserIds),
         exact: true,
       }),
       queryClient.invalidateQueries({
-        queryKey: queryKeys.stampsOverview(claims?.sub),
+        queryKey: queryKeys.stampsOverview(claims?.sub, groupUserIds),
         exact: true,
       }),
       ...filteredStampsOverviewKeys.map((queryKey) =>
@@ -578,7 +623,7 @@ function StampDetailContent() {
         })
       ),
       queryClient.invalidateQueries({
-        queryKey: queryKeys.mapData(claims?.sub),
+        queryKey: queryKeys.mapData(claims?.sub, groupUserIds),
         exact: true,
       }),
       queryClient.invalidateQueries({
@@ -589,11 +634,11 @@ function StampDetailContent() {
   }
 
   function removeVisitFromCaches(stampingId: string) {
-    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId);
-    const mapDataKey = queryKeys.mapData(claims?.sub);
-    const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub);
+    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId, groupUserIds);
+    const mapDataKey = queryKeys.mapData(claims?.sub, groupUserIds);
+    const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub, groupUserIds);
     const filteredStampsOverviewKeys = STAMP_OVERVIEW_FILTERS_TO_SYNC_AFTER_VISIT.map((filter) =>
-      queryKeys.stampsOverviewByFilter(claims?.sub, filter)
+      queryKeys.stampsOverviewByFilter(claims?.sub, filter, groupUserIds)
     );
     const profileOverviewKey = queryKeys.profileOverview(claims?.sub);
     const currentDetail = queryClient.getQueryData<StampDetailData>(stampDetailKey) ?? detail;
@@ -741,7 +786,7 @@ function StampDetailContent() {
   }
 
   function updateVisitDateCaches(stampingId: string, nextVisitedAt: string) {
-    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId);
+    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId, groupUserIds);
     const profileOverviewKey = queryKeys.profileOverview(claims?.sub);
 
     queryClient.setQueryData<StampDetailData>(stampDetailKey, (currentDetail) => {
@@ -812,10 +857,10 @@ function StampDetailContent() {
       visitedAt: nowIsoTimestamp,
       createdAt: nowIsoTimestamp,
     };
-    const mapDataKey = queryKeys.mapData(claims?.sub);
-    const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub);
+    const mapDataKey = queryKeys.mapData(claims?.sub, groupUserIds);
+    const stampsOverviewKey = queryKeys.stampsOverview(claims?.sub, groupUserIds);
     const profileOverviewKey = queryKeys.profileOverview(claims?.sub);
-    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId);
+    const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId, groupUserIds);
     const optimisticLastVisited: LatestVisitedStamp = {
       stampId,
       stampNumber: stampSnapshot?.number,
@@ -1088,6 +1133,7 @@ function StampDetailContent() {
 
       await queryClient.invalidateQueries();
       queryClient.removeQueries({ type: 'inactive' });
+      setStampSuccessMessage('Stempel erfolgreich gesetzt.');
       setIsStampSuccessToastVisible(true);
     } catch (nextError) {
       rollbackOptimisticUpdates();
@@ -1156,23 +1202,15 @@ function StampDetailContent() {
       return;
     }
 
-    Alert.alert(
-      'Besuch löschen?',
-      'Dieser Besuchseintrag wird dauerhaft entfernt.',
-      [
-        {
-          text: 'Abbrechen',
-          style: 'cancel',
-        },
-        {
-          text: 'Löschen',
-          style: 'destructive',
-          onPress: () => {
-            void handleDeleteVisit(stampingId);
-          },
-        },
-      ]
-    );
+    confirmAction({
+      title: 'Besuch löschen?',
+      message: 'Dieser Besuchseintrag wird dauerhaft entfernt.',
+      confirmText: 'Löschen',
+      destructive: true,
+      onConfirm: () => {
+        void handleDeleteVisit(stampingId);
+      },
+    });
   }
 
   async function persistVisitDate(stampingId: string, nextVisitedAt: string) {
@@ -1748,6 +1786,13 @@ function StampDetailContent() {
 
   const { stamp } = detail;
   const visited = !!stamp.hasVisited;
+  const stampedUserIds = getStampedUserIdSet(stamp);
+  const groupSize =
+    selectedFriendIds.length > 0 ? groupUserIds.length : (stamp.groupSize ?? groupUserIds.length);
+  const groupVisitedCount =
+    stamp.totalGroupStampings ??
+    (visited ? 1 : 0) +
+      selectedMembers.filter((member) => stampedUserIds.has(member.id)).length;
   const showDeferredSkeletons = isFetching && isPlaceholderData;
   const activeCarouselItem = carouselImages[activeCarouselIndex] ?? null;
   const isWebCarousel = Platform.OS === 'web';
@@ -1761,13 +1806,13 @@ function StampDetailContent() {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
       <StampingSuccessToast
-        message="Stempel erfolgreich gesetzt."
+        message={stampSuccessMessage}
         onHide={() => setIsStampSuccessToastVisible(false)}
         topOffset={insets.top + 10}
         visible={isStampSuccessToastVisible}
       />
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 180 + bottomInset }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 232 + bottomInset }]}
         refreshControl={
           <RefreshControl
             onRefresh={() => {
@@ -1879,6 +1924,147 @@ function StampDetailContent() {
             <Text style={styles.description}>Keine Beschreibung fuer diese Stempelstelle verfuegbar.</Text>
           )}
 
+          {!isGuest ? (
+            <Section action={<GroupSelector />} title="Wandergruppe">
+              {selectedFriendIds.length > 0 ? (
+                <>
+                  <Text style={styles.groupSummary}>
+                    {groupVisitedCount} von {groupSize} Gruppenmitgliedern waren hier.
+                  </Text>
+                  <View style={styles.groupMemberList}>
+                    <View
+                      accessibilityLabel={`Ich: ${visited ? 'besucht' : 'offen'}`}
+                      accessible
+                      style={styles.groupMemberRow}>
+                      <GroupMemberStatusAvatar
+                        accessible={false}
+                        accessibilityName="Ich"
+                        image={currentUserProfile?.picture}
+                        index={0}
+                        name={currentUserProfile?.name?.trim() || 'Ich'}
+                        testID="stamp-detail-group-avatar-self"
+                        visited={visited}
+                      />
+                      <Text style={styles.groupMemberName}>Ich</Text>
+                      <Text style={styles.groupMemberStatus}>
+                        {visited ? 'besucht' : 'offen'}
+                      </Text>
+                    </View>
+                    {selectedMembers.map((member, memberIndex) => {
+                      const memberVisited = stampedUserIds.has(member.id);
+                      return (
+                        <View
+                          accessibilityLabel={`${member.name}: ${
+                            memberVisited ? 'besucht' : 'offen'
+                          }`}
+                          accessible
+                          key={member.id}
+                          style={styles.groupMemberRow}>
+                          <GroupMemberStatusAvatar
+                            accessible={false}
+                            accessibilityName={member.name}
+                            image={member.picture}
+                            index={memberIndex + 1}
+                            name={member.name}
+                            testID={`stamp-detail-group-avatar-${member.id}`}
+                            visited={memberVisited}
+                          />
+                          <Text style={styles.groupMemberName}>{member.name}</Text>
+                          <Text style={styles.groupMemberStatus}>
+                            {memberVisited ? 'besucht' : 'offen'}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </>
+              ) : (
+                <Text style={styles.emptySectionText}>
+                  Wähle Freunde aus, um den gemeinsamen Fortschritt zu sehen.
+                </Text>
+              )}
+            </Section>
+          ) : null}
+
+          {isGuest || detail.myVisits.length > 0 ? (
+            <Section
+              title="Meine bisherigen Besuche"
+              action={
+                !isGuest && detail.myVisits.length > 0 ? (
+                  <Pressable
+                    disabled={!!busyVisitId || !canPerformWrites}
+                    onPress={handleToggleVisitEditing}
+                    style={({ pressed }) => [
+                      styles.sectionAction,
+                      (busyVisitId || !canPerformWrites) && styles.visitActionDisabled,
+                      pressed && canPerformWrites && styles.sectionActionPressed,
+                    ]}>
+                    <Text style={styles.sectionActionLabel}>
+                      {isEditingVisits ? 'Fertig' : 'Bearbeiten'}
+                    </Text>
+                  </Pressable>
+                ) : null
+              }>
+              {isGuest ? (
+                <LockedGuestRows
+                  body="Melde dich an, um deine Besuche zu speichern und zu verwalten."
+                  onSignIn={() => router.push('/login' as never)}
+                />
+              ) : showDeferredSkeletons ? (
+                <>
+                  <SkeletonLine width="72%" />
+                  <SkeletonLine width="58%" />
+                </>
+              ) : (
+                detail.myVisits.map((visit) => (
+                  <View key={visit.ID} style={styles.visitCard}>
+                    {isEditingVisits ? (
+                      <View style={styles.visitInlineRow}>
+                        <Pressable
+                          disabled={busyVisitId === visit.ID || !canPerformWrites}
+                          onPress={() => openVisitPicker(visit.ID, visitDrafts[visit.ID])}
+                          style={({ pressed }) => [
+                            styles.visitPickerButton,
+                            (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
+                            pressed &&
+                            busyVisitId !== visit.ID &&
+                            canPerformWrites &&
+                            styles.sectionActionPressed,
+                          ]}>
+                          <Text style={styles.visitPickerLabel}>
+                            {visitDrafts[visit.ID]
+                              ? formatEditableVisitDate(visitDrafts[visit.ID])
+                              : 'Zeit waehlen'}
+                          </Text>
+                          <Feather color="#637062" name="calendar" size={16} />
+                        </Pressable>
+                        <Pressable
+                          disabled={busyVisitId === visit.ID || !canPerformWrites}
+                          onPress={() => confirmDeleteVisit(visit.ID)}
+                          style={({ pressed }) => [
+                            styles.visitActionButton,
+                            styles.visitDeleteButton,
+                            styles.visitInlineAction,
+                            pressed &&
+                            busyVisitId !== visit.ID &&
+                            canPerformWrites &&
+                            styles.sectionActionPressed,
+                            (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
+                          ]}>
+                          <Text style={styles.visitDeleteLabel}>Löschen</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Text style={styles.simpleItemTitle}>
+                        {formatVisitDate(getVisitTimestamp(visit))}
+                      </Text>
+                    )}
+                  </View>
+                ))
+              )}
+            </Section>
+          ) : null}
+
           {isGuest ? (
             <Section title="Meine Notiz">
               <LockedGuestRows
@@ -1900,108 +2086,6 @@ function StampDetailContent() {
               }}
             />
           )}
-
-          <Section title="Stempel in der Nähe">
-            {isGuest ? (
-              <LockedGuestRows
-                body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            ) : showDeferredSkeletons ? (
-              <>
-                <SkeletonRow />
-                <SkeletonRow />
-                <SkeletonRow />
-              </>
-            ) : detail.nearbyStamps.length > 0 ? (
-              detail.nearbyStamps.map((neighbor) => (
-                <Pressable
-                  key={neighbor.ID}
-                  onPress={() =>
-                    handleAttemptNavigateAway(() => {
-                      router.push(`/stamps/${neighbor.ID}` as never);
-                    })
-                  }
-                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
-                  {neighbor.heroImageUrl ? (
-                    <Image
-                      cachePolicy="disk"
-                      contentFit="cover"
-                      source={buildAuthenticatedImageSource(neighbor.heroImageUrl, accessToken)}
-                      style={styles.rowArtwork}
-                    />
-                  ) : (
-                    <View style={[styles.rowBadge, styles.rowBadgeStamp]}>
-                      <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelStamp]}>{neighbor.number || '--'}</Text>
-                    </View>
-                  )}
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>
-                      {neighbor.number || '--'} {'\u2022'} {neighbor.name}
-                    </Text>
-                    <Text style={styles.rowMeta}>
-                      {formatDistance(neighbor.distanceKm)}
-                      {neighbor.durationMinutes ? ` • ${formatDuration(neighbor.durationMinutes)}` : ''}
-                      {formatElevationSummary(neighbor.elevationGainMeters, neighbor.elevationLossMeters)}
-                    </Text>
-                  </View>
-                  <Feather color="#8b957f" name="chevron-right" size={18} />
-                </Pressable>
-              ))
-            ) : (
-              <View style={styles.emptyNearbyStampsState}>
-                <Image
-                  contentFit="contain"
-                  source={emptyNearbyStampsIllustration}
-                  style={styles.emptyNearbyStampsIllustration}
-                />
-                <Text style={[styles.emptySectionText, styles.emptyNearbyStampsText]}>
-                  Keine Stempel in der Nähe gefunden.
-                </Text>
-              </View>
-            )}
-          </Section>
-
-          <Section title="Parkplätze in der Nähe">
-            {isGuest ? (
-              <LockedGuestRows
-                body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            ) : showDeferredSkeletons ? (
-              <>
-                <SkeletonLine width="86%" />
-                <SkeletonLine width="78%" />
-                <SkeletonLine width="82%" />
-              </>
-            ) : detail.nearbyParking.length > 0 ? (
-              detail.nearbyParking.map((parking) => (
-                <Pressable
-                  key={parking.ID}
-                  onPress={() =>
-                    handleAttemptNavigateAway(() => {
-                      router.push(`/parking/${parking.ID}` as never);
-                    })
-                  }
-                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
-                  <View style={[styles.rowBadge, styles.rowBadgeParking]}>
-                    <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelParking]}>P</Text>
-                  </View>
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>{parking.name}</Text>
-                    <Text style={styles.rowMeta}>
-                      {formatDistance(parking.distanceKm)}
-                      {parking.durationMinutes ? ` • ${formatDuration(parking.durationMinutes)}` : ''}
-                      {formatElevationSummary(parking.elevationGainMeters, parking.elevationLossMeters)}
-                    </Text>
-                  </View>
-                  <Feather color="#8b957f" name="chevron-right" size={18} />
-                </Pressable>
-              ))
-            ) : (
-              <Text style={styles.emptySectionText}>Keine Parkplätze in der Nähe gefunden.</Text>
-            )}
-          </Section>
 
           {isGuest ? (
             <Section title="Von aktueller Position">
@@ -2081,6 +2165,108 @@ function StampDetailContent() {
             </CurrentPositionDistanceSection>
           )}
 
+          <Section title="Parkplätze in der Nähe">
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
+              <>
+                <SkeletonLine width="86%" />
+                <SkeletonLine width="78%" />
+                <SkeletonLine width="82%" />
+              </>
+            ) : detail.nearbyParking.length > 0 ? (
+              detail.nearbyParking.map((parking) => (
+                <Pressable
+                  key={parking.ID}
+                  onPress={() =>
+                    handleAttemptNavigateAway(() => {
+                      router.push(`/parking/${parking.ID}` as never);
+                    })
+                  }
+                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
+                  <View style={[styles.rowBadge, styles.rowBadgeParking]}>
+                    <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelParking]}>P</Text>
+                  </View>
+                  <View style={styles.rowBody}>
+                    <Text style={styles.rowTitle}>{parking.name}</Text>
+                    <Text style={styles.rowMeta}>
+                      {formatDistance(parking.distanceKm)}
+                      {parking.durationMinutes ? ` • ${formatDuration(parking.durationMinutes)}` : ''}
+                      {formatElevationSummary(parking.elevationGainMeters, parking.elevationLossMeters)}
+                    </Text>
+                  </View>
+                  <Feather color="#8b957f" name="chevron-right" size={18} />
+                </Pressable>
+              ))
+            ) : (
+              <Text style={styles.emptySectionText}>Keine Parkplätze in der Nähe gefunden.</Text>
+            )}
+          </Section>
+
+          <Section title="Stempel in der Nähe">
+            {isGuest ? (
+              <LockedGuestRows
+                body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
+                onSignIn={() => router.push('/login' as never)}
+              />
+            ) : showDeferredSkeletons ? (
+              <>
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </>
+            ) : detail.nearbyStamps.length > 0 ? (
+              detail.nearbyStamps.map((neighbor) => (
+                <Pressable
+                  key={neighbor.ID}
+                  onPress={() =>
+                    handleAttemptNavigateAway(() => {
+                      router.push(`/stamps/${neighbor.ID}` as never);
+                    })
+                  }
+                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
+                  {neighbor.heroImageUrl ? (
+                    <Image
+                      cachePolicy="disk"
+                      contentFit="cover"
+                      source={buildAuthenticatedImageSource(neighbor.heroImageUrl, accessToken)}
+                      style={styles.rowArtwork}
+                    />
+                  ) : (
+                    <View style={[styles.rowBadge, styles.rowBadgeStamp]}>
+                      <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelStamp]}>{neighbor.number || '--'}</Text>
+                    </View>
+                  )}
+                  <View style={styles.rowBody}>
+                    <Text style={styles.rowTitle}>
+                      {neighbor.number || '--'} {'\u2022'} {neighbor.name}
+                    </Text>
+                    <Text style={styles.rowMeta}>
+                      {formatDistance(neighbor.distanceKm)}
+                      {neighbor.durationMinutes ? ` • ${formatDuration(neighbor.durationMinutes)}` : ''}
+                      {formatElevationSummary(neighbor.elevationGainMeters, neighbor.elevationLossMeters)}
+                    </Text>
+                  </View>
+                  <Feather color="#8b957f" name="chevron-right" size={18} />
+                </Pressable>
+              ))
+            ) : (
+              <View style={styles.emptyNearbyStampsState}>
+                <Image
+                  contentFit="contain"
+                  source={emptyNearbyStampsIllustration}
+                  style={styles.emptyNearbyStampsIllustration}
+                />
+                <Text style={[styles.emptySectionText, styles.emptyNearbyStampsText]}>
+                  Keine Stempel in der Nähe gefunden.
+                </Text>
+              </View>
+            )}
+          </Section>
+
           <Section title="Freunde hier gewesen">
             {isGuest ? (
               <LockedGuestRows
@@ -2106,84 +2292,6 @@ function StampDetailContent() {
             )}
           </Section>
 
-          <Section
-            title="Meine bisherigen Besuche"
-            action={
-              !isGuest && detail.myVisits.length > 0 ? (
-                <Pressable
-                  disabled={!!busyVisitId || !canPerformWrites}
-                  onPress={handleToggleVisitEditing}
-                  style={({ pressed }) => [
-                    styles.sectionAction,
-                    (busyVisitId || !canPerformWrites) && styles.visitActionDisabled,
-                    pressed && canPerformWrites && styles.sectionActionPressed,
-                  ]}>
-                  <Text style={styles.sectionActionLabel}>
-                    {isEditingVisits ? 'Fertig' : 'Bearbeiten'}
-                  </Text>
-                </Pressable>
-              ) : null
-            }>
-            {isGuest ? (
-              <LockedGuestRows
-                body="Melde dich an, um deine Besuche zu speichern und zu verwalten."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            ) : showDeferredSkeletons ? (
-              <>
-                <SkeletonLine width="72%" />
-                <SkeletonLine width="58%" />
-              </>
-            ) : detail.myVisits.length > 0 ? (
-              detail.myVisits.map((visit) => (
-                <View key={visit.ID} style={styles.visitCard}>
-                  {isEditingVisits ? (
-                    <View style={styles.visitInlineRow}>
-                      <Pressable
-                        disabled={busyVisitId === visit.ID || !canPerformWrites}
-                        onPress={() => openVisitPicker(visit.ID, visitDrafts[visit.ID])}
-                        style={({ pressed }) => [
-                          styles.visitPickerButton,
-                          (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
-                          pressed &&
-                          busyVisitId !== visit.ID &&
-                          canPerformWrites &&
-                          styles.sectionActionPressed,
-                        ]}>
-                        <Text style={styles.visitPickerLabel}>
-                          {visitDrafts[visit.ID]
-                            ? formatEditableVisitDate(visitDrafts[visit.ID])
-                            : 'Zeit waehlen'}
-                        </Text>
-                        <Feather color="#637062" name="calendar" size={16} />
-                      </Pressable>
-                      <Pressable
-                        disabled={busyVisitId === visit.ID || !canPerformWrites}
-                        onPress={() => confirmDeleteVisit(visit.ID)}
-                        style={({ pressed }) => [
-                          styles.visitActionButton,
-                          styles.visitDeleteButton,
-                          styles.visitInlineAction,
-                          pressed &&
-                          busyVisitId !== visit.ID &&
-                          canPerformWrites &&
-                          styles.sectionActionPressed,
-                          (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
-                        ]}>
-                        <Text style={styles.visitDeleteLabel}>Löschen</Text>
-                      </Pressable>
-                    </View>
-                  ) : (
-                    <Text style={styles.simpleItemTitle}>
-                      {formatVisitDate(getVisitTimestamp(visit))}
-                    </Text>
-                  )}
-                </View>
-              ))
-            ) : (
-              <Text style={styles.emptySectionText}>Du hast diese Stempelstelle noch nicht gestempelt.</Text>
-            )}
-          </Section>
         </View>
       </ScrollView>
 
@@ -2213,6 +2321,20 @@ function StampDetailContent() {
               <Text style={styles.secondaryButtonLabel}>Auf Karte anzeigen</Text>
             </Pressable>
           </View>
+          {!isGuest ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={!accessToken || !canPerformWrites}
+              onPress={() => setIsGroupStampDialogVisible(true)}
+              style={({ pressed }) => [
+                styles.groupStampButton,
+                (!accessToken || !canPerformWrites) && styles.primaryButtonDisabled,
+                pressed && canPerformWrites && styles.secondaryButtonPressed,
+              ]}>
+              <Feather color="#59483f" name="users" size={16} />
+              <Text style={styles.groupStampButtonLabel}>Für Gruppe stempeln</Text>
+            </Pressable>
+          ) : null}
           <StampPressStage enabled={!isStamping && (isGuest || canPerformWrites)} style={styles.primaryStampStage}>
             {({ buttonAnimatedStyle, isTouchActive, onPressIn, onPressOut }) => (
               <Animated.View
@@ -2248,6 +2370,21 @@ function StampDetailContent() {
           </StampPressStage>
         </View>
       </View>
+
+      <GroupStampDialog
+        currentUserAlreadyStamped={visited}
+        includeCurrentUser={!visited}
+        onClose={() => setIsGroupStampDialogVisible(false)}
+        onSuccess={() => {
+          setIsGroupStampDialogVisible(false);
+          setStampSuccessMessage('Gruppenstempel erfolgreich gesetzt.');
+          setIsStampSuccessToastVisible(true);
+          void refetch();
+        }}
+        stampId={stamp.ID}
+        stampName={`${stamp.number || '--'} • ${stamp.name}`}
+        visible={isGroupStampDialogVisible}
+      />
 
       <Modal
         animationType="fade"
@@ -2657,6 +2794,31 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginTop: 8,
   },
+  groupSummary: {
+    color: '#445244',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  groupMemberList: {
+    gap: 7,
+  },
+  groupMemberRow: {
+    minHeight: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  groupMemberName: {
+    flex: 1,
+    color: '#1e2a1e',
+    fontSize: 13,
+    lineHeight: 17,
+  },
+  groupMemberStatus: {
+    color: '#6b7a6b',
+    fontSize: 12,
+    lineHeight: 16,
+  },
   section: {
     backgroundColor: '#ffffff',
     borderRadius: 18,
@@ -2887,6 +3049,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     textAlign: 'center',
+  },
+  groupStampButton: {
+    minHeight: 45,
+    borderRadius: 14,
+    backgroundColor: '#f0e5d7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 14,
+  },
+  groupStampButtonLabel: {
+    color: '#59483f',
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '600',
   },
   primaryStampStage: {
     position: 'relative',

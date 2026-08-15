@@ -1,0 +1,2 @@
+1. Ich möchte auch wenn ich bereits besucht habe per quick action auf dem Bottm sheet stempeln können
+2. Wenn ich für eine Gruppe stempel, wird der Stempel nicht bei der anderen Person korrekt angezeigt. Prüfe die Schnittstelle und das backend

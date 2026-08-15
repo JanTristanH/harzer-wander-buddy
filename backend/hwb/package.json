@@ -1,6 +1,6 @@
 {
   "name": "hwb",
-  "version": "2.5.3",
+  "version": "2.6.0",
   "description": "A simple CAP project.",
   "repository": "<Add your repository here>",
   "license": "UNLICENSED",
@@ -29,7 +29,7 @@
     "start": "cds-serve",
     "watch": "cds watch",
     "deploy": "cds deploy",
-    "deploy:sqlite": "cds deploy --profile development",
+    "deploy:sqlite": "node util/deploySqlite.js",
     "deploy:postgres": "cds deploy --profile production",
     "watch-frontendhwb": "cds watch --open frontendhwb/webapp/index.html?sap-ui-xx-viewCache=false",
     "download-csv-exports": "node util/downloadCsvExports.js"

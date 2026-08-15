@@ -80,7 +80,7 @@
       "reactCompiler": true
     },
     "extra": {
-      "backendUrl": "https://app.harzer-wander-buddy.de",
+      "backendUrl": "http://localhost:4004",
       "auth0Domain": "dev-ijucl08spdudaszc.us.auth0.com",
       "auth0ClientId": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh",
       "auth0ClientIdNative": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh",

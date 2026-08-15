@@ -24,6 +24,7 @@ import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import MapView, { Marker, Polyline, type MapViewRef, type Region } from '@/components/maps/map-primitives';
+import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
 import {
@@ -37,6 +38,7 @@ import {
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import { triggerHaptic } from '@/lib/haptics-preferences';
+import { useHikingGroup } from '@/lib/hiking-group';
 import {
   getPreGeneratedMapMarkerFallbackImageSource,
   getPreGeneratedMapMarkerImageSource,
@@ -116,6 +118,7 @@ type LiveTourMetrics = {
   duration: number | null;
   stampCount: number | null;
   newStampCountForUser: number | null;
+  averageGroupStampings: number | null;
   totalElevationGain: number | null;
   totalElevationLoss: number | null;
 };
@@ -770,6 +773,7 @@ function createLiveTourMetrics(tour: Tour): LiveTourMetrics {
     duration: tour.duration,
     stampCount: tour.stampCount,
     newStampCountForUser: tour.newStampCountForUser,
+    averageGroupStampings: tour.averageGroupStampings,
     totalElevationGain: tour.totalElevationGain,
     totalElevationLoss: tour.totalElevationLoss,
   };
@@ -781,6 +785,7 @@ function updateMetricsFromResponse(current: LiveTourMetrics, response: TourUpdat
     duration: response.duration ?? current.duration,
     stampCount: response.stampCount ?? current.stampCount,
     newStampCountForUser: response.newStampCountForUser ?? current.newStampCountForUser,
+    averageGroupStampings: current.averageGroupStampings,
     totalElevationGain: response.totalElevationGain ?? current.totalElevationGain,
     totalElevationLoss: response.totalElevationLoss ?? current.totalElevationLoss,
   };
@@ -792,6 +797,7 @@ function createEmptyLiveTourMetrics(): LiveTourMetrics {
     duration: null,
     stampCount: null,
     newStampCountForUser: null,
+    averageGroupStampings: null,
     totalElevationGain: null,
     totalElevationLoss: null,
   };
@@ -946,6 +952,7 @@ export default function TourDetailScreen() {
   const navigation = useNavigation();
   const { accessToken, canPerformWrites, isOffline, logout } = useAuth();
   const claims = useIdTokenClaims<{ sub?: string }>();
+  const { groupUserIds, selectedFriendIds } = useHikingGroup();
   const currentUserId = claims?.sub;
   const normalizedCurrentUserId = normalizeUserId(currentUserId);
   const insets = useSafeAreaInsets();
@@ -953,8 +960,10 @@ export default function TourDetailScreen() {
   const tourId = Array.isArray(params.id) ? params.id[0] : params.id;
   const editParam = Array.isArray(params.edit) ? params.edit[0] : params.edit;
   const shouldStartInEditMode = editParam === '1' || editParam === 'true';
-  const { data, error, isPending, isFetching, refetch } = useTourDetailQuery(tourId);
-  const { data: mapData } = useMapDataQuery();
+  const { data, error, isPending, isFetching, refetch } = useTourDetailQuery(tourId, {
+    groupUserIds,
+  });
+  const { data: mapData } = useMapDataQuery({ groupUserIds });
   const deleteTourMutation = useDeleteTourMutation(tourId);
   const updateTourNameMutation = useUpdateTourNameMutation(tourId);
   const updateTourMutation = useUpdateTourByPOIListMutation(tourId);
@@ -2960,6 +2969,7 @@ export default function TourDetailScreen() {
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardTitle}>Tourprofil</Text>
+            <GroupSelector />
           </View>
 
           <View style={styles.tourMetricsLineWrap}>
@@ -3036,6 +3046,16 @@ export default function TourDetailScreen() {
               </RNAnimated.View>
             ) : null}
           </View>
+
+          {selectedFriendIds.length > 0 ? (
+            <View style={styles.groupTourProgress}>
+              <Feather color="#2e6b4b" name="users" size={15} />
+              <Text style={styles.cardLine}>
+                Ø Gruppenfortschritt: {tourMetrics.averageGroupStampings ?? 0} von{' '}
+                {tourMetrics.stampCount ?? 0} Stempeln
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {blockingErrorCode === 403 ? (
@@ -3661,6 +3681,16 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderRadius: 8,
     overflow: 'hidden',
+  },
+  groupTourProgress: {
+    marginTop: 4,
+    borderRadius: 10,
+    backgroundColor: '#eef4ef',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
   },
   tourMetricsLineGlow: {
     position: 'absolute',

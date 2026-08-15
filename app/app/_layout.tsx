@@ -16,6 +16,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth, useIdTokenClaims } from '@/lib/auth';
 import { ConnectivityProvider, configureQueryOnlineManager, useConnectivity } from '@/lib/connectivity';
 import { runCoreOfflineSync } from '@/lib/core-offline-sync';
+import { HikingGroupProvider } from '@/lib/hiking-group';
 import { queryPersistOptions } from '@/lib/query-persistence';
 import { queryClient } from '@/lib/query-client';
 
@@ -149,32 +150,34 @@ export default function RootLayout() {
       <ConnectivityProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <AuthProvider>
-            <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" />
-                <Stack.Screen name="onboarding" />
-                <Stack.Screen name="login" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="profile/edit" />
-                <Stack.Screen name="profile/[userId]" />
-                <Stack.Screen name="profile/timeline/[userId]" />
-                <Stack.Screen name="tours/[id]/index" />
-                <Stack.Screen name="tours/[id]/edit" />
-                <Stack.Screen name="stamps/[id]" />
-                <Stack.Screen name="parking/[id]" />
-                <Stack.Screen name="admin/index" />
-                <Stack.Screen name="admin/stamps/index" />
-                <Stack.Screen name="admin/stamps/[id]" />
-                <Stack.Screen name="admin/parking/index" />
-                <Stack.Screen name="admin/parking/[id]" />
-              </Stack>
-              <StatusBar style="light" />
-            </ThemeProvider>
-            <WebDocumentBehavior />
-            <QueryFocusBridge />
-            <CoreOfflineSyncBridge />
-            <OnboardingRouteSync />
-            <OfflineBanner />
+            <HikingGroupProvider>
+              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
+                  <Stack.Screen name="onboarding" />
+                  <Stack.Screen name="login" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="profile/edit" />
+                  <Stack.Screen name="profile/[userId]" />
+                  <Stack.Screen name="profile/timeline/[userId]" />
+                  <Stack.Screen name="tours/[id]/index" />
+                  <Stack.Screen name="tours/[id]/edit" />
+                  <Stack.Screen name="stamps/[id]" />
+                  <Stack.Screen name="parking/[id]" />
+                  <Stack.Screen name="admin/index" />
+                  <Stack.Screen name="admin/stamps/index" />
+                  <Stack.Screen name="admin/stamps/[id]" />
+                  <Stack.Screen name="admin/parking/index" />
+                  <Stack.Screen name="admin/parking/[id]" />
+                </Stack>
+                <StatusBar style="light" />
+              </ThemeProvider>
+              <WebDocumentBehavior />
+              <QueryFocusBridge />
+              <CoreOfflineSyncBridge />
+              <OnboardingRouteSync />
+              <OfflineBanner />
+            </HikingGroupProvider>
           </AuthProvider>
         </GestureHandlerRootView>
       </ConnectivityProvider>

@@ -16,7 +16,7 @@
       cy="23"
       rx="__BADGE_RX__"
       ry="8.7"
-      fill="#ffffff"
+      fill="__BADGE_FILL__"
     />
     <text
       x="__LABEL_X__"

@@ -80,4 +80,43 @@ describe('MapSelectionSheet user interaction', () => {
 
     expect(onDetailsPress).toHaveBeenCalled();
   });
+
+  it('opens group stamping from the dedicated action', () => {
+    const onGroupActionPress = jest.fn();
+    render(
+      <MapSelectionSheet
+        bottomOffset={0}
+        groupActionLabel="Gruppe stempeln"
+        item={baseItem}
+        mode="expanded"
+        onGroupActionPress={onGroupActionPress}
+      />
+    );
+
+    fireEvent.press(screen.getByText('Gruppe stempeln'));
+
+    expect(onGroupActionPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('replaces the personal stamping action when a group action is provided', () => {
+    const onGroupActionPress = jest.fn();
+    const onPrimaryActionPress = jest.fn();
+    render(
+      <MapSelectionSheet
+        bottomOffset={0}
+        groupActionLabel="Gruppe stempeln"
+        item={baseItem}
+        mode="expanded"
+        onGroupActionPress={onGroupActionPress}
+        onPrimaryActionPress={onPrimaryActionPress}
+        primaryActionLabel="Besuch registrieren"
+      />
+    );
+
+    expect(screen.queryByText('Besuch registrieren')).toBeNull();
+    fireEvent.press(screen.getByText('Gruppe stempeln'));
+
+    expect(onGroupActionPress).toHaveBeenCalledTimes(1);
+    expect(onPrimaryActionPress).not.toHaveBeenCalled();
+  });
 });

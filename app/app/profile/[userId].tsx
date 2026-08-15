@@ -16,6 +16,7 @@ import {
   updateFriendshipPermission,
 } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
+import { useHikingGroup } from '@/lib/hiking-group';
 import {
   isNetworkUnavailableError,
   OFFLINE_REFRESH_MESSAGE,
@@ -32,6 +33,7 @@ export default function FriendProfileScreen() {
   const userIdParam = Array.isArray(params.userId) ? params.userId[0] : params.userId;
   const userId = userIdParam ? decodeURIComponent(userIdParam) : '';
   const { accessToken, canPerformWrites, isOffline, logout } = useAuth();
+  const { addFriend, removeFriend, selectedFriendIds } = useHikingGroup();
   const claims = useIdTokenClaims<{ sub?: string }>();
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<ComparisonFilter>('visited');
@@ -154,6 +156,18 @@ export default function FriendProfileScreen() {
               toggleLabel: 'Darf fuer mich stempeln',
               value: data.isAllowedToStampForMe,
               busy: isMutating || !canPerformWrites,
+              groupLabel: selectedFriendIds.includes(data.userId)
+                ? 'Aus Gruppe entfernen'
+                : 'Zur Gruppe hinzufügen',
+              groupSelected: selectedFriendIds.includes(data.userId),
+              onGroupToggle: () => {
+                if (selectedFriendIds.includes(data.userId)) {
+                  removeFriend(data.userId);
+                  return;
+                }
+
+                addFriend(data.userId);
+              },
               onToggle: (value) => {
                 void (async () => {
                   if (!accessToken || !data.friendshipId) {
@@ -363,7 +377,7 @@ export default function FriendProfileScreen() {
         isFetching && !isPending ? 'Aktualisiere Profildaten im Hintergrund...' : undefined,
       showDeferredSkeletons: isPlaceholderData,
     };
-  }, [accessToken, activeFilter, canPerformWrites, data, handleMutationError, invalidateRelationshipQueries, isFetching, isMutating, isOffline, isPending, isPlaceholderData, isPullRefreshing, refetch, router]);
+  }, [accessToken, activeFilter, addFriend, canPerformWrites, data, handleMutationError, invalidateRelationshipQueries, isFetching, isMutating, isOffline, isPending, isPlaceholderData, isPullRefreshing, refetch, removeFriend, router, selectedFriendIds]);
 
   if (!userId) {
     return <ProfileErrorState body="Keine Benutzer-ID uebergeben." title="Profil konnte nicht geladen werden" />;

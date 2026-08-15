@@ -1,15 +1,18 @@
-import type { Map as LeafletMap } from 'leaflet';
+import type { LeafletEventHandlerFnMap, Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
+import '@maplibre/maplibre-gl-leaflet';
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Marker as LeafletMarker,
   Polyline as LeafletPolyline,
   MapContainer,
-  TileLayer,
   useMap,
   useMapEvents,
 } from 'react-leaflet';
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';
+
+import { areMapCoordinatesEqual } from '@/lib/map-viewport';
+import { createCssMapMarkerHtml, normalizeWebMarkerLabel } from '@/lib/web-map-marker';
 
 export type LatLng = {
   latitude: number;
@@ -70,6 +73,7 @@ type MapViewProps = {
 };
 
 type MarkerProps = {
+  accessibilityLabel?: string;
   anchor?: { x: number; y: number };
   children?: React.ReactNode;
   coordinate: LatLng;
@@ -94,11 +98,9 @@ const DEFAULT_REGION: Region = {
 };
 
 const MAP_CONTAINER_STYLE = { height: '100%', width: '100%' } as const;
-const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-const TILE_ATTRIBUTION = '&copy; OpenStreetMap contributors';
-const FALLBACK_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-const FALLBACK_TILE_ATTRIBUTION =
-  '&copy; OpenStreetMap contributors &copy; CARTO';
+const OPEN_FREE_MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+const OPEN_FREE_MAP_ATTRIBUTION =
+  '<a href="https://openfreemap.org/">OpenFreeMap</a> <a href="https://openmaptiles.org/">&copy; OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>';
 const WEB_MARKER_SIZE = 48;
 const WEB_MARKER_SIZE_COMPACT = 24;
 const MIN_ZOOM = 2;
@@ -171,10 +173,56 @@ const LEAFLET_RUNTIME_CSS = `
 .leaflet-control-attribution a:hover {
   text-decoration: underline;
 }
+.hwb-map-attribution {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid #2f9bff;
+  border-radius: 999px;
+  box-sizing: border-box;
+  display: flex;
+  min-height: 42px;
+  overflow: hidden;
+}
+.hwb-map-attribution-toggle {
+  align-items: center;
+  background: #171717;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font: 700 25px/1 Arial, sans-serif;
+  height: 32px;
+  justify-content: center;
+  margin: 3px;
+  padding: 0;
+  width: 32px;
+}
+.hwb-map-attribution-content {
+  color: #333;
+  font: 14px/1.25 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-width 180ms ease, opacity 140ms ease, padding-right 180ms ease;
+  white-space: nowrap;
+}
+.hwb-map-attribution.is-expanded .hwb-map-attribution-content {
+  max-width: min(680px, calc(100vw - 80px));
+  opacity: 1;
+  padding-right: 10px;
+}
+.hwb-map-attribution-content a {
+  color: #1b63c3;
+  text-decoration: none;
+}
+.hwb-map-attribution-content a:hover {
+  text-decoration: underline;
+}
 .hwb-leaflet-map.hwb-attribution-below-zoom .leaflet-bottom.leaflet-right {
   display: none;
 }
-.hwb-leaflet-map.hwb-attribution-below-zoom .leaflet-bottom.leaflet-left .leaflet-control-attribution {
+.hwb-leaflet-map.hwb-attribution-below-zoom .leaflet-bottom.leaflet-left .hwb-map-attribution {
   margin-bottom: 100px;
   margin-left: 10px;
 }
@@ -192,6 +240,17 @@ const LEAFLET_RUNTIME_CSS = `
 }
 .leaflet-tile-loaded { visibility: inherit; }
 .leaflet-zoom-animated { transform-origin: 0 0; }
+svg.leaflet-zoom-animated { will-change: transform; }
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition: transform 0.25s cubic-bezier(0, 0, 0.25, 1);
+}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+  transition: none;
+}
+.leaflet-zoom-anim .leaflet-zoom-hide {
+  visibility: hidden;
+}
 .leaflet-container img {
   max-height: none;
   max-width: none !important;
@@ -200,9 +259,63 @@ const LEAFLET_RUNTIME_CSS = `
 .hwb-leaflet-div-icon {
   background: transparent;
   border: 0;
+  overflow: visible;
 }
-.hwb-leaflet-div-icon svg {
+.hwb-css-marker {
+  --hwb-marker-color: #2e6b4b;
+  display: block;
+  height: 52px;
   pointer-events: none;
+  position: relative;
+  width: 48px;
+}
+.hwb-css-marker::before {
+  background: var(--hwb-marker-color);
+  border: 2px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  box-sizing: border-box;
+  content: "";
+  height: 34px;
+  left: 7px;
+  position: absolute;
+  top: 5px;
+  transform: rotate(-45deg);
+  width: 34px;
+  z-index: 0;
+}
+.hwb-css-marker__label {
+  align-items: center;
+  background: #fff;
+  border-radius: 999px;
+  box-sizing: border-box;
+  color: #111;
+  display: flex;
+  font: 700 14px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  height: 18px;
+  justify-content: center;
+  left: 7px;
+  padding: 0 2px;
+  position: absolute;
+  right: 7px;
+  top: 12px;
+  z-index: 1;
+}
+.hwb-css-marker--wide-label .hwb-css-marker__label {
+  font-size: 11px;
+}
+.hwb-css-marker--compact {
+  height: 100%;
+  width: 100%;
+}
+.hwb-css-marker--compact::before {
+  border-radius: 50%;
+  height: auto;
+  inset: 2px;
+  transform: none;
+  width: auto;
+}
+.hwb-css-marker--compact .hwb-css-marker__label {
+  display: none;
 }
 `;
 
@@ -275,42 +388,21 @@ function coordinateToTuple(coordinate: LatLng): [number, number] {
   return [coordinate.latitude, coordinate.longitude];
 }
 
-function escapeXmlText(value: string) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;');
-}
-
-function normalizeMarkerLabel(value: string | null) {
-  if (!value) {
-    return null;
+function moveMapEfficiently(
+  map: LeafletMap,
+  center: L.LatLngExpression,
+  zoom: number,
+  durationMs: number
+) {
+  if (Math.abs(map.getZoom() - zoom) > 0.000001) {
+    map.setView(center, zoom, { animate: durationMs > 0 });
+    return;
   }
 
-  const normalized = value.trim().toUpperCase();
-  if (!normalized) {
-    return null;
-  }
-
-  return normalized.slice(0, 4);
-}
-
-function markerBadgeRadiusForLabel(label: string) {
-  if (label.length <= 1) {
-    return 8.6;
-  }
-
-  if (label.length === 2) {
-    return 10.9;
-  }
-
-  if (label.length === 3) {
-    return 12.8;
-  }
-
-  return 14.6;
+  map.panTo(center, {
+    animate: durationMs > 0,
+    duration: Math.max(0, durationMs) / 1000,
+  });
 }
 
 function extractMarkerLabel(children: React.ReactNode): string | null {
@@ -338,22 +430,6 @@ function extractMarkerLabel(children: React.ReactNode): string | null {
   }
 
   return null;
-}
-
-function createPinSvg(color: string, size: number, label?: string | null) {
-  if (size <= 18) {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="${color}" stroke="white" stroke-width="2"/></svg>`;
-  }
-
-  const escapedLabel = normalizeMarkerLabel(label ?? null);
-  const renderedLabel = escapedLabel ? escapeXmlText(escapedLabel) : null;
-  const badgeRadius = renderedLabel ? markerBadgeRadiusForLabel(renderedLabel) : 8.6;
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${Math.round((size * 60) / 56)}" viewBox="0 0 56 60"><defs><filter id="marker-shadow" x="-60%" y="-60%" width="220%" height="220%"><feDropShadow dx="0" dy="4" stdDeviation="2.2" flood-color="#141e14" flood-opacity="0.24"/></filter></defs><g filter="url(#marker-shadow)"><path d="M28 4C17.5066 4 9 12.5066 9 23c0 14.25 19 33 19 33s19-18.75 19-33C47 12.5066 38.4934 4 28 4Zm0 27.5c-4.6944 0-8.5-3.8056-8.5-8.5s3.8056-8.5 8.5-8.5 8.5 3.8056 8.5 8.5-3.8056 8.5-8.5 8.5Z" fill="${color}" stroke="#ffffff" stroke-width="2"/><ellipse cx="28" cy="23" rx="${badgeRadius}" ry="8.7" fill="#ffffff"/>${
-    renderedLabel
-      ? `<text x="28" y="23.5" fill="#111111" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="middle">${renderedLabel}</text>`
-      : ''
-  }</g></svg>`;
 }
 
 type ResolvedImageSource = {
@@ -418,14 +494,14 @@ function createIcon(options: {
     ? Math.round(width * inferredImageRatio)
     : size <= 18
       ? size
-      : Math.round(size * 1.35);
+      : Math.round((size * 52) / 48);
   const iconAnchor: [number, number] = [
     Math.round((anchor?.x ?? 0.5) * width),
     Math.round((anchor?.y ?? 1) * height),
   ];
 
-  const normalizedLabel = normalizeMarkerLabel(label ?? null);
-  const cacheKey = `${imageUri ?? 'svg'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
+  const normalizedLabel = normalizeWebMarkerLabel(label ?? null);
+  const cacheKey = `${imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
     imageSize?.width ?? ''
   }x${imageSize?.height ?? ''}`;
   const existing = iconCache.get(cacheKey);
@@ -444,7 +520,7 @@ function createIcon(options: {
       })
     : L.divIcon({
         className: 'hwb-leaflet-div-icon',
-        html: createPinSvg(color, size, normalizedLabel),
+        html: createCssMapMarkerHtml({ color, label: normalizedLabel, size }),
         iconAnchor,
         iconSize: [width, height],
       });
@@ -533,6 +609,61 @@ function MapInstanceBridge(props: { onMapReady?: (map: LeafletMap) => void }) {
   return null;
 }
 
+function OpenFreeMapLayer() {
+  const map = useMap();
+
+  useEffect(() => {
+    const layer = L.maplibreGL({
+      attributionControl: { customAttribution: OPEN_FREE_MAP_ATTRIBUTION },
+      style: OPEN_FREE_MAP_STYLE_URL,
+    }).addTo(map);
+
+    return () => {
+      layer.remove();
+    };
+  }, [map]);
+
+  return null;
+}
+
+function OpenFreeMapAttribution({ attributionPlacement }: Pick<MapViewProps, 'attributionPlacement'>) {
+  const map = useMap();
+
+  useEffect(() => {
+    const control = new L.Control({
+      position: attributionPlacement === 'below-zoom' ? 'bottomleft' : 'bottomright',
+    });
+
+    control.onAdd = () => {
+      const container = L.DomUtil.create('div', 'leaflet-control hwb-map-attribution');
+      const toggle = L.DomUtil.create('button', 'hwb-map-attribution-toggle', container);
+      const content = L.DomUtil.create('span', 'hwb-map-attribution-content', container);
+
+      toggle.type = 'button';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-label', 'Karten-Attribution anzeigen');
+      toggle.textContent = 'i';
+      content.innerHTML = OPEN_FREE_MAP_ATTRIBUTION;
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.on(toggle, 'click', () => {
+        const expanded = container.classList.toggle('is-expanded');
+        toggle.setAttribute('aria-expanded', String(expanded));
+        toggle.setAttribute('aria-label', expanded ? 'Karten-Attribution ausblenden' : 'Karten-Attribution anzeigen');
+      });
+
+      return container;
+    };
+
+    control.addTo(map);
+    return () => {
+      control.remove();
+    };
+  }, [attributionPlacement, map]);
+
+  return null;
+}
+
 const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref) {
   const {
     attributionPlacement = 'bottom-right',
@@ -547,11 +678,10 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
     style,
   } = props;
   const [map, setMap] = useState<LeafletMap | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
-  const [tileSource, setTileSource] = useState<{ attribution: string; url: string }>({
-    attribution: TILE_ATTRIBUTION,
-    url: TILE_URL,
-  });
+  const lastUserLocationRef = useRef<LatLng | null>(null);
+  const onUserLocationChangeRef = useRef(onUserLocationChange);
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
 
   const effectiveRegion = initialRegion ?? DEFAULT_REGION;
@@ -566,14 +696,12 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
 
   useEffect(() => {
     ensureLeafletRuntimeCss();
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
-    if (!map) {
-      return;
-    }
-    map.attributionControl.setPosition(attributionPlacement === 'below-zoom' ? 'bottomleft' : 'bottomright');
-  }, [attributionPlacement, map]);
+    onUserLocationChangeRef.current = onUserLocationChange;
+  }, [onUserLocationChange]);
 
   useEffect(() => {
     if (!map) {
@@ -626,12 +754,11 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           return;
         }
 
-        map.flyTo(
+        moveMapEfficiently(
+          map,
           coordinateToTuple(region),
           zoomFromLongitudeDelta(region.longitudeDelta, map.getSize().x),
-          {
-            duration: Math.max(0, duration) / 1000,
-          }
+          duration
         );
       },
       fitToCoordinates(coordinates, options) {
@@ -680,16 +807,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
         const center = camera.center ? coordinateToTuple(camera.center) : map.getCenter();
         const zoom = typeof camera.zoom === 'number' ? clampZoom(camera.zoom) : map.getZoom();
 
-        map.flyTo(center, zoom, {
-          duration: Math.max(0, options?.duration ?? 250) / 1000,
-        });
+        moveMapEfficiently(map, center, zoom, options?.duration ?? 250);
       },
     }),
     [effectiveRegion.latitude, effectiveRegion.longitude, initialZoom, map]
   );
 
   useEffect(() => {
-    if (!showsUserLocation && !onUserLocationChange) {
+    if (!showsUserLocation) {
       return;
     }
 
@@ -704,8 +829,17 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           longitude: position.coords.longitude,
         };
 
+        if (
+          !Number.isFinite(coordinate.latitude) ||
+          !Number.isFinite(coordinate.longitude) ||
+          areMapCoordinatesEqual(lastUserLocationRef.current, coordinate)
+        ) {
+          return;
+        }
+
+        lastUserLocationRef.current = coordinate;
         setUserLocation(coordinate);
-        onUserLocationChange?.({ nativeEvent: { coordinate } });
+        onUserLocationChangeRef.current?.({ nativeEvent: { coordinate } });
       },
       () => {
         // Web geolocation can be denied by browser policy/user settings.
@@ -719,10 +853,11 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
 
     return () => {
       navigator.geolocation.clearWatch(watchId);
+      lastUserLocationRef.current = null;
     };
-  }, [onUserLocationChange, showsUserLocation]);
+  }, [showsUserLocation]);
 
-  if (typeof window === 'undefined') {
+  if (!isClient) {
     return <View style={style} />;
   }
 
@@ -733,9 +868,15 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           attributionPlacement === 'below-zoom' ? 'hwb-attribution-below-zoom' : 'hwb-attribution-bottom-right'
         }`}
         center={centerTuple}
+        attributionControl={false}
+        fadeAnimation={false}
+        markerZoomAnimation
         style={MAP_CONTAINER_STYLE}
+        wheelDebounceTime={120}
+        wheelPxPerZoomLevel={100}
         zoom={initialZoom}
-        zoomSnap={0}
+        zoomAnimation
+        zoomSnap={1}
         zoomControl={false}>
         <MapInstanceBridge
           onMapReady={(nextMap) => {
@@ -743,24 +884,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
             onMapReady?.();
           }}
         />
-        <TileLayer
-          attribution={tileSource.attribution}
-          eventHandlers={{
-            tileerror() {
-              setTileSource((current) => {
-                if (current.url === FALLBACK_TILE_URL) {
-                  return current;
-                }
-
-                return {
-                  attribution: FALLBACK_TILE_ATTRIBUTION,
-                  url: FALLBACK_TILE_URL,
-                };
-              });
-            },
-          }}
-          url={tileSource.url}
-        />
+        <OpenFreeMapLayer />
+        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} />
         <MapEventBridge
           onPress={onPress}
           onRegionChange={onRegionChange}
@@ -789,6 +914,7 @@ type InternalMarkerProps = MarkerProps & {
 
 function Marker(props: InternalMarkerProps) {
   const {
+    accessibilityLabel,
     anchor,
     children,
     coordinate,
@@ -798,6 +924,28 @@ function Marker(props: InternalMarkerProps) {
     zIndex,
   } = props;
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
+  const markerRef = useRef<L.Marker | null>(null);
+  const onPressRef = useRef(onPress);
+  onPressRef.current = onPress;
+  const isPressable = Boolean(onPress);
+  const markerLatitude = coordinate.latitude;
+  const markerLongitude = coordinate.longitude;
+  const markerEventHandlers = useMemo<LeafletEventHandlerFnMap | undefined>(
+    () =>
+      isPressable
+        ? {
+            click(event) {
+              event.originalEvent?.stopPropagation?.();
+              onPressRef.current?.();
+            },
+          }
+        : undefined,
+    [isPressable]
+  );
+  const position = useMemo<[number, number]>(
+    () => [markerLatitude, markerLongitude],
+    [markerLatitude, markerLongitude]
+  );
 
   useEffect(() => {
     if (!perfDebugEnabled) {
@@ -809,6 +957,25 @@ function Marker(props: InternalMarkerProps) {
       webMapPerfDebugState.markerUnmounts += 1;
     };
   }, [perfDebugEnabled]);
+
+  useEffect(() => {
+    const markerElement = markerRef.current?.getElement();
+    if (!markerElement) {
+      return;
+    }
+
+    if (accessibilityLabel) {
+      markerElement.setAttribute('aria-label', accessibilityLabel);
+    } else {
+      markerElement.removeAttribute('aria-label');
+    }
+
+    if (isPressable) {
+      markerElement.setAttribute('role', 'button');
+    } else {
+      markerElement.removeAttribute('role');
+    }
+  }, [accessibilityLabel, isPressable]);
 
   const imageSource = resolveImageSource(image);
   const imageUri = imageSource?.uri ?? null;
@@ -836,18 +1003,12 @@ function Marker(props: InternalMarkerProps) {
 
   return (
     <LeafletMarker
-      eventHandlers={
-        onPress
-          ? {
-              click(event) {
-                event.originalEvent?.stopPropagation?.();
-                onPress();
-              },
-            }
-          : undefined
-      }
+      alt={accessibilityLabel}
+      eventHandlers={markerEventHandlers}
       icon={icon}
-      position={coordinateToTuple(coordinate)}
+      position={position}
+      ref={markerRef}
+      title={accessibilityLabel}
       zIndexOffset={typeof zIndex === 'number' ? zIndex : 0}
     />
   );

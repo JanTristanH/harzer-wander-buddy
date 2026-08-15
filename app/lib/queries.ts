@@ -1,4 +1,11 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type QueryClient,
+  type QueryKey,
+} from '@tanstack/react-query';
 import { Platform } from 'react-native';
 
 import {
@@ -50,10 +57,41 @@ const MAP_AND_LIST_QUERY_GC_TIME = Platform.OS === 'web' ? 30 * 60 * 1000 : unde
 const DETAIL_QUERY_GC_TIME = Platform.OS === 'web' ? 15 * 60 * 1000 : undefined;
 const ROUTE_QUERY_GC_TIME = Platform.OS === 'web' ? 10 * 60 * 1000 : undefined;
 
+export function canonicalGroupUserIds(currentUserId?: string, groupUserIds?: readonly string[]) {
+  return [
+    ...new Set(
+      [currentUserId, ...(groupUserIds ?? [])]
+        .map((userId) => userId?.trim())
+        .filter((userId): userId is string => Boolean(userId))
+    ),
+  ].sort((left, right) => left.localeCompare(right));
+}
+
+export function canonicalGroupSignature(currentUserId?: string, groupUserIds?: readonly string[]) {
+  const userIds = canonicalGroupUserIds(currentUserId, groupUserIds);
+  return userIds.length > 0 ? userIds.join(',') : 'none';
+}
+
 type StampsOverviewData = {
   stamps: Stampbox[];
   lastVisited: LatestVisitedStamp | null;
 };
+
+export function getReusableQueryData<T>(
+  queryClient: QueryClient,
+  queryKeysByPriority: QueryKey[]
+) {
+  for (const queryKey of queryKeysByPriority) {
+    const state = queryClient.getQueryState<T>(queryKey);
+    if (!state) {
+      continue;
+    }
+
+    return state.isInvalidated ? undefined : state.data;
+  }
+
+  return undefined;
+}
 
 export type TourDetailData = {
   tour: Tour;
@@ -63,10 +101,12 @@ export type TourDetailData = {
 export async function fetchStampsOverviewData(
   accessToken: string,
   userId?: string,
-  stampboxFetchMode: StampboxFetchMode = 'default'
+  stampboxFetchMode: StampboxFetchMode = 'default',
+  groupUserIds?: string[]
 ): Promise<StampsOverviewData> {
+  const effectiveGroupUserIds = canonicalGroupUserIds(userId, groupUserIds);
   const [stamps, lastVisited] = await Promise.all([
-    fetchStampboxes(accessToken, stampboxFetchMode),
+    fetchStampboxes(accessToken, stampboxFetchMode, effectiveGroupUserIds),
     fetchLatestVisitedStamp(accessToken, userId),
   ]);
 
@@ -87,24 +127,60 @@ export async function fetchGuestStampsOverviewData(
 }
 
 export const queryKeys = {
-  stampsOverview: (userId?: string) => ['stamps-overview', userId ?? 'anonymous'] as const,
+  stampsOverview: (userId?: string, groupUserIds?: readonly string[]) =>
+    [
+      'stamps-overview',
+      userId ?? 'anonymous',
+      canonicalGroupSignature(userId, groupUserIds),
+    ] as const,
   stampsOverviewByFilter: (
     userId: string | undefined,
-    filter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated'
-  ) => ['stamps-overview-by-filter', userId ?? 'anonymous', filter] as const,
+    filter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated',
+    groupUserIds?: readonly string[]
+  ) =>
+    [
+      'stamps-overview-by-filter',
+      userId ?? 'anonymous',
+      filter,
+      canonicalGroupSignature(userId, groupUserIds),
+    ] as const,
   adminStampsOverview: (userId: string | undefined, filter: 'validToday' | 'all') =>
     ['admin-stamps-overview', userId ?? 'anonymous', filter] as const,
-  mapData: (userId?: string) => ['map-data', userId ?? 'anonymous'] as const,
-  toursOverview: (userId?: string) => ['tours-overview', userId ?? 'anonymous'] as const,
-  tourDetail: (userId: string | undefined, tourId: string | undefined) =>
-    ['tour-detail', userId ?? 'anonymous', tourId ?? 'unknown'] as const,
+  mapData: (userId?: string, groupUserIds?: readonly string[]) =>
+    ['map-data', userId ?? 'anonymous', canonicalGroupSignature(userId, groupUserIds)] as const,
+  toursOverview: (userId?: string, groupUserIds?: readonly string[]) =>
+    [
+      'tours-overview',
+      userId ?? 'anonymous',
+      canonicalGroupSignature(userId, groupUserIds),
+    ] as const,
+  tourDetail: (
+    userId: string | undefined,
+    tourId: string | undefined,
+    groupUserIds?: readonly string[]
+  ) =>
+    [
+      'tour-detail',
+      userId ?? 'anonymous',
+      tourId ?? 'unknown',
+      canonicalGroupSignature(userId, groupUserIds),
+    ] as const,
   pointsOfInterest: (userId?: string) => ['points-of-interest', userId ?? 'anonymous'] as const,
   friendsOverview: (userId?: string) => ['friends-overview', userId ?? 'anonymous'] as const,
   profileOverview: (userId?: string) => ['profile-overview', userId ?? 'anonymous'] as const,
   userProfileOverview: (userId: string | undefined, targetUserId: string | undefined) =>
     ['user-profile-overview', userId ?? 'anonymous', targetUserId ?? 'unknown'] as const,
-  stampDetail: (userId: string | undefined, stampId: string | undefined) =>
-    ['stamp-detail', userId ?? 'anonymous', stampId ?? 'unknown'] as const,
+  stampDetail: (
+    userId: string | undefined,
+    stampId: string | undefined,
+    groupUserIds?: readonly string[]
+  ) =>
+    [
+      'stamp-detail',
+      userId ?? 'anonymous',
+      stampId ?? 'unknown',
+      canonicalGroupSignature(userId, groupUserIds),
+    ] as const,
   parkingDetail: (userId: string | undefined, parkingId: string | undefined) =>
     ['parking-detail', userId ?? 'anonymous', parkingId ?? 'unknown'] as const,
   routeToStampFromPosition: (
@@ -185,24 +261,33 @@ function getCachedUserProfileSummary(
 function getCachedStamp(
   queryClient: ReturnType<typeof useQueryClient>,
   userId: string | undefined,
-  stampId: string
+  stampId: string,
+  groupUserIds?: readonly string[]
 ) {
-  const stampsOverview = queryClient.getQueryData<StampsOverviewData>(queryKeys.stampsOverview(userId));
+  const stampsOverview = queryClient.getQueryData<StampsOverviewData>(
+    queryKeys.stampsOverview(userId, groupUserIds)
+  );
   const fromOverview = stampsOverview?.stamps.find((stamp) => stamp.ID === stampId);
   if (fromOverview) {
     return fromOverview;
   }
 
-  const profileOverview = queryClient.getQueryData<ProfileOverviewData>(queryKeys.profileOverview(userId));
-  const fromProfile = profileOverview?.stamps.find((stamp) => stamp.ID === stampId);
-  if (fromProfile) {
-    return fromProfile;
-  }
-
-  const mapData = queryClient.getQueryData<MapData>(queryKeys.mapData(userId));
+  const mapData = queryClient.getQueryData<MapData>(queryKeys.mapData(userId, groupUserIds));
   const fromMap = mapData?.stamps.find((stamp) => stamp.ID === stampId);
   if (fromMap) {
     return fromMap;
+  }
+
+  const isSelfOnly =
+    canonicalGroupSignature(userId, groupUserIds) === canonicalGroupSignature(userId);
+  if (isSelfOnly) {
+    const profileOverview = queryClient.getQueryData<ProfileOverviewData>(
+      queryKeys.profileOverview(userId)
+    );
+    const fromProfile = profileOverview?.stamps.find((stamp) => stamp.ID === stampId);
+    if (fromProfile) {
+      return fromProfile;
+    }
   }
 
   return undefined;
@@ -224,16 +309,23 @@ function getCachedParking(
 
 function getCachedMapData(
   queryClient: ReturnType<typeof useQueryClient>,
-  userId: string | undefined
+  userId: string | undefined,
+  groupUserIds?: readonly string[]
 ) {
-  const existingMapData = queryClient.getQueryData<MapData>(queryKeys.mapData(userId));
+  const existingMapData = queryClient.getQueryData<MapData>(
+    queryKeys.mapData(userId, groupUserIds)
+  );
   if (existingMapData) {
     return existingMapData;
   }
 
   const stampsOverview =
-    queryClient.getQueryData<StampsOverviewData>(queryKeys.stampsOverviewByFilter(userId, 'validToday')) ??
-    queryClient.getQueryData<StampsOverviewData>(queryKeys.stampsOverview(userId));
+    queryClient.getQueryData<StampsOverviewData>(
+      queryKeys.stampsOverviewByFilter(userId, 'validToday', groupUserIds)
+    ) ??
+    queryClient.getQueryData<StampsOverviewData>(
+      queryKeys.stampsOverview(userId, groupUserIds)
+    );
   if (!stampsOverview) {
     return undefined;
   }
@@ -350,19 +442,23 @@ export function useFilteredStampsOverviewQuery(
   filter: 'validToday' | 'all' | 'visited' | 'open' | 'relocated',
   options?: {
     enabled?: boolean;
+    groupUserIds?: string[];
   }
 ) {
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
   const stampboxFetchMode: StampboxFetchMode = filter;
+  const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<StampsOverviewData>({
-    queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter),
+    queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter, groupUserIds),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     queryFn: () =>
-      authorizedRequest((token) => fetchStampsOverviewData(token, claims?.sub, stampboxFetchMode)),
+      authorizedRequest((token) =>
+        fetchStampsOverviewData(token, claims?.sub, stampboxFetchMode, groupUserIds)
+      ),
   });
 }
 
@@ -384,33 +480,36 @@ export function useGuestFilteredStampsOverviewQuery(
 
 export function useMapDataQuery(options?: {
   enabled?: boolean;
+  groupUserIds?: string[];
 }) {
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
   const queryClient = useQueryClient();
+  const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<MapData>({
-    queryKey: queryKeys.mapData(claims?.sub),
+    queryKey: queryKeys.mapData(claims?.sub, groupUserIds),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
-    placeholderData: () => getCachedMapData(queryClient, claims?.sub),
+    placeholderData: () => getCachedMapData(queryClient, claims?.sub, groupUserIds),
     queryFn: () =>
       authorizedRequest((token) => {
-        const cachedStampsOverview =
-          queryClient.getQueryData<StampsOverviewData>(
-            queryKeys.stampsOverviewByFilter(claims?.sub, 'validToday')
-          ) ??
-          queryClient.getQueryData<StampsOverviewData>(
-            queryKeys.stampsOverview(claims?.sub)
-          );
+        const cachedStampsOverview = getReusableQueryData<StampsOverviewData>(
+          queryClient,
+          [
+            queryKeys.stampsOverviewByFilter(claims?.sub, 'validToday', groupUserIds),
+            queryKeys.stampsOverview(claims?.sub, groupUserIds),
+          ]
+        );
 
         return fetchMapData(
           token,
           claims?.sub,
           cachedStampsOverview?.stamps,
           cachedStampsOverview?.lastVisited,
-          'validToday'
+          'validToday',
+          groupUserIds
         );
       }),
   });
@@ -495,14 +594,20 @@ export function useProfileOverviewQuery() {
   });
 }
 
-export function useStampDetailQuery(stampId?: string) {
+export function useStampDetailQuery(
+  stampId?: string,
+  options?: {
+    groupUserIds?: string[];
+  }
+) {
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
   const queryClient = useQueryClient();
+  const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<StampDetailData>({
-    queryKey: queryKeys.stampDetail(claims?.sub, stampId),
+    queryKey: queryKeys.stampDetail(claims?.sub, stampId, groupUserIds),
     enabled: Boolean(stampId && (isAuthenticated ? accessToken : true)),
     gcTime: DETAIL_QUERY_GC_TIME,
     placeholderData: () => {
@@ -510,7 +615,7 @@ export function useStampDetailQuery(stampId?: string) {
         return undefined;
       }
 
-      const cachedStamp = getCachedStamp(queryClient, claims?.sub, stampId);
+      const cachedStamp = getCachedStamp(queryClient, claims?.sub, stampId, groupUserIds);
       if (!cachedStamp) {
         return undefined;
       }
@@ -526,7 +631,9 @@ export function useStampDetailQuery(stampId?: string) {
     },
     queryFn: () =>
       isAuthenticated
-        ? authorizedRequest((token) => fetchStampDetail(token, stampId!, claims?.sub))
+        ? authorizedRequest((token) =>
+            fetchStampDetail(token, stampId!, claims?.sub, groupUserIds)
+          )
         : fetchPublicStampDetail(stampId!),
   });
 }
@@ -642,36 +749,48 @@ export function useUserProfileOverviewQuery(targetUserId?: string) {
   });
 }
 
-export function useToursOverviewQuery() {
+export function useToursOverviewQuery(options?: {
+  groupUserIds?: string[];
+}) {
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
+  const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<Tour[]>({
-    queryKey: queryKeys.toursOverview(claims?.sub),
+    queryKey: queryKeys.toursOverview(claims?.sub, groupUserIds),
     enabled: Boolean(accessToken && isAuthenticated),
     queryFn: () =>
       authorizedRequest((token) =>
-        fetchTours(token, claims?.sub ? [claims.sub] : [])
+        fetchTours(token, groupUserIds)
       ),
   });
 }
 
-export function useTourDetailQuery(tourId?: string) {
+export function useTourDetailQuery(
+  tourId?: string,
+  options?: {
+    groupUserIds?: string[];
+  }
+) {
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
   const queryClient = useQueryClient();
+  const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   return useQuery<TourDetailData>({
-    queryKey: queryKeys.tourDetail(claims?.sub, tourId),
+    queryKey: queryKeys.tourDetail(claims?.sub, tourId, groupUserIds),
     enabled: Boolean(accessToken && isAuthenticated && tourId),
     placeholderData: () => {
       if (!tourId) {
         return undefined;
       }
 
-      const cachedTours = queryClient.getQueryData<Tour[]>(queryKeys.toursOverview(claims?.sub)) ?? [];
+      const cachedTours =
+        queryClient.getQueryData<Tour[]>(
+          queryKeys.toursOverview(claims?.sub, groupUserIds)
+        ) ?? [];
       const cachedTour = cachedTours.find((tour) => tour.ID === tourId);
       if (!cachedTour) {
         return undefined;
@@ -685,7 +804,7 @@ export function useTourDetailQuery(tourId?: string) {
     queryFn: () =>
       authorizedRequest(async (token) => {
         const [tour, path] = await Promise.all([
-          fetchTourById(token, tourId!, claims?.sub ? [claims.sub] : []),
+          fetchTourById(token, tourId!, groupUserIds),
           fetchTourPath(token, tourId!),
         ]);
 
@@ -728,7 +847,9 @@ export function useCreateTourMutation() {
         })
       ),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.toursOverview(claims?.sub) });
+      await queryClient.invalidateQueries({
+        queryKey: ['tours-overview', claims?.sub ?? 'anonymous'],
+      });
     },
   });
 }
@@ -759,8 +880,12 @@ export function useUpdateTourByPOIListMutation(tourId?: string) {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.toursOverview(claims?.sub) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.tourDetail(claims?.sub, tourId) }),
+        queryClient.invalidateQueries({
+          queryKey: ['tours-overview', claims?.sub ?? 'anonymous'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['tour-detail', claims?.sub ?? 'anonymous', tourId ?? 'unknown'],
+        }),
       ]);
     },
   });
@@ -781,8 +906,12 @@ export function useDeleteTourMutation(tourId?: string) {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.toursOverview(claims?.sub) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.tourDetail(claims?.sub, tourId) }),
+        queryClient.invalidateQueries({
+          queryKey: ['tours-overview', claims?.sub ?? 'anonymous'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['tour-detail', claims?.sub ?? 'anonymous', tourId ?? 'unknown'],
+        }),
       ]);
     },
   });
@@ -808,8 +937,12 @@ export function useUpdateTourNameMutation(tourId?: string) {
     },
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.toursOverview(claims?.sub) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.tourDetail(claims?.sub, tourId) }),
+        queryClient.invalidateQueries({
+          queryKey: ['tours-overview', claims?.sub ?? 'anonymous'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['tour-detail', claims?.sub ?? 'anonymous', tourId ?? 'unknown'],
+        }),
       ]);
     },
   });

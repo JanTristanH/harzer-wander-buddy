@@ -24,13 +24,17 @@ export type FriendsListItem = {
 export function FriendAvatar({
   image,
   index,
+  name,
   size = 44,
   radius = 16,
+  testID,
 }: {
   image?: string;
   index: number;
+  name?: string;
   size?: number;
   radius?: number;
+  testID?: string;
 }) {
   const { accessToken } = useAuth();
   const avatarStyle = {
@@ -46,17 +50,33 @@ export function FriendAvatar({
         contentFit="cover"
         source={buildAuthenticatedImageSource(image, accessToken)}
         style={[avatarStyle, styles.avatarImage]}
+        testID={testID}
       />
     );
   }
+
+  const initials = name
+    ?.trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
 
   return (
     <View
       style={[
         avatarStyle,
+        styles.avatarFallback,
         { backgroundColor: AVATAR_COLORS[index % AVATAR_COLORS.length] },
       ]}
-    />
+      testID={testID}>
+      {initials ? (
+        <Text style={[styles.avatarFallbackLabel, { fontSize: Math.max(9, size * 0.28) }]}>
+          {initials}
+        </Text>
+      ) : null}
+    </View>
   );
 }
 
@@ -73,7 +93,7 @@ function FriendsListRow({
         disabled={!item.onPress}
         onPress={item.onPress}
         style={({ pressed }) => [styles.friendRowPressable, pressed && item.onPress && styles.pressed]}>
-        <FriendAvatar image={item.image} index={index} />
+        <FriendAvatar image={item.image} index={index} name={item.name} />
         <View style={styles.friendBody}>
           <Text style={styles.friendName}>{item.name}</Text>
           {item.subtitle ? <Text style={styles.friendMeta}>{item.subtitle}</Text> : null}
@@ -138,6 +158,15 @@ const styles = StyleSheet.create({
   },
   avatarImage: {
     overflow: 'hidden',
+  },
+  avatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarFallbackLabel: {
+    color: '#405044',
+    fontFamily: Fonts.sans,
+    fontWeight: '800',
   },
   friendBody: {
     flex: 1,
