@@ -2,7 +2,10 @@ FROM node:22-bookworm-slim AS expo-web-builder
 
 WORKDIR /usr/src/expo-app
 
-ENV EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de
+ARG EXPO_PUBLIC_BACKEND_URL
+ENV EXPO_PUBLIC_BACKEND_URL=${EXPO_PUBLIC_BACKEND_URL}
+
+RUN test -n "${EXPO_PUBLIC_BACKEND_URL}"
 
 COPY app/package*.json ./
 COPY app/patches ./patches
