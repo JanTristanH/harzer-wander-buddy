@@ -10,9 +10,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdminGuard } from '@/components/admin-guard';
+import { AdminScreen } from '@/components/admin-screen';
 import { AdminPoiListItem } from '@/components/admin-poi-list-item';
 import { SkeletonBlock } from '@/components/skeleton';
 import { useMapDataQuery } from '@/lib/queries';
@@ -52,7 +52,7 @@ export default function AdminParkingListScreen() {
 
   return (
     <AdminGuard>
-      <SafeAreaView style={styles.safeArea}>
+      <AdminScreen style={styles.safeArea}>
         <View style={styles.content}>
           <View style={styles.headerRow}>
             <Pressable
@@ -93,6 +93,8 @@ export default function AdminParkingListScreen() {
             </View>
           ) : (
             <FlatList
+              keyboardDismissMode="on-drag"
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.listContent}
               data={filteredParkingSpots}
               keyExtractor={(item) => item.ID}
@@ -147,7 +149,7 @@ export default function AdminParkingListScreen() {
 
           {isFetching && !isPending ? <Text style={styles.refreshHint}>Aktualisiere im Hintergrund...</Text> : null}
         </View>
-      </SafeAreaView>
+      </AdminScreen>
     </AdminGuard>
   );
 }

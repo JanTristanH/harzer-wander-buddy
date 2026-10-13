@@ -4,9 +4,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, type MapPressEvent, type Region } from 'react-native-maps';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdminGuard } from '@/components/admin-guard';
+import { AdminScreen } from '@/components/admin-screen';
 import { SkeletonBlock } from '@/components/skeleton';
 import {
   createParkingSpot,
@@ -538,8 +538,12 @@ export default function AdminParkingEditorScreen() {
 
   return (
     <AdminGuard>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <AdminScreen style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
           <View style={styles.headerRow}>
             <Pressable
               onPress={() => router.back()}
@@ -761,7 +765,7 @@ export default function AdminParkingEditorScreen() {
             </>
           )}
         </ScrollView>
-      </SafeAreaView>
+      </AdminScreen>
     </AdminGuard>
   );
 }
