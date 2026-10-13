@@ -12,6 +12,10 @@ if (isAndroidEasBuild && !androidGoogleMapsApiKey) {
 
 export default (): ExpoConfig => ({
   ...config,
+  experiments: {
+    ...config.experiments,
+    baseUrl: process.env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : config.experiments?.baseUrl,
+  },
   android: {
     ...config.android,
     config: {

@@ -33,6 +33,7 @@ import {
   type SearchUserResult,
 } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
+import { appConfig } from '@/lib/config';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import { type UploadableImage } from '@/lib/image-upload';
 import {
@@ -768,14 +769,14 @@ export default function OnboardingScreen() {
                 <ActionButton
                   disabled={!!configError || isLoading}
                   label={isLoading ? 'Wird vorbereitet...' : 'Anmelden'}
-                  onPress={login}
+                  onPress={() => appConfig.authMode === 'basic' ? router.push('/login') : void login()}
                 />
-                <ActionButton
+                {appConfig.authMode !== 'basic' ? <ActionButton
                   disabled={!!configError || isLoading}
                   label={isLoading ? 'Wird vorbereitet...' : 'Konto erstellen'}
                   onPress={signup}
                   variant="primary"
-                />
+                /> : null}
               </View>
             )}
           </View>
