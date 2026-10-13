@@ -13,6 +13,10 @@ type StampListItemProps = {
   item: Stampbox;
   index: number;
   onPress: () => void;
+  onLongPress?: () => void;
+  selectionMode?: boolean;
+  selected?: boolean;
+  disabled?: boolean;
   metaLabel?: string | null;
   groupActive?: boolean;
   groupMembers?: readonly {
@@ -72,6 +76,10 @@ function StampListItemComponent({
   item,
   index,
   onPress,
+  onLongPress,
+  selectionMode = false,
+  selected = false,
+  disabled = false,
   metaLabel,
   groupActive = false,
   groupMembers = [],
@@ -122,12 +130,21 @@ function StampListItemComponent({
 
   return (
     <Pressable
-      accessibilityLabel={groupAccessibilityLabel}
-      accessibilityRole="button"
+      accessibilityLabel={groupAccessibilityLabel ?? `Stempel ${item.number || '--'}: ${item.name}. ${item.hasVisited ? 'Besucht' : 'Unbesucht'}`}
+      accessibilityRole={selectionMode ? 'checkbox' : 'button'}
+      accessibilityState={{ disabled, ...(selectionMode ? { checked: selected } : {}) }}
+      aria-checked={selectionMode ? selected : undefined}
+      accessibilityHint={onLongPress ? 'Gedrückt halten, um mehrere Stempelstellen auszuwählen' : undefined}
+      testID={`stamp-list-item-${item.ID}`}
+      disabled={disabled}
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={500}
       style={({ pressed }) => [
         styles.card,
         groupActive && styles.cardWithGroup,
+        selectionMode && styles.cardSelectable,
+        selected && styles.cardSelected,
         pressed && styles.cardPressed,
       ]}>
       <View style={styles.cardMainRow}>
@@ -164,7 +181,7 @@ function StampListItemComponent({
           </View>
         </View>
 
-        <Feather color="#8b957f" name="chevron-right" size={18} style={styles.cardChevron} />
+        <Feather color={selected ? '#2e6b4b' : '#8b957f'} name={selectionMode ? selected ? 'check-square' : 'square' : 'chevron-right'} size={selectionMode ? 24 : 18} style={styles.cardChevron} />
       </View>
 
       {groupActive ? (
@@ -222,11 +239,16 @@ function StampListItemComponent({
 export const StampListItem = React.memo(StampListItemComponent);
 
 const styles = StyleSheet.create({
+  cardSelectable: { borderColor: '#d9e2d9' },
+  cardSelected: { borderColor: '#2e6b4b', backgroundColor: '#edf5ee' },
   card: {
+    flex: 1,
     minHeight: 100,
     gap: 12,
     backgroundColor: '#ffffff',
     borderRadius: 18,
+    borderWidth: 2,
+    borderColor: 'transparent',
     paddingHorizontal: 12,
     paddingVertical: 12,
     shadowColor: '#141e14',

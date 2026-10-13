@@ -3933,3 +3933,20 @@ export async function deleteStamping(accessToken: string, stampingId: string) {
     method: 'DELETE',
   });
 }
+
+// Read every visit owned by the signed-in user; a place may have multiple visits.
+export async function fetchOwnStampings(accessToken: string, stampId: string, currentUserId: string) {
+  const stampings: VisitStamping[] = [];
+  const pageSize = 200;
+  for (let skip = 0; ; skip += pageSize) {
+    const page = await fetchCollection<VisitStamping>(accessToken, 'Stampings', {
+      select: ['ID', 'stamp_ID', 'createdBy'],
+      filter: `stamp_ID eq ${stampId} and createdBy eq '${escapeODataString(currentUserId)}'`,
+      orderBy: 'ID asc',
+      top: pageSize,
+      skip,
+    });
+    stampings.push(...page);
+    if (page.length < pageSize) return stampings;
+  }
+}
