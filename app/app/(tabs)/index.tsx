@@ -25,10 +25,10 @@ import { CompletionConfetti, useCompletionConfetti } from '@/components/completi
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
-import { StampPressStage } from '@/components/stamp-press-stage';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
 import { createStamping, deleteStamping, fetchOwnStampings, type Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
 
@@ -207,10 +207,10 @@ export default function StampsScreen() {
     if (!isAuthenticated) cancelSelection();
   }, [isAuthenticated, cancelSelection]);
 
-  // Keep selections limited to visible results when search or filters change.
+  // Preserve selection across searches; reset when the filter or group changes.
   useEffect(() => {
     cancelSelection();
-  }, [query, activeFilter, selectedFriendKey, cancelSelection]);
+  }, [activeFilter, selectedFriendKey, cancelSelection]);
 
   const beginSelection = useCallback((stampId: string) => {
     if (!isAuthenticated || bulkBusyRef.current) return;
@@ -218,7 +218,12 @@ export default function StampsScreen() {
     setToastVisible(false);
     setSelectionMode(true);
     setSelectedIds((ids) => ids.includes(stampId) ? ids : [...ids, stampId]);
-  }, [isAuthenticated]);
+    if (!selectedIds.includes(stampId)) {
+      void triggerHaptic('selectionChange').catch(() => {
+        // Selection remains usable when native feedback is unavailable.
+      });
+    }
+  }, [isAuthenticated, selectedIds]);
 
   const selectedStamps = stamps.filter((stamp) => selectedIds.includes(stamp.ID));
   const stampableCount = selectedStamps.length;
@@ -669,6 +674,9 @@ export default function StampsScreen() {
       if (bulkBusyRef.current) return;
       if (selectionMode) {
         setSelectedIds((ids) => ids.includes(stampId) ? ids.filter((id) => id !== stampId) : [...ids, stampId]);
+        void triggerHaptic('selectionChange').catch(() => {
+          // Selection remains usable when native feedback is unavailable.
+        });
         return;
       }
       router.push(`/stamps/${stampId}` as never);
@@ -1004,8 +1012,7 @@ export default function StampsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StampPressStage enabled={selectionMode && !isBulkBusy && canPerformWrites && stampableCount > 0} style={styles.selectionStampStage} actorStyle={styles.selectionStampActor}>
-        {({ buttonAnimatedStyle, onPressIn, onPressOut }) => selectionMode ? (
+      {selectionMode ? (
         <View style={styles.selectionToolbar} testID="stamp-selection-toolbar">
           <View style={styles.titleRow}>
             <Text style={styles.selectionCount}>{selectedIds.length} ausgewählt</Text>
@@ -1015,19 +1022,16 @@ export default function StampsScreen() {
           </View>
           <Text style={styles.totalLabel}>Deine Stempel · Weitere Einträge antippen</Text>
           <View style={styles.selectionActions}>
-                <Animated.View style={buttonAnimatedStyle}>
-                  <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || stampableCount === 0} onPress={() => { void applyBulkAction(false); }} onPressIn={onPressIn} onPressOut={onPressOut} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || stampableCount === 0) && styles.selectionDisabled]}>
-                    <Text style={styles.selectionButtonText}>Stempeln ({stampableCount})</Text>
-                  </Pressable>
-                </Animated.View>
+            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || stampableCount === 0} onPress={() => { void applyBulkAction(false); }} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || stampableCount === 0) && styles.selectionDisabled]}>
+              <Text style={styles.selectionButtonText}>Stempeln ({stampableCount})</Text>
+            </Pressable>
             <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || removableCount === 0} onPress={() => { void prepareRemoval(); }} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || removableCount === 0) && styles.selectionDisabled]}>
               <Text style={styles.selectionButtonText}>Entfernen ({removableCount})</Text>
             </Pressable>
           </View>
           {isBulkBusy ? <Text style={styles.totalLabel}>Wird gespeichert…</Text> : !canPerformWrites ? <Text style={styles.filterHint}>Stempeln und Entfernen sind nur online möglich.</Text> : null}
         </View>
-        ) : null}
-      </StampPressStage>
+      ) : null}
       <StampingSuccessToast key={toastRunId} message={bulkMessage} visible={toastVisible} onHide={() => setToastVisible(false)} topOffset={insets.top + (selectionMode ? 140 : 10)} />
       <Modal visible={showRemoveConfirmation} transparent animationType="fade" onRequestClose={() => setShowRemoveConfirmation(false)}>
         <View style={styles.confirmOverlay}>
@@ -1140,8 +1144,6 @@ export default function StampsScreen() {
 }
 
 const styles = StyleSheet.create({
-  selectionStampStage: { zIndex: 20 },
-  selectionStampActor: { top: -23, left: 20 },
   confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.35)' },
   confirmCard: { width: '100%', maxWidth: 420, padding: 24, borderRadius: 22, backgroundColor: '#f5f3ee', gap: 20 },
   selectionToolbar: { paddingHorizontal: 20, paddingVertical: 12, gap: 8, backgroundColor: '#e2eee6', zIndex: 20 },
