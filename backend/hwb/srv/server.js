@@ -12,6 +12,18 @@ const {
 require("dotenv").config();
 
 
+const isLocalBasic = cds.env.profiles.includes('dev-basic');
+const isLocalSso = cds.env.profiles.includes('dev-sso') && !cds.env.profiles.includes('production');
+if (isLocalBasic && cds.env.profiles.includes('production')) {
+  throw new Error('dev-basic cannot be combined with production');
+}
+if (isLocalSso) {
+  const appConfig = require('../../../app/app.json').expo.extra;
+  process.env.ISSUER_BASE_URL ||= `https://${appConfig.auth0Domain}/`;
+  process.env.AUDIENCE ||= appConfig.auth0Audience;
+  process.env.BASE_URL = 'http://localhost:4004/';
+}
+
 const config = {
   authRequired: false,
   auth0Logout: true,
@@ -276,12 +288,16 @@ cds.on("bootstrap", (app) => {
   // ✅ Serve manifest.json publicly before authentication middleware
   app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));
 
-  const useOidcAuth = !isMockedCapAuth();
+  const useOidcAuth = !isMockedCapAuth() && !isLocalBasic;
   const requireStaticAuth = useOidcAuth ? requiresAuth() : skipOidcAuth;
 
   app.use(useOidcAuth ? auth(config) : skipOidcAuth);
-  app.use("/odata/v4/api", mobileCors, bearerAuth);
-  app.use("/odata/v2/api", mobileCors, bearerAuth);
+  const apiAuth = isLocalBasic ? skipOidcAuth : bearerAuth;
+  if (isLocalBasic) {
+    app.use('/export/csv', require('./basic-auth')(cds.env.requires.auth));
+  }
+  app.use("/odata/v4/api", mobileCors, apiAuth);
+  app.use("/odata/v2/api", mobileCors, apiAuth);
   app.use("/odata/v4/public", mobileCors);
 
   app.use("/app/frontendhwb", requireStaticAuth, express.static(__dirname + "/../app/frontendhwb"));

@@ -13,6 +13,11 @@ jest.mock('@/lib/auth', () => ({
   useAuth: jest.fn(),
 }));
 
+let mockAuthMode = 'sso';
+jest.mock('@/lib/config', () => ({
+  appConfig: { get authMode() { return mockAuthMode; } },
+}));
+
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>;
 
 function buildAuth(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
@@ -29,6 +34,19 @@ function buildAuth(overrides: Partial<ReturnType<typeof useAuth>> = {}) {
 }
 
 describe('LoginScreen user interaction', () => {
+  beforeEach(() => { mockAuthMode = 'sso'; });
+
+  it('submits Basic credentials from the form and hides signup', () => {
+    mockAuthMode = 'basic';
+    const login = jest.fn();
+    mockUseAuth.mockReturnValue(buildAuth({ login }));
+    render(<LoginScreen />);
+    fireEvent.changeText(screen.getByLabelText('Nutzername'), 'user1@hwb.de');
+    fireEvent.changeText(screen.getByLabelText('Passwort'), 'test-password');
+    fireEvent.press(screen.getByText('Anmelden'));
+    expect(login).toHaveBeenCalledWith('user1@hwb.de', 'test-password');
+    expect(screen.queryByText('Konto erstellen')).toBeNull();
+  });
   it('calls login when the "Anmelden" button is pressed', () => {
     const login = jest.fn();
     mockUseAuth.mockReturnValue(buildAuth({ login }));

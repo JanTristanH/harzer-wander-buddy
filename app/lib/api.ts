@@ -716,7 +716,7 @@ async function fetchOData<T>(accessToken: string, url: string) {
   const response = await fetch(url, {
     headers: {
       Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `${appConfig.authMode === 'basic' ? 'Basic' : 'Bearer'} ${accessToken}`,
     },
   });
 
@@ -766,7 +766,7 @@ async function mutateOData<T>(
     ...init,
     headers: {
       Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `${appConfig.authMode === 'basic' ? 'Basic' : 'Bearer'} ${accessToken}`,
       'Content-Type': 'application/json',
       ...(init.headers ?? {}),
     },
@@ -3818,7 +3818,7 @@ export async function uploadAttachment(
     method: 'PUT',
     headers: {
       Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `${appConfig.authMode === 'basic' ? 'Basic' : 'Bearer'} ${accessToken}`,
       'Content-Type': file.mimeType,
     },
     body: fileBlob,

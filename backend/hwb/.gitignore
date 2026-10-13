@@ -5,6 +5,7 @@ app/frontendhwb/dist
 # CAP hwb
 _out
 *.db
+db.local.db-*
 connection.properties
 default-*.json
 .cdsrc-private.json
