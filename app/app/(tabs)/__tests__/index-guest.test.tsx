@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react-native';
+import { act, render, screen, within } from '@testing-library/react-native';
 import React from 'react';
 
 import type { Stampbox } from '@/lib/api';
@@ -32,9 +32,13 @@ jest.mock('@/lib/queries', () => ({
 
 jest.mock('@/lib/hiking-group', () => ({
   useHikingGroup: () => ({
+    clearGroup: jest.fn(),
     groupUserIds: [],
+    isLoading: false,
+    members: [],
     selectedFriendIds: [],
     selectedMembers: [],
+    toggleFriend: jest.fn(),
   }),
 }));
 
@@ -89,7 +93,33 @@ function mockGuestData(stamps: Stampbox[]) {
   });
 }
 
-describe('StampsScreen (guest / unauthenticated)', () => {
+function mockAuthenticatedData(stamps: Stampbox[]) {
+  mockUseAuth.mockReturnValue({
+    accessToken: 'access-token',
+    currentUserProfile: null,
+    isAuthenticated: true,
+    hasCompletedOnboarding: true,
+    isLoading: false,
+  });
+
+  mockUseFilteredStampsOverviewQuery.mockReturnValue({
+    data: { stamps, lastVisited: null },
+    error: null,
+    isFetching: false,
+    isPending: false,
+    refetch: jest.fn(),
+  });
+
+  mockUseGuestFilteredStampsOverviewQuery.mockReturnValue({
+    data: undefined,
+    error: null,
+    isFetching: false,
+    isPending: true,
+    refetch: jest.fn(),
+  });
+}
+
+describe('StampsScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Fake timers let us settle the on-mount progress animations synchronously,
@@ -103,7 +133,7 @@ describe('StampsScreen (guest / unauthenticated)', () => {
 
   // Renders the screen and flushes mount effects: the async location-permission
   // check (a Promise) and the progress-bar animations (timer driven).
-  async function renderGuestScreen() {
+  async function renderScreen() {
     render(<StampsScreen />);
     await act(async () => {
       jest.runAllTimers();
@@ -113,10 +143,23 @@ describe('StampsScreen (guest / unauthenticated)', () => {
   it('renders the list header for guests', async () => {
     mockGuestData([createStamp()]);
 
-    await renderGuestScreen();
+    await renderScreen();
 
     expect(screen.getByText('Stempelstellen')).toBeOnTheScreen();
     expect(screen.getByText('1 gesamt')).toBeOnTheScreen();
+  });
+
+  it('places the group selector in the header for authenticated users', async () => {
+    mockAuthenticatedData([createStamp()]);
+
+    await renderScreen();
+
+    const titleRow = screen.getByTestId('stamps-title-row');
+
+    expect(within(titleRow).getByText('Stempelstellen')).toBeOnTheScreen();
+    expect(within(titleRow).getByTestId('stamps-header-group-selector')).toBeOnTheScreen();
+    expect(screen.getAllByTestId('stamps-header-group-selector')).toHaveLength(1);
+    expect(screen.queryByText('1 gesamt')).toBeNull();
   });
 
   it('shows the stamps returned by the guest query', async () => {
@@ -125,7 +168,7 @@ describe('StampsScreen (guest / unauthenticated)', () => {
       createStamp({ ID: 'stamp-2', number: '002', name: 'Brocken', hasVisited: true }),
     ]);
 
-    await renderGuestScreen();
+    await renderScreen();
 
     expect(screen.getByText(/Rabenklippe/)).toBeOnTheScreen();
     expect(screen.getByText(/Brocken/)).toBeOnTheScreen();
@@ -138,7 +181,7 @@ describe('StampsScreen (guest / unauthenticated)', () => {
       createStamp({ ID: 'stamp-2', hasVisited: false }),
     ]);
 
-    await renderGuestScreen();
+    await renderScreen();
 
     // 1 of 2 stamps visited -> 50%.
     expect(screen.getByText('50%')).toBeOnTheScreen();
@@ -147,7 +190,7 @@ describe('StampsScreen (guest / unauthenticated)', () => {
   it('uses the guest query and disables the authenticated query', async () => {
     mockGuestData([createStamp()]);
 
-    await renderGuestScreen();
+    await renderScreen();
 
     expect(mockUseGuestFilteredStampsOverviewQuery).toHaveBeenCalledWith(
       'validToday',

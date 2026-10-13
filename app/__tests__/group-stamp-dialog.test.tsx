@@ -152,7 +152,7 @@ describe('GroupStampDialog', () => {
     expect(props.onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('requires at least one permitted friend even when self is included', async () => {
+  it('allows a self-only visit when no selected friend is permitted', async () => {
     mockGroupState = buildGroupState(
       [
         member('denied-selected', 'Berta', false),
@@ -165,27 +165,43 @@ describe('GroupStampDialog', () => {
     await waitFor(() => {
       expect(
         screen.getByTestId('group-stamp-confirm').props.accessibilityState
-      ).toEqual({ disabled: true });
+      ).toEqual({ disabled: false });
     });
     expect(
       screen.getByTestId('group-stamp-include-current-user').props
         .accessibilityState
     ).toEqual({ checked: true, disabled: false });
 
-    fireEvent.press(screen.getByTestId('group-stamp-friend-denied-selected'));
     fireEvent.press(screen.getByTestId('group-stamp-confirm'));
 
-    expect(mockStampForGroup).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(mockStampForGroup).toHaveBeenCalledWith('access-token', {
+        stampId: 'stamp-123',
+        friendIds: [],
+        includeCurrentUser: true,
+      });
+    });
   });
 
-  it('forces the self option off when the current user already stamped', async () => {
+  it('allows another self visit when the current user already stamped', async () => {
     renderDialog({ currentUserAlreadyStamped: true });
 
     await waitFor(() => {
       expect(
         screen.getByTestId('group-stamp-include-current-user').props
           .accessibilityState
-      ).toEqual({ checked: false, disabled: true });
+      ).toEqual({ checked: false, disabled: false });
+    });
+
+    fireEvent.press(screen.getByTestId('group-stamp-include-current-user'));
+    fireEvent.press(screen.getByTestId('group-stamp-confirm'));
+
+    await waitFor(() => {
+      expect(mockStampForGroup).toHaveBeenCalledWith('access-token', {
+        stampId: 'stamp-123',
+        friendIds: ['allowed-selected'],
+        includeCurrentUser: true,
+      });
     });
   });
 

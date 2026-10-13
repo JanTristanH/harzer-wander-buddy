@@ -23,25 +23,15 @@ function readConfig(key: keyof ExtraConfig, envValue?: string) {
   return typeof value === 'string' ? value : '';
 }
 
-function readBackendUrl(envValue?: string) {
-  if (Platform.OS === 'web') {
-    return typeof envValue === 'string' && envValue.length > 0 ? envValue : '';
-  }
-
-  return readConfig('backendUrl', envValue);
-}
-
-function resolveBackendUrlForPlatform(url: string) {
-  if (Platform.OS !== 'android') {
+export function resolveBackendUrlForPlatform(url: string, platform = Platform.OS) {
+  if (platform !== 'android') {
     return url;
   }
 
   return url.replace(/^(https?):\/\/(localhost|127\.0\.0\.1)(?=[:/]|$)/i, '$1://10.0.2.2');
 }
 
-const backendUrl = resolveBackendUrlForPlatform(
-  readBackendUrl(process.env.EXPO_PUBLIC_BACKEND_URL)
-);
+const backendUrl = resolveBackendUrlForPlatform(readConfig('backendUrl'));
 
 export const appConfig = {
   backendUrl,
@@ -69,7 +59,7 @@ export function getAuth0ClientIdForPlatform(
 }
 
 export function getMissingConfig() {
-  const requiredEntries: Array<[string, string | undefined]> = [
+  const requiredEntries: [string, string | undefined][] = [
     ['backendUrl', appConfig.backendUrl],
     ['auth0Domain', appConfig.auth0Domain],
     ['auth0Audience', appConfig.auth0Audience],

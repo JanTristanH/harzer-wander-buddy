@@ -60,12 +60,26 @@ Join our community of developers creating universal apps.
 
 `npx expo start` => start the dev server
 
-## Auth0 Config
+## Runtime configuration
 
-`app.json` file contains the configuration.
+`app.config.ts` is the single source for the backend URL. It reads
+`EXPO_PUBLIC_BACKEND_URL` at build/start time and falls back to the local backend.
+In particular:
+
+- local development: `EXPO_PUBLIC_BACKEND_URL=http://localhost:4004`
+- preview and production builds: `EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de`
+
+The EAS profiles define both values in `eas.json`. The container deployment passes
+the production value explicitly from `.github/workflows/ci.yml` into the root
+`Dockerfile`. This keeps production configuration in the deployment pipeline while
+retaining a useful local default.
+
+Android emulators automatically map the local hostname to `10.0.2.2`. A physical
+device needs an explicit LAN URL or HTTPS tunnel via `EXPO_PUBLIC_BACKEND_URL`.
+
+The remaining public Auth0 configuration is stored in `app.json`:
 
 ```
-      "backendUrl": "https://app.harzer-wander-buddy.de",
       "auth0Domain": "dev-ijucl08spdudaszc.us.auth0.com",
       "auth0ClientId": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh", => legacy fallback
       "auth0ClientIdNative": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh", => needs to be a native app
@@ -79,6 +93,14 @@ For local development against a local backend, start Expo with:
 
 ```bash
 EXPO_PUBLIC_BACKEND_URL=http://localhost:4004 npx expo start
+```
+
+For a local container build, pass the backend URL explicitly just like CI:
+
+```bash
+docker build \
+  --build-arg EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de \
+  -t harzer-wander-buddy .
 ```
 
 ## Android Maps Config

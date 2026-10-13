@@ -7,6 +7,9 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "http://localhost:4004"
+      },
       "ios": {
         "simulator": true
       },
@@ -22,6 +25,10 @@
     },
     "production": {
       "autoIncrement": true,
+      "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_BACKEND_URL": "https://app.harzer-wander-buddy.de"
+      },
       "channel": "production"
     }
   },

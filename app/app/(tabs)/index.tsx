@@ -543,9 +543,13 @@ export default function StampsScreen() {
 
   const renderIntro = useCallback(() => (
     <View style={styles.introContent}>
-      <View style={styles.titleRow}>
+      <View style={styles.titleRow} testID="stamps-title-row">
         <Text style={styles.title}>Stempelstellen</Text>
-        <Text style={styles.totalLabel}>{totalCount} gesamt</Text>
+        {isAuthenticated ? (
+          <GroupSelector testID="stamps-header-group-selector" />
+        ) : (
+          <Text style={styles.totalLabel}>{totalCount} gesamt</Text>
+        )}
       </View>
 
       <Pressable
@@ -630,20 +634,13 @@ export default function StampsScreen() {
         })}
       </ScrollView>
 
-      {isAuthenticated ? (
-        <View style={styles.groupSelectorSection}>
-          <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
-          <GroupSelector />
-        </View>
-      ) : null}
-
       {activeFilter === 'near' && locationState !== 'granted' ? (
         <Text style={styles.filterHint}>
           Standortfreigabe fehlt. Aktiviere sie im Onboarding oder in den Systemeinstellungen.
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, isAuthenticated, locationState, query]);
+  ), [activeFilter, locationState, query]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {
@@ -764,9 +761,13 @@ export default function StampsScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContent}>
           <View style={styles.loadingIntro}>
-            <View style={styles.loadingTitleRow}>
+            <View style={styles.loadingTitleRow} testID="stamps-title-row">
               <Text style={styles.title}>Stempelstellen</Text>
-              <Text style={styles.totalLabel}>-- gesamt</Text>
+              {isAuthenticated ? (
+                <GroupSelector testID="stamps-header-group-selector" />
+              ) : (
+                <Text style={styles.totalLabel}>-- gesamt</Text>
+              )}
             </View>
             <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.loadingProgressCard}>
               <SkeletonBlock height={14} radius={7} width="34%" />
@@ -811,12 +812,6 @@ export default function StampsScreen() {
                 </View>
               ))}
             </ScrollView>
-            {isAuthenticated ? (
-              <View style={styles.groupSelectorSection}>
-                <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
-                <GroupSelector />
-              </View>
-            ) : null}
           </View>
 
           <View style={styles.loadingCards}>
@@ -1152,17 +1147,6 @@ const styles = StyleSheet.create({
   },
   filterScroll: {
     height: 40,
-  },
-  groupSelectorSection: {
-    gap: 6,
-  },
-  groupSelectorLabel: {
-    color: '#5f705f',
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '700',
-    letterSpacing: 0.7,
-    textTransform: 'uppercase',
   },
   filterPill: {
     height: 32,

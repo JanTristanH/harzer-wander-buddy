@@ -23,6 +23,22 @@ function normalizeMarkerColor(value: string) {
   return CSS_HEX_COLOR_PATTERN.test(value) ? value : FALLBACK_MARKER_COLOR;
 }
 
+function markerBadgeWidthForLabel(label: string | null) {
+  if (!label || label.length <= 1) {
+    return 15;
+  }
+
+  if (label.length === 2) {
+    return 19;
+  }
+
+  if (label.length === 3) {
+    return 22;
+  }
+
+  return 25;
+}
+
 export function createCssMapMarkerHtml(options: {
   color: string;
   label?: string | null;
@@ -31,9 +47,9 @@ export function createCssMapMarkerHtml(options: {
   const color = normalizeMarkerColor(options.color);
   const label = normalizeWebMarkerLabel(options.label ?? null);
   const compactClass = options.size <= 18 ? ' hwb-css-marker--compact' : '';
-  const labelClass = label && label.length >= 4 ? ' hwb-css-marker--wide-label' : '';
+  const badgeWidth = markerBadgeWidthForLabel(label);
 
-  return `<span aria-hidden="true" class="hwb-css-marker${compactClass}${labelClass}" style="--hwb-marker-color:${color}"><span class="hwb-css-marker__label">${
+  return `<span aria-hidden="true" class="hwb-css-marker${compactClass}" style="--hwb-marker-color:${color};--hwb-marker-badge-width:${badgeWidth}px"><span class="hwb-css-marker__label">${
     label ? escapeHtmlText(label) : ''
   }</span></span>`;
 }
