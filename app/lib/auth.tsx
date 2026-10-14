@@ -478,7 +478,7 @@ function logAuthMetadata(event: string, metadata: Record<string, unknown>) {
 }
 
 function isTokenFresh(tokenResponse: AuthSession.TokenResponse | null) {
-  return AuthSession.TokenResponse.isTokenFresh(tokenResponse);
+  return tokenResponse !== null && AuthSession.TokenResponse.isTokenFresh(tokenResponse);
 }
 
 function isUnauthorizedError(error: unknown) {
