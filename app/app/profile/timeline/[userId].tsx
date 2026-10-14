@@ -303,7 +303,10 @@ export default function ProfileTimelineScreen() {
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gestureState) =>
-          hasScrollableTimeline && (Math.abs(gestureState.dy) > 1 || Math.abs(gestureState.dx) > 1),
+          hasScrollableTimeline &&
+          (Platform.OS === 'android'
+            ? Math.abs(gestureState.dy) > 6 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx)
+            : Math.abs(gestureState.dy) > 1 || Math.abs(gestureState.dx) > 1),
         onPanResponderGrant: (event) => {
           if (!hasScrollableTimeline) {
             return;
@@ -326,7 +329,8 @@ export default function ProfileTimelineScreen() {
           setThumbRatioOverride(null);
           scheduleFastScrollerHide();
         },
-        onStartShouldSetPanResponder: () => hasScrollableTimeline,
+        // Wait for a vertical drag on Android so a back swipe cannot jump the timeline on touch-down.
+        onStartShouldSetPanResponder: () => hasScrollableTimeline && Platform.OS !== 'android',
       }),
     [hasScrollableTimeline, scheduleFastScrollerHide, showFastScroller, updateScrollFromTouch]
   );
@@ -772,7 +776,8 @@ const styles = StyleSheet.create({
   fastScrollerOverlay: {
     position: 'absolute',
     top: 0,
-    right: 0,
+    // Leave the Android system back-gesture edge outside the scroller's touch area.
+    right: Platform.OS === 'android' ? 24 : 0,
     bottom: 18,
     width: 118,
     alignItems: 'flex-end',

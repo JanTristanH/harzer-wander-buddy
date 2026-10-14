@@ -552,7 +552,11 @@ export default function StampsScreen() {
   const fastScrollerPanResponder = React.useMemo(
     () =>
       PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gestureState) => hasScrollableList && Math.abs(gestureState.dy) > 1,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          hasScrollableList &&
+          (Platform.OS === 'android'
+            ? Math.abs(gestureState.dy) > 6 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx)
+            : Math.abs(gestureState.dy) > 1),
         onPanResponderGrant: (event) => {
           if (!hasScrollableList) {
             return;
@@ -575,7 +579,8 @@ export default function StampsScreen() {
           setThumbRatioOverride(null);
           scheduleFastScrollerHide();
         },
-        onStartShouldSetPanResponder: () => hasScrollableList,
+        // Wait for a vertical drag on Android so a back swipe cannot jump the list on touch-down.
+        onStartShouldSetPanResponder: () => hasScrollableList && Platform.OS !== 'android',
       }),
     [hasScrollableList, scheduleFastScrollerHide, showFastScroller, updateScrollFromTouch]
   );
@@ -1441,7 +1446,8 @@ const styles = StyleSheet.create({
   fastScrollerOverlay: {
     position: 'absolute',
     top: 0,
-    right: 0,
+    // Leave the Android system back-gesture edge outside the scroller's touch area.
+    right: Platform.OS === 'android' ? 24 : 0,
     bottom: 176,
     width: 74,
     alignItems: 'flex-end',
