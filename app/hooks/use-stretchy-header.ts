@@ -13,6 +13,7 @@ export function useStretchyHeader(height: number, onRefresh: () => void, refresh
   const scrollOffset = useRef(0);
   const startedAtTop = useRef(false);
   const pullDistance = useRef(0);
+  const didPull = useRef(false);
   const refreshRef = useRef(onRefresh);
   const refreshingRef = useRef(refreshing);
   refreshRef.current = onRefresh;
@@ -39,13 +40,17 @@ export function useStretchyHeader(height: number, onRefresh: () => void, refresh
 
   const panResponder = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponderCapture: (event) => {
+      didPull.current = false;
       startedAtTop.current = scrollOffset.current <= 0 && event.nativeEvent.touches.length === 1;
       return false;
     },
     onMoveShouldSetPanResponderCapture: (event, gesture) =>
       !usesNativeBounce && startedAtTop.current && scrollOffset.current <= 0 &&
       event.nativeEvent.touches.length === 1 && gesture.dy > 8 && gesture.dy > Math.abs(gesture.dx) * 1.5,
-    onPanResponderGrant: () => pull.stopAnimation(),
+    onPanResponderGrant: () => {
+      didPull.current = true;
+      pull.stopAnimation();
+    },
     onPanResponderMove: (_event, gesture) => {
       const distance = Math.min(MAX_PULL, Math.max(0, gesture.dy * PULL_RESISTANCE));
       pullDistance.current = distance;
@@ -73,6 +78,7 @@ export function useStretchyHeader(height: number, onRefresh: () => void, refresh
 
   return {
     usesNativeBounce,
+    didPull,
     panHandlers: usesNativeBounce ? {} : panResponder.panHandlers,
     onScroll,
     contentStyle: usesNativeBounce ? undefined : { transform: [{ translateY: pull }] },

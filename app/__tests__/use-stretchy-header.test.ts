@@ -48,6 +48,14 @@ it('stretches without refreshing on a short pull', () => {
   expect(onRefresh).not.toHaveBeenCalled();
 });
 
+it('suppresses the image press after pulling until a new gesture begins', () => {
+  const { result, handlers, pull } = setup();
+  pull(100);
+  expect(result.current.didPull.current).toBe(true);
+  handlers.onStartShouldSetPanResponderCapture?.(touch, gesture(0));
+  expect(result.current.didPull.current).toBe(false);
+});
+
 it('refreshes once when a sufficiently long pull is released', () => {
   const { onRefresh, pull } = setup();
   pull(220);
