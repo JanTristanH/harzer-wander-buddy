@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-
 import React, { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput } from 'react-native';
 
-import { fetchCurrentUserProfile } from '@/lib/api';
+import { fetchCurrentUserProfile, updateCurrentUserOnboardingCompleted } from '@/lib/api';
 import { AuthProvider, useAuth, useIdTokenClaims } from '@/lib/auth';
 
 jest.mock('expo-auth-session', () => ({}));
@@ -48,4 +48,46 @@ test('Basic profile loads once and keeps unsaved edits during auth profile updat
   await act(async () => { fireEvent.press(screen.getByText('Refresh profile')); });
   expect(screen.getByLabelText('Anzeigename').props.value).toBe('Unsaved edit');
   expect(fetchProfile).toHaveBeenCalledTimes(2);
+});
+
+function OnboardingStateProbe() {
+  const { login, completeOnboarding, hasCompletedOnboarding, setCurrentUserProfile } = useAuth();
+  return <>
+    <Text>{hasCompletedOnboarding ? 'Completed' : 'Not completed'}</Text>
+    <Pressable onPress={() => void login('user1@hwb.de', 'test-password')}><Text>Login</Text></Pressable>
+    <Pressable onPress={() => void completeOnboarding()}><Text>Complete onboarding</Text></Pressable>
+    <Pressable onPress={() => setCurrentUserProfile({ id: 'user1@hwb.de', name: 'Edited name' })}><Text>Edit profile</Text></Pressable>
+    <Pressable onPress={() => setCurrentUserProfile({ id: 'user1@hwb.de', name: 'Edited name', onboardingCompleted: false })}><Text>Explicit reset</Text></Pressable>
+    <Pressable onPress={() => setCurrentUserProfile({ id: 'other-user', name: 'Other user' })}><Text>Other user</Text></Pressable>
+  </>;
+}
+
+test('Basic profile edits preserve onboarding completion for the same user only', async () => {
+  jest.clearAllMocks();
+  (fetchCurrentUserProfile as jest.Mock).mockResolvedValue({ id: 'user1@hwb.de', name: 'Test user', onboardingCompleted: true });
+  render(<AuthProvider><OnboardingStateProbe /></AuthProvider>);
+  await act(async () => { fireEvent.press(screen.getByText('Login')); });
+  expect(screen.getByText('Completed')).toBeTruthy();
+  fireEvent.press(screen.getByText('Edit profile'));
+  expect(screen.getByText('Completed')).toBeTruthy();
+  fireEvent.press(screen.getByText('Explicit reset'));
+  expect(screen.getByText('Not completed')).toBeTruthy();
+  await act(async () => { fireEvent.press(screen.getByText('Login')); });
+  fireEvent.press(screen.getByText('Other user'));
+  expect(screen.getByText('Not completed')).toBeTruthy();
+});
+
+test('Basic onboarding completion writes to the backend and reloads the profile', async () => {
+  jest.clearAllMocks();
+  let completed = false;
+  (fetchCurrentUserProfile as jest.Mock).mockImplementation(async () => ({ id: 'user1@hwb.de', name: 'Test user', onboardingCompleted: completed }));
+  (updateCurrentUserOnboardingCompleted as jest.Mock).mockImplementation(async () => { completed = true; });
+  render(<AuthProvider><OnboardingStateProbe /></AuthProvider>);
+  await act(async () => { fireEvent.press(screen.getByText('Login')); });
+  expect(screen.getByText('Not completed')).toBeTruthy();
+  await act(async () => { fireEvent.press(screen.getByText('Complete onboarding')); });
+  expect(updateCurrentUserOnboardingCompleted).toHaveBeenCalledWith(expect.any(String), true);
+  expect(screen.getByText('Completed')).toBeTruthy();
+  await act(async () => { fireEvent.press(screen.getByText('Login')); });
+  expect(screen.getByText('Completed')).toBeTruthy();
 });
