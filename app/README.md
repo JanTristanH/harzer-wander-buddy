@@ -112,9 +112,11 @@ In particular:
 - local development: `EXPO_PUBLIC_BACKEND_URL=http://localhost:4004`
 - preview and production builds: `EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de`
 
-The EAS profiles define both values in `eas.json`. The Google container build from `main` must pass the production value as
-`EXPO_PUBLIC_BACKEND_URL` build argument into the root `Dockerfile`. GitHub Actions
-does not build Docker images. This retains a useful local default.
+The EAS profiles define both values in `eas.json`. The root `Dockerfile` defaults
+to the production backend so Google's existing container trigger can build without
+arguments. Set the `EXPO_PUBLIC_BACKEND_URL` build argument to override it for
+another environment. GitHub Actions validates the Docker build without publishing
+an image; Google continues to build and deploy from `main`.
 
 Android emulators automatically map the local hostname to `10.0.2.2`. A physical
 device needs an explicit LAN URL or HTTPS tunnel via `EXPO_PUBLIC_BACKEND_URL`.
@@ -141,7 +143,7 @@ After editing files under `app/`, rebuild and copy the web export again:
 ./scripts/build-and-copy-rnweb.sh
 ```
 
-For a local container build, pass the backend URL explicitly just like CI:
+For a local container build, the production backend is the default. To override it:
 
 ```bash
 docker build \
