@@ -7,11 +7,11 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { AdminGuard } from '@/components/admin-guard';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
@@ -78,7 +78,7 @@ export default function AdminStampListScreen() {
 
           <View style={styles.searchWrap}>
             <Feather color="#6b7a6b" name="search" size={14} />
-            <TextInput
+            <ClearableSearchInput
               autoCapitalize="none"
               autoCorrect={false}
               onChangeText={setQuery}
@@ -129,6 +129,7 @@ export default function AdminStampListScreen() {
             </View>
           ) : (
             <FlatList
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.listContent}
               data={filteredStamps}
               keyExtractor={(item) => item.ID}

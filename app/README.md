@@ -1,22 +1,65 @@
-# Welcome to your Expo app 👋
+# Harzer Wanderbuddy app
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is the React Native app for Harzer Wanderbuddy. Basic development uses a separate Expo Web server; Auth0 web development is served by CAP; see [Local web development and Auth0](#local-web-development-and-auth0).
+
+## Local development profiles
+
+Both development profiles use the ignored `db.local.db` database. On first start,
+CAP copies the checked-in `db.sqlite` seed once; existing local data is never
+overwritten. Visits and profile edits remain local and keep the Git checkout clean.
+
+### Basic Auth: CAP and Expo Web in separate terminals
+
+From the repository root:
+
+```bash
+# Terminal 1: CAP, SQLite and local test users; no Auth0 configuration needed
+npm run watch:basic --prefix backend/hwb
+
+# Terminal 2: Expo Web with hot reload
+npm run web:basic --prefix app
+```
+
+Open `http://localhost:8081/login`. Enter the test credentials documented in `../AGENTS.md`.
+The app sends HTTP Basic credentials to CAP at `http://localhost:4004` and creates the
+local user profile on first login. Credentials stay in memory: logout or a page reload
+requires a new login. Local accounts are configured under `[dev-basic]` in CAP's
+`package.json`; registration and Auth0 are not used in this mode.
+
+For native Basic development, use `npm run start:basic`. On a physical device, override
+`EXPO_PUBLIC_BACKEND_URL` with the CAP host's LAN address instead of localhost; start
+Expo with `EXPO_PUBLIC_AUTH_MODE=basic EXPO_PUBLIC_BACKEND_URL=http://<host>:4004 npx expo start`.
+
+### SSO: Auth0 and CAP-served web export
+
+```bash
+./scripts/build-and-copy-rnweb.sh
+npm run watch:sso --prefix backend/hwb
+```
+
+Open `http://localhost:4004/app/rnweb`. SSO web login continues to use the registered
+CAP callbacks below. The build script explicitly selects SSO and keeps the CAP mount
+path even after a Basic Expo session. Run the script after changes to `app/` and reload
+the browser. `npm run web:basic` is the separate Expo Web workflow; it does not require
+Auth0 callback changes.
 
 ## Get started
 
-1. Install dependencies
+1. Install dependencies (from this directory)
 
    ```bash
-   npm install
+   npm ci
    ```
 
-2. Start the app
+2. Start Expo for native development
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+Use this Expo server for iOS/Android development. Do not press `w` or add `--web` for local Auth0 login; use the CAP-served web workflow below.
+
+You can open the native app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
 - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
@@ -55,17 +98,30 @@ Join our community of developers creating universal apps.
 
 `npx expo run:ios`
 
-###  remote
+### remote
 `eas build --platform ios --profile development`
 
-`npx expo start` => start the dev server
+`npx expo start` starts the native development server.
 
-## Auth0 Config
+## Runtime configuration
 
-`app.json` file contains the configuration.
+`app.config.ts` is the single source for the backend URL. It reads
+`EXPO_PUBLIC_BACKEND_URL` at build/start time and falls back to the local backend.
+In particular:
+
+- local development: `EXPO_PUBLIC_BACKEND_URL=http://localhost:4004`
+- preview and production builds: `EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de`
+
+The EAS profiles define both values in `eas.json`. The Google container build from `main` must pass the production value as
+`EXPO_PUBLIC_BACKEND_URL` build argument into the root `Dockerfile`. GitHub Actions
+does not build Docker images. This retains a useful local default.
+
+Android emulators automatically map the local hostname to `10.0.2.2`. A physical
+device needs an explicit LAN URL or HTTPS tunnel via `EXPO_PUBLIC_BACKEND_URL`.
+
+The remaining public Auth0 configuration is stored in `app.json`:
 
 ```
-      "backendUrl": "https://app.harzer-wander-buddy.de",
       "auth0Domain": "dev-ijucl08spdudaszc.us.auth0.com",
       "auth0ClientId": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh", => legacy fallback
       "auth0ClientIdNative": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh", => needs to be a native app
@@ -75,11 +131,24 @@ Join our community of developers creating universal apps.
       "auth0LogoutReturnPath": "auth/logout",
 ```
 
-For local development against a local backend, start Expo with:
+### Local web development and Auth0
+
+For web login, serve the static Expo export through CAP. Do not use `npx expo start --web` for this flow: Auth0's local callback is registered for the CAP URL, not Expo's development-server URL. Follow the [CAP React Native Web instructions](../backend/hwb/README.md#react-native-web-via-cap).
+
+After editing files under `app/`, rebuild and copy the web export again:
 
 ```bash
-EXPO_PUBLIC_BACKEND_URL=http://localhost:4004 npx expo start
+./scripts/build-and-copy-rnweb.sh
 ```
+
+For a local container build, pass the backend URL explicitly just like CI:
+
+```bash
+docker build \
+  --build-arg EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de \
+  -t harzer-wander-buddy .
+```
+For native development against a local backend, `EXPO_PUBLIC_BACKEND_URL` can still point to the CAP server. Android emulators map `localhost` to `10.0.2.2` automatically.
 
 ## Android Maps Config
 
@@ -115,8 +184,8 @@ npx eas update --channel preview --platform android --message "Message"
 ## OTA-Pipeline mit GitHub Actions
 
 Der Workflow [Expo OTA Update](../.github/workflows/expo-update.yml) veröffentlicht
-zunächst ausschließlich **manuell auf `preview`**. Android ist voreingestellt;
-iOS oder beide Plattformen können beim Start ausgewählt werden. Er installiert
+bei App-Änderungen auf **`main` automatisch auf `preview` für beide Plattformen**.
+Auf `develop` wird er ausschließlich manuell gestartet; Android ist dann voreingestellt. Er installiert
 die App mit `npm ci`, führt die App-Tests aus, prüft die Backend-Konfiguration
 und veröffentlicht anschließend mit `eas update --environment preview`.
 
@@ -184,11 +253,11 @@ Wechsel innerhalb der App müsste ein Channel-Override implementiert werden.
 
 OTA ersetzt JavaScript und Assets, aber keinen nativen Build. Plattform und
 Runtime müssen übereinstimmen. Dieses Projekt verwendet die Runtime-Policy
-`appVersion`: Entscheidend ist `expo.version` in `app.json` (aktuell `1.5.2`),
-nicht die Paketversion in `package.json`. Bei Änderungen an nativen Modulen,
-Expo SDK, Berechtigungen oder nativer Konfiguration zuerst `expo.version`
-erhöhen und neue Builds verteilen. Eine reine OTA-Korrektur für vorhandene
-Builds behält deren Runtime-Version.
+`fingerprint`: Expo ermittelt native Kompatibilität aus dem Projekt. Die sichtbare
+App-Version kommt aus `package.json` über `app.config.ts`. Bei geänderter nativer
+Runtime neue Builds verteilen. Auch der erstmalige Wechsel von `appVersion`
+auf `fingerprint` erfordert neue Binaries; alte Installationen erhalten diese
+Updates nicht. EAS erhöht Buildnummern unabhängig davon automatisch.
 [Expo: Runtime-Versionen](https://docs.expo.dev/eas-update/runtime-versions/)
 
 ### 4. Erstes Update starten und prüfen
@@ -196,7 +265,9 @@ Builds behält deren Runtime-Version.
 Nach dem Merge erscheint der Workflow unter **GitHub → Actions → Expo OTA
 Update → Run workflow**. Wähle den Git-Branch mit dem gewünschten App-Code und
 die passende Plattform. Der gewählte Branch wird ausgecheckt; das Ziel bleibt
-immer `preview`. Ein Push oder PR veröffentlicht derzeit kein Update.
+immer `preview`. App-Pushes auf `main` veröffentlichen automatisch Updates.
+Nach einem Merge nach `develop` zum OTA-Test **Run workflow → Branch develop →
+Plattform android** wählen. Pushes auf `develop` und PRs veröffentlichen keine Updates.
 
 Die Job-Ausgabe enthält den Expo-Link zur veröffentlichten Update-Gruppe;
 die Update-Nachricht enthält Git-Branch, Commit und GitHub-Run-ID. Prüfe im
@@ -211,38 +282,14 @@ eine vorherige kompatible Update-Gruppe erneut veröffentlichen (Republish).
 Alternativ den betreffenden Commit zurücknehmen und die Pipeline erneut starten.
 [Expo: Rollbacks](https://docs.expo.dev/eas-update/rollbacks/)
 
-### 5. Später nur von main automatisch veröffentlichen
+### 5. Produktionsreleases
 
-Wenn Preview erfolgreich getestet ist, ersetze den gesamten `on`-Block durch:
-
-```yaml
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'app/**'
-      - '.github/workflows/expo-update.yml'
-```
-
-Entferne damit `workflow_dispatch`, damit ausschließlich Pushes auf `main`
-veröffentlichen. Setze außerdem im Job:
-
-```yaml
-env:
-  CI: '1'
-  OTA_CHANNEL: production
-  OTA_ENVIRONMENT: production
-  OTA_PLATFORM: all
-```
-
-Ändere die Concurrency-Gruppe zu `expo-update-production`. Richte zuvor die
-EAS-Umgebung `production` mit denselben zu den Production-Builds passenden
-Variablen ein. Stelle im Production-Build-Profil explizit
-`"environment": "production"` ein und installiere Production-Builds auf den
-Zielgeräten. Bisherige Preview-Installationen bleiben auf `preview` und erhalten
-diese Production-Updates nicht.
-
+**Prepare Release** wird manuell auf `develop` gestartet und erstellt dort
+getrennte App-/CAP-Versions-PRs. Erst die anschließende Freigabe nach `main`
+veröffentlicht Tags/Releases ohne weitere Versionscommits. Ein App-Release
+startet Produktionsbuilds für beide Plattformen; Produktions-OTA und
+Store-Einreichung erfolgen nicht automatisch. Google baut das Docker-Image
+weiterhin von `main`. Einrichtung und Ablauf: [Releases](../docs/releases.md).
 
 ## build ios locally
 

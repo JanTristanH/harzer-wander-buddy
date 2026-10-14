@@ -93,7 +93,7 @@ export function buildAuthenticatedImageSource(uri: string, accessToken?: string 
     uri: resolvedUri,
     cacheKey,
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `${appConfig.authMode === 'basic' ? 'Basic' : 'Bearer'} ${accessToken}`,
     },
   } satisfies AuthenticatedImageSource;
 }

@@ -29,4 +29,15 @@ describe('web map marker HTML', () => {
       'hwb-css-marker--compact'
     );
   });
+
+  it.each([
+    ['P', 15],
+    ['12', 19],
+    ['121', 22],
+    ['ABCD', 25],
+  ])('matches the native badge width for label %s', (label, expectedWidth) => {
+    const html = createCssMapMarkerHtml({ color: '#2e6b4b', label, size: 48 });
+
+    expect(html).toContain(`--hwb-marker-badge-width:${expectedWidth}px`);
+  });
 });

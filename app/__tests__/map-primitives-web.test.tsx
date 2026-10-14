@@ -34,11 +34,13 @@ describe('web map primitives', () => {
   const watchPosition = jest.fn();
   const clearWatch = jest.fn();
   let injectedStyle: { id: string; textContent: string } | null;
+  let originalNavigatorDescriptor: PropertyDescriptor | undefined;
 
   beforeEach(() => {
     jest.clearAllMocks();
     injectedStyle = null;
     watchPosition.mockReturnValue(73);
+    originalNavigatorDescriptor = Object.getOwnPropertyDescriptor(global, 'navigator');
     Object.defineProperty(global, 'document', {
       configurable: true,
       value: {
@@ -71,10 +73,11 @@ describe('web map primitives', () => {
       configurable: true,
       value: undefined,
     });
-    Object.defineProperty(global, 'navigator', {
-      configurable: true,
-      value: undefined,
-    });
+    if (originalNavigatorDescriptor) {
+      Object.defineProperty(global, 'navigator', originalNavigatorDescriptor);
+    } else {
+      Reflect.deleteProperty(global, 'navigator');
+    }
   });
 
   it('keeps one geolocation watch, calls the newest callback, and deduplicates coordinates', () => {
@@ -140,6 +143,7 @@ describe('web map primitives', () => {
     const options = mockDivIcon.mock.calls[0][0] as { html: string };
 
     expect(options.html).toContain('hwb-css-marker');
+    expect(options.html).toContain('--hwb-marker-badge-width:19px');
     expect(options.html).not.toMatch(/<svg\b/i);
     expect(options.html).not.toMatch(/<filter\b/i);
     expect(options.html).not.toMatch(/feDropShadow/i);
@@ -150,6 +154,10 @@ describe('web map primitives', () => {
 
     const markerCss = global.document.getElementById('hwb-leaflet-runtime-css')?.textContent;
     expect(markerCss).toMatch(/\.hwb-css-marker \{[^}]*display: block;/s);
+    expect(markerCss).toMatch(/height: 32px;[^}]*left: 8px;[^}]*top: 10px;/s);
+    expect(markerCss).toContain('transform: scaleX(0.72) rotate(-45deg)');
+    expect(markerCss).toContain('font: 700 12px/1 Arial, Helvetica, sans-serif');
+    expect(markerCss).toContain('width: var(--hwb-marker-badge-width)');
     expect(markerCss).toContain('.leaflet-zoom-anim .leaflet-zoom-hide');
     expect(markerCss).toContain('transition: transform 0.25s');
     expect(markerCss).not.toContain('box-shadow');

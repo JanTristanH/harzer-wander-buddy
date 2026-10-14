@@ -123,12 +123,6 @@ export function GroupStampDialog({
     );
   }, [allowedFriendIds, isInitializedForOpen, visible]);
 
-  useEffect(() => {
-    if (visible && currentUserAlreadyStamped) {
-      setShouldIncludeCurrentUser(false);
-    }
-  }, [currentUserAlreadyStamped, visible]);
-
   const toggleStampFriend = useCallback(
     (friendId: string) => {
       if (!allowedFriendIds.has(friendId)) {
@@ -156,10 +150,13 @@ export function GroupStampDialog({
     !isLoading &&
     !isSubmitting &&
     stampId.trim().length > 0 &&
-    selectedStampFriendIds.length > 0;
+    (selectedStampFriendIds.length > 0 || shouldIncludeCurrentUser);
 
   const confirmGroupStamp = useCallback(async () => {
-    if (selectedStampFriendIds.length === 0 || isSubmitting) {
+    if (
+      (selectedStampFriendIds.length === 0 && !shouldIncludeCurrentUser) ||
+      isSubmitting
+    ) {
       return;
     }
 
@@ -346,30 +343,28 @@ export function GroupStampDialog({
           <Pressable
             accessibilityLabel={
               currentUserAlreadyStamped
-                ? 'Für mich stempeln, bereits gestempelt'
+                ? 'Für mich erneut stempeln'
                 : 'Für mich stempeln'
             }
             accessibilityRole="checkbox"
             accessibilityState={{
               checked: shouldIncludeCurrentUser,
-              disabled: currentUserAlreadyStamped,
+              disabled: isSubmitting,
             }}
-            disabled={currentUserAlreadyStamped || isSubmitting}
+            disabled={isSubmitting}
             onPress={() => {
               setShouldIncludeCurrentUser((currentValue) => !currentValue);
               setErrorMessage(null);
             }}
             style={({ pressed }) => [
               styles.selfRow,
-              currentUserAlreadyStamped && styles.selfRowDisabled,
-              pressed && !currentUserAlreadyStamped && styles.pressed,
+              pressed && !isSubmitting && styles.pressed,
             ]}
             testID="group-stamp-include-current-user">
             <View
               style={[
                 styles.checkbox,
                 shouldIncludeCurrentUser && styles.checkboxSelected,
-                currentUserAlreadyStamped && styles.checkboxDisabled,
               ]}>
               {shouldIncludeCurrentUser ? (
                 <Feather color="#FFFFFF" name="check" size={15} />
@@ -377,14 +372,13 @@ export function GroupStampDialog({
             </View>
             <View style={styles.memberCopy}>
               <Text
-                style={[
-                  styles.selfLabel,
-                  currentUserAlreadyStamped && styles.textDisabled,
-                ]}>
-                Für mich stempeln
+                style={styles.selfLabel}>
+                {currentUserAlreadyStamped ? 'Für mich erneut stempeln' : 'Für mich stempeln'}
               </Text>
               {currentUserAlreadyStamped ? (
-                <Text style={styles.memberMeta}>Du hast hier bereits gestempelt.</Text>
+                <Text style={styles.memberMeta}>
+                  Du hast hier bereits gestempelt. Die Auswahl erzeugt einen weiteren Besuch.
+                </Text>
               ) : null}
             </View>
           </Pressable>
@@ -598,9 +592,6 @@ const styles = StyleSheet.create({
     minHeight: 54,
     paddingHorizontal: 12,
     paddingVertical: 9,
-  },
-  selfRowDisabled: {
-    backgroundColor: '#F3F4F1',
   },
   selfLabel: {
     color: '#1E2A1E',

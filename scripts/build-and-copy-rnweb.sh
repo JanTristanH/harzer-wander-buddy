@@ -7,7 +7,7 @@ TARGET_DIR="${ROOT_DIR}/backend/hwb/app/rnweb"
 
 echo "[1/3] Build Expo web app..."
 cd "${APP_DIR}"
-npx expo export --platform web
+EXPO_PUBLIC_AUTH_MODE=sso npx expo export --platform web
 
 echo "[2/3] Replace CAP static target..."
 rm -rf "${TARGET_DIR}"

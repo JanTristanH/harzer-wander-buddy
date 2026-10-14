@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import { FriendsList } from '@/components/friends-list';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
@@ -434,6 +435,7 @@ export default function FriendsScreen() {
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.screen}>
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.content}
           refreshControl={
             <RefreshControl
@@ -638,7 +640,7 @@ export default function FriendsScreen() {
                 <View style={styles.searchInputIconWrap}>
                   <Feather color="#6B7A6B" name="search" size={14} />
                 </View>
-                <TextInput
+                <ClearableSearchInput
                   autoCapitalize="none"
                   autoCorrect={false}
                   autoFocus
