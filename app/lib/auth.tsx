@@ -557,6 +557,13 @@ function BasicAuthProvider({ children }: React.PropsWithChildren) {
   const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const updateCurrentUserProfileState = useCallback((profile: CurrentUserProfileData | null) => {
+    setCurrentUserProfile((currentProfile) =>
+      profile && currentProfile?.id === profile.id && typeof profile.onboardingCompleted !== 'boolean'
+        ? { ...profile, onboardingCompleted: currentProfile.onboardingCompleted }
+        : profile
+    );
+  }, []);
   const preloadCurrentUserProfile = useCallback(async () => {
     if (!accessToken) return null;
     const profile = await fetchCurrentUserProfile(accessToken);
@@ -604,7 +611,7 @@ function BasicAuthProvider({ children }: React.PropsWithChildren) {
     isAuthenticated: !!accessToken, isLoading, authError, configError: null,
     login, signup, completeWebRedirectAuth, getValidAccessToken,
     completeOnboarding, logout, logoutEverywhere: logout, resetApp: logout,
-    preloadCurrentUserProfile, setCurrentUserProfile,
+    preloadCurrentUserProfile, setCurrentUserProfile: updateCurrentUserProfileState,
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
