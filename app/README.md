@@ -284,7 +284,9 @@ Alternativ den betreffenden Commit zurücknehmen und die Pipeline erneut starten
 
 ### 5. Produktionsreleases
 
-Release Please erstellt getrennte App-/CAP-Release-PRs auf `main`. Ein App-Release
+**Prepare Release** wird manuell auf `develop` gestartet und erstellt dort
+getrennte App-/CAP-Versions-PRs. Erst die anschließende Freigabe nach `main`
+veröffentlicht Tags/Releases ohne weitere Versionscommits. Ein App-Release
 startet Produktionsbuilds für beide Plattformen; Produktions-OTA und
 Store-Einreichung erfolgen nicht automatisch. Google baut das Docker-Image
 weiterhin von `main`. Einrichtung und Ablauf: [Releases](../docs/releases.md).

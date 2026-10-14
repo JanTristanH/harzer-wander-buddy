@@ -14,7 +14,7 @@
   pflegen. Preview nutzt derzeit ebenfalls das Produktionsbackend; ein separates
   Staging-Backend benötigt eine eigene URL und Infrastruktur.
 - In GitHub `main` und `develop` schützen: PRs, App Jest tests, Backend CAP tests
-  und Conventional Commit PR title als Pflichtprüfungen; Force-Push deaktivieren.
+  und Conventional Commit PR title sowie Release automation tests als Pflichtprüfungen; Force-Push deaktivieren.
 - GitHub muss Actions das Erstellen von PRs erlauben. Das GitHub-Environment
   `production` kann für Produktionsbuilds Reviewer verlangen.
 
@@ -79,35 +79,68 @@ Quellen: [EAS aus CI starten](https://docs.expo.dev/build/building-on-ci/),
 [Expo-Tokens](https://docs.expo.dev/accounts/programmatic-access/),
 [interne Verteilung](https://docs.expo.dev/build/internal-distribution/).
 
-## Täglicher Ablauf
+## Release vorbereiten und freigeben
 
-1. Feature/Fix von aktuellem `develop` abzweigen, PR nach `develop` erstellen.
-2. Conventional-Commit-Titel verwenden und per Squash mit diesem Titel mergen.
-   `feat(app): …` bedeutet Minor, `fix(cap): …` Patch, `feat(cap)!: …` Major.
-   Die geänderten Dateipfade entscheiden über betroffene Release-Komponenten.
-3. OTA auf `develop` ausschließlich manuell starten: **Actions → Expo OTA Update →
-   Run workflow → Branch develop → Plattform android** (oder ios/all). Nach App-Tests
-   wird auf `preview` veröffentlicht. Bei neuer nativer Runtime zunächst Preview-Binaries bauen:
-   `cd app && npx eas build --platform all --profile preview`.
-4. Für eine Freigabe PR `develop` → `main` erstellen, z. B.
-   `chore: promote develop to main`. Per Merge-Commit mergen, nicht squashen.
-   App-Änderungen auf `main` veröffentlichen nach App-Tests automatisch ein OTA
-   auf `preview` für beide Plattformen. Der Zielchannel bleibt also `preview`;
-   ein Produktions-OTA wird dadurch nicht veröffentlicht.
-5. Google baut/deployt weiterhin bei Änderungen auf `main` das Docker-Image.
-   Release Please erzeugt nach erfolgreichen Tests getrennte Release-PRs für App
-   und CAP. Diese prüfen und mergen; dadurch entstehen Changelogs, Versionsbumps
-   einschließlich Lockdateien sowie Tags `app-vX.Y.Z` und `cap-vX.Y.Z`.
-6. Ein App-Release startet im selben Workflow Produktionsbuilds für Android und
-   iOS. EAS erhöht die Buildnummern. Der Workflow wartet nur auf die Annahme der
-   Buildaufträge; Ergebnisse und Store-Einreichung anschließend in EAS prüfen.
-   Es erfolgt keine automatische Store-Einreichung und kein Produktions-OTA.
-7. `main` einschließlich Release-Commits per Merge-PR zurück nach `develop`
-   führen, z. B. `chore: sync main into develop`.
+1. Feature-PRs nach `develop` mergen und testen. Feature-PRs per Squash mit
+   Conventional-Commit-Titel mergen. OTA auf `develop` bleibt manuell über
+   **Actions → Expo OTA Update → Run workflow → Branch develop**.
+2. Vor der nächsten Vorbereitung `main` per Merge-PR nach `develop` zurückführen.
+   Der Workflow prüft, dass der aktuelle main-Stand enthalten ist.
+3. **Actions → Prepare Release → Run workflow → Branch develop** starten.
+   Der Workflow läuft ausschließlich manuell auf `develop`, führt die Tests aus
+   und lässt Release Please getrennte App-/CAP-Versions-PRs nach `develop`
+   erstellen/aktualisieren. Er erstellt noch keine Tags oder GitHub-Releases.
+4. Versions-PRs einschließlich Changelogs und Lockdateien prüfen und nach
+   `develop` mergen. Alle zur Freigabe gehörenden Komponenten berücksichtigen.
+   Danach den Stand testen; bis zur Freigabe keine weiteren Features mergen.
+5. PR `develop` → `main` erstellen, z. B. `chore: promote develop to main`.
+   Per **Merge-Commit** mergen. Der Commit enthält bereits die neuen Versionen.
+6. Google baut/deployt wie bisher bei Änderungen auf `main`. Es gibt keinen
+   nachgelagerten Versionscommit auf main und damit keinen zweiten Docker-Build
+   wegen eines Versionsbumps.
+7. Der Workflow **Releases** prüft den main-Stand und veröffentlicht die bereits
+   vorbereiteten Versionen als `app-vX.Y.Z` / `cap-vX.Y.Z`, mit Notizen aus den
+   jeweiligen Changelogs. Er schreibt keine Dateien/Branch-Commits. Veröffentliche
+   Vorbereitungs-PRs werden als `autorelease: tagged` markiert, damit Release
+   Please anschließend die nächste Version vorbereiten kann.
+8. Bei einem App-Release werden Produktionsbuilds für Android und iOS gestartet.
+   EAS erhöht die Buildnummern. Der Workflow wartet auf die Auftragsannahme;
+   fertige Builds und Store-Einreichung anschließend in EAS prüfen.
+9. `main` per Merge-PR zurück nach `develop` führen. Das macht auch die neuen
+   Release-Tags in der develop-Historie erreichbar. Erst dann die nächste
+   Release-Vorbereitung starten.
 
-Hotfixes starten auf `main` und gehen per PR dorthin zurück. Danach ebenfalls
-`main` nach `develop` mergen. Für längere Abnahmen kann ein `release/*`-Branch
-von `develop` erstellt werden; Korrekturen nach der Freigabe zurückführen.
+App-Änderungen auf `main` veröffentlichen weiterhin automatisch ein OTA auf
+`preview`. Es erfolgen kein automatisches Produktions-OTA und keine automatische
+Store-Einreichung. Google-Deployment, OTA und Release-Veröffentlichung laufen
+unabhängig voneinander; ein fehlgeschlagener GitHub-Job stoppt Google nicht.
+
+### Wiederholungen und Fehler
+
+- **Prepare Release** erneut auf `develop` starten, um offene Versions-PRs zu
+  aktualisieren. Ist ein Versions-PR bereits gemergt, zunächst diesen Stand über
+  main veröffentlichen; Release Please wartet solange auf dessen Tag.
+- **Releases** nur auf `main` starten. Ein erneuter Lauf kann eine unterbrochene
+  Veröffentlichung ergänzen. Vorhandene Tags werden nicht verschoben.
+- Ein Wiederholungslauf desselben Veröffentlichungscommits kann die nativen
+  Builds erneut starten. Spätere main-Commits bauen eine schon veröffentlichte
+  App-Version nicht nochmals über den Release-Workflow.
+- Manifest, package.json und die beiden Versionsfelder der Lockdatei müssen
+  zusammenpassen. Neue Versionen ohne passende Changelog-Notizen werden abgelehnt.
+- Nachträgliche Features nach dem Versionsbump vermeiden: Die Automatik prüft
+  Versionen und Notizen, ersetzt aber keine inhaltliche Release-Abnahme.
+- Hotfixes benötigen ebenfalls eine vorbereitete Version vor dem Merge nach
+  main. Der Vorbereitungsworkflow unterstützt aktuell `develop`; ein direkter
+  Hotfix-Merge nach main deployt weiterhin über Google, erzeugt ohne vorbereitete
+  neue Version aber keinen neuen Komponenten-Release.
+
+### Einmaliger Umstieg
+
+Diesen Infrastruktur-PR zuerst nach `develop` und anschließend nach `main`
+übernehmen. Erst danach ist **Prepare Release** im Actions-Menü sichtbar.
+Die bestehenden Ausgangsversionen ohne Komponenten-Changelog werden dabei
+nicht rückwirkend veröffentlicht. Anschließend main zurück nach develop führen
+und die erste echte Version mit **Prepare Release** vorbereiten.
 
 ## Versionen und OTA-Kompatibilität
 
@@ -115,8 +148,7 @@ von `develop` erstellt werden; Korrekturen nach der Freigabe zurückführen.
 - Der Bootstrap-Commit ist der main-Stand vor Einführung der Automatik. Historische
   Tags ohne Komponentenpräfix werden nicht als App-/CAP-Releases interpretiert.
   Alte Commits ohne Conventional-Commit-Format erzeugen keinen Versionsbump;
-  bei der ersten Freigabe die Vorschläge prüfen und bei Bedarf mit dem von
-  Release Please unterstützten `Release-As`-Footer bewusst initialisieren.
+  bei der ersten Vorbereitung die Vorschläge und Changelogs prüfen.
 - `app/package.json` ist die Quelle der sichtbaren Expo-Version. `app.config.ts`
   übernimmt sie; `app.json` enthält keine zweite Versionsangabe.
 - EAS verwaltet Android-versionCode/iOS-buildNumber remote und erhöht sie bei
@@ -131,6 +163,7 @@ von `develop` erstellt werden; Korrekturen nach der Freigabe zurückführen.
 
 Der alte tagbasierte GitHub-Docker-Workflow ist entfernt. Googles vorhandener
 main-Trigger bleibt zuständig; seine Konfiguration wird durch diesen PR nicht
-geändert. Der CAP-Versionsbump auf main löst damit ebenfalls den bestehenden
-Google-Build aus. Deployments erfolgen weiterhin auf jedem main-Stand, nicht
-nur beim Erstellen eines CAP-Tags.
+geändert. Versionsbumps werden vorab auf develop gemergt und gemeinsam mit den Features
+nach main übernommen. Tags und GitHub-Releases ändern main nicht und lösen
+daher keinen zusätzlichen branchbasierten Google-Build aus. Deployments erfolgen
+weiterhin auf jedem main-Stand, nicht nur beim Erstellen eines CAP-Tags.
