@@ -85,11 +85,15 @@ Quellen: [EAS aus CI starten](https://docs.expo.dev/build/building-on-ci/),
 2. Conventional-Commit-Titel verwenden und per Squash mit diesem Titel mergen.
    `feat(app): …` bedeutet Minor, `fix(cap): …` Patch, `feat(cap)!: …` Major.
    Die geänderten Dateipfade entscheiden über betroffene Release-Komponenten.
-3. Jeder App-Push auf `develop` veröffentlicht nach App-Tests ein Preview-OTA für
-   beide Plattformen. Bei neuer nativer Runtime zunächst Preview-Binaries bauen:
+3. OTA auf `develop` ausschließlich manuell starten: **Actions → Expo OTA Update →
+   Run workflow → Branch develop → Plattform android** (oder ios/all). Nach App-Tests
+   wird auf `preview` veröffentlicht. Bei neuer nativer Runtime zunächst Preview-Binaries bauen:
    `cd app && npx eas build --platform all --profile preview`.
 4. Für eine Freigabe PR `develop` → `main` erstellen, z. B.
    `chore: promote develop to main`. Per Merge-Commit mergen, nicht squashen.
+   App-Änderungen auf `main` veröffentlichen nach App-Tests automatisch ein OTA
+   auf `preview` für beide Plattformen. Der Zielchannel bleibt also `preview`;
+   ein Produktions-OTA wird dadurch nicht veröffentlicht.
 5. Google baut/deployt weiterhin bei Änderungen auf `main` das Docker-Image.
    Release Please erzeugt nach erfolgreichen Tests getrennte Release-PRs für App
    und CAP. Diese prüfen und mergen; dadurch entstehen Changelogs, Versionsbumps

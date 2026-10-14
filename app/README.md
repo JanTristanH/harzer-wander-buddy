@@ -184,8 +184,8 @@ npx eas update --channel preview --platform android --message "Message"
 ## OTA-Pipeline mit GitHub Actions
 
 Der Workflow [Expo OTA Update](../.github/workflows/expo-update.yml) veröffentlicht
-bei App-Änderungen auf **`develop` automatisch auf `preview` für beide Plattformen**.
-Zusätzlich kann er manuell gestartet werden; Android ist dann voreingestellt. Er installiert
+bei App-Änderungen auf **`main` automatisch auf `preview` für beide Plattformen**.
+Auf `develop` wird er ausschließlich manuell gestartet; Android ist dann voreingestellt. Er installiert
 die App mit `npm ci`, führt die App-Tests aus, prüft die Backend-Konfiguration
 und veröffentlicht anschließend mit `eas update --environment preview`.
 
@@ -265,8 +265,9 @@ Updates nicht. EAS erhöht Buildnummern unabhängig davon automatisch.
 Nach dem Merge erscheint der Workflow unter **GitHub → Actions → Expo OTA
 Update → Run workflow**. Wähle den Git-Branch mit dem gewünschten App-Code und
 die passende Plattform. Der gewählte Branch wird ausgecheckt; das Ziel bleibt
-immer `preview`. App-Pushes auf `develop` veröffentlichen ebenfalls Updates;
-PRs veröffentlichen keine Updates.
+immer `preview`. App-Pushes auf `main` veröffentlichen automatisch Updates.
+Nach einem Merge nach `develop` zum OTA-Test **Run workflow → Branch develop →
+Plattform android** wählen. Pushes auf `develop` und PRs veröffentlichen keine Updates.
 
 Die Job-Ausgabe enthält den Expo-Link zur veröffentlichten Update-Gruppe;
 die Update-Nachricht enthält Git-Branch, Commit und GitHub-Run-ID. Prüfe im
