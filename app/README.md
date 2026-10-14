@@ -112,6 +112,137 @@ eas build --platform android --profile preview
 
 npx eas update --channel preview --platform android --message "Message"
 
+## OTA-Pipeline mit GitHub Actions
+
+Der Workflow [Expo OTA Update](../.github/workflows/expo-update.yml) veröffentlicht
+zunächst ausschließlich **manuell auf `preview`**. Android ist voreingestellt;
+iOS oder beide Plattformen können beim Start ausgewählt werden. Er installiert
+die App mit `npm ci`, führt die App-Tests aus, prüft die Backend-Konfiguration
+und veröffentlicht anschließend mit `eas update --environment preview`.
+
+### 1. Expo-Zugriff für GitHub einrichten
+
+Erstelle im Expo-Konto unter **Account settings → Access tokens** einen Token:
+[Expo Access Tokens](https://expo.dev/settings/access-tokens).
+Das Konto muss Zugriff auf das EAS-Projekt
+`1511f3e0-0255-4c5b-97a4-43e285483bc2` haben.
+
+Speichere den Token im GitHub-Repository unter **Settings → Secrets and variables
+→ Actions → New repository secret** mit dem Namen **`EXPO_TOKEN`**.
+Den Token nicht ins Repository oder in den Chat kopieren.
+
+### 2. EAS-Umgebung prüfen
+
+Im Verzeichnis `app/`:
+
+```bash
+npx eas-cli@latest login
+npx eas-cli@latest project:info
+npx eas-cli@latest env:list preview
+```
+
+Lege den Backend-Endpunkt in der EAS-Umgebung `preview` an, falls er dort fehlt:
+
+```bash
+npx eas-cli@latest env:create --environment preview \
+  --name EXPO_PUBLIC_BACKEND_URL \
+  --value https://app.harzer-wander-buddy.de --visibility plaintext
+```
+
+Für eine bereits vorhandene Variable verwende `env:update` statt `env:create`.
+Weitere öffentliche Konfigurationswerte, etwa Auth0-Overrides oder der Google
+Maps Key, müssen zum installierten Build passen. Für OTA benötigte Variablen
+brauchen `plaintext` oder `sensitive` Sichtbarkeit; EAS-Variablen mit `secret`
+Sichtbarkeit können auf dem GitHub-Runner nicht geladen werden.
+
+**Wichtig:** Die `env`-Werte der Build-Profile in `eas.json` werden bei
+`eas update` nicht übernommen. Mit `--environment preview` kommen die Werte
+aus der EAS-Umgebung; lokale `.env`-Dateien werden dabei nicht verwendet.
+Die Pipeline bricht ab, falls die Backend-Variable fehlt oder auf eine andere
+Adresse zeigt. [Expo: Umgebungsvariablen](https://docs.expo.dev/eas/environment-variables/usage/)
+
+### 3. Installierten Build und Channel prüfen
+
+Ein Channel gehört zum **installierten App-Build**. Im Expo-Dashboard unter
+**Projekt → Builds → Build-Details** lässt sich der Channel des jeweiligen
+Builds prüfen. Ein mit dem Profil `preview` erstellter Build verwendet hier
+den Channel `preview`; `production` verwendet `production`.
+
+Die App kann auf dem Gerät mit `Updates.channel`, `Updates.runtimeVersion`
+und `Updates.updateId` den Channel, die Runtime und das laufende Update anzeigen.
+Eine solche Diagnoseanzeige ist bisher nicht implementiert. Die Build-Liste
+ist kein Inventar aller Installationen auf einzelnen Geräten.
+[Expo: Updates API](https://docs.expo.dev/versions/v54.0.0/sdk/updates/)
+
+Alle kompatiblen Preview-Installationen erhalten ein auf `preview` veröffentlichtes
+Update. Für einen dauerhaften Wechsel eines Geräts nach `production` dort einen
+neuen Build mit dem Profil `production` installieren. Änderungen in `eas.json`
+ändern bestehende Installationen nicht. Ein serverseitiges Umhängen des Channels
+auf einen anderen EAS-Branch betrifft alle Builds dieses Channels; für einen
+Wechsel innerhalb der App müsste ein Channel-Override implementiert werden.
+[Expo: Channels und Branches](https://docs.expo.dev/eas-update/how-it-works/)
+
+OTA ersetzt JavaScript und Assets, aber keinen nativen Build. Plattform und
+Runtime müssen übereinstimmen. Dieses Projekt verwendet die Runtime-Policy
+`appVersion`: Entscheidend ist `expo.version` in `app.json` (aktuell `1.5.2`),
+nicht die Paketversion in `package.json`. Bei Änderungen an nativen Modulen,
+Expo SDK, Berechtigungen oder nativer Konfiguration zuerst `expo.version`
+erhöhen und neue Builds verteilen. Eine reine OTA-Korrektur für vorhandene
+Builds behält deren Runtime-Version.
+[Expo: Runtime-Versionen](https://docs.expo.dev/eas-update/runtime-versions/)
+
+### 4. Erstes Update starten und prüfen
+
+Nach dem Merge erscheint der Workflow unter **GitHub → Actions → Expo OTA
+Update → Run workflow**. Wähle den Git-Branch mit dem gewünschten App-Code und
+die passende Plattform. Der gewählte Branch wird ausgecheckt; das Ziel bleibt
+immer `preview`. Ein Push oder PR veröffentlicht derzeit kein Update.
+
+Die Job-Ausgabe enthält den Expo-Link zur veröffentlichten Update-Gruppe;
+die Update-Nachricht enthält Git-Branch, Commit und GitHub-Run-ID. Prüfe im
+Expo-Dashboard die Ziel-Runtime und den Channel. Öffne anschließend einen
+passenden Preview-Build auf einem Gerät mit Internetzugang. Bei der normalen
+Startprüfung wird das Update heruntergeladen und üblicherweise beim nächsten
+App-Neustart angewendet. Expo Go ist kein Test für den fest zugewiesenen
+Channel eines Release-Builds.
+
+Bei einem fehlerhaften Update lässt sich im Expo-Dashboard unter **Updates**
+eine vorherige kompatible Update-Gruppe erneut veröffentlichen (Republish).
+Alternativ den betreffenden Commit zurücknehmen und die Pipeline erneut starten.
+[Expo: Rollbacks](https://docs.expo.dev/eas-update/rollbacks/)
+
+### 5. Später nur von main automatisch veröffentlichen
+
+Wenn Preview erfolgreich getestet ist, ersetze den gesamten `on`-Block durch:
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/**'
+      - '.github/workflows/expo-update.yml'
+```
+
+Entferne damit `workflow_dispatch`, damit ausschließlich Pushes auf `main`
+veröffentlichen. Setze außerdem im Job:
+
+```yaml
+env:
+  CI: '1'
+  OTA_CHANNEL: production
+  OTA_ENVIRONMENT: production
+  OTA_PLATFORM: all
+```
+
+Ändere die Concurrency-Gruppe zu `expo-update-production`. Richte zuvor die
+EAS-Umgebung `production` mit denselben zu den Production-Builds passenden
+Variablen ein. Stelle im Production-Build-Profil explizit
+`"environment": "production"` ein und installiere Production-Builds auf den
+Zielgeräten. Bisherige Preview-Installationen bleiben auf `preview` und erhalten
+diese Production-Updates nicht.
+
 
 ## build ios locally
 
