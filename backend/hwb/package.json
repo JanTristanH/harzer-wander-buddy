@@ -25,6 +25,8 @@
     "@sap/cds-dk": "^7"
   },
   "scripts": {
+    "dev:basic:cap": "npm run watch:basic",
+    "dev:sso:cap": "npm run watch:sso",
     "test": "node --test test/*.test.js",
     "start": "cds-serve",
     "watch": "cds watch",
@@ -32,7 +34,11 @@
     "deploy:sqlite": "node util/deploySqlite.js",
     "deploy:postgres": "cds deploy --profile production",
     "watch-frontendhwb": "cds watch --open frontendhwb/webapp/index.html?sap-ui-xx-viewCache=false",
-    "download-csv-exports": "node util/downloadCsvExports.js"
+    "download-csv-exports": "node util/downloadCsvExports.js",
+    "watch:basic": "node util/prepareLocalDatabase.js && cds watch --profile dev-basic",
+    "start:basic": "node util/prepareLocalDatabase.js && cds serve --profile dev-basic",
+    "watch:sso": "node util/prepareLocalDatabase.js && cds watch --profile dev-sso",
+    "start:sso": "node util/prepareLocalDatabase.js && cds serve --profile dev-sso"
   },
   "cds": {
     "requires": {
@@ -63,6 +69,18 @@
             "fifo": true,
             "evictionRunIntervalMillis": 5000,
             "idleTimeoutMillis": 30000
+          }
+        },
+        "[dev-basic]": {
+          "kind": "sqlite",
+          "credentials": {
+            "url": "db.local.db"
+          }
+        },
+        "[dev-sso]": {
+          "kind": "sqlite",
+          "credentials": {
+            "url": "db.local.db"
           }
         }
       },
@@ -96,6 +114,22 @@
         },
         "[production]": {
           "impl": "srv/auth.js"
+        },
+        "[dev-basic]": {
+          "kind": "basic",
+          "impl": "srv/basic-auth.js",
+          "users": {
+            "user1@hwb.de": {
+              "password": "user1@hwb.deA",
+              "roles": [
+                "authenticated-user"
+              ]
+            },
+            "*": false
+          }
+        },
+        "[dev-sso]": {
+          "impl": "srv/auth.js"
         }
       }
     }
@@ -124,5 +158,27 @@
       "no-console": "off",
       "require-atomic-updates": "off"
     }
+  },
+  "hwbProfiles": {
+    "dev-basic": {
+      "description": "Lokaler CAP-Server mit SQLite und HTTP Basic Auth; benötigt kein Auth0.",
+      "watch": "npm run dev:basic:cap",
+      "start": "npm run start:basic",
+      "frontend": "Im zweiten Terminal: npm run dev:basic:web --prefix app (vom Projektroot).",
+      "url": "http://localhost:8081/login",
+      "testCredentials": "../../AGENTS.md"
+    },
+    "dev-sso": {
+      "description": "Lokaler CAP-Server mit SQLite und Auth0 SSO.",
+      "watch": "npm run dev:sso:cap",
+      "start": "npm run start:sso",
+      "frontend": "npm run dev:sso:web:build --prefix app (vom Projektroot).",
+      "url": "http://localhost:4004/app/rnweb"
+    },
+    "production": {
+      "description": "Bestehendes Container-Profil mit PostgreSQL und Auth0; unverändert.",
+      "start": "npm start (im bestehenden Container mit Produktionsprofil)"
+    },
+    "note": "Nur einen CAP-Server auf Port 4004 starten; vor dem Profilwechsel den laufenden Server beenden."
   }
 }

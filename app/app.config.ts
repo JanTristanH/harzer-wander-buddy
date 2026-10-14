@@ -34,6 +34,10 @@ export function createExpoConfig(env: BuildEnvironment = process.env): ExpoConfi
 
   return {
     ...config,
+    experiments: {
+      ...config.experiments,
+      baseUrl: env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : config.experiments?.baseUrl,
+    },
     android: {
       ...config.android,
       config: {

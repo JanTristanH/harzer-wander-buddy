@@ -28,6 +28,11 @@ describe('Expo backend configuration', () => {
     );
   });
 
+  it('uses the Expo root for Basic web and preserves the CAP mount path for SSO', () => {
+    expect(createExpoConfig({ EXPO_PUBLIC_AUTH_MODE: 'basic' }).experiments?.baseUrl).toBe('');
+    expect(createExpoConfig({ EXPO_PUBLIC_AUTH_MODE: 'sso' }).experiments?.baseUrl).toBe('/app/rnweb');
+  });
+
   it('rejects invalid or unsupported backend URLs', () => {
     expect(() => resolveBackendUrl('app.harzer-wander-buddy.de')).toThrow(
       /Invalid EXPO_PUBLIC_BACKEND_URL/

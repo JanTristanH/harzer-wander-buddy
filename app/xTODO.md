@@ -1,3 +1,9 @@
+- Expo ci für OTA updates
+- Wenn stempel ist zurück button nicht sichtbar
+- Rechsts an der Suche auch noch ein x
+- Liste selektieren um mehrere zu stempeln
+- gesten?
+
 - neue freundschafsanfragen presenter darstellen (notification unten und im freundes tab)
 - Bug report, irgendwas spring links und rechts
 - mehr analytics App / WEbsite

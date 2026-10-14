@@ -43,6 +43,7 @@ describe('Haptic preference interaction', () => {
 
     await triggerHaptic('poiAdded');
     await triggerHaptic('tabChange');
+    await triggerHaptic('selectionChange');
 
     expect(selectionAsync).not.toHaveBeenCalled();
     expect(impactAsync).not.toHaveBeenCalled();
@@ -72,4 +73,20 @@ describe('Haptic preference interaction', () => {
 
     expect(selectionAsync).toHaveBeenCalledTimes(1);
   });
+
+  it.each(['light', 'medium', 'strong'] as const)(
+    'provides selection feedback at %s strength',
+    async (strength) => {
+      await setHapticStrengthPreference(strength);
+      await triggerHaptic('selectionChange');
+
+      if (strength === 'light') {
+        expect(selectionAsync).toHaveBeenCalledTimes(1);
+      } else {
+        expect(impactAsync).toHaveBeenCalledWith(
+          strength === 'medium' ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium
+        );
+      }
+    }
+  );
 });
