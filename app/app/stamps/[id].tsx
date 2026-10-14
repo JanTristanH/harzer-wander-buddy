@@ -1823,6 +1823,7 @@ function StampDetailContent() {
       />
       <View style={styles.scrollViewport} {...stretchyHeader.panHandlers}>
         <Animated.ScrollView
+          ref={stretchyHeader.scrollRef}
           alwaysBounceVertical
           bounces
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 232 + bottomInset }]}

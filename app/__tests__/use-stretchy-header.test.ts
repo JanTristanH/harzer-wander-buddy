@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react-native';
-import { PanResponder, Platform, type GestureResponderEvent, type PanResponderGestureState } from 'react-native';
+import { Animated, PanResponder, Platform, type GestureResponderEvent, type PanResponderGestureState, type ScrollView } from 'react-native';
 
 import { useStretchyHeader } from '@/hooks/use-stretchy-header';
 
@@ -80,4 +80,85 @@ it('leaves the native iOS bounce and refresh gesture in control', () => {
   expect(result.current.panHandlers).toEqual({});
   handlers.onStartShouldSetPanResponderCapture?.(touch, gesture(0));
   expect(handlers.onMoveShouldSetPanResponderCapture?.(touch, gesture(30))).toBe(false);
+});
+
+describe('web wheel overscroll', () => {
+  beforeEach(() => {
+    Object.defineProperty(Platform, 'OS', { value: 'web', configurable: true });
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => jest.useRealTimers());
+
+  function setupWheel() {
+    const hook = setup();
+    let listener: (event: WheelEvent) => void;
+    const node = {
+      scrollTop: 0,
+      clientHeight: 600,
+      addEventListener: jest.fn((_type, callback) => { listener = callback; }),
+      removeEventListener: jest.fn(),
+    };
+    const setValue = jest.spyOn(Animated.Value.prototype, 'setValue');
+    const spring = jest.spyOn(Animated, 'spring');
+    act(() => hook.result.current.scrollRef({ getScrollableNode: () => node } as unknown as ScrollView));
+    const wheel = (deltaY: number, options = {}) => {
+      const event = { deltaY, deltaX: 0, deltaMode: 0, ctrlKey: false, preventDefault: jest.fn(), ...options };
+      act(() => listener(event as unknown as WheelEvent));
+      return event;
+    };
+    return { ...hook, node, setValue, spring, wheel };
+  }
+
+  it('stretches at the top and springs back after the wheel gesture without refreshing', () => {
+    const { node, setValue, spring, wheel, onRefresh } = setupWheel();
+    expect(node.addEventListener).toHaveBeenCalledWith('wheel', expect.any(Function), { passive: false });
+    expect(wheel(-100).preventDefault).toHaveBeenCalled();
+    expect(setValue).toHaveBeenLastCalledWith(45);
+    act(() => jest.advanceTimersByTime(100));
+    wheel(-100);
+    expect(setValue).toHaveBeenLastCalledWith(90);
+    act(() => jest.advanceTimersByTime(100));
+    expect(spring).not.toHaveBeenCalled();
+    act(() => jest.advanceTimersByTime(40));
+    expect(spring).toHaveBeenCalledTimes(1);
+    expect(onRefresh).not.toHaveBeenCalled();
+  });
+
+  it('preserves ordinary scrolling, horizontal gestures and pinch zoom', () => {
+    const { node, setValue, wheel } = setupWheel();
+    node.scrollTop = 100;
+    expect(wheel(-100).preventDefault).not.toHaveBeenCalled();
+    node.scrollTop = 0;
+    expect(wheel(100).preventDefault).not.toHaveBeenCalled();
+    expect(wheel(-100, { deltaX: 200 }).preventDefault).not.toHaveBeenCalled();
+    expect(wheel(-100, { ctrlKey: true }).preventDefault).not.toHaveBeenCalled();
+    expect(setValue).not.toHaveBeenCalled();
+  });
+
+  it('normalizes line and page deltas and caps the stretch', () => {
+    const { setValue, wheel } = setupWheel();
+    wheel(-1, { deltaMode: 1 });
+    expect(setValue).toHaveBeenLastCalledWith(7.2);
+    wheel(-1, { deltaMode: 2 });
+    expect(setValue).toHaveBeenLastCalledWith(160);
+  });
+
+  it('releases immediately when scrolling back down', () => {
+    const { spring, wheel } = setupWheel();
+    wheel(-100);
+    expect(wheel(20).preventDefault).not.toHaveBeenCalled();
+    expect(spring).toHaveBeenCalledTimes(1);
+    act(() => jest.advanceTimersByTime(200));
+    expect(spring).toHaveBeenCalledTimes(1);
+  });
+
+  it('removes the listener and pending release on unmount', () => {
+    const { node, wheel, unmount, spring } = setupWheel();
+    wheel(-100);
+    unmount();
+    expect(node.removeEventListener).toHaveBeenCalledWith('wheel', node.addEventListener.mock.calls[0][1]);
+    act(() => jest.advanceTimersByTime(200));
+    expect(spring).not.toHaveBeenCalled();
+  });
 });

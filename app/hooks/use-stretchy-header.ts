@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Animated, PanResponder, Platform, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, PanResponder, Platform, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollView } from 'react-native';
 
 const PULL_RESISTANCE = 0.45;
 const MAX_PULL = 160;
 const REFRESH_PULL = 90;
+const WHEEL_RELEASE_DELAY = 140;
 
 /** iOS supplies elastic scroll offsets; Android and web need a resisted pull gesture. */
 export function useStretchyHeader(height: number, onRefresh: () => void, refreshing: boolean) {
@@ -14,6 +15,11 @@ export function useStretchyHeader(height: number, onRefresh: () => void, refresh
   const startedAtTop = useRef(false);
   const pullDistance = useRef(0);
   const didPull = useRef(false);
+  const [scrollNode, setScrollNode] = useState<HTMLElement | null>(null);
+  const wheelReleaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollRef = useCallback((view: ScrollView | null) => {
+    if (Platform.OS === 'web') setScrollNode(view?.getScrollableNode() ?? null);
+  }, []);
   const refreshRef = useRef(onRefresh);
   const refreshingRef = useRef(refreshing);
   refreshRef.current = onRefresh;
@@ -37,6 +43,42 @@ export function useStretchyHeader(height: number, onRefresh: () => void, refresh
       refreshRef.current();
     }
   }, [pull]);
+
+  useEffect(() => {
+    if (!scrollNode) return;
+    const clearReleaseTimer = () => {
+      if (wheelReleaseTimer.current !== null) clearTimeout(wheelReleaseTimer.current);
+      wheelReleaseTimer.current = null;
+    };
+    const onWheel = (event: WheelEvent) => {
+      // Preserve horizontal scrolling and trackpad pinch-to-zoom.
+      if (event.ctrlKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+      if (event.deltaY >= 0 || scrollNode.scrollTop > 0) {
+        if (pullDistance.current > 0) {
+          clearReleaseTimer();
+          release(false);
+        }
+        return;
+      }
+      event.preventDefault();
+      clearReleaseTimer();
+      pull.stopAnimation();
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? scrollNode.clientHeight : 1;
+      const distance = Math.min(MAX_PULL, pullDistance.current - event.deltaY * unit * PULL_RESISTANCE);
+      pullDistance.current = distance;
+      pull.setValue(distance);
+      // Wheel overscroll is visual feedback; refreshing remains an explicit pull gesture.
+      wheelReleaseTimer.current = setTimeout(() => {
+        wheelReleaseTimer.current = null;
+        release(false);
+      }, WHEEL_RELEASE_DELAY);
+    };
+    scrollNode.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      scrollNode.removeEventListener('wheel', onWheel);
+      clearReleaseTimer();
+    };
+  }, [pull, release, scrollNode]);
 
   const panResponder = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponderCapture: (event) => {
@@ -79,6 +121,7 @@ export function useStretchyHeader(height: number, onRefresh: () => void, refresh
   return {
     usesNativeBounce,
     didPull,
+    scrollRef,
     panHandlers: usesNativeBounce ? {} : panResponder.panHandlers,
     onScroll,
     contentStyle: usesNativeBounce ? undefined : { transform: [{ translateY: pull }] },
