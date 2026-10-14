@@ -1,4 +1,4 @@
-import { createCssMapMarkerHtml, normalizeWebMarkerLabel } from '@/lib/web-map-marker';
+import { createCssMapMarkerHtml, normalizeWebMarkerLabel, WEB_MAP_MARKER_CSS } from '@/lib/web-map-marker';
 
 describe('web map marker HTML', () => {
   it('renders a lightweight CSS marker without SVG filters', () => {
@@ -31,13 +31,27 @@ describe('web map marker HTML', () => {
   });
 
   it.each([
-    ['P', 15],
-    ['12', 19],
-    ['121', 22],
-    ['ABCD', 25],
+    ['P', 17.2],
+    ['12', 21.8],
+    ['121', 33],
+    ['ABCD', 35],
   ])('matches the native badge width for label %s', (label, expectedWidth) => {
     const html = createCssMapMarkerHtml({ color: '#2e6b4b', label, size: 48 });
 
     expect(html).toContain(`--hwb-marker-badge-width:${expectedWidth}px`);
+  });
+  it('scales the contour and badge together for smaller markers', () => {
+    const html = createCssMapMarkerHtml({ color: '#2e6b4b', label: '121', size: 24 });
+    expect(html).toContain(`--hwb-marker-scale-x:${24 / 56}`);
+    expect(html).toContain(`--hwb-marker-scale-y:${26 / 60}`);
+    expect(WEB_MAP_MARKER_CSS).toContain('border-radius: 50%');
+    expect(WEB_MAP_MARKER_CSS).toContain('mask-image: url("data:image/svg+xml,');
+  });
+
+  it('fits wide letters inside the ellipse without shrinking numeric labels', () => {
+    const wide = createCssMapMarkerHtml({ color: '#2e6b4b', label: 'WWW', size: 48 });
+    const numeric = createCssMapMarkerHtml({ color: '#2e6b4b', label: '222', size: 48 });
+    expect(wide).toContain('--hwb-marker-font-size:8.58px');
+    expect(numeric).toContain('--hwb-marker-font-size:14px');
   });
 });

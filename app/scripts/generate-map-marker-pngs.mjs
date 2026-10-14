@@ -3,6 +3,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
+import markerStyle from '../lib/map-marker-style.js';
+
+const { geometry, resolveMapMarkerLabelStyle } = markerStyle;
 
 const rootDir = process.cwd();
 const templatePath = path.join(rootDir, 'assets', 'images', 'map', 'marker.svg');
@@ -11,11 +14,16 @@ const generatedMappingFilePath = path.join(rootDir, 'lib', 'map-marker-images.ge
 
 const STAMP_MIN = 1;
 const STAMP_MAX = 222;
-const BASE_MARKER_WIDTH = 48;
-const BASE_MARKER_HEIGHT = 52;
+const BASE_MARKER_WIDTH = geometry.outputWidth;
+const BASE_MARKER_HEIGHT = geometry.outputHeight;
 const MARKER_ASSET_SCALES = [1, 2, 3];
 
 const PLACEHOLDERS = {
+  width: '__WIDTH__',
+  height: '__HEIGHT__',
+  badgeY: '__BADGE_Y__',
+  badgeRy: '__BADGE_RY__',
+  pinPath: '__PIN_PATH__',
   fill: '__FILL_COLOR__',
   label: '__LABEL_TEXT__',
   textColor: '__LABEL_COLOR__',
@@ -76,25 +84,6 @@ function escapeXmlText(value) {
     .replace(/'/g, '&apos;');
 }
 
-function resolveLabelStyle(label) {
-  const length = label.length;
-  const consistentFontSize = '14';
-
-  if (length <= 1) {
-    return { fontSize: consistentFontSize, x: '28', y: '23.5', badgeRx: '8.6' };
-  }
-
-  if (length === 2) {
-    return { fontSize: consistentFontSize, x: '28', y: '23.5', badgeRx: '10.9' };
-  }
-
-  if (length === 3) {
-    return { fontSize: consistentFontSize, x: '28', y: '23.5', badgeRx: '12.8' };
-  }
-
-  return { fontSize: consistentFontSize, x: '28', y: '23.5', badgeRx: '14.6' };
-}
-
 function filenameForLabel(label) {
   if (label === '--') {
     return 'fallback';
@@ -110,17 +99,22 @@ function filenameForLabel(label) {
 function renderSvg(template, { fillColor, textColor, badgeFill = '#ffffff', label }) {
   const safeLabel = label.trim() || '--';
   const escapedLabel = escapeXmlText(safeLabel);
-  const labelStyle = resolveLabelStyle(safeLabel);
+  const labelStyle = resolveMapMarkerLabelStyle(safeLabel);
 
   return template
+    .replaceAll(PLACEHOLDERS.width, String(geometry.width))
+    .replaceAll(PLACEHOLDERS.height, String(geometry.height))
+    .replaceAll(PLACEHOLDERS.badgeY, String(geometry.badgeY))
+    .replaceAll(PLACEHOLDERS.badgeRy, String(geometry.badgeRy))
+    .replaceAll(PLACEHOLDERS.pinPath, geometry.pinPath)
     .replaceAll(PLACEHOLDERS.fill, fillColor)
     .replaceAll(PLACEHOLDERS.textColor, textColor)
     .replaceAll(PLACEHOLDERS.badgeFill, badgeFill)
     .replaceAll(PLACEHOLDERS.label, escapedLabel)
-    .replaceAll(PLACEHOLDERS.fontSize, labelStyle.fontSize)
-    .replaceAll(PLACEHOLDERS.x, labelStyle.x)
-    .replaceAll(PLACEHOLDERS.y, labelStyle.y)
-    .replaceAll(PLACEHOLDERS.badgeRx, labelStyle.badgeRx);
+    .replaceAll(PLACEHOLDERS.fontSize, String(labelStyle.fontSize))
+    .replaceAll(PLACEHOLDERS.x, String(geometry.width / 2))
+    .replaceAll(PLACEHOLDERS.y, String(geometry.labelY))
+    .replaceAll(PLACEHOLDERS.badgeRx, String(labelStyle.badgeRx));
 }
 
 function validateTemplate(template) {
