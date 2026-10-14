@@ -1858,7 +1858,9 @@ function StampDetailContent() {
               </Animated.View>
               {carouselImages.length > 0 ? (
                 <Pressable
-                  onPress={() => openImageCarousel(0)}
+                  onPress={() => {
+                    if (!stretchyHeader.didPull.current) openImageCarousel(0);
+                  }}
                   style={({ pressed }) => [
                     styles.heroImagePressable,
                     pressed && styles.heroImagePressablePressed,
