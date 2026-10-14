@@ -1,5 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { Asset } from 'expo-asset';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -11,6 +12,8 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -45,7 +48,18 @@ import {
 import { fetchStampsOverviewData, queryKeys } from '@/lib/queries';
 
 const bearIllustration = require('@/assets/images/onboarding-bear.png');
-const PROFILE_AUTO_SAVE_DELAY_MS = 3000;
+const DEFAULT_AVATARS = [
+  { id: 'bear', label: 'Bär', source: require('@/assets/images/avatars/bear.png') },
+  { id: 'fox', label: 'Fuchs', source: require('@/assets/images/avatars/fox.png') },
+  { id: 'lynx', label: 'Luchs', source: require('@/assets/images/avatars/lynx.png') },
+] as const;
+const STEPS = [
+  { label: 'Willkommen', title: 'Dein nächstes Abenteuer wartet.', copy: 'Entdecke den Harz, sammle Stempel und teile deine Wanderungen mit deinen Buddies.' },
+  { label: 'Dein Name', title: 'Wie dürfen wir dich nennen?', copy: 'Mit diesem Namen finden dich deine Wanderbuddies in der App.' },
+  { label: 'Dein Avatar', title: 'Welcher Buddy bist du?', copy: 'Wähle deinen Begleiter für den Harz. Oder starte ganz ohne Avatar.' },
+  { label: 'Standort', title: 'Das nächste Ziel ist ganz nah.', copy: 'Mit deinem Standort siehst du Entfernungen, Stempelstellen und Parkplätze in deiner Nähe.' },
+  { label: 'Wanderbuddies', title: 'Zusammen macht’s mehr Spaß.', copy: 'Finde deine Freunde, vergleicht eure Stempel und plant das nächste Abenteuer.' },
+] as const;
 
 type LoginClaims = {
   sub?: string;
@@ -140,6 +154,10 @@ export default function OnboardingScreen() {
     setCurrentUserProfile,
   } = useAuth();
   const claims = useIdTokenClaims<LoginClaims>();
+  const [step, setStep] = useState(0);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const [locationPermission, setLocationPermission] = useState<LocationPermissionState>('unknown');
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
@@ -155,37 +173,23 @@ export default function OnboardingScreen() {
   const [isProfileSaving, setIsProfileSaving] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const hasPrefetchedListRef = useRef(false);
-  const lastAutoSaveAttemptRef = useRef<string | null>(null);
   const profileSavePromiseRef = useRef<Promise<boolean> | null>(null);
-  const normalizedInitialSaveKeyRef = useRef<string | null>(null);
   const matchingCurrentUserProfile =
     claims?.sub && currentUserProfile?.id === claims.sub ? currentUserProfile : null;
   const primaryDisabled = !isAuthenticated || !!configError || isLoading;
   const errorMessage = configError || authError;
-  const displayName = claims?.nickname || claims?.name || claims?.given_name || 'Wanderbuddy';
   const fallbackProfileName = getInitialProfileName(
     matchingCurrentUserProfile?.name || claims?.name || claims?.nickname || claims?.given_name || ''
   );
-  const claimsNameHasAt = Boolean((claims?.name || '').includes('@'));
-  const effectiveProfileName = profileName.trim() || displayName;
-  const effectiveProfilePicture = selectedProfileImage?.uri || profilePicture || claims?.picture || null;
-  const footerNote = isAuthenticated
-    ? 'Du kannst alles später in den Einstellungen ändern.'
-    : 'Anmelden erforderlich';
-  const locationButtonLabel =
-    locationPermission === 'checking'
-      ? 'Prüfen...'
-      : locationPermission === 'granted'
-        ? 'Erlaubt'
-        : locationPermission === 'denied'
-          ? 'Erneut fragen'
-          : 'Erlauben';
-  const locationDescription =
-    locationPermission === 'granted'
-      ? 'Standortfreigabe ist aktiv fuer Entfernungen, Karte und nahe Parkplaetze.'
-      : 'Fuer Entfernungen, Karte und nahe Parkplaetze.';
-  const bottomDockPadding = Math.max(insets.bottom, 10);
-  const scrollBottomPadding = 176 + bottomDockPadding;
+  const effectiveProfilePicture = selectedProfileImage?.uri || profilePicture || null;
+  const bottomDockPadding = Math.max(insets.bottom, 16);
+  const currentStep = STEPS[step];
+  const busy = isProfileSaving || isAdvancing;
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [step]);
+
   const sentRequestIdSet = useMemo(
     () => new Set(sentRequests.map((request) => request.key)),
     [sentRequests]
@@ -214,15 +218,14 @@ export default function OnboardingScreen() {
         matchingCurrentUserProfile?.name || claims?.name || claims?.nickname || claims?.given_name || ''
       )
     );
-    setProfilePicture(matchingCurrentUserProfile?.picture || claims?.picture || null);
+    setProfilePicture(matchingCurrentUserProfile ? matchingCurrentUserProfile.picture ?? '' : claims?.picture ?? '');
     setProfileSaveError(null);
   }, [
     claims?.given_name,
     claims?.name,
     claims?.nickname,
     claims?.picture,
-    matchingCurrentUserProfile?.name,
-    matchingCurrentUserProfile?.picture,
+    matchingCurrentUserProfile,
     isAuthenticated,
   ]);
 
@@ -373,6 +376,7 @@ export default function OnboardingScreen() {
 
     const asset = result.assets[0];
     setProfileSaveError(null);
+    setSelectedAvatar(null);
     setSelectedProfileImage({
       uri: asset.uri,
       fileName: asset.fileName || `profile-${Date.now()}.jpg`,
@@ -391,7 +395,7 @@ export default function OnboardingScreen() {
         return false;
       }
 
-      const nextName = profileName.trim() || fallbackProfileName;
+      const nextName = profileName.trim();
       if (!nextName) {
         if (showValidationAlert) {
           Alert.alert('Name fehlt', 'Bitte gib einen Namen ein.');
@@ -399,10 +403,12 @@ export default function OnboardingScreen() {
         return false;
       }
 
-      const nextPictureFromState = profilePicture || claims?.picture || undefined;
+      const nextPictureFromState = profilePicture ?? '';
+      const originalPicture = matchingCurrentUserProfile ? matchingCurrentUserProfile.picture ?? '' : claims?.picture ?? '';
+      const hasPictureChange = nextPictureFromState !== originalPicture;
       const hasNameChange = nextName !== fallbackProfileName;
       const hasNewSelectedImage = !!selectedProfileImage;
-      if (!hasNameChange && !hasNewSelectedImage) {
+      if (!hasNameChange && !hasNewSelectedImage && !hasPictureChange) {
         return true;
       }
 
@@ -435,7 +441,7 @@ export default function OnboardingScreen() {
         const resolvedProfile = {
           id: matchingCurrentUserProfile?.id || claims?.sub || nextName,
           name: updatedProfile.name || nextName,
-          picture: updatedProfile.picture || nextPicture,
+          picture: updatedProfile.picture ?? nextPicture,
           roles: matchingCurrentUserProfile?.roles,
         };
 
@@ -495,8 +501,7 @@ export default function OnboardingScreen() {
     fallbackProfileName,
     claims?.picture,
     claims?.sub,
-    matchingCurrentUserProfile?.id,
-    matchingCurrentUserProfile?.roles,
+    matchingCurrentUserProfile,
     isAuthenticated,
     logout,
     canPerformWrites,
@@ -507,84 +512,39 @@ export default function OnboardingScreen() {
     setCurrentUserProfile,
   ]);
 
-  useEffect(() => {
-    if (
-      !isAuthenticated ||
-      !accessToken ||
-      isProfileSaving ||
-      !claimsNameHasAt ||
-      Boolean(matchingCurrentUserProfile?.name)
-    ) {
-      return;
+  const handleAdvance = async () => {
+    if (busy) return;
+    setIsAdvancing(true);
+    try {
+      if ((step === 1 || step === 2 || step === 4) && !(await handleSaveProfile())) return;
+      if (step === STEPS.length - 1) {
+        await completeOnboarding();
+        router.replace('/(tabs)');
+      } else {
+        setStep((current) => current + 1);
+      }
+    } catch (error) {
+      Alert.alert('Onboarding konnte nicht abgeschlossen werden', error instanceof Error ? error.message : 'Bitte versuche es erneut.');
+    } finally {
+      setIsAdvancing(false);
     }
+  };
 
-    const saveKey = `${claims?.sub || 'unknown'}::${fallbackProfileName}`;
-    if (normalizedInitialSaveKeyRef.current === saveKey) {
-      return;
+  const selectAvatar = (id: string) => {
+    const avatar = DEFAULT_AVATARS.find((item) => item.id === id);
+    setSelectedAvatar(id);
+    setProfileSaveError(null);
+    if (avatar) {
+      setSelectedProfileImage({
+        uri: Asset.fromModule(avatar.source).uri,
+        fileName: `avatar-${id}.png`,
+        mimeType: 'image/png',
+      });
+    } else {
+      setSelectedProfileImage(null);
+      setProfilePicture('');
     }
-
-    normalizedInitialSaveKeyRef.current = saveKey;
-    void handleSaveProfile({ showValidationAlert: false, showErrorAlert: false });
-  }, [
-    accessToken,
-    claims?.sub,
-    claimsNameHasAt,
-    matchingCurrentUserProfile?.name,
-    fallbackProfileName,
-    handleSaveProfile,
-    isAuthenticated,
-    isProfileSaving,
-  ]);
-
-  const hasPendingProfileNameChange = profileName.trim().length > 0 && profileName.trim() !== fallbackProfileName;
-  const hasPendingProfileImageChange = !!selectedProfileImage;
-  const pendingProfileDraftKey = useMemo(() => {
-    if (!hasPendingProfileNameChange && !hasPendingProfileImageChange) {
-      return null;
-    }
-
-    return `${profileName.trim()}::${selectedProfileImage?.uri || ''}`;
-  }, [hasPendingProfileImageChange, hasPendingProfileNameChange, profileName, selectedProfileImage?.uri]);
-
-  useEffect(() => {
-    if (!accessToken || !isAuthenticated || isProfileSaving) {
-      return;
-    }
-
-    if (!pendingProfileDraftKey) {
-      lastAutoSaveAttemptRef.current = null;
-      return;
-    }
-
-    if (lastAutoSaveAttemptRef.current === pendingProfileDraftKey) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      lastAutoSaveAttemptRef.current = pendingProfileDraftKey;
-      void handleSaveProfile({ showValidationAlert: false, showErrorAlert: false });
-    }, PROFILE_AUTO_SAVE_DELAY_MS);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [
-    accessToken,
-    handleSaveProfile,
-    isAuthenticated,
-    isProfileSaving,
-    pendingProfileDraftKey,
-  ]);
-
-  const handleContinueToStamps = useCallback(async () => {
-    const saveSuccessful = await handleSaveProfile();
-    if (!saveSuccessful) {
-      return;
-    }
-
-    await completeOnboarding();
-    router.replace('/(tabs)');
-  }, [completeOnboarding, handleSaveProfile, router]);
+  };
 
   const handleCreateRequest = useCallback(
     async (userId: string) => {
@@ -688,159 +648,106 @@ export default function OnboardingScreen() {
     <LinearGradient colors={['#f7f5ef', '#f3efe6', '#f0ebe1']} style={styles.gradient}>
       <StatusBar style="dark" />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
-          showsVerticalScrollIndicator={false}>
-          <Text style={styles.eyebrow}>Erste Schritte</Text>
-
-          <View style={styles.heroRow}>
-            <Text style={styles.title}>Mach die App zu deinem Wanderbuddy</Text>
-            <Image contentFit="contain" source={bearIllustration} style={styles.heroImage} />
+        <KeyboardAvoidingView style={styles.flow} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.navigation}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Vorheriger Schritt" disabled={step === 0 || busy}
+              onPress={() => setStep((current) => Math.max(0, current - 1))}
+              style={[styles.backButton, step === 0 && { opacity: 0 }]}>
+              <Feather name="arrow-left" size={20} color="#284C3B" />
+            </Pressable>
+            <Text style={styles.stepLabel}>{currentStep.label}</Text>
+            <Text style={styles.stepCount}>{step + 1} / {STEPS.length}</Text>
           </View>
-
-          <Text style={styles.copy}>
-            Wir fragen nur nach dem, was dir wirklich hilft: Standort für die Karte und
-            Benachrichtigungen für neue Stempelstellen.
-          </Text>
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Konto</Text>
-            <Text style={styles.cardCopy}>
-              {isAuthenticated
-                ? 'Du bist angemeldet und kannst jetzt direkt loslegen.'
-                : 'Anmelden ist erforderlich, um Stempel zu speichern.'}
-            </Text>
-            {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-            {isAuthenticated ? (
-              <>
-                <View style={styles.welcomeBox}>
-                  <Text style={styles.welcomeEyebrow}>Willkommen</Text>
-                  <Text style={styles.welcomeName}>{effectiveProfileName}</Text>
-                </View>
-
-                <View style={styles.profileEditor}>
-                  <Pressable
-                    disabled={isProfileSaving || !canPerformWrites}
-                    onPress={() => void handlePickProfileImage()}
-                    style={({ pressed }) => [styles.profileAvatarButton, pressed && styles.actionButtonPressed]}>
-                    {effectiveProfilePicture ? (
-                      <Image
-                        cachePolicy="disk"
-                        contentFit="cover"
-                        source={buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)}
-                        style={styles.profileAvatarImage}
-                      />
-                    ) : (
-                      <View style={styles.profileAvatarFallback}>
-                        <Feather color="#5F6E5F" name="user" size={26} />
-                      </View>
-                    )}
-                  </Pressable>
-
-                  <View style={styles.profileEditorBody}>
-                    <Text style={styles.cardCopy}>
-                      Passe deinen Namen und dein Profilbild direkt hier an. Aenderungen speichern automatisch.
-                    </Text>
-                    <TextInput
-                      autoCapitalize="words"
-                      editable={!isProfileSaving && canPerformWrites}
-                      onChangeText={(value) => {
-                        setProfileName(value);
-                        setProfileSaveError(null);
-                      }}
-                      placeholder="Dein Name"
-                      placeholderTextColor="#8A968A"
-                      style={styles.profileInput}
-                      value={profileName}
-                    />
-                    <View style={styles.row}>
-                      <ActionButton
-                        disabled={isProfileSaving || !canPerformWrites}
-                        label="Profilbild waehlen"
-                        onPress={() => void handlePickProfileImage()}
-                      />
-                    </View>
-                    {profileSaveError ? <Text style={styles.errorText}>{profileSaveError}</Text> : null}
-                  </View>
-                </View>
-              </>
-            ) : (
-              <View style={styles.row}>
-                <ActionButton
-                  disabled={!!configError || isLoading}
-                  label={isLoading ? 'Wird vorbereitet...' : 'Anmelden'}
-                  onPress={() => appConfig.authMode === 'basic' ? router.push('/login') : void login()}
-                />
-                {appConfig.authMode !== 'basic' ? <ActionButton
-                  disabled={!!configError || isLoading}
-                  label={isLoading ? 'Wird vorbereitet...' : 'Konto erstellen'}
-                  onPress={signup}
-                  variant="primary"
-                /> : null}
-              </View>
-            )}
+          <View accessibilityRole="progressbar" accessibilityValue={{ min: 1, max: STEPS.length, now: step + 1 }}
+            accessibilityLabel="Onboarding-Fortschritt" style={styles.progressRow}>
+            {STEPS.map((item, index) => <View key={item.label} style={[styles.progressSegment, index <= step && styles.progressActive]} />)}
           </View>
-
-          <View style={[styles.card, styles.inlineCard]}>
-            <View
-              style={[
-                styles.permissionIcon,
-                locationPermission === 'granted' && styles.permissionIconGranted,
-              ]}
-            />
-            <View style={styles.permissionBody}>
-              <Text style={styles.cardTitle}>Standort erlauben</Text>
-              <Text style={styles.cardCopy}>{locationDescription}</Text>
-              {locationError ? <Text style={styles.errorText}>{locationError}</Text> : null}
+          <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" bounces={false}
+            contentContainerStyle={styles.flowContent} showsVerticalScrollIndicator={false}>
+            <View style={[styles.scene, step === 2 && styles.compactScene]}>
+              {step === 0 ? <Image contentFit="contain" source={bearIllustration} style={styles.welcomeIllustration} /> :
+                step === 1 || step === 2 ? <View style={[styles.avatarPreview, step === 2 && styles.compactAvatarPreview]}>
+                  {effectiveProfilePicture ? <Image contentFit="cover" source={selectedProfileImage ? { uri: selectedProfileImage.uri } : buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)} style={styles.previewImage} /> :
+                    <Feather name="user" size={58} color="#496850" />}
+                </View> : <View style={styles.featureScene}>
+                  <View style={styles.sceneOrbit} />
+                  <View style={styles.sceneBadge}><Feather name={step === 3 ? 'map-pin' : 'users'} size={54} color="#315B43" /></View>
+                  <View style={styles.smallBadge}><Feather name={step === 3 ? 'navigation' : 'heart'} size={22} color="#315B43" /></View>
+                </View>}
             </View>
-            <ActionButton
-              disabled={
-                locationPermission === 'checking' || locationPermission === 'granted'
-              }
-              label={locationButtonLabel}
-              onPress={requestLocationPermission}
-              style={[
-                styles.inlineAction,
-                locationPermission === 'granted' && styles.inlineActionGranted,
-              ]}
-              variant={locationPermission === 'granted' ? 'primary' : 'secondary'}
-            />
-          </View>
+            <Text style={styles.flowEyebrow}>{step === 0 ? 'HARZER WANDER BUDDY' : `SCHRITT ${step + 1} · ${step >= 3 ? 'OPTIONAL' : 'DEIN PROFIL'}`}</Text>
+            <Text accessibilityRole="header" style={[styles.flowTitle, step === 2 && styles.compactTitle]}>{currentStep.title}</Text>
+            <Text style={styles.flowCopy}>{currentStep.copy}</Text>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Hast du schon Wanderbuddies?</Text>
-            <Text style={styles.cardCopy}>
-              Suche direkt nach Freunden und sende schon jetzt Anfragen.
-            </Text>
-            <ActionButton
-              disabled={!isAuthenticated || !accessToken || !canPerformWrites}
-              label="Freunde hinzufügen"
-              onPress={() => setIsSearchModalVisible(true)}
-              style={styles.fullWidthButton}
-            />
-            {sentRequests.length > 0 ? (
-              <View style={styles.sentRequestsBox}>
-                <Text style={styles.sentRequestsTitle}>Gesendete Anfragen</Text>
-                <FriendsList items={sentRequestItems} />
+            {step === 0 ? <>
+              <View style={styles.benefitRow}>
+                {[['map', 'Ziele entdecken'], ['award', 'Stempel sammeln'], ['users', 'Gemeinsam los']].map(([icon, label]) =>
+                  <View key={label} style={styles.benefit}><Feather name={icon as 'map' | 'award' | 'users'} size={22} color="#315B43" /><Text style={styles.benefitText}>{label}</Text></View>)}
               </View>
-            ) : null}
-          </View>
-        </ScrollView>
+              <Text style={styles.guidance}>Vier kurze Schritte, dann geht’s los. Name und Avatar kannst du später im Profil ändern.</Text>
+              {!isAuthenticated ? <View style={styles.card}>
+                <Text style={styles.cardTitle}>Deine Stempel bekommen ein Zuhause.</Text>
+                <Text style={styles.cardCopy}>Melde dich an, um deine Wandererfolge zu speichern.</Text>
+                <ActionButton disabled={!!configError || isLoading} label={isLoading ? 'Wird vorbereitet…' : 'Anmelden'}
+                  onPress={() => appConfig.authMode === 'basic' ? router.push('/login') : void login()} variant="primary" />
+                {appConfig.authMode !== 'basic' ? <ActionButton disabled={!!configError || isLoading} label="Konto erstellen" onPress={signup} /> : null}
+              </View> : null}
+              {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+            </> : null}
 
-        <View pointerEvents="box-none" style={[styles.bottomDock, { paddingBottom: bottomDockPadding }]}>
-          <View style={styles.bottomSection}>
-            <ActionButton
-              disabled={primaryDisabled}
-              label={isProfileSaving ? 'Speichert...' : 'Zu den Stempelstellen'}
-              onPress={() => void handleContinueToStamps()}
-              style={[styles.bottomButton, primaryDisabled && styles.bottomButtonDisabled]}
-              variant="primary"
-            />
-            <Text style={styles.footerNote}>{footerNote}</Text>
+            {step === 1 ? <View style={styles.inputCard}>
+              <Text style={styles.inputLabel}>Dein Anzeigename</Text>
+              <TextInput accessibilityLabel="Dein Anzeigename" autoCapitalize="words" maxLength={80}
+                editable={!busy && canPerformWrites} onChangeText={(value) => { setProfileName(value); setProfileSaveError(null); }}
+                onSubmitEditing={() => { if (profileName.trim()) void handleAdvance(); }} returnKeyType="next"
+                placeholder="Zum Beispiel Alex" placeholderTextColor="#8A968A" style={styles.nameInput} value={profileName} />
+              <Text style={styles.inputHint}>Ein Vorname oder Spitzname reicht.</Text>
+            </View> : null}
+
+            {step === 2 ? <>
+              <View style={styles.avatarGrid}>
+                {[...DEFAULT_AVATARS, { id: 'none', label: 'Kein Avatar', source: null }].map((avatar) => {
+                  const selected = selectedAvatar === avatar.id || (avatar.id === 'none' && !effectiveProfilePicture);
+                  return <Pressable key={avatar.id} accessibilityRole="radio" accessibilityLabel={avatar.label}
+                    accessibilityState={{ checked: selected, disabled: busy || !canPerformWrites }} disabled={busy || !canPerformWrites}
+                    onPress={() => selectAvatar(avatar.id)} style={[styles.avatarOption, selected && styles.avatarOptionSelected]}>
+                    {avatar.source ? <Image source={avatar.source} contentFit="cover" style={styles.choiceImage} /> :
+                      <View style={styles.noneAvatar}><Feather name="user" size={35} color="#788779" /></View>}
+                    <Text style={[styles.avatarLabel, selected && styles.avatarLabelSelected]}>{avatar.label}</Text>
+                    {selected ? <View style={styles.selectionCheck}><Feather name="check" size={14} color="white" /></View> : null}
+                  </Pressable>;
+                })}
+              </View>
+              <ActionButton disabled={busy || !canPerformWrites} label="Eigenes Foto hochladen" onPress={() => void handlePickProfileImage()} />
+              <Text style={styles.guidance}>Dein Avatar ist für deine Wanderbuddies sichtbar.</Text>
+            </> : null}
+
+            {step === 3 ? <View style={styles.inputCard}>
+              <View style={styles.infoRow}><Feather name="compass" size={22} color="#315B43" /><View style={styles.permissionBody}>
+                <Text style={styles.cardTitle}>Orientierung unterwegs</Text><Text style={styles.cardCopy}>Entfernungen auf einen Blick – direkt auf deiner Karte.</Text>
+              </View></View>
+              <ActionButton disabled={locationPermission === 'checking' || locationPermission === 'granted'}
+                label={locationPermission === 'granted' ? 'Standort ist aktiviert' : locationPermission === 'checking' ? 'Wird geprüft…' : locationPermission === 'denied' ? 'Standort erneut anfragen' : 'Standort aktivieren'}
+                onPress={requestLocationPermission} variant="primary" />
+              {locationPermission === 'denied' ? <Text style={styles.guidance}>Kein Problem, du kannst ohne Standort starten. Wenn die Anfrage nicht mehr erscheint, erlaube den Zugriff in deinen Geräte- oder Browsereinstellungen.</Text> : null}
+              {locationError ? <Text style={styles.errorText}>{locationError}</Text> : null}
+              <Text style={styles.inputHint}>Die Freigabe ist freiwillig und lässt sich in deinen Geräte- oder Browsereinstellungen ändern.</Text>
+            </View> : null}
+
+            {step === 4 ? <View style={styles.inputCard}>
+              <ActionButton disabled={!accessToken || !canPerformWrites || busy} label="Wanderbuddies finden" onPress={() => setIsSearchModalVisible(true)} variant="primary" />
+              {sentRequests.length > 0 ? <View style={styles.sentRequestsBox}><Text style={styles.sentRequestsTitle}>Deine Anfragen sind unterwegs</Text><FriendsList items={sentRequestItems} /></View> :
+                <Text style={styles.guidance}>Auch allein beginnt ein gutes Abenteuer. Freunde kannst du jederzeit später hinzufügen.</Text>}
+            </View> : null}
+            {profileSaveError && step > 0 ? <Text accessibilityRole="alert" style={styles.errorText}>{profileSaveError}</Text> : null}
+          </ScrollView>
+          <View style={[styles.flowDock, { paddingBottom: bottomDockPadding }]}>
+            <ActionButton disabled={primaryDisabled || busy || (step === 1 && !profileName.trim()) || locationPermission === 'checking'}
+              label={busy ? 'Wird gespeichert…' : step === 0 ? 'Los geht’s' : step === 4 ? 'Zu den Stempelstellen' : step === 3 && locationPermission !== 'granted' ? 'Ohne Standort weiter' : 'Weiter'}
+              onPress={() => void handleAdvance()} variant="primary" style={styles.bottomButton} />
+            <Text style={styles.footerNote}>{step === 4 ? 'Bereit für deinen ersten Stempel?' : step === 3 ? 'Du entscheidest, was du freigibst.' : 'Dein Abenteuer. Dein Tempo.'}</Text>
           </View>
-        </View>
+        </KeyboardAvoidingView>
 
         <Modal
           animationType="fade"
@@ -919,53 +826,52 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
+  flow: { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  navigation: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 12 },
+  backButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: '#E7EBDD' },
+  stepLabel: { color: '#315B43', fontWeight: '600', fontSize: 14 },
+  stepCount: { color: '#64725E', fontSize: 13, width: 44, textAlign: 'right' },
+  progressRow: { flexDirection: 'row', gap: 6, paddingHorizontal: 28, marginTop: 18 },
+  progressSegment: { flex: 1, height: 4, borderRadius: 2, backgroundColor: '#DCE1D4' },
+  progressActive: { backgroundColor: '#41664A' },
+  flowContent: { paddingHorizontal: 28, paddingTop: 20, paddingBottom: 24, gap: 16 },
+  scene: { height: 170, alignItems: 'center', justifyContent: 'center' },
+  compactScene: { height: 86 },
+  compactAvatarPreview: { width: 80, height: 80, borderRadius: 40, borderWidth: 4 },
+  compactTitle: { fontSize: 28, lineHeight: 34 },
+  welcomeIllustration: { width: 200, height: 180 },
+  avatarPreview: { width: 142, height: 142, borderRadius: 71, backgroundColor: '#E4E9D9', alignItems: 'center', justifyContent: 'center', borderWidth: 6, borderColor: '#FFFFFF' },
+  previewImage: { width: '100%', height: '100%', borderRadius: 71 },
+  featureScene: { width: 220, height: 160, alignItems: 'center', justifyContent: 'center' },
+  sceneOrbit: { position: 'absolute', width: 208, height: 136, borderRadius: 70, borderWidth: 1, borderColor: '#C8D3BC', transform: [{ rotate: '-20deg' }] },
+  sceneBadge: { width: 126, height: 126, borderRadius: 63, backgroundColor: '#DFE7D4', alignItems: 'center', justifyContent: 'center', borderWidth: 6, borderColor: '#F9FAF4' },
+  smallBadge: { position: 'absolute', right: 16, bottom: 12, width: 52, height: 52, borderRadius: 26, backgroundColor: '#F6DFC4', alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: '#F7F5EF' },
+  flowEyebrow: { color: '#68775D', fontSize: 11, fontWeight: '700', letterSpacing: 2, textAlign: 'center' },
+  flowTitle: { fontFamily: Fonts.serif, color: '#21382B', fontSize: 32, lineHeight: 39, textAlign: 'center' },
+  flowCopy: { color: '#65715E', fontSize: 15, lineHeight: 23, textAlign: 'center', marginBottom: 6 },
+  benefitRow: { flexDirection: 'row', gap: 8 },
+  benefit: { flex: 1, paddingVertical: 16, paddingHorizontal: 6, borderRadius: 20, backgroundColor: '#FFFFFF99', alignItems: 'center', gap: 10 },
+  benefitText: { fontSize: 11, color: '#39523E', textAlign: 'center', fontWeight: '600' },
+  guidance: { color: '#697361', fontSize: 13, lineHeight: 20, textAlign: 'center' },
+  inputCard: { padding: 20, backgroundColor: '#FFFFFFCC', borderRadius: 24, gap: 16 },
+  inputLabel: { color: '#36503C', fontSize: 13, fontWeight: '600' },
+  nameInput: { color: '#21382B', backgroundColor: '#F4F6ED', borderWidth: 1, borderColor: '#CBD6BF', borderRadius: 16, padding: 16, fontSize: 20, minHeight: 58 },
+  inputHint: { color: '#6C7666', fontSize: 12, lineHeight: 18 },
+  avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
+  avatarOption: { width: '47%', borderWidth: 2, borderColor: '#E1E4D8', borderRadius: 24, padding: 12, alignItems: 'center', gap: 8, backgroundColor: '#FFFFFF99' },
+  avatarOptionSelected: { borderColor: '#41664A', backgroundColor: '#E7EDDE' },
+  choiceImage: { width: 82, height: 82, borderRadius: 41 },
+  noneAvatar: { width: 82, height: 82, borderRadius: 41, backgroundColor: '#EBEEE5', alignItems: 'center', justifyContent: 'center' },
+  avatarLabel: { color: '#64725E', fontSize: 14 },
+  avatarLabelSelected: { color: '#315B43', fontWeight: '700' },
+  selectionCheck: { position: 'absolute', top: 10, right: 10, backgroundColor: '#41664A', width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  infoRow: { flexDirection: 'row', gap: 14, alignItems: 'center' },
+  flowDock: { paddingHorizontal: 28, paddingTop: 12, gap: 10, backgroundColor: '#F3EFE6' },
   gradient: {
     flex: 1,
   },
   safeArea: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 22,
-    paddingTop: 18,
-    paddingBottom: 180,
-    minHeight: '100%',
-  },
-  eyebrow: {
-    color: '#61705f',
-    fontSize: 12,
-    letterSpacing: 2.2,
-    lineHeight: 16,
-    textTransform: 'uppercase',
-    marginBottom: 18,
-  },
-  heroRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  title: {
-    flex: 1,
-    color: '#11100d',
-    fontSize: 26,
-    lineHeight: 38,
-    fontFamily: 'serif',
-    maxWidth: 190,
-  },
-  heroImage: {
-    width: 148,
-    height: 152,
-    marginRight: -4,
-    marginTop: -8,
-  },
-  copy: {
-    color: '#5a6655',
-    fontSize: 14,
-    lineHeight: 21,
-    marginTop: 8,
-    marginBottom: 24,
-    maxWidth: 332,
   },
   card: {
     backgroundColor: '#ffffff',
@@ -978,11 +884,6 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     elevation: 5,
     marginBottom: 18,
-  },
-  inlineCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
   },
   cardTitle: {
     color: '#263127',
@@ -1000,65 +901,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginTop: -2,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  welcomeBox: {
-    backgroundColor: '#edf4ef',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 4,
-  },
-  welcomeEyebrow: {
-    color: '#5f7464',
-    fontSize: 12,
-    lineHeight: 16,
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
-  },
-  welcomeName: {
-    color: '#263127',
-    fontSize: 20,
-    lineHeight: 24,
-    fontWeight: '700',
-  },
-  profileEditor: {
-    gap: 14,
-  },
-  profileAvatarButton: {
-    alignSelf: 'center',
-    borderRadius: 34,
-  },
-  profileAvatarImage: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-  },
-  profileAvatarFallback: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: '#E9E2D6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileEditorBody: {
-    gap: 10,
-  },
-  profileInput: {
-    borderWidth: 1,
-    borderColor: '#D7D1C5',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    color: '#1E2A1E',
-    fontFamily: Fonts.sans,
-    fontSize: 16,
-    lineHeight: 20,
-    backgroundColor: '#FBF9F4',
   },
   actionButton: {
     minHeight: 52,
@@ -1092,32 +934,9 @@ const styles = StyleSheet.create({
   actionButtonLabelSecondary: {
     color: '#374337',
   },
-  permissionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    backgroundColor: '#dce8df',
-  },
-  permissionIconGranted: {
-    backgroundColor: '#c9decf',
-  },
   permissionBody: {
     flex: 1,
     gap: 4,
-  },
-  inlineAction: {
-    flexGrow: 0,
-    flexShrink: 0,
-    minWidth: 104,
-    minHeight: 44,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-  },
-  inlineActionGranted: {
-    backgroundColor: '#397b52',
-  },
-  fullWidthButton: {
-    width: '100%',
   },
   sentRequestsBox: {
     marginTop: 6,
@@ -1226,28 +1045,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
-  bottomDock: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 22,
-    paddingBottom: 10,
-  },
-  bottomSection: {
-    backgroundColor: 'rgba(247, 245, 239, 0.92)',
-    borderRadius: 28,
-    paddingTop: 16,
-    paddingBottom: 10,
-    gap: 14,
-  },
   bottomButton: {
     width: '100%',
     minHeight: 58,
     borderRadius: 22,
-  },
-  bottomButtonDisabled: {
-    backgroundColor: '#d7d3cb',
   },
   footerNote: {
     color: '#798275',
