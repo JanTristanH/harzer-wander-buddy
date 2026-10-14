@@ -12,7 +12,7 @@ import {
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { areMapCoordinatesEqual } from '@/lib/map-viewport';
-import { createCssMapMarkerHtml, normalizeWebMarkerLabel } from '@/lib/web-map-marker';
+import { createCssMapMarkerHtml, normalizeWebMarkerLabel, WEB_MAP_MARKER_CSS } from '@/lib/web-map-marker';
 
 export type LatLng = {
   latitude: number;
@@ -261,61 +261,7 @@ svg.leaflet-zoom-animated { will-change: transform; }
   border: 0;
   overflow: visible;
 }
-.hwb-css-marker {
-  --hwb-marker-color: #2e6b4b;
-  --hwb-marker-badge-width: 15px;
-  display: block;
-  height: 52px;
-  pointer-events: none;
-  position: relative;
-  width: 48px;
-}
-.hwb-css-marker::before {
-  background: var(--hwb-marker-color);
-  border: 2px solid #fff;
-  border-radius: 50% 50% 50% 0;
-  box-sizing: border-box;
-  content: "";
-  height: 32px;
-  left: 8px;
-  position: absolute;
-  top: 10px;
-  transform: scaleX(0.72) rotate(-45deg);
-  width: 32px;
-  z-index: 0;
-}
-.hwb-css-marker__label {
-  align-items: center;
-  background: #fff;
-  border-radius: 999px;
-  box-sizing: border-box;
-  color: #111;
-  display: flex;
-  font: 700 12px/1 Arial, Helvetica, sans-serif;
-  height: 15px;
-  justify-content: center;
-  left: 50%;
-  padding: 0;
-  position: absolute;
-  top: 12px;
-  transform: translateX(-50%);
-  width: var(--hwb-marker-badge-width);
-  z-index: 1;
-}
-.hwb-css-marker--compact {
-  height: 100%;
-  width: 100%;
-}
-.hwb-css-marker--compact::before {
-  border-radius: 50%;
-  height: auto;
-  inset: 2px;
-  transform: none;
-  width: auto;
-}
-.hwb-css-marker--compact .hwb-css-marker__label {
-  display: none;
-}
+${WEB_MAP_MARKER_CSS}
 `;
 
 const iconCache = new Map<string, L.Icon | L.DivIcon>();
