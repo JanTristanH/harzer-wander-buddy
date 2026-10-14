@@ -5,6 +5,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GroupMemberStatusAvatar } from '@/components/group-member-status-avatar';
+import { UncollectedStampArtwork } from '@/components/uncollected-stamp-artwork';
 import type { Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
@@ -78,9 +79,13 @@ function StampListItemComponent({
   currentUser,
   groupSize,
 }: StampListItemProps) {
-  const { accessToken } = useAuth();
+  const { accessToken, isAuthenticated } = useAuth();
+  const showUncollectedArtwork = isAuthenticated && !item.hasVisited;
   const artworkUri = item.heroImageUrl?.trim() || item.image?.trim() || '';
-  const artworkSource = artworkUri ? buildAuthenticatedImageSource(artworkUri, accessToken) : null;
+  const artworkSource = React.useMemo(
+    () => artworkUri ? buildAuthenticatedImageSource(artworkUri, accessToken) : null,
+    [artworkUri, accessToken]
+  );
   const stampedUserIds = parseStampedUserIds(item.stampedUserIds);
   const memberStatuses = [
     {
@@ -132,7 +137,20 @@ function StampListItemComponent({
       ]}>
       <View style={styles.cardMainRow}>
         {artworkSource ? (
-          <Image cachePolicy="disk" contentFit="cover" source={artworkSource} style={styles.cardArtwork} />
+          showUncollectedArtwork ? (
+            <UncollectedStampArtwork
+              source={artworkSource}
+              style={styles.cardArtwork}
+            />
+          ) : (
+            <Image
+              cachePolicy="disk"
+              contentFit="cover"
+              source={artworkSource}
+              style={styles.cardArtwork}
+              testID="stamp-artwork-color"
+            />
+          )
         ) : (
           <LinearGradient colors={cardGradient(index, !!item.hasVisited)} style={styles.cardArtwork} />
         )}
