@@ -1,0 +1,23 @@
+name: PR title
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  conventional-title:
+    name: Conventional Commit PR title
+    runs-on: ubuntu-latest
+    steps:
+      # No checkout or execution of pull-request code in this privileged event.
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const pattern = /^(feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert)(\([a-zA-Z0-9_.\/-]+\))?!?: \S.*$/;
+            if (!pattern.test(title)) {
+              core.setFailed('Use a Conventional Commit title, e.g. feat(app): add tour filters or fix(cap)!: change API response');
+            }

@@ -1,6 +1,11 @@
 name: Expo OTA Update
 
 on:
+  push:
+    branches: [develop]
+    paths:
+      - "app/**"
+      - ".github/workflows/expo-update.yml"
   workflow_dispatch:
     inputs:
       platform:
@@ -30,7 +35,7 @@ jobs:
       CI: '1'
       OTA_CHANNEL: preview
       OTA_ENVIRONMENT: preview
-      OTA_PLATFORM: ${{ inputs.platform }}
+      OTA_PLATFORM: ${{ inputs.platform || 'all' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
