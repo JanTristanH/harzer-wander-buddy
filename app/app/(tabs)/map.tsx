@@ -97,6 +97,7 @@ type StampMarkerItem = BaseMarkerItem & {
   visitedAt?: string;
   groupSize?: number;
   totalGroupStampings?: number;
+  stampedUserIds?: Stampbox['stampedUserIds'];
 };
 
 type ParkingMarkerItem = BaseMarkerItem & {
@@ -598,8 +599,8 @@ export default function MapScreen() {
     stampId?: string | string[];
     parkingId?: string | string[];
   }>();
-  const { accessToken, canPerformWrites, isAuthenticated, logout } = useAuth();
-  const { groupUserIds, selectedFriendIds } = useHikingGroup();
+  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
+  const { groupUserIds, selectedFriendIds, selectedMembers } = useHikingGroup();
   const isGroupActive = selectedFriendIds.length > 0;
   const { isOnline } = useConnectivity();
   const claims = useIdTokenClaims<AuthClaims>();
@@ -742,6 +743,7 @@ export default function MapScreen() {
           visitedAt: stamp.visitedAt,
           groupSize: stamp.groupSize,
           totalGroupStampings: stamp.totalGroupStampings,
+          stampedUserIds: stamp.stampedUserIds,
         } satisfies StampMarkerItem;
       })
       .filter((item): item is StampMarkerItem => item !== null);
@@ -2139,15 +2141,8 @@ export default function MapScreen() {
         : formatVisitDate(selectedItem.visitedAt)
           ? `Besucht am ${formatVisitDate(selectedItem.visitedAt)}`
           : 'Noch kein Besuchsdatum vorhanden.';
-    const groupMetadata =
-      selectedItem.kind !== 'parking' && selectedFriendIds.length > 0
-        ? `Gruppe: ${selectedItem.totalGroupStampings ?? 0} von ${
-            selectedItem.groupSize ?? groupUserIds.length
-          } besucht`
-        : null;
-
-    return [groupMetadata, nearestCounterpartMeta || visitMetadata].filter(Boolean).join(' • ');
-  }, [groupUserIds.length, nearestCounterpartMeta, selectedFriendIds.length, selectedItem]);
+    return nearestCounterpartMeta || visitMetadata;
+  }, [nearestCounterpartMeta, selectedItem]);
 
   const handleGroupStampPress = useCallback(() => {
     if (!selectedItem || selectedItem.kind === 'parking') {
@@ -2396,6 +2391,16 @@ export default function MapScreen() {
                 selectedItem.kind === 'parking' ? undefined : selectedItem.description,
               imageUrl: selectedItem.imageUrl,
             }}
+            groupStatus={isGroupActive && selectedItem.kind !== 'parking' ? {
+              item: {
+                hasVisited: selectedItem.kind === 'visited-stamp',
+                stampedUserIds: selectedItem.stampedUserIds,
+                totalGroupStampings: selectedItem.totalGroupStampings,
+              },
+              groupMembers: selectedMembers,
+              currentUser: currentUserProfile ?? undefined,
+              groupSize: selectedItem.groupSize ?? groupUserIds.length,
+            } : undefined}
             metadata={selectionMetadata}
             onPrimaryActionPress={
               showGroupStampAction ? undefined : selectionPrimaryActionPress
