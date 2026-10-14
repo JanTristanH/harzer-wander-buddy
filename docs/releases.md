@@ -115,9 +115,15 @@ Quellen: [EAS aus CI starten](https://docs.expo.dev/build/building-on-ci/),
 8. Bei einem App-Release werden Produktionsbuilds für Android und iOS gestartet.
    EAS erhöht die Buildnummern. Der Workflow wartet auf die Auftragsannahme;
    fertige Builds und Store-Einreichung anschließend in EAS prüfen.
-9. `main` per Merge-PR zurück nach `develop` führen. Das macht auch die neuen
-   Release-Tags in der develop-Historie erreichbar. Erst dann die nächste
-   Release-Vorbereitung starten.
+9. Nach erfolgreicher Veröffentlichung erstellt/aktualisiert **Releases**
+   automatisch den Backmerge-PR `main` → `develop`, sofern main dort noch nicht
+   integriert ist. Der Link steht in der Job-Zusammenfassung. Diesen PR prüfen
+   und **per Merge-Commit mergen, nicht squashen**. Es gibt keinen Auto-Merge.
+   Dadurch werden die Release-Tags in der develop-Historie erreichbar. Erst dann
+   die nächste Release-Vorbereitung starten. Der Backmerge-PR wartet nicht auf
+   native EAS-Builds; bei fehlgeschlagener Release-Veröffentlichung wird er
+   nicht erzeugt. Er verwendet das vorhandene `RELEASE_PLEASE_TOKEN`, damit
+   die normalen PR-Prüfungen starten.
 
 App-Änderungen auf `main` veröffentlichen weiterhin automatisch ein OTA auf
 `preview`. Es erfolgen kein automatisches Produktions-OTA und keine automatische

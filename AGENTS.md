@@ -12,6 +12,8 @@
   Conventional Commits und gemeinsame Historie erhalten bleiben.
 - Hotfixes von `main` abzweigen und nach `main` mergen. Nach jedem Release/Hotfix
   `main` per PR nach `develop` zurückführen (z. B. `chore: sync main into develop`).
+  Nach erfolgreicher Release-Veröffentlichung erstellt/aktualisiert die CI diesen
+  Backmerge-PR automatisch. Ihn prüfen und per Merge-Commit mergen; kein Auto-Merge.
 - Versionen und Changelogs verwaltet Release Please. Keine manuellen Versionsbumps
   in Feature-PRs. **Prepare Release** manuell auf `develop` starten und die
   Versions-PRs nach `develop` prüfen und mergen. Danach keine weiteren Features
