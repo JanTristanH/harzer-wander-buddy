@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 
+import { AdminImageCompression } from '@/components/admin-image-compression';
 import { AdminGuard } from '@/components/admin-guard';
 import { AdminScreen } from '@/components/admin-screen';
 import {
@@ -196,6 +197,8 @@ export default function AdminHomeScreen() {
               <Feather color="#2e6b4b" name="chevron-right" size={18} />
             </Pressable>
           </View>
+
+          <AdminImageCompression />
 
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>TravelTime Service</Text>
