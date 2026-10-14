@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { MapSelectionSheet } from '@/components/map-selection-sheet';
 import { GroupSelector } from '@/components/group-selector';
 import { GroupStampDialog } from '@/components/group-stamp-dialog';
@@ -2268,7 +2269,7 @@ export default function MapScreen() {
           <View style={styles.primaryControlsRow} testID="map-primary-controls-row">
             <View style={styles.searchBarWrap}>
               <View style={styles.searchBar}>
-                <TextInput
+                <ClearableSearchInput standalone
                   ref={searchInputRef}
                   onBlur={() => {
                     if (searchBlurTimeoutRef.current) {

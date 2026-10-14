@@ -11,12 +11,12 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
@@ -387,7 +387,7 @@ export default function ToursTabScreen() {
             <View style={styles.loadingSearchRow}>
               <View style={styles.searchShell}>
                 <Feather color="#6d7d6e" name="search" size={14} />
-                <TextInput
+                <ClearableSearchInput
                   editable={false}
                   placeholder="Suche nach Tourname"
                   placeholderTextColor="#7b8776"
@@ -455,6 +455,7 @@ export default function ToursTabScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <FlatList
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContent}
         data={listItems}
         keyExtractor={(item) => item.key}
@@ -512,7 +513,7 @@ export default function ToursTabScreen() {
                 <View style={styles.searchRow}>
                   <View style={styles.searchShell}>
                     <Feather color="#6d7d6e" name="search" size={14} />
-                    <TextInput
+                    <ClearableSearchInput
                       onChangeText={setQuery}
                       placeholder="Suche nach Tourname"
                       placeholderTextColor="#7b8776"

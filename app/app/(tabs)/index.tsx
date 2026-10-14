@@ -16,11 +16,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { CompletionConfetti, useCompletionConfetti } from '@/components/completion-confetti';
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
@@ -748,7 +748,7 @@ export default function StampsScreen() {
         <View style={styles.searchIconWrap}>
           <Feather color="#6d7d6e" name="search" size={14} />
         </View>
-        <TextInput
+        <ClearableSearchInput
           onChangeText={setQuery}
           placeholder="Suche nach Nummer oder Ort"
           placeholderTextColor="#7b8776"
@@ -758,6 +758,7 @@ export default function StampsScreen() {
       </View>
 
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.filterRow}
         horizontal
         style={styles.filterScroll}
@@ -938,7 +939,7 @@ export default function StampsScreen() {
               <View style={styles.searchIconWrap}>
                 <Feather color="#6d7d6e" name="search" size={14} />
               </View>
-              <TextInput
+              <ClearableSearchInput
                 editable={false}
                 placeholder="Suche nach Nummer oder Ort"
                 placeholderTextColor="#7b8776"
@@ -947,6 +948,7 @@ export default function StampsScreen() {
               />
             </View>
             <ScrollView
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.filterRow}
               horizontal
               style={styles.filterScroll}
@@ -1058,6 +1060,7 @@ export default function StampsScreen() {
       </Modal>
       <View style={styles.listContainer}>
         <FlatList
+          keyboardShouldPersistTaps="handled"
           ref={listRef}
           data={listItems}
           keyExtractor={keyExtractor}
