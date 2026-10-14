@@ -1823,6 +1823,7 @@ function StampDetailContent() {
       />
       <View style={styles.scrollViewport} {...stretchyHeader.panHandlers}>
         <Animated.ScrollView
+          ref={stretchyHeader.scrollRef}
           alwaysBounceVertical
           bounces
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 232 + bottomInset }]}
@@ -1858,7 +1859,9 @@ function StampDetailContent() {
               </Animated.View>
               {carouselImages.length > 0 ? (
                 <Pressable
-                  onPress={() => openImageCarousel(0)}
+                  onPress={() => {
+                    if (!stretchyHeader.didPull.current) openImageCarousel(0);
+                  }}
                   style={({ pressed }) => [
                     styles.heroImagePressable,
                     pressed && styles.heroImagePressablePressed,
