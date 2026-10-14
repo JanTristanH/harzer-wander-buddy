@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.7.0](https://github.com/JanTristanH/harzer-wander-buddy/compare/app-v1.6.0...app-v1.7.0) (2026-10-14)
+
+
+### Features
+
+* **app:** Elastischen Bild-Header für Stempeldetails hinzufügen ([e0750ba](https://github.com/JanTristanH/harzer-wander-buddy/commit/e0750ba5698e2dd2bddaa7d1369475690841ac5a))
+* **app:** Geführtes Onboarding mit Standard-Avataren gestalten ([#55](https://github.com/JanTristanH/harzer-wander-buddy/issues/55)) ([6755b94](https://github.com/JanTristanH/harzer-wander-buddy/commit/6755b949cf3ee28a410d45dcbd9a0a3e80e1caa2))
+* **app:** Gruppenstempel im Karten-Bottomsheet anzeigen ([#41](https://github.com/JanTristanH/harzer-wander-buddy/issues/41)) ([13885e4](https://github.com/JanTristanH/harzer-wander-buddy/commit/13885e43ed225f4d753a78b6c4ed90ac176fde19))
+* **cap:** Bilder automatisch komprimieren und Bestandsbilder über die App optimieren ([693057c](https://github.com/JanTristanH/harzer-wander-buddy/commit/693057cf1249b817e22a59d344a7d222a8ef80de))
+
+
+### Bug Fixes
+
+* **app:** Android-Zurück-Geste vom Fast Scroller trennen ([#47](https://github.com/JanTristanH/harzer-wander-buddy/issues/47)) ([42a2577](https://github.com/JanTristanH/harzer-wander-buddy/commit/42a25771d9d4d452e3bc79ac1bbc18dd8982d5c3))
+* **app:** Eingabefelder in der Verwaltung bei geöffneter Tastatur sichtbar halten ([e4e329e](https://github.com/JanTristanH/harzer-wander-buddy/commit/e4e329e82571028a0c33e7ff6aa46831037bd0fd))
+* **app:** Elastischen Header beim Web-Scrollen unterstützen und Galerie-Klick korrigieren ([#52](https://github.com/JanTristanH/harzer-wander-buddy/issues/52)) ([f888a80](https://github.com/JanTristanH/harzer-wander-buddy/commit/f888a80c0d86142893f33287119e0909702fbb85))
+* **app:** Suchfeld-X im Browser anklickbar machen ([#40](https://github.com/JanTristanH/harzer-wander-buddy/issues/40)) ([df82668](https://github.com/JanTristanH/harzer-wander-buddy/commit/df82668fdc5990e33130697deb46c2f4b8fb4c33))
+* **app:** SVG- und Div-Kartenmarker vereinheitlichen ([#53](https://github.com/JanTristanH/harzer-wander-buddy/issues/53)) ([9d4c109](https://github.com/JanTristanH/harzer-wander-buddy/commit/9d4c109af1eeadc1b73a69471b19b3d6cb11cb4c))
+* **release:** Docker-Build und PR-Labelberechtigungen korrigieren ([#48](https://github.com/JanTristanH/harzer-wander-buddy/issues/48)) ([bda9959](https://github.com/JanTristanH/harzer-wander-buddy/commit/bda99597f7414a78c16765f5dc136be00b30c75b))
+
 ## [1.6.0](https://github.com/JanTristanH/harzer-wander-buddy/compare/app-v1.5.3...app-v1.6.0) (2026-10-14)
 
 
