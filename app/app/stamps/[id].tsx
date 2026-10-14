@@ -9,6 +9,7 @@ import * as Location from 'expo-location';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   FlatList,
@@ -43,6 +44,7 @@ import { SkeletonBlock } from '@/components/skeleton';
 import { StampPressStage } from '@/components/stamp-press-stage';
 import { StampNoteSection } from '@/components/stamp-note-section';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
+import { useStretchyHeader } from '@/hooks/use-stretchy-header';
 import {
   createStamping,
   deleteStamping,
@@ -396,6 +398,14 @@ function StampDetailContent() {
     userLocation?.longitude
   );
   const isGuest = !isAuthenticated;
+  const handleRefresh = useCallback(() => {
+    if (isOffline) {
+      Alert.alert('Offline', OFFLINE_REFRESH_MESSAGE);
+      return;
+    }
+    void refetch();
+  }, [isOffline, refetch]);
+  const stretchyHeader = useStretchyHeader(240, handleRefresh, isFetching && !isPending);
   const promptSignIn = useCallback(
     (message?: string) => {
       requireSignIn(message);
@@ -1811,489 +1821,503 @@ function StampDetailContent() {
         topOffset={insets.top + 10}
         visible={isStampSuccessToastVisible}
       />
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 232 + bottomInset }]}
-        refreshControl={
-          <RefreshControl
-            onRefresh={() => {
-              if (isOffline) {
-                Alert.alert('Offline', OFFLINE_REFRESH_MESSAGE);
-                return;
-              }
-
-              void refetch();
-            }}
-            refreshing={isPullRefreshing}
-            tintColor="#2e6b4b"
-          />
-        }
-        showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={heroGradient(visited)} style={styles.hero}>
-          {heroImageUri ? (
-            <>
-              <Image
-                cachePolicy="disk"
-                contentFit="cover"
-                source={buildAuthenticatedImageSource(heroImageUri, accessToken)}
-                style={styles.heroImage}
+      <View style={styles.scrollViewport} {...stretchyHeader.panHandlers}>
+        <Animated.ScrollView
+          ref={stretchyHeader.scrollRef}
+          alwaysBounceVertical
+          bounces
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 232 + bottomInset }]}
+          onScroll={stretchyHeader.onScroll}
+          scrollEventThrottle={16}
+          overScrollMode="never"
+          refreshControl={
+            stretchyHeader.usesNativeBounce ? (
+              <RefreshControl
+                onRefresh={handleRefresh}
+                refreshing={isPullRefreshing}
+                tintColor="#2e6b4b"
               />
-              <View style={styles.heroImageOverlay} />
-            </>
-          ) : null}
-          {carouselImages.length > 0 ? (
-            <Pressable
-              onPress={() => openImageCarousel(0)}
-              style={({ pressed }) => [
-                styles.heroImagePressable,
-                pressed && styles.heroImagePressablePressed,
-              ]}
-            />
-          ) : null}
-          <Pressable onPress={handleBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
-            <Feather color="#1e2a1e" name="arrow-left" size={18} />
-          </Pressable>
-
-          <View style={styles.topRightActions}>
-            <View style={[styles.statusPill, visited ? styles.statusPillVisited : styles.statusPillOpen]}>
-              <Feather
-                color={visited ? '#2e6b4b' : '#7a6a4a'}
-                name={visited ? 'check' : 'x'}
-                size={11}
-              />
-              <Text
-                style={[
-                  styles.statusPillLabel,
-                  visited ? styles.statusPillLabelVisited : styles.statusPillLabelOpen,
-                ]}>
-                {visited ? 'Besucht' : 'Unbesucht'}
-              </Text>
-            </View>
-            <Pressable
-              onPress={handleShare}
-              style={({ pressed }) => [styles.shareHeaderButton, pressed && styles.topButtonPressed]}>
-              <Feather color="#3a4f84" name="share-2" size={14} />
-              <Text style={styles.shareHeaderButtonLabel}>Teilen</Text>
-            </Pressable>
-            {isAdmin ? (
-              <DetailOverflowMenu
-                actions={[
-                  {
-                    key: 'edit-stamp',
-                    label: 'Bearbeiten',
-                    icon: 'edit-2',
-                    onPress: () =>
-                      handleAttemptNavigateAway(() => {
-                        router.push(`/admin/stamps/${stamp.ID}` as never);
-                      }),
-                  },
-                ]}
-                topOffset={insets.top + 58}
-              />
-            ) : null}
-          </View>
-          <View style={styles.heroBadge}>
-            <Text style={styles.heroBadgeText}>Stempel {stamp.number || '--'}</Text>
-          </View>
-        </LinearGradient>
-        {stamp.imageCaption?.trim() ? (
-          <View style={styles.heroCaptionWrap}>
-            <Markdown
-              style={{
-                body: styles.heroCaptionBody,
-                paragraph: styles.heroCaptionParagraph,
-                text: styles.heroCaptionBody,
-                strong: styles.heroCaptionStrong,
-                link: styles.heroCaptionLink,
-              }}>
-              {stamp.imageCaption.trim()}
-            </Markdown>
-          </View>
-        ) : null}
-
-        <View style={styles.body}>
-          <Text style={styles.title}>{stamp.name}</Text>
-          {stamp.description?.trim() ? (
-            <Text style={styles.description}>{stamp.description.trim()}</Text>
-          ) : showDeferredSkeletons ? (
-            <View style={styles.descriptionSkeleton}>
-              <SkeletonLine width="100%" />
-              <SkeletonLine width="92%" />
-              <SkeletonLine width="64%" />
-            </View>
-          ) : (
-            <Text style={styles.description}>Keine Beschreibung fuer diese Stempelstelle verfuegbar.</Text>
-          )}
-
-          {!isGuest ? (
-            <Section action={<GroupSelector />} title="Wandergruppe">
-              {selectedFriendIds.length > 0 ? (
-                <>
-                  <Text style={styles.groupSummary}>
-                    {groupVisitedCount} von {groupSize} Gruppenmitgliedern waren hier.
-                  </Text>
-                  <View style={styles.groupMemberList}>
-                    <View
-                      accessibilityLabel={`Ich: ${visited ? 'besucht' : 'offen'}`}
-                      accessible
-                      style={styles.groupMemberRow}>
-                      <GroupMemberStatusAvatar
-                        accessible={false}
-                        accessibilityName="Ich"
-                        image={currentUserProfile?.picture}
-                        index={0}
-                        name={currentUserProfile?.name?.trim() || 'Ich'}
-                        testID="stamp-detail-group-avatar-self"
-                        visited={visited}
+            ) : undefined
+          }
+          showsVerticalScrollIndicator={false}>
+          <Animated.View style={stretchyHeader.contentStyle}>
+            <View style={styles.hero}>
+              <Animated.View pointerEvents="none" style={[styles.heroBackground, stretchyHeader.backgroundStyle]}>
+                <LinearGradient colors={heroGradient(visited)} style={StyleSheet.absoluteFill}>
+                  {heroImageUri ? (
+                    <>
+                      <Image
+                        cachePolicy="disk"
+                        contentFit="cover"
+                        source={buildAuthenticatedImageSource(heroImageUri, accessToken)}
+                        style={styles.heroImage}
                       />
-                      <Text style={styles.groupMemberName}>Ich</Text>
-                      <Text style={styles.groupMemberStatus}>
-                        {visited ? 'besucht' : 'offen'}
+                      <View style={styles.heroImageOverlay} />
+                    </>
+                  ) : null}
+                </LinearGradient>
+              </Animated.View>
+              {carouselImages.length > 0 ? (
+                <Pressable
+                  onPress={() => {
+                    if (!stretchyHeader.didPull.current) openImageCarousel(0);
+                  }}
+                  style={({ pressed }) => [
+                    styles.heroImagePressable,
+                    pressed && styles.heroImagePressablePressed,
+                  ]}
+                />
+              ) : null}
+              <Pressable onPress={handleBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
+                <Feather color="#1e2a1e" name="arrow-left" size={18} />
+              </Pressable>
+
+              <View style={styles.topRightActions}>
+                <View style={[styles.statusPill, visited ? styles.statusPillVisited : styles.statusPillOpen]}>
+                  <Feather
+                    color={visited ? '#2e6b4b' : '#7a6a4a'}
+                    name={visited ? 'check' : 'x'}
+                    size={11}
+                  />
+                  <Text
+                    style={[
+                      styles.statusPillLabel,
+                      visited ? styles.statusPillLabelVisited : styles.statusPillLabelOpen,
+                    ]}>
+                    {visited ? 'Besucht' : 'Unbesucht'}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={handleShare}
+                  style={({ pressed }) => [styles.shareHeaderButton, pressed && styles.topButtonPressed]}>
+                  <Feather color="#3a4f84" name="share-2" size={14} />
+                  <Text style={styles.shareHeaderButtonLabel}>Teilen</Text>
+                </Pressable>
+                {isAdmin ? (
+                  <DetailOverflowMenu
+                    actions={[
+                      {
+                        key: 'edit-stamp',
+                        label: 'Bearbeiten',
+                        icon: 'edit-2',
+                        onPress: () =>
+                          handleAttemptNavigateAway(() => {
+                            router.push(`/admin/stamps/${stamp.ID}` as never);
+                          }),
+                      },
+                    ]}
+                    topOffset={insets.top + 58}
+                  />
+                ) : null}
+              </View>
+              <View style={styles.heroBadge}>
+                <Text style={styles.heroBadgeText}>Stempel {stamp.number || '--'}</Text>
+              </View>
+            </View>
+            {stamp.imageCaption?.trim() ? (
+              <View style={styles.heroCaptionWrap}>
+                <Markdown
+                  style={{
+                    body: styles.heroCaptionBody,
+                    paragraph: styles.heroCaptionParagraph,
+                    text: styles.heroCaptionBody,
+                    strong: styles.heroCaptionStrong,
+                    link: styles.heroCaptionLink,
+                  }}>
+                  {stamp.imageCaption.trim()}
+                </Markdown>
+              </View>
+            ) : null}
+
+            <View style={styles.body}>
+              <Text style={styles.title}>{stamp.name}</Text>
+              {stamp.description?.trim() ? (
+                <Text style={styles.description}>{stamp.description.trim()}</Text>
+              ) : showDeferredSkeletons ? (
+                <View style={styles.descriptionSkeleton}>
+                  <SkeletonLine width="100%" />
+                  <SkeletonLine width="92%" />
+                  <SkeletonLine width="64%" />
+                </View>
+              ) : (
+                <Text style={styles.description}>Keine Beschreibung fuer diese Stempelstelle verfuegbar.</Text>
+              )}
+
+              {!isGuest ? (
+                <Section action={<GroupSelector />} title="Wandergruppe">
+                  {selectedFriendIds.length > 0 ? (
+                    <>
+                      <Text style={styles.groupSummary}>
+                        {groupVisitedCount} von {groupSize} Gruppenmitgliedern waren hier.
                       </Text>
-                    </View>
-                    {selectedMembers.map((member, memberIndex) => {
-                      const memberVisited = stampedUserIds.has(member.id);
-                      return (
+                      <View style={styles.groupMemberList}>
                         <View
-                          accessibilityLabel={`${member.name}: ${
-                            memberVisited ? 'besucht' : 'offen'
-                          }`}
+                          accessibilityLabel={`Ich: ${visited ? 'besucht' : 'offen'}`}
                           accessible
-                          key={member.id}
                           style={styles.groupMemberRow}>
                           <GroupMemberStatusAvatar
                             accessible={false}
-                            accessibilityName={member.name}
-                            image={member.picture}
-                            index={memberIndex + 1}
-                            name={member.name}
-                            testID={`stamp-detail-group-avatar-${member.id}`}
-                            visited={memberVisited}
+                            accessibilityName="Ich"
+                            image={currentUserProfile?.picture}
+                            index={0}
+                            name={currentUserProfile?.name?.trim() || 'Ich'}
+                            testID="stamp-detail-group-avatar-self"
+                            visited={visited}
                           />
-                          <Text style={styles.groupMemberName}>{member.name}</Text>
+                          <Text style={styles.groupMemberName}>Ich</Text>
                           <Text style={styles.groupMemberStatus}>
-                            {memberVisited ? 'besucht' : 'offen'}
+                            {visited ? 'besucht' : 'offen'}
                           </Text>
                         </View>
-                      );
-                    })}
-                  </View>
-                </>
-              ) : (
-                <Text style={styles.emptySectionText}>
-                  Wähle Freunde aus, um den gemeinsamen Fortschritt zu sehen.
-                </Text>
-              )}
-            </Section>
-          ) : null}
-
-          {isGuest || detail.myVisits.length > 0 ? (
-            <Section
-              title="Meine bisherigen Besuche"
-              action={
-                !isGuest && detail.myVisits.length > 0 ? (
-                  <Pressable
-                    disabled={!!busyVisitId || !canPerformWrites}
-                    onPress={handleToggleVisitEditing}
-                    style={({ pressed }) => [
-                      styles.sectionAction,
-                      (busyVisitId || !canPerformWrites) && styles.visitActionDisabled,
-                      pressed && canPerformWrites && styles.sectionActionPressed,
-                    ]}>
-                    <Text style={styles.sectionActionLabel}>
-                      {isEditingVisits ? 'Fertig' : 'Bearbeiten'}
-                    </Text>
-                  </Pressable>
-                ) : null
-              }>
-              {isGuest ? (
-                <LockedGuestRows
-                  body="Melde dich an, um deine Besuche zu speichern und zu verwalten."
-                  onSignIn={() => router.push('/login' as never)}
-                />
-              ) : showDeferredSkeletons ? (
-                <>
-                  <SkeletonLine width="72%" />
-                  <SkeletonLine width="58%" />
-                </>
-              ) : (
-                detail.myVisits.map((visit) => (
-                  <View key={visit.ID} style={styles.visitCard}>
-                    {isEditingVisits ? (
-                      <View style={styles.visitInlineRow}>
-                        <Pressable
-                          disabled={busyVisitId === visit.ID || !canPerformWrites}
-                          onPress={() => openVisitPicker(visit.ID, visitDrafts[visit.ID])}
-                          style={({ pressed }) => [
-                            styles.visitPickerButton,
-                            (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
-                            pressed &&
-                            busyVisitId !== visit.ID &&
-                            canPerformWrites &&
-                            styles.sectionActionPressed,
-                          ]}>
-                          <Text style={styles.visitPickerLabel}>
-                            {visitDrafts[visit.ID]
-                              ? formatEditableVisitDate(visitDrafts[visit.ID])
-                              : 'Zeit waehlen'}
-                          </Text>
-                          <Feather color="#637062" name="calendar" size={16} />
-                        </Pressable>
-                        <Pressable
-                          disabled={busyVisitId === visit.ID || !canPerformWrites}
-                          onPress={() => confirmDeleteVisit(visit.ID)}
-                          style={({ pressed }) => [
-                            styles.visitActionButton,
-                            styles.visitDeleteButton,
-                            styles.visitInlineAction,
-                            pressed &&
-                            busyVisitId !== visit.ID &&
-                            canPerformWrites &&
-                            styles.sectionActionPressed,
-                            (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
-                          ]}>
-                          <Text style={styles.visitDeleteLabel}>Löschen</Text>
-                        </Pressable>
+                        {selectedMembers.map((member, memberIndex) => {
+                          const memberVisited = stampedUserIds.has(member.id);
+                          return (
+                            <View
+                              accessibilityLabel={`${member.name}: ${
+                                memberVisited ? 'besucht' : 'offen'
+                              }`}
+                              accessible
+                              key={member.id}
+                              style={styles.groupMemberRow}>
+                              <GroupMemberStatusAvatar
+                                accessible={false}
+                                accessibilityName={member.name}
+                                image={member.picture}
+                                index={memberIndex + 1}
+                                name={member.name}
+                                testID={`stamp-detail-group-avatar-${member.id}`}
+                                visited={memberVisited}
+                              />
+                              <Text style={styles.groupMemberName}>{member.name}</Text>
+                              <Text style={styles.groupMemberStatus}>
+                                {memberVisited ? 'besucht' : 'offen'}
+                              </Text>
+                            </View>
+                          );
+                        })}
                       </View>
-                    ) : (
-                      <Text style={styles.simpleItemTitle}>
-                        {formatVisitDate(getVisitTimestamp(visit))}
-                      </Text>
-                    )}
-                  </View>
-                ))
-              )}
-            </Section>
-          ) : null}
-
-          {isGuest ? (
-            <Section title="Meine Notiz">
-              <LockedGuestRows
-                body="Melde dich an, um persönliche Notizen zu dieser Stempelstelle zu speichern."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            </Section>
-          ) : (
-            <StampNoteSection
-              isDirty={isNoteDirty}
-              isSaving={isSavingNote}
-              isTooLong={isNoteTooLong}
-              maxLength={STAMP_NOTE_MAX_LENGTH}
-              noteDraft={noteDraft}
-              noteLength={normalizedNoteDraft.length}
-              onChangeNote={setNoteDraft}
-              onSave={() => {
-                void handleSaveNote();
-              }}
-            />
-          )}
-
-          {isGuest ? (
-            <Section title="Von aktueller Position">
-              <LockedGuestRows
-                body="Melde dich an, um Distanz, Höhenmeter und Reisezeit von deinem Standort zu berechnen."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            </Section>
-          ) : (
-            <CurrentPositionDistanceSection
-              actionLabel="Distanz berechnen"
-              errorText={routeToCurrentPositionErrorMessage}
-              loadingLineWidths={['72%', '56%']}
-              noCoordinatesText="Für diese Stempelstelle liegen keine Koordinaten vor."
-              onRequestDistance={() => {
-                void handleRequestRouteToStamp();
-              }}
-              promptText="Tippe auf den Button, um die Distanz und Höhenmeter von deinem aktuellen Standort zur Stempelstelle zu berechnen."
-              retryLabel="Erneut versuchen"
-              title="Von aktueller Position"
-              status={
-                !hasSelectedStampCoordinates
-                  ? 'no-coordinates'
-                  : locationState === 'idle'
-                    ? 'idle'
-                    : locationState === 'denied'
-                      ? 'denied'
-                      : isRouteToCurrentPositionLoading
-                        ? 'loading'
-                        : routeToCurrentPositionError
-                          ? 'error'
-                          : routeToCurrentPosition
-                            ? 'ready'
-                            : 'error'
-              }>
-              {routeToCurrentPosition ? (
-                <View style={styles.routeSummaryCard}>
-                  <View style={[styles.rowBadge, styles.rowBadgeRoute]}>
-                    <Feather color="#b56928" name="map-pin" size={14} />
-                  </View>
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>Aktuelle Position</Text>
-                    <Text style={styles.rowMeta}>
-                      {formatDistanceMeters(routeToCurrentPosition.distanceMeters)}
-                      {formatElevationSummary(
-                        routeToCurrentPosition.elevationGainMeters,
-                        routeToCurrentPosition.elevationLossMeters
-                      )}
-                    </Text>
-                  </View>
-                  <Pressable
-                    disabled={routeToCurrentPositionQuery.isFetching || isOffline}
-                    onPress={() => {
-                      if (isOffline) {
-                        Alert.alert('Offline', OFFLINE_REFRESH_MESSAGE);
-                        return;
-                      }
-
-                      void routeToCurrentPositionQuery.refetch();
-                    }}
-                    style={({ pressed }) => [
-                      styles.routeRefreshButton,
-                      (routeToCurrentPositionQuery.isFetching || isOffline) && styles.routeRefreshButtonDisabled,
-                      pressed &&
-                      !routeToCurrentPositionQuery.isFetching &&
-                      !isOffline &&
-                      styles.sectionActionPressed,
-                    ]}>
-                    <Feather
-                      color="#2e3a2e"
-                      name={routeToCurrentPositionQuery.isFetching ? 'refresh-cw' : 'rotate-cw'}
-                      size={14}
-                    />
-                  </Pressable>
-                </View>
-              ) : null}
-            </CurrentPositionDistanceSection>
-          )}
-
-          <Section title="Parkplätze in der Nähe">
-            {isGuest ? (
-              <LockedGuestRows
-                body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            ) : showDeferredSkeletons ? (
-              <>
-                <SkeletonLine width="86%" />
-                <SkeletonLine width="78%" />
-                <SkeletonLine width="82%" />
-              </>
-            ) : detail.nearbyParking.length > 0 ? (
-              detail.nearbyParking.map((parking) => (
-                <Pressable
-                  key={parking.ID}
-                  onPress={() =>
-                    handleAttemptNavigateAway(() => {
-                      router.push(`/parking/${parking.ID}` as never);
-                    })
-                  }
-                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
-                  <View style={[styles.rowBadge, styles.rowBadgeParking]}>
-                    <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelParking]}>P</Text>
-                  </View>
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>{parking.name}</Text>
-                    <Text style={styles.rowMeta}>
-                      {formatDistance(parking.distanceKm)}
-                      {parking.durationMinutes ? ` • ${formatDuration(parking.durationMinutes)}` : ''}
-                      {formatElevationSummary(parking.elevationGainMeters, parking.elevationLossMeters)}
-                    </Text>
-                  </View>
-                  <Feather color="#8b957f" name="chevron-right" size={18} />
-                </Pressable>
-              ))
-            ) : (
-              <Text style={styles.emptySectionText}>Keine Parkplätze in der Nähe gefunden.</Text>
-            )}
-          </Section>
-
-          <Section title="Stempel in der Nähe">
-            {isGuest ? (
-              <LockedGuestRows
-                body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            ) : showDeferredSkeletons ? (
-              <>
-                <SkeletonRow />
-                <SkeletonRow />
-                <SkeletonRow />
-              </>
-            ) : detail.nearbyStamps.length > 0 ? (
-              detail.nearbyStamps.map((neighbor) => (
-                <Pressable
-                  key={neighbor.ID}
-                  onPress={() =>
-                    handleAttemptNavigateAway(() => {
-                      router.push(`/stamps/${neighbor.ID}` as never);
-                    })
-                  }
-                  style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
-                  {neighbor.heroImageUrl ? (
-                    <Image
-                      cachePolicy="disk"
-                      contentFit="cover"
-                      source={buildAuthenticatedImageSource(neighbor.heroImageUrl, accessToken)}
-                      style={styles.rowArtwork}
-                    />
+                    </>
                   ) : (
-                    <View style={[styles.rowBadge, styles.rowBadgeStamp]}>
-                      <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelStamp]}>{neighbor.number || '--'}</Text>
-                    </View>
-                  )}
-                  <View style={styles.rowBody}>
-                    <Text style={styles.rowTitle}>
-                      {neighbor.number || '--'} {'\u2022'} {neighbor.name}
+                    <Text style={styles.emptySectionText}>
+                      Wähle Freunde aus, um den gemeinsamen Fortschritt zu sehen.
                     </Text>
-                    <Text style={styles.rowMeta}>
-                      {formatDistance(neighbor.distanceKm)}
-                      {neighbor.durationMinutes ? ` • ${formatDuration(neighbor.durationMinutes)}` : ''}
-                      {formatElevationSummary(neighbor.elevationGainMeters, neighbor.elevationLossMeters)}
+                  )}
+                </Section>
+              ) : null}
+
+              {isGuest || detail.myVisits.length > 0 ? (
+                <Section
+                  title="Meine bisherigen Besuche"
+                  action={
+                    !isGuest && detail.myVisits.length > 0 ? (
+                      <Pressable
+                        disabled={!!busyVisitId || !canPerformWrites}
+                        onPress={handleToggleVisitEditing}
+                        style={({ pressed }) => [
+                          styles.sectionAction,
+                          (busyVisitId || !canPerformWrites) && styles.visitActionDisabled,
+                          pressed && canPerformWrites && styles.sectionActionPressed,
+                        ]}>
+                        <Text style={styles.sectionActionLabel}>
+                          {isEditingVisits ? 'Fertig' : 'Bearbeiten'}
+                        </Text>
+                      </Pressable>
+                    ) : null
+                  }>
+                  {isGuest ? (
+                    <LockedGuestRows
+                      body="Melde dich an, um deine Besuche zu speichern und zu verwalten."
+                      onSignIn={() => router.push('/login' as never)}
+                    />
+                  ) : showDeferredSkeletons ? (
+                    <>
+                      <SkeletonLine width="72%" />
+                      <SkeletonLine width="58%" />
+                    </>
+                  ) : (
+                    detail.myVisits.map((visit) => (
+                      <View key={visit.ID} style={styles.visitCard}>
+                        {isEditingVisits ? (
+                          <View style={styles.visitInlineRow}>
+                            <Pressable
+                              disabled={busyVisitId === visit.ID || !canPerformWrites}
+                              onPress={() => openVisitPicker(visit.ID, visitDrafts[visit.ID])}
+                              style={({ pressed }) => [
+                                styles.visitPickerButton,
+                                (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
+                                pressed &&
+                                busyVisitId !== visit.ID &&
+                                canPerformWrites &&
+                                styles.sectionActionPressed,
+                              ]}>
+                              <Text style={styles.visitPickerLabel}>
+                                {visitDrafts[visit.ID]
+                                  ? formatEditableVisitDate(visitDrafts[visit.ID])
+                                  : 'Zeit waehlen'}
+                              </Text>
+                              <Feather color="#637062" name="calendar" size={16} />
+                            </Pressable>
+                            <Pressable
+                              disabled={busyVisitId === visit.ID || !canPerformWrites}
+                              onPress={() => confirmDeleteVisit(visit.ID)}
+                              style={({ pressed }) => [
+                                styles.visitActionButton,
+                                styles.visitDeleteButton,
+                                styles.visitInlineAction,
+                                pressed &&
+                                busyVisitId !== visit.ID &&
+                                canPerformWrites &&
+                                styles.sectionActionPressed,
+                                (busyVisitId === visit.ID || !canPerformWrites) && styles.visitActionDisabled,
+                              ]}>
+                              <Text style={styles.visitDeleteLabel}>Löschen</Text>
+                            </Pressable>
+                          </View>
+                        ) : (
+                          <Text style={styles.simpleItemTitle}>
+                            {formatVisitDate(getVisitTimestamp(visit))}
+                          </Text>
+                        )}
+                      </View>
+                    ))
+                  )}
+                </Section>
+              ) : null}
+
+              {isGuest ? (
+                <Section title="Meine Notiz">
+                  <LockedGuestRows
+                    body="Melde dich an, um persönliche Notizen zu dieser Stempelstelle zu speichern."
+                    onSignIn={() => router.push('/login' as never)}
+                  />
+                </Section>
+              ) : (
+                <StampNoteSection
+                  isDirty={isNoteDirty}
+                  isSaving={isSavingNote}
+                  isTooLong={isNoteTooLong}
+                  maxLength={STAMP_NOTE_MAX_LENGTH}
+                  noteDraft={noteDraft}
+                  noteLength={normalizedNoteDraft.length}
+                  onChangeNote={setNoteDraft}
+                  onSave={() => {
+                    void handleSaveNote();
+                  }}
+                />
+              )}
+
+              {isGuest ? (
+                <Section title="Von aktueller Position">
+                  <LockedGuestRows
+                    body="Melde dich an, um Distanz, Höhenmeter und Reisezeit von deinem Standort zu berechnen."
+                    onSignIn={() => router.push('/login' as never)}
+                  />
+                </Section>
+              ) : (
+                <CurrentPositionDistanceSection
+                  actionLabel="Distanz berechnen"
+                  errorText={routeToCurrentPositionErrorMessage}
+                  loadingLineWidths={['72%', '56%']}
+                  noCoordinatesText="Für diese Stempelstelle liegen keine Koordinaten vor."
+                  onRequestDistance={() => {
+                    void handleRequestRouteToStamp();
+                  }}
+                  promptText="Tippe auf den Button, um die Distanz und Höhenmeter von deinem aktuellen Standort zur Stempelstelle zu berechnen."
+                  retryLabel="Erneut versuchen"
+                  title="Von aktueller Position"
+                  status={
+                    !hasSelectedStampCoordinates
+                      ? 'no-coordinates'
+                      : locationState === 'idle'
+                        ? 'idle'
+                        : locationState === 'denied'
+                          ? 'denied'
+                          : isRouteToCurrentPositionLoading
+                            ? 'loading'
+                            : routeToCurrentPositionError
+                              ? 'error'
+                              : routeToCurrentPosition
+                                ? 'ready'
+                                : 'error'
+                  }>
+                  {routeToCurrentPosition ? (
+                    <View style={styles.routeSummaryCard}>
+                      <View style={[styles.rowBadge, styles.rowBadgeRoute]}>
+                        <Feather color="#b56928" name="map-pin" size={14} />
+                      </View>
+                      <View style={styles.rowBody}>
+                        <Text style={styles.rowTitle}>Aktuelle Position</Text>
+                        <Text style={styles.rowMeta}>
+                          {formatDistanceMeters(routeToCurrentPosition.distanceMeters)}
+                          {formatElevationSummary(
+                            routeToCurrentPosition.elevationGainMeters,
+                            routeToCurrentPosition.elevationLossMeters
+                          )}
+                        </Text>
+                      </View>
+                      <Pressable
+                        disabled={routeToCurrentPositionQuery.isFetching || isOffline}
+                        onPress={() => {
+                          if (isOffline) {
+                            Alert.alert('Offline', OFFLINE_REFRESH_MESSAGE);
+                            return;
+                          }
+
+                          void routeToCurrentPositionQuery.refetch();
+                        }}
+                        style={({ pressed }) => [
+                          styles.routeRefreshButton,
+                          (routeToCurrentPositionQuery.isFetching || isOffline) && styles.routeRefreshButtonDisabled,
+                          pressed &&
+                          !routeToCurrentPositionQuery.isFetching &&
+                          !isOffline &&
+                          styles.sectionActionPressed,
+                        ]}>
+                        <Feather
+                          color="#2e3a2e"
+                          name={routeToCurrentPositionQuery.isFetching ? 'refresh-cw' : 'rotate-cw'}
+                          size={14}
+                        />
+                      </Pressable>
+                    </View>
+                  ) : null}
+                </CurrentPositionDistanceSection>
+              )}
+
+              <Section title="Parkplätze in der Nähe">
+                {isGuest ? (
+                  <LockedGuestRows
+                    body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
+                    onSignIn={() => router.push('/login' as never)}
+                  />
+                ) : showDeferredSkeletons ? (
+                  <>
+                    <SkeletonLine width="86%" />
+                    <SkeletonLine width="78%" />
+                    <SkeletonLine width="82%" />
+                  </>
+                ) : detail.nearbyParking.length > 0 ? (
+                  detail.nearbyParking.map((parking) => (
+                    <Pressable
+                      key={parking.ID}
+                      onPress={() =>
+                        handleAttemptNavigateAway(() => {
+                          router.push(`/parking/${parking.ID}` as never);
+                        })
+                      }
+                      style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
+                      <View style={[styles.rowBadge, styles.rowBadgeParking]}>
+                        <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelParking]}>P</Text>
+                      </View>
+                      <View style={styles.rowBody}>
+                        <Text style={styles.rowTitle}>{parking.name}</Text>
+                        <Text style={styles.rowMeta}>
+                          {formatDistance(parking.distanceKm)}
+                          {parking.durationMinutes ? ` • ${formatDuration(parking.durationMinutes)}` : ''}
+                          {formatElevationSummary(parking.elevationGainMeters, parking.elevationLossMeters)}
+                        </Text>
+                      </View>
+                      <Feather color="#8b957f" name="chevron-right" size={18} />
+                    </Pressable>
+                  ))
+                ) : (
+                  <Text style={styles.emptySectionText}>Keine Parkplätze in der Nähe gefunden.</Text>
+                )}
+              </Section>
+
+              <Section title="Stempel in der Nähe">
+                {isGuest ? (
+                  <LockedGuestRows
+                    body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
+                    onSignIn={() => router.push('/login' as never)}
+                  />
+                ) : showDeferredSkeletons ? (
+                  <>
+                    <SkeletonRow />
+                    <SkeletonRow />
+                    <SkeletonRow />
+                  </>
+                ) : detail.nearbyStamps.length > 0 ? (
+                  detail.nearbyStamps.map((neighbor) => (
+                    <Pressable
+                      key={neighbor.ID}
+                      onPress={() =>
+                        handleAttemptNavigateAway(() => {
+                          router.push(`/stamps/${neighbor.ID}` as never);
+                        })
+                      }
+                      style={({ pressed }) => [styles.rowItem, pressed && styles.rowItemPressed]}>
+                      {neighbor.heroImageUrl ? (
+                        <Image
+                          cachePolicy="disk"
+                          contentFit="cover"
+                          source={buildAuthenticatedImageSource(neighbor.heroImageUrl, accessToken)}
+                          style={styles.rowArtwork}
+                        />
+                      ) : (
+                        <View style={[styles.rowBadge, styles.rowBadgeStamp]}>
+                          <Text style={[styles.rowBadgeLabel, styles.rowBadgeLabelStamp]}>{neighbor.number || '--'}</Text>
+                        </View>
+                      )}
+                      <View style={styles.rowBody}>
+                        <Text style={styles.rowTitle}>
+                          {neighbor.number || '--'} {'\u2022'} {neighbor.name}
+                        </Text>
+                        <Text style={styles.rowMeta}>
+                          {formatDistance(neighbor.distanceKm)}
+                          {neighbor.durationMinutes ? ` • ${formatDuration(neighbor.durationMinutes)}` : ''}
+                          {formatElevationSummary(neighbor.elevationGainMeters, neighbor.elevationLossMeters)}
+                        </Text>
+                      </View>
+                      <Feather color="#8b957f" name="chevron-right" size={18} />
+                    </Pressable>
+                  ))
+                ) : (
+                  <View style={styles.emptyNearbyStampsState}>
+                    <Image
+                      contentFit="contain"
+                      source={emptyNearbyStampsIllustration}
+                      style={styles.emptyNearbyStampsIllustration}
+                    />
+                    <Text style={[styles.emptySectionText, styles.emptyNearbyStampsText]}>
+                      Keine Stempel in der Nähe gefunden.
                     </Text>
                   </View>
-                  <Feather color="#8b957f" name="chevron-right" size={18} />
-                </Pressable>
-              ))
-            ) : (
-              <View style={styles.emptyNearbyStampsState}>
-                <Image
-                  contentFit="contain"
-                  source={emptyNearbyStampsIllustration}
-                  style={styles.emptyNearbyStampsIllustration}
-                />
-                <Text style={[styles.emptySectionText, styles.emptyNearbyStampsText]}>
-                  Keine Stempel in der Nähe gefunden.
-                </Text>
-              </View>
-            )}
-          </Section>
+                )}
+              </Section>
 
-          <Section title="Freunde hier gewesen">
-            {isGuest ? (
-              <LockedGuestRows
-                body="Melde dich an, um Besuche deiner Freunde zu sehen."
-                onSignIn={() => router.push('/login' as never)}
-              />
-            ) : showDeferredSkeletons ? (
-              <>
-                <SkeletonRow />
-                <SkeletonRow />
-              </>
-            ) : detail.friendVisits.length > 0 ? (
-              <FriendsList
-                items={detail.friendVisits.map((visit) => ({
-                  id: visit.id,
-                  name: visit.name,
-                  image: visit.picture,
-                  subtitle: `Zuletzt besucht: ${formatVisitDate(getVisitTimestamp(visit))}`,
-                }))}
-              />
-            ) : (
-              <Text style={styles.emptySectionText}>Noch keine Freundesbesuche fuer diese Stelle.</Text>
-            )}
-          </Section>
+              <Section title="Freunde hier gewesen">
+                {isGuest ? (
+                  <LockedGuestRows
+                    body="Melde dich an, um Besuche deiner Freunde zu sehen."
+                    onSignIn={() => router.push('/login' as never)}
+                  />
+                ) : showDeferredSkeletons ? (
+                  <>
+                    <SkeletonRow />
+                    <SkeletonRow />
+                  </>
+                ) : detail.friendVisits.length > 0 ? (
+                  <FriendsList
+                    items={detail.friendVisits.map((visit) => ({
+                      id: visit.id,
+                      name: visit.name,
+                      image: visit.picture,
+                      subtitle: `Zuletzt besucht: ${formatVisitDate(getVisitTimestamp(visit))}`,
+                    }))}
+                  />
+                ) : (
+                  <Text style={styles.emptySectionText}>Noch keine Freundesbesuche fuer diese Stelle.</Text>
+                )}
+              </Section>
 
-        </View>
-      </ScrollView>
+            </View>
+          </Animated.View>
+        </Animated.ScrollView>
+        {!stretchyHeader.usesNativeBounce && isPullRefreshing ? (
+          <ActivityIndicator color="#2e6b4b" style={styles.refreshIndicator} />
+        ) : null}
+      </View>
 
       <View pointerEvents="box-none" style={[styles.bottomDock, { bottom: 18 + bottomInset }]}>
         <View style={styles.bottomActions}>
@@ -2638,6 +2662,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 180,
   },
+  scrollViewport: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  refreshIndicator: {
+    position: 'absolute',
+    top: 12,
+    alignSelf: 'center',
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#f5f3ee',
+  },
   loadingContent: {
     paddingBottom: 40,
   },
@@ -2652,11 +2688,14 @@ const styles = StyleSheet.create({
   },
   hero: {
     height: 240,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+  },
+  heroBackground: {
+    ...StyleSheet.absoluteFillObject,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     overflow: 'hidden',
-    paddingHorizontal: 18,
-    paddingTop: 16,
   },
   heroImage: {
     ...StyleSheet.absoluteFillObject,

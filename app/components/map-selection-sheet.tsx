@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Animated, type LayoutChangeEvent, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { GroupStampStatus, type GroupStampStatusProps } from '@/components/group-stamp-status';
 import { StampPressStage } from '@/components/stamp-press-stage';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
@@ -15,6 +16,7 @@ export function MapSelectionSheet({
   mode,
   item,
   metadata,
+  groupStatus,
   primaryActionLabel,
   onPrimaryActionPress,
   primaryActionDisabled,
@@ -35,6 +37,7 @@ export function MapSelectionSheet({
     imageUrl?: string;
   };
   metadata?: string;
+  groupStatus?: GroupStampStatusProps;
   primaryActionLabel?: string;
   onPrimaryActionPress?: () => void;
   primaryActionDisabled?: boolean;
@@ -122,6 +125,12 @@ export function MapSelectionSheet({
             </Text>
           </View>
         </View>
+
+        {item.kind !== 'parking' && groupStatus ? (
+          <View pointerEvents="none">
+            <GroupStampStatus {...groupStatus} />
+          </View>
+        ) : null}
 
         {!isCompact && metadata?.trim() ? (
           <View pointerEvents="none" style={styles.detailMetaRow}>

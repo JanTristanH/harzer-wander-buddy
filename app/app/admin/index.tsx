@@ -11,9 +11,10 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AdminImageCompression } from '@/components/admin-image-compression';
 import { AdminGuard } from '@/components/admin-guard';
+import { AdminScreen } from '@/components/admin-screen';
 import {
   addElevationToAllTravelTimes,
   calculateTravelTimesNNearestNeighbors,
@@ -156,8 +157,12 @@ export default function AdminHomeScreen() {
 
   return (
     <AdminGuard>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <AdminScreen style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
           <View style={styles.headerRow}>
             <Pressable
               onPress={() => router.back()}
@@ -192,6 +197,8 @@ export default function AdminHomeScreen() {
               <Feather color="#2e6b4b" name="chevron-right" size={18} />
             </Pressable>
           </View>
+
+          <AdminImageCompression />
 
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>TravelTime Service</Text>
@@ -260,7 +267,7 @@ export default function AdminHomeScreen() {
             </Pressable>
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </AdminScreen>
     </AdminGuard>
   );
 }

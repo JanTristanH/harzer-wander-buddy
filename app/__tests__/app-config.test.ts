@@ -1,4 +1,4 @@
-import {
+import expoConfig, {
   createExpoConfig,
   LOCAL_BACKEND_URL,
   resolveBackendUrl,
@@ -21,6 +21,31 @@ describe('Expo backend configuration', () => {
     const config = createExpoConfig({});
     expect(config.version).toBe(require('../package.json').version);
     expect(config.runtimeVersion).toEqual({ policy: 'fingerprint' });
+  });
+
+  it('preserves the static configuration passed by Expo', () => {
+    const config = {
+      name: 'Config context name',
+      slug: 'config-context-slug',
+      android: {
+        package: 'de.example.app',
+        config: { googleMaps: { apiKey: 'test-maps-key' } },
+      },
+      extra: { contextValue: 'preserved' },
+    };
+
+    const resolved = expoConfig({
+      config,
+      projectRoot: '/tmp/project',
+      staticConfigPath: null,
+      packageJsonPath: '/tmp/project/package.json',
+    });
+
+    expect(resolved.name).toBe(config.name);
+    expect(resolved.slug).toBe(config.slug);
+    expect(resolved.android).toMatchObject(config.android);
+    expect(resolved.extra?.contextValue).toBe('preserved');
+
   });
 
   it('uses the local backend as the development default', () => {

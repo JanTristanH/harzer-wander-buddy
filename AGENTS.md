@@ -7,6 +7,8 @@
 - Erlaubte Typen: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `style`, `revert`.
   Scope ist optional; bevorzugt `app`, `cap` oder `release`. `feat` erhöht Minor,
   `fix`/`perf` Patch und `!` beziehungsweise `BREAKING CHANGE` Major.
+- Bei Änderungen an der Benutzeroberfläche Screenshots der betroffenen Ansicht erstellen
+  und in der PR-Beschreibung einbinden.
 - Feature-PRs per Squash mit dem PR-Titel als Commit-Betreff mergen.
 - `develop` → `main` und `main` → `develop` per Merge-Commit mergen, damit
   Conventional Commits und gemeinsame Historie erhalten bleiben.

@@ -294,3 +294,58 @@ exports.onExecutePostLogin = async (event, api) => {
 };
 ````
     - move into flow on the left
+
+## Image compression and database traffic
+
+The app already prepares profile uploads at a maximum edge of 1024 pixels and
+quality 70 (WebP, with JPEG fallback). The backend now also optimizes JPEG, PNG,
+WebP, GIF, TIFF and AVIF uploads to `Attachments`, including OData V2/V4 media PUTs
+and inline content on CREATE/UPDATE. The shared server settings are in
+`srv/image-processing.js`: WebP, 1024 pixels, quality 70. Images are oriented before
+resizing; output metadata is removed. Files are replaced only when smaller.
+Animated/multipage files and other attachment types are preserved. Invalid images
+are rejected; processing is limited to 20 MiB input and 40 megapixels.
+
+Deploy the CDS schema before running the new backend: `Attachments_local` gains a
+nullable `compressionProfile` column. The existing container startup runs the
+schema deployment. Stored content stays in the database and existing URLs stay valid.
+External profile-picture URLs (for example Auth0/Gravatar) are unaffected.
+
+An authenticated user with the `admin` role can optimize existing attachments:
+
+```http
+POST /odata/v4/api/compressExistingImages
+Authorization: Bearer <admin-access-token>
+Content-Type: application/json
+
+{"batchSize":10}
+```
+
+The response includes `processed`, `compressed`, `skipped`, `failed`, `failedIds`,
+`bytesBefore`, `bytesAfter`, `bytesSaved`, `hasMore`, and `nextAfterId`.
+When `hasMore` is true, send `nextAfterId` as `afterId` in the next POST, retaining
+`batchSize` (default 10, maximum 50). The endpoint reads one image at a time;
+row locks prevent concurrent uploads from being overwritten. Each batch commits
+atomically. Unreadable/oversized images are reported in `failedIds` and retained;
+continue with the cursor to process subsequent images. A new run without `afterId`
+retries failed images. Successfully evaluated images are marked with the settings
+version, preventing repeated lossy recompression and unnecessary blob reads on
+repeat runs. Changing the shared settings makes them eligible again. No backfill
+is run automatically; its first pass necessarily reads existing image data.
+
+Authenticated image-content GETs use a per-process LRU memory cache (5-minute TTL,
+32 MiB total, at most 2 MiB per entry), including profile-picture requests through
+the existing attachment URLs. Cache keys include user, tenant and query; CAP
+checks authorization on every hit. Successful attachment writes/deletes and
+backfill batches invalidate the local cache. Other server instances expire their
+copies within five minutes. Large images still stream normally, without being
+cached. Restarting the server clears the cache. This reduces database reads as
+well as the bytes transferred for compressed images.
+
+From the mobile app, open **Profil → Admin → Bilder komprimieren** and tap
+**Komprimierung starten**. The app processes batches automatically and displays
+saved MiB plus compressed, unchanged and failed counts. You can pause and resume;
+backgrounding the app or leaving the screen stops after the current request.
+Keep the screen open to finish the run. If you return later, starting again safely
+skips images already processed by the server. The control requires admin access
+and an online connection.

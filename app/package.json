@@ -1,7 +1,7 @@
 {
   "name": "harzer-wander-buddy-app",
   "main": "expo-router/entry",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "scripts": {
     "dev:basic:web": "npm run web:basic",
     "dev:basic:native": "npm run start:basic",
@@ -37,7 +37,7 @@
     "@maplibre/maplibre-gl-leaflet": "^0.1.3",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
-    "@react-native-community/netinfo": "^11.5.2",
+    "@react-native-community/netinfo": "11.4.1",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
@@ -83,8 +83,10 @@
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
+    "react-native-svg": "^15.12.1",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "0.5.1"
+    "react-native-worklets": "0.5.1",
+    "expo-asset": "~12.0.12"
   },
   "devDependencies": {
     "@testing-library/react-native": "^13.3.3",

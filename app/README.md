@@ -26,6 +26,18 @@ local user profile on first login. Credentials stay in memory: logout or a page 
 requires a new login. Local accounts are configured under `[dev-basic]` in CAP's
 `package.json`; registration and Auth0 are not used in this mode.
 
+Onboarding is controlled by the user's `onboardingCompleted` field in CAP's
+`ExternalUsers` table, not by the authentication method. A new user starts with
+`false`; completing the final step writes `true` to the backend. Login loads this
+value: `false` opens onboarding, `true` opens the stamp list. Profile edits keep the
+existing completion state when their response omits the field.
+
+The local database survives server restarts, so logging out, reloading the browser
+or restarting Expo does not repeat completed onboarding. A page reload does clear
+the in-memory Basic session and requires another login. For repeat onboarding tests,
+reset only the test user's `onboardingCompleted` field in your own ignored
+`backend/hwb/db.local.db`; do not delete the database or change the checked-in seed.
+
 For native Basic development, use `npm run start:basic`. On a physical device, override
 `EXPO_PUBLIC_BACKEND_URL` with the CAP host's LAN address instead of localhost; start
 Expo with `EXPO_PUBLIC_AUTH_MODE=basic EXPO_PUBLIC_BACKEND_URL=http://<host>:4004 npx expo start`.
