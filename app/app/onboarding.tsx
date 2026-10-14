@@ -728,14 +728,14 @@ export default function OnboardingScreen() {
               </View></View>
               <ActionButton disabled={locationPermission === 'checking' || locationPermission === 'granted'}
                 label={locationPermission === 'granted' ? 'Standort ist aktiviert' : locationPermission === 'checking' ? 'Wird geprüft…' : locationPermission === 'denied' ? 'Standort erneut anfragen' : 'Standort aktivieren'}
-                onPress={requestLocationPermission} variant="primary" />
+                onPress={requestLocationPermission} variant="secondary" />
               {locationPermission === 'denied' ? <Text style={styles.guidance}>Kein Problem, du kannst ohne Standort starten. Wenn die Anfrage nicht mehr erscheint, erlaube den Zugriff in deinen Geräte- oder Browsereinstellungen.</Text> : null}
               {locationError ? <Text style={styles.errorText}>{locationError}</Text> : null}
               <Text style={styles.inputHint}>Die Freigabe ist freiwillig und lässt sich in deinen Geräte- oder Browsereinstellungen ändern.</Text>
             </View> : null}
 
             {step === 4 ? <View style={styles.inputCard}>
-              <ActionButton disabled={!accessToken || !canPerformWrites || busy} label="Wanderbuddies finden" onPress={() => setIsSearchModalVisible(true)} variant="primary" />
+              <ActionButton disabled={!accessToken || !canPerformWrites || busy} label="Wanderbuddies finden" onPress={() => setIsSearchModalVisible(true)} variant="secondary" />
               {sentRequests.length > 0 ? <View style={styles.sentRequestsBox}><Text style={styles.sentRequestsTitle}>Deine Anfragen sind unterwegs</Text><FriendsList items={sentRequestItems} /></View> :
                 <Text style={styles.guidance}>Auch allein beginnt ein gutes Abenteuer. Freunde kannst du jederzeit später hinzufügen.</Text>}
             </View> : null}
