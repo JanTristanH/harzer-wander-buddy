@@ -87,14 +87,23 @@ Quellen: [EAS aus CI starten](https://docs.expo.dev/build/building-on-ci/),
 2. Vor der nächsten Vorbereitung `main` per Merge-PR nach `develop` zurückführen.
    Der Workflow prüft, dass der aktuelle main-Stand enthalten ist.
 3. **Actions → Prepare Release → Run workflow → Branch develop** starten.
-   Der Workflow läuft ausschließlich manuell auf `develop`, führt die Tests aus
-   und lässt Release Please getrennte App-/CAP-Versions-PRs nach `develop`
-   erstellen/aktualisieren. Er erstellt noch keine Tags oder GitHub-Releases.
+   Die Versionsvorbereitung läuft ausschließlich manuell auf `develop`, führt
+   die Tests aus und lässt Release Please getrennte App-/CAP-Versions-PRs nach
+   `develop` erstellen/aktualisieren. Zusätzlich wird der Freigabe-PR
+   `develop` → `main` als Entwurf angelegt bzw. ein vorhandener PR aktualisiert.
+   Er enthält einen Conventional-Commit-Titel, Versionsübersicht, Changelog,
+   Links zu offenen Versions-PRs und den Hinweis auf Merge-Commits.
+   Es entstehen noch keine Tags oder GitHub-Releases.
 4. Versions-PRs einschließlich Changelogs und Lockdateien prüfen und nach
    `develop` mergen. Alle zur Freigabe gehörenden Komponenten berücksichtigen.
    Danach den Stand testen; bis zur Freigabe keine weiteren Features mergen.
-5. PR `develop` → `main` erstellen, z. B. `chore: promote develop to main`.
-   Per **Merge-Commit** mergen. Der Commit enthält bereits die neuen Versionen.
+5. Der vorbereitete Freigabe-PR wird nach develop-Pushes und erfolgreichen Tests
+   automatisch aktualisiert. Sobald die Versions-PRs gemergt sind und neue
+   Versionen vorliegen, wird er zur Prüfung freigegeben. Änderungen an App-/CAP-
+   Dateien nach dem Versionsbump setzen ihn zurück auf Entwurf. Zusätzliche
+   eigene PR-Notizen bleiben beim Aktualisieren erhalten.
+   Den Freigabe-PR prüfen und per **Merge-Commit** mergen; es gibt keinen Auto-Merge.
+   Der Commit enthält bereits die neuen Versionen.
 6. Google baut/deployt wie bisher bei Änderungen auf `main`. Es gibt keinen
    nachgelagerten Versionscommit auf main und damit keinen zweiten Docker-Build
    wegen eines Versionsbumps.
