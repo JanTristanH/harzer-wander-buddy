@@ -17,6 +17,12 @@ jest.mock('expo-constants', () => ({
 }));
 
 describe('Expo backend configuration', () => {
+  it('uses the package release version and fingerprint runtime compatibility', () => {
+    const config = createExpoConfig({});
+    expect(config.version).toBe(require('../package.json').version);
+    expect(config.runtimeVersion).toEqual({ policy: 'fingerprint' });
+  });
+
   it('uses the local backend as the development default', () => {
     expect(resolveBackendUrl()).toBe(LOCAL_BACKEND_URL);
     expect(createExpoConfig({}).extra?.backendUrl).toBe(LOCAL_BACKEND_URL);

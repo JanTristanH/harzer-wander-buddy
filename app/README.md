@@ -112,10 +112,9 @@ In particular:
 - local development: `EXPO_PUBLIC_BACKEND_URL=http://localhost:4004`
 - preview and production builds: `EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de`
 
-The EAS profiles define both values in `eas.json`. The container deployment passes
-the production value explicitly from `.github/workflows/ci.yml` into the root
-`Dockerfile`. This keeps production configuration in the deployment pipeline while
-retaining a useful local default.
+The EAS profiles define both values in `eas.json`. The Google container build from `main` must pass the production value as
+`EXPO_PUBLIC_BACKEND_URL` build argument into the root `Dockerfile`. GitHub Actions
+does not build Docker images. This retains a useful local default.
 
 Android emulators automatically map the local hostname to `10.0.2.2`. A physical
 device needs an explicit LAN URL or HTTPS tunnel via `EXPO_PUBLIC_BACKEND_URL`.
@@ -185,8 +184,8 @@ npx eas update --channel preview --platform android --message "Message"
 ## OTA-Pipeline mit GitHub Actions
 
 Der Workflow [Expo OTA Update](../.github/workflows/expo-update.yml) veröffentlicht
-zunächst ausschließlich **manuell auf `preview`**. Android ist voreingestellt;
-iOS oder beide Plattformen können beim Start ausgewählt werden. Er installiert
+bei App-Änderungen auf **`develop` automatisch auf `preview` für beide Plattformen**.
+Zusätzlich kann er manuell gestartet werden; Android ist dann voreingestellt. Er installiert
 die App mit `npm ci`, führt die App-Tests aus, prüft die Backend-Konfiguration
 und veröffentlicht anschließend mit `eas update --environment preview`.
 
@@ -254,11 +253,11 @@ Wechsel innerhalb der App müsste ein Channel-Override implementiert werden.
 
 OTA ersetzt JavaScript und Assets, aber keinen nativen Build. Plattform und
 Runtime müssen übereinstimmen. Dieses Projekt verwendet die Runtime-Policy
-`appVersion`: Entscheidend ist `expo.version` in `app.json` (aktuell `1.5.2`),
-nicht die Paketversion in `package.json`. Bei Änderungen an nativen Modulen,
-Expo SDK, Berechtigungen oder nativer Konfiguration zuerst `expo.version`
-erhöhen und neue Builds verteilen. Eine reine OTA-Korrektur für vorhandene
-Builds behält deren Runtime-Version.
+`fingerprint`: Expo ermittelt native Kompatibilität aus dem Projekt. Die sichtbare
+App-Version kommt aus `package.json` über `app.config.ts`. Bei geänderter nativer
+Runtime neue Builds verteilen. Auch der erstmalige Wechsel von `appVersion`
+auf `fingerprint` erfordert neue Binaries; alte Installationen erhalten diese
+Updates nicht. EAS erhöht Buildnummern unabhängig davon automatisch.
 [Expo: Runtime-Versionen](https://docs.expo.dev/eas-update/runtime-versions/)
 
 ### 4. Erstes Update starten und prüfen
@@ -266,7 +265,8 @@ Builds behält deren Runtime-Version.
 Nach dem Merge erscheint der Workflow unter **GitHub → Actions → Expo OTA
 Update → Run workflow**. Wähle den Git-Branch mit dem gewünschten App-Code und
 die passende Plattform. Der gewählte Branch wird ausgecheckt; das Ziel bleibt
-immer `preview`. Ein Push oder PR veröffentlicht derzeit kein Update.
+immer `preview`. App-Pushes auf `develop` veröffentlichen ebenfalls Updates;
+PRs veröffentlichen keine Updates.
 
 Die Job-Ausgabe enthält den Expo-Link zur veröffentlichten Update-Gruppe;
 die Update-Nachricht enthält Git-Branch, Commit und GitHub-Run-ID. Prüfe im
@@ -281,38 +281,12 @@ eine vorherige kompatible Update-Gruppe erneut veröffentlichen (Republish).
 Alternativ den betreffenden Commit zurücknehmen und die Pipeline erneut starten.
 [Expo: Rollbacks](https://docs.expo.dev/eas-update/rollbacks/)
 
-### 5. Später nur von main automatisch veröffentlichen
+### 5. Produktionsreleases
 
-Wenn Preview erfolgreich getestet ist, ersetze den gesamten `on`-Block durch:
-
-```yaml
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'app/**'
-      - '.github/workflows/expo-update.yml'
-```
-
-Entferne damit `workflow_dispatch`, damit ausschließlich Pushes auf `main`
-veröffentlichen. Setze außerdem im Job:
-
-```yaml
-env:
-  CI: '1'
-  OTA_CHANNEL: production
-  OTA_ENVIRONMENT: production
-  OTA_PLATFORM: all
-```
-
-Ändere die Concurrency-Gruppe zu `expo-update-production`. Richte zuvor die
-EAS-Umgebung `production` mit denselben zu den Production-Builds passenden
-Variablen ein. Stelle im Production-Build-Profil explizit
-`"environment": "production"` ein und installiere Production-Builds auf den
-Zielgeräten. Bisherige Preview-Installationen bleiben auf `preview` und erhalten
-diese Production-Updates nicht.
-
+Release Please erstellt getrennte App-/CAP-Release-PRs auf `main`. Ein App-Release
+startet Produktionsbuilds für beide Plattformen; Produktions-OTA und
+Store-Einreichung erfolgen nicht automatisch. Google baut das Docker-Image
+weiterhin von `main`. Einrichtung und Ablauf: [Releases](../docs/releases.md).
 
 ## build ios locally
 

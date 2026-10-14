@@ -2,7 +2,6 @@
   "expo": {
     "name": "Harzer Wanderbuddy",
     "slug": "harzer-wander-buddy-app",
-    "version": "1.5.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "harzerwanderbuddyapp",
@@ -93,7 +92,7 @@
       }
     },
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "fingerprint"
     },
     "updates": {
       "url": "https://u.expo.dev/1511f3e0-0255-4c5b-97a4-43e285483bc2",

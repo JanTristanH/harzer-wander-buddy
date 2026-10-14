@@ -1,5 +1,7 @@
 # Harzer-Wander-Buddy
 
+[Gitflow, automatische Versionierung und Release-Einrichtung](docs/releases.md)
+
 
 |Harzer Wanderbuddy for stamp collecting|![Logo](https://www.harzer-wander-buddy.de/assets/images/BuddyWithMapNoBG.webp)|
 |-----|-----|
