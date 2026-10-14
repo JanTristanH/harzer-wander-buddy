@@ -1,7 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -25,6 +24,7 @@ import { GroupSelector } from '@/components/group-selector';
 import { GroupStampDialog } from '@/components/group-stamp-dialog';
 import MapView, { Marker, type MapViewRef, type Region } from '@/components/maps/map-primitives';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
+import { useMapLocation } from '@/hooks/use-map-location';
 import {
   createStamping,
   fetchRouteMetrics,
@@ -51,7 +51,7 @@ import {
 import { useHikingGroup } from '@/lib/hiking-group';
 import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images';
 import { geometry, resolveMapMarkerLabelStyle } from '@/lib/map-marker-style';
-import { areMapCoordinatesEqual, isCoordinateInPaddedRegion } from '@/lib/map-viewport';
+import { isCoordinateInPaddedRegion } from '@/lib/map-viewport';
 import { canCreateMapVisit, getMapPrimaryActionLabel } from '@/lib/map-stamp-action';
 import {
   isNetworkUnavailableError,
@@ -70,7 +70,6 @@ type Coordinate = {
   longitude: number;
 };
 
-type LocationState = 'idle' | 'loading' | 'granted' | 'denied';
 type SelectionSheetMode = 'expanded' | 'compact';
 type AuthClaims = {
   sub?: string;
@@ -628,8 +627,7 @@ export default function MapScreen() {
   const [remoteSearchResults, setRemoteSearchResults] = useState<PlaceSearchResult[]>([]);
   const [isRemoteSearchLoading, setIsRemoteSearchLoading] = useState(false);
   const [remoteSearchError, setRemoteSearchError] = useState<string | null>(null);
-  const [locationState, setLocationState] = useState<LocationState>('idle');
-  const [userLocation, setUserLocation] = useState<Coordinate | null>(null);
+  const { locationState, userLocation, handleUserLocationChange, locateMe } = useMapLocation();
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('all');
   const [showStamps, setShowStamps] = useState(true);
   const [showParking, setShowParking] = useState(true);
@@ -1117,65 +1115,6 @@ export default function MapScreen() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadLocation() {
-      try {
-        setLocationState('loading');
-        let permission = await Location.getForegroundPermissionsAsync();
-        if (!permission.granted && permission.canAskAgain) {
-          permission = await Location.requestForegroundPermissionsAsync();
-        }
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (!permission.granted) {
-          setUserLocation(null);
-          setLocationState(permission.status === 'denied' ? 'denied' : 'idle');
-          return;
-        }
-
-        setLocationState('granted');
-      } catch {
-        if (!isMounted) {
-          return;
-        }
-
-        setLocationState('denied');
-      }
-    }
-
-    void loadLocation();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const handleUserLocationChange = useCallback(
-    (event: { nativeEvent: { coordinate?: Coordinate } }) => {
-      const coordinate = event.nativeEvent.coordinate;
-      if (
-        !coordinate ||
-        !Number.isFinite(coordinate.latitude) ||
-        !Number.isFinite(coordinate.longitude)
-      ) {
-        return;
-      }
-
-      setUserLocation((currentCoordinate) =>
-        areMapCoordinatesEqual(currentCoordinate, coordinate) ? currentCoordinate : coordinate
-      );
-      setLocationState((currentState) =>
-        currentState === 'granted' ? currentState : 'granted'
-      );
-    },
-    []
-  );
-
-  useEffect(() => {
     if (!selectedItemId) {
       return;
     }
@@ -1516,16 +1455,17 @@ export default function MapScreen() {
     [suppressSelectionSheetCompactionForAutoZoom]
   );
 
-  const handleLocateMePress = useCallback(() => {
-    if (!userLocation) {
+  const handleLocateMePress = useCallback(async () => {
+    const coordinate = await locateMe();
+    if (!coordinate) {
       return;
     }
 
     const targetDelta = Math.min(regionRef.current.longitudeDelta, LOCATE_ME_TARGET_DELTA);
-    const nextRegion = createSinglePointRegion(userLocation, targetDelta);
+    const nextRegion = createSinglePointRegion(coordinate, targetDelta);
     suppressSelectionSheetCompactionForAutoZoom();
     mapRef.current?.animateToRegion(nextRegion, 260);
-  }, [suppressSelectionSheetCompactionForAutoZoom, userLocation]);
+  }, [locateMe, suppressSelectionSheetCompactionForAutoZoom]);
 
   const handleStampVisit = useCallback(async () => {
     if (
@@ -2358,12 +2298,14 @@ export default function MapScreen() {
 
         <View style={[styles.zoomControls, { bottom: zoomControlsBottomOffset }]}>
           <Pressable
-            disabled={!userLocation}
+            accessibilityLabel="Orte mich"
+            accessibilityRole="button"
+            disabled={locationState === 'loading'}
             onPress={handleLocateMePress}
             style={({ pressed }) => [
               styles.zoomButton,
-              !userLocation && styles.disabledControl,
-              pressed && userLocation && styles.pressed,
+              locationState === 'loading' && styles.disabledControl,
+              pressed && styles.pressed,
             ]}>
             <Feather color={userLocation ? '#2e3a2e' : '#9ba59a'} name="crosshair" size={19} />
           </Pressable>
