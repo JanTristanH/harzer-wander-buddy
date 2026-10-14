@@ -23,6 +23,7 @@ import {
 import Animated, { Easing, runOnJS, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import MapView, { Marker, Polyline, type MapViewRef, type Region } from '@/components/maps/map-primitives';
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
@@ -2673,7 +2674,7 @@ export default function TourDetailScreen() {
         <View style={styles.mapTopControlsRow}>
           <View style={styles.mapSearchWrap}>
             <Feather color="#6d7d6e" name="search" size={14} />
-            <TextInput
+            <ClearableSearchInput
               onBlur={() => {
                 if (searchBlurTimeoutRef.current) {
                   clearTimeout(searchBlurTimeoutRef.current);
@@ -2905,6 +2906,7 @@ export default function TourDetailScreen() {
         visible={isSaveSuccessToastVisible}
       />
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.scrollContent, { paddingBottom: footerReservedHeight }]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.headerWrap}>

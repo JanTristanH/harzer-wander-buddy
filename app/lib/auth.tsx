@@ -83,7 +83,7 @@ type AuthContextValue = {
   isLoading: boolean;
   authError: string | null;
   configError: string | null;
-  login: () => Promise<void>;
+  login: (username?: string, password?: string) => Promise<void>;
   signup: () => Promise<void>;
   completeWebRedirectAuth: () => Promise<boolean>;
   getValidAccessToken: () => Promise<string | null>;
@@ -545,6 +545,71 @@ function isNetworkRefreshError(error: unknown) {
 }
 
 export function AuthProvider({ children }: React.PropsWithChildren) {
+  return appConfig.authMode === 'basic'
+    ? <BasicAuthProvider>{children}</BasicAuthProvider>
+    : <SsoAuthProvider>{children}</SsoAuthProvider>;
+}
+
+function BasicAuthProvider({ children }: React.PropsWithChildren) {
+  const { isOffline } = useConnectivity();
+  // Development credentials stay in memory and are cleared on reload/logout.
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfileData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const preloadCurrentUserProfile = useCallback(async () => {
+    if (!accessToken) return null;
+    const profile = await fetchCurrentUserProfile(accessToken);
+    setCurrentUserProfile(profile);
+    return profile;
+  }, [accessToken]);
+  const logout = useCallback(async () => {
+    setAccessToken(null);
+    setCurrentUserProfile(null);
+    setAuthError(null);
+    queryClient.clear();
+    await clearPersistedQueryCache();
+  }, []);
+  const login = useCallback(async (username = '', password = '') => {
+    setIsLoading(true);
+    setAuthError(null);
+    try {
+      const token = btoa(`${username}:${password}`);
+      const profile = await fetchCurrentUserProfile(token);
+      queryClient.clear();
+      await clearPersistedQueryCache();
+      setCurrentUserProfile(profile);
+      setAccessToken(token);
+    } catch (error) {
+      setAuthError(error instanceof Error && error.name === 'UnauthorizedError'
+        ? 'Nutzername oder Passwort ist falsch.' : 'Anmeldung fehlgeschlagen. Bitte Backend und Zugangsdaten pruefen.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  const completeOnboarding = useCallback(async () => {
+    if (!accessToken) return;
+    await updateCurrentUserOnboardingCompleted(accessToken, true);
+    await preloadCurrentUserProfile();
+  }, [accessToken, preloadCurrentUserProfile]);
+  const signup = useCallback(async () => {
+    setAuthError('Lokale Testkonten werden im CAP-Profil konfiguriert.');
+  }, []);
+  const completeWebRedirectAuth = useCallback(async () => false, []);
+  const getValidAccessToken = useCallback(async () => accessToken, [accessToken]);
+  const value: AuthContextValue = {
+    accessToken, idToken: null, refreshToken: null, issuedAt: null, expiresIn: null,
+    sessionMode: 'online', isOffline, canPerformWrites: !!accessToken && !isOffline,
+    currentUserProfile, hasCompletedOnboarding: currentUserProfile?.onboardingCompleted ?? false,
+    isAuthenticated: !!accessToken, isLoading, authError, configError: null,
+    login, signup, completeWebRedirectAuth, getValidAccessToken,
+    completeOnboarding, logout, logoutEverywhere: logout, resetApp: logout,
+    preloadCurrentUserProfile, setCurrentUserProfile,
+  };
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+function SsoAuthProvider({ children }: React.PropsWithChildren) {
   const { isOffline } = useConnectivity();
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [sessionMode, setSessionMode] = useState<SessionMode>('online');
@@ -1295,7 +1360,12 @@ export function useAuth() {
 }
 
 export function useIdTokenClaims<T>() {
-  const { idToken } = useAuth();
+  const { idToken, currentUserProfile } = useAuth();
+  if (appConfig.authMode === 'basic') {
+    return currentUserProfile ? {
+      sub: currentUserProfile.id, name: currentUserProfile.name, picture: currentUserProfile.picture,
+    } as T : null;
+  }
   return decodeJwt<T>(idToken ?? undefined);
 }
 

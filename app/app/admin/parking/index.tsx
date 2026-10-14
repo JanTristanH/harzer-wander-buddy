@@ -7,10 +7,10 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { AdminGuard } from '@/components/admin-guard';
 import { AdminScreen } from '@/components/admin-screen';
 import { AdminPoiListItem } from '@/components/admin-poi-list-item';
@@ -75,7 +75,7 @@ export default function AdminParkingListScreen() {
 
           <View style={styles.searchWrap}>
             <Feather color="#6b7a6b" name="search" size={14} />
-            <TextInput
+            <ClearableSearchInput
               autoCapitalize="none"
               autoCorrect={false}
               onChangeText={setQuery}

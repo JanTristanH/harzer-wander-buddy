@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import MapView, { Marker, type MapPressEvent, type Region } from 'react-native-maps';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { AdminGuard } from '@/components/admin-guard';
 import { AdminScreen } from '@/components/admin-screen';
 import { SkeletonBlock } from '@/components/skeleton';
@@ -846,7 +847,7 @@ export default function AdminStampEditorScreen() {
                 </View>
 
                 <Text style={styles.fieldLabel}>Ort suchen</Text>
-                <TextInput
+                <ClearableSearchInput standalone
                   autoCapitalize="words"
                   autoCorrect={false}
                   onChangeText={setLocationSearchQuery}
