@@ -673,7 +673,11 @@ export default function StampsScreen() {
     (stampId: string) => {
       if (bulkBusyRef.current) return;
       if (selectionMode) {
-        setSelectedIds((ids) => ids.includes(stampId) ? ids.filter((id) => id !== stampId) : [...ids, stampId]);
+        if (selectedIds.length === 1 && selectedIds.includes(stampId)) {
+          cancelSelection();
+        } else {
+          setSelectedIds((ids) => ids.includes(stampId) ? ids.filter((id) => id !== stampId) : [...ids, stampId]);
+        }
         void triggerHaptic('selectionChange').catch(() => {
           // Selection remains usable when native feedback is unavailable.
         });
@@ -681,7 +685,7 @@ export default function StampsScreen() {
       }
       router.push(`/stamps/${stampId}` as never);
     },
-    [router, selectionMode]
+    [router, selectionMode, selectedIds, cancelSelection]
   );
 
   const renderIntro = useCallback(() => (

@@ -74,5 +74,13 @@ describe('Main list selection', () => {
     expect(triggerHaptic).toHaveBeenLastCalledWith('selectionChange');
     // Let the initial location permission request settle.
     await screen.findByText('1 ausgewählt');
+    fireEvent.press(screen.getByTestId('stamp-list-item-torfhaus'));
+    expect(screen.queryByTestId('stamp-selection-toolbar')).toBeNull();
+    expect(screen.getByTestId('stamp-list-item-torfhaus').props.accessibilityRole).toBe('button');
+
+    fireEvent(screen.getByTestId('stamp-list-item-brocken'), 'longPress');
+    expect(screen.getByText('1 ausgewählt')).toBeTruthy();
+    expect(screen.getByTestId('stamp-list-item-brocken')).toBeChecked();
+    expect(screen.getByTestId('stamp-list-item-torfhaus')).not.toBeChecked();
   });
 });
