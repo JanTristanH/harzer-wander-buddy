@@ -1,0 +1,91 @@
+name: Native Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Native platform
+        type: choice
+        default: android
+        options: [android, ios, all]
+      profile:
+        description: Preview for installation on devices; production for stores
+        type: choice
+        default: preview
+        options: [preview, production]
+      wait:
+        description: Wait for EAS to finish (otherwise only queue builds)
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-build-${{ github.ref }}-${{ inputs.profile }}-${{ inputs.platform }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: EAS ${{ inputs.profile }} / ${{ inputs.platform }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment: ${{ inputs.profile }}
+    defaults:
+      run:
+        working-directory: app
+    env:
+      CI: '1'
+      BUILD_PLATFORM: ${{ inputs.platform }}
+      BUILD_PROFILE: ${{ inputs.profile }}
+      WAIT_FOR_BUILD: ${{ inputs.wait }}
+    steps:
+      - name: Check Expo token
+        working-directory: .
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo '::error::Set EXPO_TOKEN in GitHub Actions secrets. See docs/releases.md.'
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - name: Test app before building
+        run: npm test -- --runInBand --config jest.config.js
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Build on EAS
+        run: |
+          wait_flag=--no-wait
+          if [ "$WAIT_FOR_BUILD" = true ]; then
+            wait_flag=--wait
+          fi
+          eas build \
+            --platform "$BUILD_PLATFORM" \
+            --profile "$BUILD_PROFILE" \
+            --non-interactive \
+            "$wait_flag"
+      - name: Build summary
+        if: always()
+        working-directory: .
+        env:
+          BUILD_RESULT: ${{ job.status }}
+        run: |
+          {
+            echo '## Native build'
+            echo "- Profile: $BUILD_PROFILE"
+            echo "- Platform: $BUILD_PLATFORM"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Waited for EAS: $WAIT_FOR_BUILD"
+            echo "- GitHub job result: $BUILD_RESULT"
+            echo '- Build details, logs and installation links are printed by EAS in the Build on EAS step.'
+            echo '- Without waiting, success only confirms that EAS accepted the build request.'
+          } >> "$GITHUB_STEP_SUMMARY"
