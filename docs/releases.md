@@ -115,9 +115,15 @@ Quellen: [EAS aus CI starten](https://docs.expo.dev/build/building-on-ci/),
 8. Bei einem App-Release werden Produktionsbuilds für Android und iOS gestartet.
    EAS erhöht die Buildnummern. Der Workflow wartet auf die Auftragsannahme;
    fertige Builds und Store-Einreichung anschließend in EAS prüfen.
-9. `main` per Merge-PR zurück nach `develop` führen. Das macht auch die neuen
-   Release-Tags in der develop-Historie erreichbar. Erst dann die nächste
-   Release-Vorbereitung starten.
+9. Nach erfolgreicher Veröffentlichung erstellt/aktualisiert **Releases**
+   automatisch den Backmerge-PR `main` → `develop`, sofern main dort noch nicht
+   integriert ist. Der Link steht in der Job-Zusammenfassung. Diesen PR prüfen
+   und **per Merge-Commit mergen, nicht squashen**. Es gibt keinen Auto-Merge.
+   Dadurch werden die Release-Tags in der develop-Historie erreichbar. Erst dann
+   die nächste Release-Vorbereitung starten. Der Backmerge-PR wartet nicht auf
+   native EAS-Builds; bei fehlgeschlagener Release-Veröffentlichung wird er
+   nicht erzeugt. Er verwendet das vorhandene `RELEASE_PLEASE_TOKEN`, damit
+   die normalen PR-Prüfungen starten.
 
 App-Änderungen auf `main` veröffentlichen weiterhin automatisch ein OTA auf
 `preview`. Es erfolgen kein automatisches Produktions-OTA und keine automatische
@@ -169,6 +175,19 @@ und die erste echte Version mit **Prepare Release** vorbereiten.
 - Expo-SDK- und SAP-CDS-Abhängigkeiten werden separat aktualisiert.
 
 ## Docker
+
+Das Root-Dockerfile verwendet `https://app.harzer-wander-buddy.de` als Standard
+für `EXPO_PUBLIC_BACKEND_URL`. Der bestehende Google-Trigger benötigt daher keine
+Buildargumente. Andere Umgebungen können die URL per `--build-arg` überschreiben;
+ein explizit leerer Wert wird weiterhin abgelehnt. Der Tests-Workflow prüft den
+vollständigen Docker-Build ohne Buildargumente auf PRs, `develop` und `main`,
+veröffentlicht aber keine Images.
+
+Der Release-Job benötigt `pull-requests: write`, um nach erfolgreicher
+Veröffentlichung die Labels der Versions-PRs auf `autorelease: tagged` zu setzen.
+Fehlt diese Berechtigung, können Tags/Releases bereits veröffentlicht sein,
+während der Job beim Labeln mit HTTP 403 abbricht. Nach Übernahme des Fixes kann
+**Releases** auf `main` erneut gestartet werden; vorhandene Tags bleiben erhalten.
 
 Der alte tagbasierte GitHub-Docker-Workflow ist entfernt. Googles vorhandener
 main-Trigger bleibt zuständig; seine Konfiguration wird durch diesen PR nicht

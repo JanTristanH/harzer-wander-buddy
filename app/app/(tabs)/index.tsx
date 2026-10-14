@@ -11,6 +11,7 @@ import {
   FlatList,
   Modal,
   PanResponder,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -1129,7 +1130,7 @@ export default function StampsScreen() {
         />
         {hasScrollableList ? (
           <View pointerEvents="box-none" style={[styles.fastScrollerOverlay, { top: fastScrollerTopInset }]}>
-            <View style={styles.fastScrollerRail}>
+            <View pointerEvents="box-none" style={styles.fastScrollerRail}>
               <View
                 pointerEvents="none"
                 style={[styles.fastScrollerTrack, { opacity: scrollerOpacity }]}>
@@ -1471,7 +1472,9 @@ const styles = StyleSheet.create({
     top: 0,
     right: 0,
     bottom: 0,
-    width: 40,
+    // On web, keep the mouse target in the list's outer gutter so it cannot
+    // cover the search clear button or the stamp rows underneath the overlay.
+    width: Platform.OS === 'web' ? 20 : 40,
   },
   fastScrollerPreview: {
     position: 'absolute',
