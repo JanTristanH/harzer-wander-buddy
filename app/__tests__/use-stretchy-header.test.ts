@@ -92,11 +92,20 @@ describe('web wheel overscroll', () => {
 
   function setupWheel() {
     const hook = setup();
-    let listener: (event: WheelEvent) => void;
+    const listeners: Record<string, (event: any) => void> = {};
+    const ownerDocument = {
+      addEventListener: jest.fn((type, callback) => { listeners[type] = callback; }),
+      removeEventListener: jest.fn(),
+      defaultView: {
+        addEventListener: jest.fn((type, callback) => { listeners[type] = callback; }),
+        removeEventListener: jest.fn(),
+      },
+    };
     const node = {
       scrollTop: 0,
       clientHeight: 600,
-      addEventListener: jest.fn((_type, callback) => { listener = callback; }),
+      ownerDocument,
+      addEventListener: jest.fn((type, callback) => { listeners[type] = callback; }),
       removeEventListener: jest.fn(),
     };
     const setValue = jest.spyOn(Animated.Value.prototype, 'setValue');
@@ -104,10 +113,10 @@ describe('web wheel overscroll', () => {
     act(() => hook.result.current.scrollRef({ getScrollableNode: () => node } as unknown as ScrollView));
     const wheel = (deltaY: number, options = {}) => {
       const event = { deltaY, deltaX: 0, deltaMode: 0, ctrlKey: false, preventDefault: jest.fn(), ...options };
-      act(() => listener(event as unknown as WheelEvent));
+      act(() => listeners.wheel(event));
       return event;
     };
-    return { ...hook, node, setValue, spring, wheel };
+    return { ...hook, node, setValue, spring, wheel, listeners };
   }
 
   it('stretches at the top and springs back after the wheel gesture without refreshing', () => {
@@ -122,6 +131,7 @@ describe('web wheel overscroll', () => {
     expect(spring).not.toHaveBeenCalled();
     act(() => jest.advanceTimersByTime(40));
     expect(spring).toHaveBeenCalledTimes(1);
+    expect(spring).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ useNativeDriver: false }));
     expect(onRefresh).not.toHaveBeenCalled();
   });
 
@@ -160,5 +170,68 @@ describe('web wheel overscroll', () => {
     expect(node.removeEventListener).toHaveBeenCalledWith('wheel', node.addEventListener.mock.calls[0][1]);
     act(() => jest.advanceTimersByTime(200));
     expect(spring).not.toHaveBeenCalled();
+  });
+
+  it('returns during a long momentum tail and allows a new gesture after a pause', () => {
+    const { wheel, spring, setValue } = setupWheel();
+    wheel(-100);
+    for (let i = 0; i < 6; i++) {
+      act(() => jest.advanceTimersByTime(100));
+      wheel(-10);
+    }
+    expect(spring).toHaveBeenCalledTimes(1);
+    const valueCalls = setValue.mock.calls.length;
+    wheel(-10);
+    expect(setValue).toHaveBeenCalledTimes(valueCalls);
+    act(() => jest.advanceTimersByTime(1000));
+    expect(setValue).toHaveBeenLastCalledWith(0);
+    wheel(-100);
+    expect(setValue).toHaveBeenLastCalledWith(45);
+  });
+
+  it('cancels text selection and browser image dragging during a mouse pull at the top', () => {
+    const { listeners, node } = setupWheel();
+    const event = { preventDefault: jest.fn() };
+    listeners.mousedown({ button: 0 });
+    listeners.selectstart(event);
+    listeners.dragstart(event);
+    expect(event.preventDefault).toHaveBeenCalledTimes(2);
+    listeners.mouseup({});
+    listeners.selectstart(event);
+    node.scrollTop = 100;
+    listeners.mousedown({ button: 0 });
+    listeners.selectstart(event);
+    expect(event.preventDefault).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns on window blur and resets the position if the scroll node is replaced', () => {
+    const { wheel, listeners, spring, result, setValue } = setupWheel();
+    wheel(-100);
+    listeners.blur({});
+    expect(spring).toHaveBeenCalledTimes(1);
+    act(() => result.current.scrollRef(null));
+    expect(setValue).toHaveBeenLastCalledWith(0);
+  });
+
+  it('resets on a ref change during the return animation after the idle timer fired', () => {
+    const { wheel, result, setValue } = setupWheel();
+    wheel(-100);
+    act(() => jest.advanceTimersByTime(140));
+    act(() => result.current.scrollRef(null));
+    expect(setValue).toHaveBeenLastCalledWith(0);
+  });
+
+  it('does not let a pending wheel reset interrupt a subsequent mouse pull', () => {
+    const { wheel, listeners, handlers, setValue } = setupWheel();
+    wheel(-100);
+    act(() => jest.advanceTimersByTime(140));
+    listeners.mousedown({ button: 0 });
+    act(() => {
+      handlers.onStartShouldSetPanResponderCapture?.(touch, gesture(0));
+      handlers.onPanResponderGrant?.(touch, gesture(0));
+      handlers.onPanResponderMove?.(touch, gesture(100));
+      jest.advanceTimersByTime(1000);
+    });
+    expect(setValue).toHaveBeenLastCalledWith(45);
   });
 });
