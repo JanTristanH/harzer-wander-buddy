@@ -22,7 +22,6 @@ const PLACEHOLDERS = {
   width: '__WIDTH__',
   height: '__HEIGHT__',
   badgeY: '__BADGE_Y__',
-  badgeRy: '__BADGE_RY__',
   pinPath: '__PIN_PATH__',
   fill: '__FILL_COLOR__',
   label: '__LABEL_TEXT__',
@@ -30,7 +29,7 @@ const PLACEHOLDERS = {
   fontSize: '__LABEL_FONT_SIZE__',
   y: '__LABEL_Y__',
   x: '__LABEL_X__',
-  badgeRx: '__BADGE_RX__',
+  badgeRadius: '__BADGE_RADIUS__',
   badgeFill: '__BADGE_FILL__',
 };
 
@@ -105,7 +104,6 @@ function renderSvg(template, { fillColor, textColor, badgeFill = '#ffffff', labe
     .replaceAll(PLACEHOLDERS.width, String(geometry.width))
     .replaceAll(PLACEHOLDERS.height, String(geometry.height))
     .replaceAll(PLACEHOLDERS.badgeY, String(geometry.badgeY))
-    .replaceAll(PLACEHOLDERS.badgeRy, String(geometry.badgeRy))
     .replaceAll(PLACEHOLDERS.pinPath, geometry.pinPath)
     .replaceAll(PLACEHOLDERS.fill, fillColor)
     .replaceAll(PLACEHOLDERS.textColor, textColor)
@@ -114,7 +112,7 @@ function renderSvg(template, { fillColor, textColor, badgeFill = '#ffffff', labe
     .replaceAll(PLACEHOLDERS.fontSize, String(labelStyle.fontSize))
     .replaceAll(PLACEHOLDERS.x, String(geometry.width / 2))
     .replaceAll(PLACEHOLDERS.y, String(geometry.labelY))
-    .replaceAll(PLACEHOLDERS.badgeRx, String(labelStyle.badgeRx));
+    .replaceAll(PLACEHOLDERS.badgeRadius, String(labelStyle.badgeRadius));
 }
 
 function validateTemplate(template) {

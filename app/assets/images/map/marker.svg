@@ -11,11 +11,10 @@
       stroke="#ffffff"
       stroke-width="2"
     />
-    <ellipse
+    <circle
       cx="__LABEL_X__"
       cy="__BADGE_Y__"
-      rx="__BADGE_RX__"
-      ry="__BADGE_RY__"
+      r="__BADGE_RADIUS__"
       fill="__BADGE_FILL__"
     />
     <text

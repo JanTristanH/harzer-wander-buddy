@@ -34,7 +34,7 @@ export function createCssMapMarkerHtml(options: {
   const label = normalizeWebMarkerLabel(options.label ?? null);
   const compactClass = options.size <= 18 ? ' hwb-css-marker--compact' : '';
   const labelStyle = resolveMapMarkerLabelStyle(label ?? '');
-  const badgeWidth = labelStyle.badgeRx * 2;
+  const badgeWidth = labelStyle.badgeRadius * 2;
   const height = Math.round((options.size * geometry.outputHeight) / geometry.outputWidth);
 
   return `<span aria-hidden="true" class="hwb-css-marker${compactClass}" style="--hwb-marker-color:${color};--hwb-marker-badge-width:${badgeWidth}px;--hwb-marker-font-size:${labelStyle.fontSize}px;--hwb-marker-scale-x:${options.size / geometry.width};--hwb-marker-scale-y:${height / geometry.height}"><span class="hwb-css-marker__label">${
@@ -83,13 +83,13 @@ export const WEB_MAP_MARKER_CSS = `
   color: #111;
   display: flex;
   font: 700 var(--hwb-marker-font-size)/1 Arial, Helvetica, sans-serif;
-  height: ${geometry.badgeRy * 2}px;
+  height: var(--hwb-marker-badge-width);
   justify-content: center;
   left: 50%;
   padding: 0;
   position: absolute;
-  top: ${geometry.badgeY - geometry.badgeRy}px;
-  transform: translateX(-50%);
+  top: ${geometry.badgeY}px;
+  transform: translate(-50%, -50%);
   width: var(--hwb-marker-badge-width);
   z-index: 1;
 }

@@ -5,24 +5,27 @@
   "outputHeight": 52,
   "pinPath": "M28 4C17.5066 4 9 12.5066 9 23c0 14.25 19 33 19 33s19-18.75 19-33C47 12.5066 38.4934 4 28 4Zm0 27.5c-4.6944 0-8.5-3.8056-8.5-8.5s3.8056-8.5 8.5-8.5 8.5 3.8056 8.5 8.5-3.8056 8.5-8.5 8.5Z",
   "badgeY": 23,
-  "badgeRy": 8.7,
   "labelY": 23.5,
   "labelStyles": [
     {
       "fontSize": 14,
-      "badgeRx": 8.6
+      "textWidth": 13.416,
+      "badgeRadius": 8.6
     },
     {
       "fontSize": 14,
-      "badgeRx": 10.9
+      "textWidth": 17.004,
+      "badgeRadius": 10.9
     },
     {
       "fontSize": 14,
-      "badgeRx": 16.5
+      "textWidth": 25.74,
+      "badgeRadius": 13.5
     },
     {
       "fontSize": 12,
-      "badgeRx": 17.5
+      "textWidth": 27.3,
+      "badgeRadius": 17.5
     }
   ]
 }

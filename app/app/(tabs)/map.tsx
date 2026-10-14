@@ -50,6 +50,7 @@ import {
 } from '@/lib/group-marker';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images';
+import { geometry, resolveMapMarkerLabelStyle } from '@/lib/map-marker-style';
 import { areMapCoordinatesEqual, isCoordinateInPaddedRegion } from '@/lib/map-viewport';
 import { canCreateMapVisit, getMapPrimaryActionLabel } from '@/lib/map-stamp-action';
 import {
@@ -487,20 +488,13 @@ function normalizeStampMarkerToken(value?: string | null): string | null {
   return null;
 }
 
-function groupMarkerBadgeWidth(label: string) {
-  if (label.length <= 1) {
-    return 15;
-  }
-
-  if (label.length === 2) {
-    return 19;
-  }
-
-  if (label.length === 3) {
-    return 22;
-  }
-
-  return 25;
+function groupMarkerBadgeDimensions(label: string) {
+  const radius = resolveMapMarkerLabelStyle(label).badgeRadius;
+  const diameter = radius * 2 * geometry.outputWidth / geometry.width;
+  return {
+    diameter,
+    top: geometry.badgeY * geometry.outputHeight / geometry.height - diameter / 2,
+  };
 }
 
 function stampMarkerAccessibilityLabel(
@@ -896,6 +890,7 @@ export default function MapScreen() {
         visual.visualKind === 'group-partial-stamp';
 
       if (usesGeneratedGroupBackground && visual.image) {
+        const badge = groupMarkerBadgeDimensions(visual.label);
         return (
           <Marker
             accessibilityLabel={accessibilityLabel}
@@ -911,11 +906,11 @@ export default function MapScreen() {
                 source={visual.image}
                 style={styles.generatedGroupMarkerBackground}
               />
-              <View style={styles.generatedGroupMarkerBadgePositioner}>
+              <View style={[styles.generatedGroupMarkerBadgePositioner, { top: badge.top }]}>
                 <View
                   style={[
                     styles.generatedGroupMarkerBadge,
-                    { width: groupMarkerBadgeWidth(visual.label) },
+                    { width: badge.diameter, height: badge.diameter },
                   ]}>
                   <Text style={styles.generatedGroupMarkerLabel}>{visual.label}</Text>
                 </View>
@@ -2816,8 +2811,7 @@ const styles = StyleSheet.create({
   generatedGroupMarkerBadge: {
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 8,
-    height: 15,
+    borderRadius: 999,
     justifyContent: 'center',
   },
   generatedGroupMarkerLabel: {

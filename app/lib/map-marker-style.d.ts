@@ -5,8 +5,7 @@ export const geometry: {
   outputHeight: number;
   pinPath: string;
   badgeY: number;
-  badgeRy: number;
   labelY: number;
-  labelStyles: { fontSize: number; badgeRx: number }[];
+  labelStyles: { fontSize: number; badgeRadius: number; textWidth: number }[];
 };
-export function resolveMapMarkerLabelStyle(label: string): { fontSize: number; badgeRx: number };
+export function resolveMapMarkerLabelStyle(label: string): { fontSize: number; badgeRadius: number; textWidth: number };
