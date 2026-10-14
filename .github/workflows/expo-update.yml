@@ -2,7 +2,7 @@ name: Expo OTA Update
 
 on:
   push:
-    branches: [develop]
+    branches: [main]
     paths:
       - "app/**"
       - ".github/workflows/expo-update.yml"
