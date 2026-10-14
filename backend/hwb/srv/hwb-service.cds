@@ -87,6 +87,24 @@ service api @(requires: 'authenticated-user') {
         provider         : String;
     };
 
+    type ImageCompressionResult {
+        processed : Integer;
+        compressed : Integer;
+        skipped : Integer;
+        failed : Integer;
+        bytesBefore : Integer64;
+        bytesAfter : Integer64;
+        bytesSaved : Integer64;
+        nextAfterId : UUID;
+        hasMore : Boolean;
+        maxDimension : Integer;
+        quality : Integer;
+        failedIds : many UUID;
+    };
+
+    @requires: 'admin'
+    action compressExistingImages(batchSize : Integer, afterId : UUID) returns ImageCompressionResult;
+
     @requires: 'admin'
     function calculateTravelTimesNNearestNeighbors(n : Integer)        returns Integer;
 

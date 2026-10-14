@@ -9,10 +9,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { AdminGuard } from '@/components/admin-guard';
+import { AdminScreen } from '@/components/admin-screen';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
 import { useAdminStampsOverviewQuery } from '@/lib/queries';
@@ -55,7 +55,7 @@ export default function AdminStampListScreen() {
 
   return (
     <AdminGuard>
-      <SafeAreaView style={styles.safeArea}>
+      <AdminScreen style={styles.safeArea}>
         <View style={styles.content}>
           <View style={styles.headerRow}>
             <Pressable
@@ -129,6 +129,7 @@ export default function AdminStampListScreen() {
             </View>
           ) : (
             <FlatList
+              keyboardDismissMode="on-drag"
               keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.listContent}
               data={filteredStamps}
@@ -186,7 +187,7 @@ export default function AdminStampListScreen() {
 
           {isFetching && !isPending ? <Text style={styles.refreshHint}>Aktualisiere im Hintergrund...</Text> : null}
         </View>
-      </SafeAreaView>
+      </AdminScreen>
     </AdminGuard>
   );
 }
