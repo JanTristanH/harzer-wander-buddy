@@ -26,6 +26,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
+import { LegalLinks } from '@/components/legal-links';
 import { FriendsList, type FriendsListItem } from '@/components/friends-list';
 import { Fonts } from '@/constants/theme';
 import {
@@ -351,15 +352,6 @@ export default function OnboardingScreen() {
   const handlePickProfileImage = useCallback(async () => {
     if (!canPerformWrites) {
       Alert.alert('Offline', 'Profilbilder koennen nur online geaendert werden.');
-      return;
-    }
-
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert(
-        'Zugriff auf Fotos benoetigt',
-        'Bitte erlaube den Zugriff auf deine Fotos, um ein Profilbild auszuwaehlen.'
-      );
       return;
     }
 
@@ -701,7 +693,7 @@ export default function OnboardingScreen() {
                 editable={!busy && canPerformWrites} onChangeText={(value) => { setProfileName(value); setProfileSaveError(null); }}
                 onSubmitEditing={() => { if (profileName.trim()) void handleAdvance(); }} returnKeyType="next"
                 placeholder="Zum Beispiel Alex" placeholderTextColor="#8A968A" style={styles.nameInput} value={profileName} />
-              <Text style={styles.inputHint}>Ein Vorname oder Spitzname reicht.</Text>
+              <Text style={styles.inputHint}>Ein Vorname oder Spitzname reicht. Dein Profilname ist für andere angemeldete Nutzer auffindbar.</Text>
             </View> : null}
 
             {step === 2 ? <>
@@ -719,7 +711,7 @@ export default function OnboardingScreen() {
                 })}
               </View>
               <ActionButton disabled={busy || !canPerformWrites} label="Eigenes Foto hochladen" onPress={() => void handlePickProfileImage()} />
-              <Text style={styles.guidance}>Dein Avatar ist für deine Wanderbuddies sichtbar.</Text>
+              <Text style={styles.guidance}>Dein Avatar ist für andere angemeldete Nutzer auffindbar.</Text>
             </> : null}
 
             {step === 3 ? <View style={styles.inputCard}>
@@ -740,6 +732,7 @@ export default function OnboardingScreen() {
                 <Text style={styles.guidance}>Auch allein beginnt ein gutes Abenteuer. Freunde kannst du jederzeit später hinzufügen.</Text>}
             </View> : null}
             {profileSaveError && step > 0 ? <Text accessibilityRole="alert" style={styles.errorText}>{profileSaveError}</Text> : null}
+            <LegalLinks />
           </ScrollView>
           <View style={[styles.flowDock, { paddingBottom: bottomDockPadding }]}>
             <ActionButton disabled={primaryDisabled || busy || (step === 1 && !profileName.trim()) || locationPermission === 'checking'}

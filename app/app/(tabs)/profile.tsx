@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 
+import { LegalLinks } from '@/components/legal-links';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import {
   ProfileErrorState,
@@ -178,6 +179,8 @@ export default function ProfileScreen() {
       refreshHint: isFetching && !isPending ? 'Aktualisiere Daten im Hintergrund...' : undefined,
       showDeferredSkeletons: isPlaceholderData,
       footerButtons: [
+        { key: 'privacy', label: 'Konto und Datenschutz', onPress: () => router.push('/account-privacy' as never) },
+        { key: 'legal', label: 'Impressum und Rechtliches', onPress: () => router.push('/legal/imprint' as never) },
         ...(isAdmin
           ? [
               {
@@ -245,24 +248,24 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SignInRequiredScreen
+      <View style={{ flex: 1 }}><SignInRequiredScreen
         body="Melde dich an, um deinen Fortschritt, deine Besuche und deine Freunde zu sehen."
         onSignIn={() => router.push('/login' as never)}
         title="Profil ist mit Konto verfuegbar"
-      />
+      /><View style={{ paddingHorizontal: 24, paddingBottom: 100 }}><LegalLinks /></View></View>
     );
   }
 
   if (isPending && !data) {
-    return <ProfileLoadingState label="Profil wird geladen..." />;
+    return <View style={{ flex: 1 }}><ProfileLoadingState label="Profil wird geladen..." /><View style={{ paddingHorizontal: 24, paddingBottom: 100 }}><LegalLinks /></View></View>;
   }
 
   if (blockingError || !viewModel) {
     return (
-      <ProfileErrorState
+      <View style={{ flex: 1 }}><ProfileErrorState
         body={blockingError?.message || 'Keine Daten verfuegbar.'}
         title="Profil konnte nicht geladen werden"
-      />
+      /><View style={{ paddingHorizontal: 24, paddingBottom: 100 }}><LegalLinks /></View></View>
     );
   }
 

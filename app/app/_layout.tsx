@@ -128,7 +128,7 @@ function OnboardingRouteSync() {
   const rootSegment = segments[0];
 
   useEffect(() => {
-    if (isLoading || !isAuthenticated || hasCompletedOnboarding || rootSegment === 'onboarding') {
+    if (isLoading || !isAuthenticated || hasCompletedOnboarding || ['onboarding', 'legal', 'account-privacy', 'community-safety'].includes(rootSegment || '')) {
       return;
     }
 
