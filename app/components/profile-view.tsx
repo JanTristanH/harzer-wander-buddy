@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList } from '@/components/friends-list';
 import { InstallAppBanner } from '@/components/profile/install-app-banner';
+import { TechnicalDetails } from '@/components/profile/technical-details';
 import { ProfileTimelineSummarySection } from '@/components/profile-timeline-summary-section';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
 import { useAuth } from '@/lib/auth';
@@ -1022,6 +1023,8 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             ) : null}
           </ProfileSection>
         ) : null}
+
+        {data.mode === 'self' ? <TechnicalDetails /> : null}
 
         {data.footerButtons?.length ? (
           <View style={styles.footerButtonStack}>
