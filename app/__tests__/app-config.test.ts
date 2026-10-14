@@ -17,6 +17,12 @@ jest.mock('expo-constants', () => ({
 }));
 
 describe('Expo backend configuration', () => {
+  it('uses the package release version and fingerprint runtime compatibility', () => {
+    const config = createExpoConfig({});
+    expect(config.version).toBe(require('../package.json').version);
+    expect(config.runtimeVersion).toEqual({ policy: 'fingerprint' });
+  });
+
   it('uses the local backend as the development default', () => {
     expect(resolveBackendUrl()).toBe(LOCAL_BACKEND_URL);
     expect(createExpoConfig({}).extra?.backendUrl).toBe(LOCAL_BACKEND_URL);
@@ -26,6 +32,11 @@ describe('Expo backend configuration', () => {
     expect(resolveBackendUrl('  https://app.harzer-wander-buddy.de/  ')).toBe(
       'https://app.harzer-wander-buddy.de'
     );
+  });
+
+  it('uses the Expo root for Basic web and preserves the CAP mount path for SSO', () => {
+    expect(createExpoConfig({ EXPO_PUBLIC_AUTH_MODE: 'basic' }).experiments?.baseUrl).toBe('');
+    expect(createExpoConfig({ EXPO_PUBLIC_AUTH_MODE: 'sso' }).experiments?.baseUrl).toBe('/app/rnweb');
   });
 
   it('rejects invalid or unsupported backend URLs', () => {

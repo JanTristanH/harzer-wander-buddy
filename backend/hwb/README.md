@@ -1,12 +1,40 @@
 # Getting Started
 
+## Explicit local auth profiles
+
+| Profile | Backend command | App / browser |
+| --- | --- | --- |
+| `dev-basic` | `npm run watch:basic` (or `start:basic`) | Separately run `npm run web:basic --prefix app` from repository root; `http://localhost:8081/login` |
+| `dev-sso` | `npm run watch:sso` (or `start:sso`) | Build with `./scripts/build-and-copy-rnweb.sh` from repository root; `http://localhost:4004/app/rnweb` |
+| `production` | Existing container startup | Existing PostgreSQL and Auth0 configuration |
+
+Both local profiles use the ignored SQLite database `db.local.db`. Their startup
+scripts copy the checked-in `db.sqlite` seed on first start only; existing local
+visits and profile edits are never overwritten and do not change tracked files.
+Start only one CAP profile on port 4004 at a time. `PORT=4005 npm run start:basic` can
+run alongside SSO, but then Expo must use `EXPO_PUBLIC_BACKEND_URL=http://localhost:4005`.
+
+`dev-basic` uses real HTTP Basic headers and only explicitly configured test accounts,
+with the test login from `../../AGENTS.md`. No wildcard users or default CAP mock users
+are accepted. A valid login provisions the local `ExternalUsers` record so profile,
+onboarding and ownership checks work with the same user ID. Test users have no admin
+role by default. Basic cannot be combined with `production`.
+
+`dev-sso` keeps the existing Auth0 session and bearer authentication. For local startup,
+empty issuer/audience values fall back to the public Auth0 configuration in
+`../../app/app.json`; CAP's session base URL is explicitly `http://localhost:4004/`.
+Session secrets and client credentials still come from the local `.env`. If using a
+different tenant, configure matching `ISSUER_BASE_URL`, `AUDIENCE` and Expo values.
+These local defaults do not apply to production. The existing `development` default
+and container startup remain unchanged.
+
 ## Running this project
 
 - run `cds watch` to start the backend
 - the frontend is also served via the cds server
   - be careful with the link in the console: is protected by the auth0 endpoint.
     - http://localhost:4004/app -> protected by auth0
-    - http://localhost:4004/frontendhwb/webapp/index.html -> basic auth & geo locating available (Users are configured in `package.json`)
+    - http://localhost:4004/app/frontendhwb/webapp/index.html -> legacy UI5 app (Auth0 in the default profile)
 - The profiles `memory`, `development` and `production` are available and can be selected using the `--profile` flag
   - `development` is selected as default with a persistent database
   - to get dummy data, rename the folder `DoNotDeploy-data` to `data` and run `cds deploy`
@@ -15,7 +43,14 @@
 
 ## React Native Web via CAP
 
-Do not use the Expo web dev server for local Auth0 login. The Auth0 SPA configuration is meant for the RN web build served by the CAP server.
+Use the separate Expo web dev server only with `dev-basic`; do not use it for local Auth0 login. The Auth0 SPA configuration is meant for the RN web build served by the CAP server.
+
+Install dependencies once, from the repository root, if either `node_modules` directory is missing:
+
+```bash
+npm ci --prefix app
+npm ci --prefix backend/hwb
+```
 
 Build and copy the RN web HTML/assets into the CAP app folder from the repository root:
 
@@ -24,6 +59,7 @@ Build and copy the RN web HTML/assets into the CAP app folder from the repositor
 ```
 
 The script runs `npx expo export --platform web` in `app/` and replaces `backend/hwb/app/rnweb` with the generated `app/dist` output.
+Edit the source files under `app/`; do not edit `app/dist` or `backend/hwb/app/rnweb`, since both are generated. Re-run the build-and-copy script after each web change, then reload the browser.
 
 Then start CAP:
 
@@ -44,8 +80,16 @@ Auth0 local development settings for this CAP-served entry point:
 
 ## Needed Environment variables
 
-Rename the file `sample.env` to `.env` for development. You must also provide a api key in the `app/frontendhwb/index.html` to load the google maps script.
-For deployment you may also provide them directly to the container.
+Copy `sample.env` to `.env` for local development. Keep the `.env` file local and do not commit secrets.
+
+For the React Native web app's Auth0 bearer-token API calls, make sure these values are populated in `backend/hwb/.env` before starting CAP:
+
+- `ISSUER_BASE_URL`: the Auth0 tenant issuer matching `auth0Domain` in `app/app.json` (for example, `https://<tenant>.us.auth0.com`).
+- `AUDIENCE`: the API identifier matching `auth0Audience` in `app/app.json`.
+
+An empty `ISSUER_BASE_URL` lets the page load and Auth0 login begin, but protected API requests fail. `CLIENT_ID`, `CLIENT_SECRET`, `SECRET`, and `BASE_URL` configure CAP's own Auth0 session flow (for example, the older `/app` UI5 route); the RN web SPA uses `auth0ClientIdWeb` from `app/app.json` instead. For CAP's session flow, `BASE_URL` should be `http://localhost:4004/` locally.
+
+You must also provide an API key in `app/frontendhwb/index.html` to load the Google Maps script. For deployment, environment variables may be provided directly to the container.
 
 ## Database
 
@@ -250,3 +294,58 @@ exports.onExecutePostLogin = async (event, api) => {
 };
 ````
     - move into flow on the left
+
+## Image compression and database traffic
+
+The app already prepares profile uploads at a maximum edge of 1024 pixels and
+quality 70 (WebP, with JPEG fallback). The backend now also optimizes JPEG, PNG,
+WebP, GIF, TIFF and AVIF uploads to `Attachments`, including OData V2/V4 media PUTs
+and inline content on CREATE/UPDATE. The shared server settings are in
+`srv/image-processing.js`: WebP, 1024 pixels, quality 70. Images are oriented before
+resizing; output metadata is removed. Files are replaced only when smaller.
+Animated/multipage files and other attachment types are preserved. Invalid images
+are rejected; processing is limited to 20 MiB input and 40 megapixels.
+
+Deploy the CDS schema before running the new backend: `Attachments_local` gains a
+nullable `compressionProfile` column. The existing container startup runs the
+schema deployment. Stored content stays in the database and existing URLs stay valid.
+External profile-picture URLs (for example Auth0/Gravatar) are unaffected.
+
+An authenticated user with the `admin` role can optimize existing attachments:
+
+```http
+POST /odata/v4/api/compressExistingImages
+Authorization: Bearer <admin-access-token>
+Content-Type: application/json
+
+{"batchSize":10}
+```
+
+The response includes `processed`, `compressed`, `skipped`, `failed`, `failedIds`,
+`bytesBefore`, `bytesAfter`, `bytesSaved`, `hasMore`, and `nextAfterId`.
+When `hasMore` is true, send `nextAfterId` as `afterId` in the next POST, retaining
+`batchSize` (default 10, maximum 50). The endpoint reads one image at a time;
+row locks prevent concurrent uploads from being overwritten. Each batch commits
+atomically. Unreadable/oversized images are reported in `failedIds` and retained;
+continue with the cursor to process subsequent images. A new run without `afterId`
+retries failed images. Successfully evaluated images are marked with the settings
+version, preventing repeated lossy recompression and unnecessary blob reads on
+repeat runs. Changing the shared settings makes them eligible again. No backfill
+is run automatically; its first pass necessarily reads existing image data.
+
+Authenticated image-content GETs use a per-process LRU memory cache (5-minute TTL,
+32 MiB total, at most 2 MiB per entry), including profile-picture requests through
+the existing attachment URLs. Cache keys include user, tenant and query; CAP
+checks authorization on every hit. Successful attachment writes/deletes and
+backfill batches invalidate the local cache. Other server instances expire their
+copies within five minutes. Large images still stream normally, without being
+cached. Restarting the server clears the cache. This reduces database reads as
+well as the bytes transferred for compressed images.
+
+From the mobile app, open **Profil → Admin → Bilder komprimieren** and tap
+**Komprimierung starten**. The app processes batches automatically and displays
+saved MiB plus compressed, unchanged and failed counts. You can pause and resume;
+backgrounding the app or leaving the screen stops after the current request.
+Keep the screen open to finish the run. If you return later, starting again safely
+skips images already processed by the server. The control requires admin access
+and an online connection.

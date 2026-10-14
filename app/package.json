@@ -1,8 +1,12 @@
 {
   "name": "harzer-wander-buddy-app",
   "main": "expo-router/entry",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "scripts": {
+    "dev:basic:web": "npm run web:basic",
+    "dev:basic:native": "npm run start:basic",
+    "dev:sso:web:build": "bash ../scripts/build-and-copy-rnweb.sh",
+    "dev:sso:native": "EXPO_PUBLIC_AUTH_MODE=sso expo start",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "generate:map-markers": "node ./scripts/generate-map-marker-pngs.mjs",
@@ -14,7 +18,10 @@
     "lint": "expo lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "web:basic": "EXPO_PUBLIC_AUTH_MODE=basic EXPO_PUBLIC_BACKEND_URL=http://localhost:4004 expo start --web --port 8081",
+    "start:basic": "EXPO_PUBLIC_AUTH_MODE=basic EXPO_PUBLIC_BACKEND_URL=http://localhost:4004 expo start",
+    "build:web:sso": "EXPO_PUBLIC_AUTH_MODE=sso expo export --platform web"
   },
   "jest": {
     "preset": "jest-expo",
@@ -94,5 +101,26 @@
     "sharp": "^0.34.5",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "hwbProfiles": {
+    "dev-basic": {
+      "description": "Lokale HTTP Basic Auth mit Loginformular; CAP und Expo separat starten.",
+      "backend": "Im zweiten Terminal: npm run dev:basic:cap --prefix backend/hwb (vom Projektroot).",
+      "web": "npm run dev:basic:web",
+      "native": "npm run dev:basic:native",
+      "url": "http://localhost:8081/login",
+      "testCredentials": "../AGENTS.md"
+    },
+    "dev-sso": {
+      "description": "Auth0 SSO; Web-Build wird über CAP ausgeliefert. Nach App-Änderungen erneut bauen und Browser neu laden.",
+      "backend": "npm run dev:sso:cap --prefix backend/hwb (vom Projektroot).",
+      "webBuildAndCopy": "npm run dev:sso:web:build",
+      "native": "npm run dev:sso:native",
+      "url": "http://localhost:4004/app/rnweb",
+      "note": "Expo Web nicht direkt für SSO starten; Expo start ist hier nur für native Entwicklung."
+    },
+    "production": {
+      "description": "SSO-Web-Build und bestehender Container-Ablauf bleiben unverändert."
+    }
+  }
 }

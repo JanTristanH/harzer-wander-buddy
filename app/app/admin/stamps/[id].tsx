@@ -15,9 +15,10 @@ import {
   View,
 } from 'react-native';
 import MapView, { Marker, type MapPressEvent, type Region } from 'react-native-maps';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { AdminGuard } from '@/components/admin-guard';
+import { AdminScreen } from '@/components/admin-screen';
 import { SkeletonBlock } from '@/components/skeleton';
 import {
   createStampbox,
@@ -654,8 +655,12 @@ export default function AdminStampEditorScreen() {
 
   return (
     <AdminGuard>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <AdminScreen style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
           <View style={styles.headerRow}>
             <Pressable
               onPress={() => router.back()}
@@ -842,7 +847,7 @@ export default function AdminStampEditorScreen() {
                 </View>
 
                 <Text style={styles.fieldLabel}>Ort suchen</Text>
-                <TextInput
+                <ClearableSearchInput standalone
                   autoCapitalize="words"
                   autoCorrect={false}
                   onChangeText={setLocationSearchQuery}
@@ -936,7 +941,7 @@ export default function AdminStampEditorScreen() {
             </>
           )}
         </ScrollView>
-      </SafeAreaView>
+      </AdminScreen>
     </AdminGuard>
   );
 }

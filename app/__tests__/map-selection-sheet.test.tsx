@@ -120,3 +120,34 @@ describe('MapSelectionSheet user interaction', () => {
     expect(onPrimaryActionPress).not.toHaveBeenCalled();
   });
 });
+
+const groupStatus = {
+  item: { hasVisited: true, stampedUserIds: '["anna"]', totalGroupStampings: 2 },
+  currentUser: { name: 'Max Wanderer', picture: 'https://example.test/max.jpg' },
+  groupMembers: [{ id: 'anna', name: 'Anna Adler', picture: 'https://example.test/anna.jpg' },
+    { id: 'ben', name: 'Ben Berg' }],
+  groupSize: 3,
+};
+
+describe('MapSelectionSheet group status', () => {
+  it.each(['expanded', 'compact'] as const)('shows member visits in %s mode', (mode) => {
+    render(<MapSelectionSheet bottomOffset={0} item={baseItem} mode={mode} groupStatus={groupStatus} />);
+    expect(screen.getByText('2 von 3 in der Gruppe')).toBeTruthy();
+    expect(screen.getByLabelText('Du: besucht')).toBeTruthy();
+    expect(screen.getByLabelText('Anna Adler: besucht')).toBeTruthy();
+    expect(screen.getByLabelText('Ben Berg: unbesucht')).toBeTruthy();
+    expect(screen.getByTestId('group-member-avatar-anna-image').props.source).toMatchObject({
+      uri: 'https://example.test/anna.jpg',
+    });
+  });
+
+  it('hides group status on parking sheets', () => {
+    render(<MapSelectionSheet bottomOffset={0} item={{ ...baseItem, kind: 'parking' }} mode="expanded" groupStatus={groupStatus} />);
+    expect(screen.queryByText(/in der Gruppe/)).toBeNull();
+  });
+
+  it('hides group status without a selected group', () => {
+    render(<MapSelectionSheet bottomOffset={0} item={baseItem} mode="expanded" />);
+    expect(screen.queryByTestId('group-member-avatar-self')).toBeNull();
+  });
+});
