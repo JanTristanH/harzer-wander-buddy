@@ -3755,6 +3755,26 @@ export async function calculateTravelTimesNNearestNeighbors(accessToken: string,
   return unwrapNumericODataResult(parsed) ?? 0;
 }
 
+export type ImageCompressionResult = {
+  processed: number;
+  compressed: number;
+  skipped: number;
+  failed: number;
+  bytesSaved: number;
+  hasMore: boolean;
+  nextAfterId: string | null;
+};
+
+export async function compressExistingImages(accessToken: string, afterId?: string) {
+  const payload = await mutateOData<unknown>(accessToken, buildUrl('compressExistingImages'), {
+    method: 'POST',
+    body: JSON.stringify({ batchSize: 10, ...(afterId ? { afterId } : {}) }),
+  });
+  const result = parseODataFunctionResult<ImageCompressionResult>(payload, 'compressExistingImages');
+  // OData may encode Integer64 byte counts as strings.
+  return { ...result, bytesSaved: Number(result.bytesSaved) };
+}
+
 export async function addElevationToAllTravelTimes(accessToken: string) {
   const payload = await fetchOData<unknown>(accessToken, buildUrl('addElevationToAllTravelTimes'));
   const parsed = parseODataFunctionResult<unknown>(payload, 'addElevationToAllTravelTimes');

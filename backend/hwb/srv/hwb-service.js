@@ -30,6 +30,7 @@ let aTravelTimesGlobal = [];
 
 module.exports = class api extends cds.ApplicationService {
   init() {
+    require('./attachment-images')(this);
 
     this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
 

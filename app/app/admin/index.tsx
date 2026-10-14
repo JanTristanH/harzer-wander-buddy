@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AdminImageCompression } from '@/components/admin-image-compression';
 import { AdminGuard } from '@/components/admin-guard';
 import {
   addElevationToAllTravelTimes,
@@ -192,6 +193,8 @@ export default function AdminHomeScreen() {
               <Feather color="#2e6b4b" name="chevron-right" size={18} />
             </Pressable>
           </View>
+
+          <AdminImageCompression />
 
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>TravelTime Service</Text>
