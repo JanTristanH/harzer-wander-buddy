@@ -1,6 +1,7 @@
 import type { ExpoConfig } from 'expo/config';
 
 const config = (require('./app.json') as { expo: ExpoConfig }).expo;
+const { version } = require('./package.json') as { version: string };
 export const LOCAL_BACKEND_URL = 'http://localhost:4004';
 
 type BuildEnvironment = Record<string, string | undefined>;
@@ -34,6 +35,11 @@ export function createExpoConfig(env: BuildEnvironment = process.env): ExpoConfi
 
   return {
     ...config,
+    version,
+    experiments: {
+      ...config.experiments,
+      baseUrl: env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : config.experiments?.baseUrl,
+    },
     android: {
       ...config.android,
       config: {

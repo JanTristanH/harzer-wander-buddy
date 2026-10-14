@@ -35,6 +35,7 @@ type StampPressStageProps = {
   enabled?: boolean;
   pressDepth?: number;
   style?: React.ComponentProps<typeof View>['style'];
+  actorStyle?: React.ComponentProps<typeof Animated.View>['style'];
 };
 
 function useStampPressAnimation({
@@ -253,6 +254,7 @@ export function StampPressStage({
   enabled = true,
   pressDepth = 5,
   style,
+  actorStyle,
 }: StampPressStageProps) {
   const { buttonAnimatedStyle, isTouchActive, onPressIn, onPressOut, stampActorStyle } =
     useStampPressAnimation({
@@ -268,7 +270,7 @@ export function StampPressStage({
         onPressIn,
         onPressOut,
       })}
-      <AnimatedStamp style={stampActorStyle} />
+      <AnimatedStamp style={[stampActorStyle, actorStyle]} />
     </View>
   );
 }

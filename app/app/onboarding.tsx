@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList, type FriendsListItem } from '@/components/friends-list';
 import { Fonts } from '@/constants/theme';
 import {
@@ -33,6 +34,7 @@ import {
   type SearchUserResult,
 } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
+import { appConfig } from '@/lib/config';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import { type UploadableImage } from '@/lib/image-upload';
 import {
@@ -687,6 +689,7 @@ export default function OnboardingScreen() {
       <StatusBar style="dark" />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           bounces={false}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
           showsVerticalScrollIndicator={false}>
@@ -768,14 +771,14 @@ export default function OnboardingScreen() {
                 <ActionButton
                   disabled={!!configError || isLoading}
                   label={isLoading ? 'Wird vorbereitet...' : 'Anmelden'}
-                  onPress={login}
+                  onPress={() => appConfig.authMode === 'basic' ? router.push('/login') : void login()}
                 />
-                <ActionButton
+                {appConfig.authMode !== 'basic' ? <ActionButton
                   disabled={!!configError || isLoading}
                   label={isLoading ? 'Wird vorbereitet...' : 'Konto erstellen'}
                   onPress={signup}
                   variant="primary"
-                />
+                /> : null}
               </View>
             )}
           </View>
@@ -861,7 +864,7 @@ export default function OnboardingScreen() {
                 <View style={styles.searchInputIconWrap}>
                   <Feather color="#6B7A6B" name="search" size={14} />
                 </View>
-                <TextInput
+                <ClearableSearchInput
                   autoCapitalize="none"
                   autoCorrect={false}
                   autoFocus

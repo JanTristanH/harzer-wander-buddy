@@ -3,6 +3,10 @@ import React from 'react';
 
 import type { Stampbox } from '@/lib/api';
 
+jest.mock('@tanstack/react-query', () => ({
+  useQueryClient: () => ({ invalidateQueries: jest.fn() }),
+}));
+
 /**
  * Reference component test for the main list ("Liste" tab) in the unauthenticated
  * guest state.

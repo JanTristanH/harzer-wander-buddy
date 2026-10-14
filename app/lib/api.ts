@@ -716,7 +716,7 @@ async function fetchOData<T>(accessToken: string, url: string) {
   const response = await fetch(url, {
     headers: {
       Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `${appConfig.authMode === 'basic' ? 'Basic' : 'Bearer'} ${accessToken}`,
     },
   });
 
@@ -766,7 +766,7 @@ async function mutateOData<T>(
     ...init,
     headers: {
       Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `${appConfig.authMode === 'basic' ? 'Basic' : 'Bearer'} ${accessToken}`,
       'Content-Type': 'application/json',
       ...(init.headers ?? {}),
     },
@@ -3838,7 +3838,7 @@ export async function uploadAttachment(
     method: 'PUT',
     headers: {
       Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `${appConfig.authMode === 'basic' ? 'Basic' : 'Bearer'} ${accessToken}`,
       'Content-Type': file.mimeType,
     },
     body: fileBlob,
@@ -3952,4 +3952,21 @@ export async function deleteStamping(accessToken: string, stampingId: string) {
   return mutateOData<null>(accessToken, buildUrl(`Stampings(${stampingId})`), {
     method: 'DELETE',
   });
+}
+
+// Read every visit owned by the signed-in user; a place may have multiple visits.
+export async function fetchOwnStampings(accessToken: string, stampId: string, currentUserId: string) {
+  const stampings: VisitStamping[] = [];
+  const pageSize = 200;
+  for (let skip = 0; ; skip += pageSize) {
+    const page = await fetchCollection<VisitStamping>(accessToken, 'Stampings', {
+      select: ['ID', 'stamp_ID', 'createdBy'],
+      filter: `stamp_ID eq ${stampId} and createdBy eq '${escapeODataString(currentUserId)}'`,
+      orderBy: 'ID asc',
+      top: pageSize,
+      skip,
+    });
+    stampings.push(...page);
+    if (page.length < pageSize) return stampings;
+  }
 }

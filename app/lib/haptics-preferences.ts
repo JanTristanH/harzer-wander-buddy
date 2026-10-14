@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 
 export type HapticStrength = 'off' | 'light' | 'medium' | 'strong';
-export type HapticEvent = 'poiAdded' | 'tabChange';
+export type HapticEvent = 'poiAdded' | 'tabChange' | 'selectionChange';
 
 const HAPTIC_STRENGTH_STORAGE_KEY = '@hwb:haptic-strength';
 export const DEFAULT_HAPTIC_STRENGTH: HapticStrength = 'medium';

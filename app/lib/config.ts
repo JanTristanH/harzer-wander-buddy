@@ -35,6 +35,7 @@ const backendUrl = resolveBackendUrlForPlatform(readConfig('backendUrl'));
 
 export const appConfig = {
   backendUrl,
+  authMode: process.env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? 'basic' : 'sso',
   auth0Domain: readConfig('auth0Domain', process.env.EXPO_PUBLIC_AUTH0_DOMAIN),
   auth0ClientId: readConfig('auth0ClientId', process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID),
   auth0ClientIdNative:
@@ -59,6 +60,9 @@ export function getAuth0ClientIdForPlatform(
 }
 
 export function getMissingConfig() {
+  if (appConfig.authMode === 'basic') {
+    return appConfig.backendUrl || Platform.OS === 'web' ? [] : ['backendUrl'];
+  }
   const requiredEntries: [string, string | undefined][] = [
     ['backendUrl', appConfig.backendUrl],
     ['auth0Domain', appConfig.auth0Domain],
