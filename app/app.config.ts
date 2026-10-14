@@ -1,4 +1,4 @@
-import type { ExpoConfig } from 'expo/config';
+import type { ConfigContext, ExpoConfig } from 'expo/config';
 
 const config = (require('./app.json') as { expo: ExpoConfig }).expo;
 const { version } = require('./package.json') as { version: string };
@@ -23,7 +23,10 @@ export function resolveBackendUrl(envValue?: string) {
   return candidate.replace(/\/+$/, '');
 }
 
-export function createExpoConfig(env: BuildEnvironment = process.env): ExpoConfig {
+export function createExpoConfig(
+  env: BuildEnvironment = process.env,
+  baseConfig: ExpoConfig = config
+): ExpoConfig {
   const androidGoogleMapsApiKey = env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const isAndroidEasBuild = env.EAS_BUILD_PLATFORM === 'android';
 
@@ -34,16 +37,16 @@ export function createExpoConfig(env: BuildEnvironment = process.env): ExpoConfi
   }
 
   return {
-    ...config,
+    ...baseConfig,
     version,
     experiments: {
-      ...config.experiments,
-      baseUrl: env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : config.experiments?.baseUrl,
+      ...baseConfig.experiments,
+      baseUrl: env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : baseConfig.experiments?.baseUrl,
     },
     android: {
-      ...config.android,
+      ...baseConfig.android,
       config: {
-        ...(config.android?.config ?? {}),
+        ...(baseConfig.android?.config ?? {}),
         ...(androidGoogleMapsApiKey
           ? {
               googleMaps: {
@@ -54,10 +57,11 @@ export function createExpoConfig(env: BuildEnvironment = process.env): ExpoConfi
       },
     },
     extra: {
-      ...(config.extra ?? {}),
+      ...(baseConfig.extra ?? {}),
       backendUrl: resolveBackendUrl(env.EXPO_PUBLIC_BACKEND_URL),
     },
   };
 }
 
-export default (): ExpoConfig => createExpoConfig();
+export default ({ config: contextConfig }: ConfigContext): ExpoConfig =>
+  createExpoConfig(process.env, { ...config, ...contextConfig });
