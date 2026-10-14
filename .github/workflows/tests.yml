@@ -10,6 +10,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  release-tests:
+    name: Release automation tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test scripts/publish-prepared-releases.test.cjs
+
   app-tests:
     name: App Jest tests
     runs-on: ubuntu-latest

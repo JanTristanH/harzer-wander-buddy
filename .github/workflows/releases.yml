@@ -17,27 +17,30 @@ jobs:
     uses: ./.github/workflows/tests.yml
 
   release:
+    if: github.ref == 'refs/heads/main'
     needs: tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: read
     outputs:
-      app_released: ${{ steps.release.outputs['app--release_created'] }}
-      app_sha: ${{ steps.release.outputs['app--sha'] }}
+      app_released: ${{ steps.release.outputs.app_released }}
+      app_sha: ${{ steps.release.outputs.app_sha }}
     steps:
-      - name: Check release token
-        env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-        run: |
-          if [ -z "$RELEASE_TOKEN" ]; then
-            echo '::error::Set RELEASE_PLEASE_TOKEN so generated release PRs trigger required CI checks. See docs/releases.md.'
-            exit 1
-          fi
-      - uses: googleapis/release-please-action@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Publish prepared versions without changing main
+        uses: actions/github-script@v7
         id: release
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          target-branch: main
-          config-file: release-please-config.json
-          manifest-file: .release-please-manifest.json
+          script: |
+            const { loadPlan, publish } = require('./scripts/publish-prepared-releases.cjs');
+            await publish(loadPlan(), { github, context, core });
 
   production-app:
     needs: release

@@ -13,7 +13,10 @@
 - Hotfixes von `main` abzweigen und nach `main` mergen. Nach jedem Release/Hotfix
   `main` per PR nach `develop` zurückführen (z. B. `chore: sync main into develop`).
 - Versionen und Changelogs verwaltet Release Please. Keine manuellen Versionsbumps
-  in Feature-PRs. Release-PRs nach `main` prüfen und mergen.
+  in Feature-PRs. **Prepare Release** manuell auf `develop` starten und die
+  Versions-PRs nach `develop` prüfen und mergen. Danach keine weiteren Features
+  vor der Freigabe mergen; den versionierten Stand per Merge-PR nach `main` übernehmen.
+  Auf main nur vorbereitete Tags/Releases veröffentlichen, keine weiteren Versionscommits.
 - Google baut und deployt das Docker-Image weiterhin von `main`; keinen zusätzlichen
   Docker-Publish-Workflow anlegen. Details und Einrichtung: `docs/releases.md`.
 
