@@ -1,0 +1,82 @@
+name: Expo OTA Update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/expo-update.yml"
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Target platform (must match an installed preview build)
+        type: choice
+        default: android
+        options:
+          - android
+          - ios
+          - all
+
+permissions:
+  contents: read
+
+concurrency:
+  group: expo-update-preview
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: app
+    env:
+      CI: '1'
+      OTA_CHANNEL: preview
+      OTA_ENVIRONMENT: preview
+      OTA_PLATFORM: ${{ inputs.platform || 'all' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check Expo token
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo '::error::Create the EXPO_TOKEN repository secret before running this workflow.'
+            exit 1
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Run app tests
+        run: npm test -- --runInBand --config jest.config.js
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          packager: npm
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Validate EAS environment
+        run: eas env:exec "$OTA_ENVIRONMENT" 'node scripts/check-ota-environment.cjs' --non-interactive
+
+      - name: Publish OTA update
+        run: |
+          eas update \
+            --channel "$OTA_CHANNEL" \
+            --environment "$OTA_ENVIRONMENT" \
+            --platform "$OTA_PLATFORM" \
+            --message "GitHub Actions ${GITHUB_REF_NAME} @ ${GITHUB_SHA} (run ${GITHUB_RUN_ID})" \
+            --non-interactive

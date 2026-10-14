@@ -35,10 +35,10 @@
     "deploy:postgres": "cds deploy --profile production",
     "watch-frontendhwb": "cds watch --open frontendhwb/webapp/index.html?sap-ui-xx-viewCache=false",
     "download-csv-exports": "node util/downloadCsvExports.js",
-    "watch:basic": "cds watch --profile dev-basic",
-    "start:basic": "cds serve --profile dev-basic",
-    "watch:sso": "cds watch --profile dev-sso",
-    "start:sso": "cds serve --profile dev-sso"
+    "watch:basic": "node util/prepareLocalDatabase.js && cds watch --profile dev-basic",
+    "start:basic": "node util/prepareLocalDatabase.js && cds serve --profile dev-basic",
+    "watch:sso": "node util/prepareLocalDatabase.js && cds watch --profile dev-sso",
+    "start:sso": "node util/prepareLocalDatabase.js && cds serve --profile dev-sso"
   },
   "cds": {
     "requires": {
@@ -69,6 +69,18 @@
             "fifo": true,
             "evictionRunIntervalMillis": 5000,
             "idleTimeoutMillis": 30000
+          }
+        },
+        "[dev-basic]": {
+          "kind": "sqlite",
+          "credentials": {
+            "url": "db.local.db"
+          }
+        },
+        "[dev-sso]": {
+          "kind": "sqlite",
+          "credentials": {
+            "url": "db.local.db"
           }
         }
       },

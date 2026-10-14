@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
@@ -8,28 +9,32 @@ import {
   Animated,
   Easing,
   FlatList,
+  Modal,
   PanResponder,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { CompletionConfetti, useCompletionConfetti } from '@/components/completion-confetti';
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
-import type { Stampbox } from '@/lib/api';
+import { StampingSuccessToast } from '@/components/stamping-success-toast';
+import { createStamping, deleteStamping, fetchOwnStampings, type Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
 
 type FilterKey = 'all' | 'visited' | 'open' | 'near' | 'relocated';
 type LocationState = 'idle' | 'loading' | 'granted' | 'denied';
+type RemovalPlan = { stampId: string; visitIds: string[] }[];
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all', label: 'Alle' },
@@ -42,7 +47,8 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 const NEARBY_DISTANCE_KM = 15;
 const LIST_TOP_PADDING = 20;
 const LIST_BOTTOM_PADDING = 220;
-const KNOWN_STAMP_ROW_HEIGHT = 112;
+// 116 px for two description lines, padding and selection border, plus 12 px spacing.
+const KNOWN_STAMP_ROW_HEIGHT = 128;
 const DEFAULT_INTRO_HEIGHT = 220;
 const DEFAULT_CONTROLS_HEIGHT = 124;
 const STAMP_LIST_START_INDEX = 2;
@@ -136,8 +142,20 @@ function isRelocatedStamp(validTo?: string) {
 
 export default function StampsScreen() {
   const router = useRouter();
-  const { currentUserProfile, isAuthenticated } = useAuth();
+  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
+  const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBulkBusy, setIsBulkBusy] = useState(false);
+  const bulkBusyRef = React.useRef(false);
+  const [bulkMessage, setBulkMessage] = useState('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastRunId, setToastRunId] = useState(0);
+  const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
+  const [removalPlan, setRemovalPlan] = useState<RemovalPlan>([]);
   const { groupUserIds, selectedFriendIds, selectedMembers } = useHikingGroup();
+  const selectedFriendKey = selectedFriendIds.join(',');
   const isGroupActive = isAuthenticated && selectedFriendIds.length > 0;
   const stampRowHeight = isGroupActive ? GROUP_STAMP_ROW_HEIGHT : KNOWN_STAMP_ROW_HEIGHT;
   const [query, setQuery] = useState('');
@@ -177,6 +195,123 @@ export default function StampsScreen() {
   const lastVisited = data?.lastVisited ?? null;
   const isRefreshing = isFetching && !isPending;
   const blockingError = !data ? error : null;
+
+  const cancelSelection = useCallback(() => {
+    setSelectionMode(false);
+    setSelectedIds([]);
+    setShowRemoveConfirmation(false);
+    setRemovalPlan([]);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) cancelSelection();
+  }, [isAuthenticated, cancelSelection]);
+
+  // Preserve selection across searches; reset when the filter or group changes.
+  useEffect(() => {
+    cancelSelection();
+  }, [activeFilter, selectedFriendKey, cancelSelection]);
+
+  const beginSelection = useCallback((stampId: string) => {
+    if (!isAuthenticated || bulkBusyRef.current) return;
+    setBulkMessage('');
+    setToastVisible(false);
+    setSelectionMode(true);
+    setSelectedIds((ids) => ids.includes(stampId) ? ids : [...ids, stampId]);
+    if (!selectedIds.includes(stampId)) {
+      void triggerHaptic('selectionChange').catch(() => {
+        // Selection remains usable when native feedback is unavailable.
+      });
+    }
+  }, [isAuthenticated, selectedIds]);
+
+  const selectedStamps = stamps.filter((stamp) => selectedIds.includes(stamp.ID));
+  const stampableCount = selectedStamps.length;
+  const removableCount = selectedStamps.filter((stamp) => stamp.hasVisited).length;
+  const removalVisitCount = removalPlan.reduce((count, place) => count + place.visitIds.length, 0);
+
+  const showBulkToast = useCallback((message: string) => {
+    setBulkMessage(message);
+    setToastRunId((runId) => runId + 1);
+    setToastVisible(true);
+  }, []);
+
+  const applyBulkAction = useCallback(async (remove: boolean, plan?: RemovalPlan) => {
+    if (!accessToken || !currentUserProfile?.id || !canPerformWrites || bulkBusyRef.current) return;
+    if (remove && !plan) return;
+    bulkBusyRef.current = true;
+    setIsBulkBusy(true);
+    setToastVisible(false);
+    const targetIds = remove ? (plan ?? []).map((place) => place.stampId) : selectedIds;
+    const failedIds: string[] = [];
+    let completed = 0;
+    let removedVisits = 0;
+    try {
+      for (const stampId of targetIds) {
+        try {
+          if (remove) {
+            for (const visitId of plan?.find((place) => place.stampId === stampId)?.visitIds ?? []) {
+              await deleteStamping(accessToken, visitId);
+              removedVisits++;
+            }
+          } else {
+            await createStamping(accessToken, stampId);
+          }
+          completed++;
+        } catch (nextError) {
+          failedIds.push(stampId);
+          if (nextError instanceof Error && nextError.name === 'UnauthorizedError') {
+            await logout();
+            return;
+          }
+        }
+      }
+      await queryClient.invalidateQueries();
+      setSelectedIds(failedIds);
+      setSelectionMode(failedIds.length > 0);
+      setRemovalPlan([]);
+      showBulkToast(failedIds.length > 0
+        ? `${completed} erledigt. ${failedIds.length} fehlgeschlagen. Bitte erneut versuchen.`
+        : remove
+          ? `${removedVisits} ${removedVisits === 1 ? 'Besuch' : 'Besuche'} entfernt.`
+          : `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} gestempelt.`);
+    } finally {
+      bulkBusyRef.current = false;
+      setIsBulkBusy(false);
+    }
+  }, [accessToken, canPerformWrites, currentUserProfile?.id, logout, queryClient, selectedIds, showBulkToast]);
+
+  const prepareRemoval = useCallback(async () => {
+    if (!accessToken || !currentUserProfile?.id || !canPerformWrites || bulkBusyRef.current) return;
+    bulkBusyRef.current = true;
+    setIsBulkBusy(true);
+    setToastVisible(false);
+    const plan: RemovalPlan = [];
+    try {
+      for (const stampId of selectedIds) {
+        const visits = await fetchOwnStampings(accessToken, stampId, currentUserProfile.id);
+        if (visits.length > 0) plan.push({ stampId, visitIds: visits.map((visit) => visit.ID) });
+      }
+    } catch (nextError) {
+      if (nextError instanceof Error && nextError.name === 'UnauthorizedError') {
+        await logout();
+      } else {
+        showBulkToast('Besuche konnten nicht geladen werden. Bitte erneut versuchen.');
+      }
+      return;
+    } finally {
+      bulkBusyRef.current = false;
+      setIsBulkBusy(false);
+    }
+    const visitCount = plan.reduce((count, place) => count + place.visitIds.length, 0);
+    if (visitCount > 0) {
+      setRemovalPlan(plan);
+      setShowRemoveConfirmation(true);
+    } else {
+      showBulkToast('Keine Besuche zum Entfernen vorhanden.');
+      await queryClient.invalidateQueries();
+    }
+  }, [accessToken, canPerformWrites, currentUserProfile?.id, selectedIds, logout, showBulkToast, queryClient]);
 
   useEffect(() => {
     let isMounted = true;
@@ -536,16 +671,32 @@ export default function StampsScreen() {
 
   const handleStampPress = useCallback(
     (stampId: string) => {
+      if (bulkBusyRef.current) return;
+      if (selectionMode) {
+        if (selectedIds.length === 1 && selectedIds.includes(stampId)) {
+          cancelSelection();
+        } else {
+          setSelectedIds((ids) => ids.includes(stampId) ? ids.filter((id) => id !== stampId) : [...ids, stampId]);
+        }
+        void triggerHaptic('selectionChange').catch(() => {
+          // Selection remains usable when native feedback is unavailable.
+        });
+        return;
+      }
       router.push(`/stamps/${stampId}` as never);
     },
-    [router]
+    [router, selectionMode, selectedIds, cancelSelection]
   );
 
   const renderIntro = useCallback(() => (
     <View style={styles.introContent}>
-      <View style={styles.titleRow}>
+      <View style={styles.titleRow} testID="stamps-title-row">
         <Text style={styles.title}>Stempelstellen</Text>
-        <Text style={styles.totalLabel}>{totalCount} gesamt</Text>
+        {isAuthenticated ? (
+          <GroupSelector testID="stamps-header-group-selector" />
+        ) : (
+          <Text style={styles.totalLabel}>{totalCount} gesamt</Text>
+        )}
       </View>
 
       <Pressable
@@ -597,7 +748,7 @@ export default function StampsScreen() {
         <View style={styles.searchIconWrap}>
           <Feather color="#6d7d6e" name="search" size={14} />
         </View>
-        <TextInput
+        <ClearableSearchInput
           onChangeText={setQuery}
           placeholder="Suche nach Nummer oder Ort"
           placeholderTextColor="#7b8776"
@@ -607,6 +758,7 @@ export default function StampsScreen() {
       </View>
 
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.filterRow}
         horizontal
         style={styles.filterScroll}
@@ -630,20 +782,13 @@ export default function StampsScreen() {
         })}
       </ScrollView>
 
-      {isAuthenticated ? (
-        <View style={styles.groupSelectorSection}>
-          <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
-          <GroupSelector />
-        </View>
-      ) : null}
-
       {activeFilter === 'near' && locationState !== 'granted' ? (
         <Text style={styles.filterHint}>
           Standortfreigabe fehlt. Aktiviere sie im Onboarding oder in den Systemeinstellungen.
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, isAuthenticated, locationState, query]);
+  ), [activeFilter, locationState, query]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {
@@ -706,6 +851,10 @@ export default function StampsScreen() {
             index={item.stampIndex}
             item={item.stampItem.stamp}
             metaLabel={formatDistance(item.stampItem.distanceKm)}
+            selectionMode={selectionMode}
+            selected={selectedIds.includes(item.stampItem.stamp.ID)}
+            disabled={isBulkBusy}
+            onLongPress={isAuthenticated ? () => beginSelection(item.stampItem.stamp.ID) : undefined}
             onPress={() => handleStampPress(item.stampItem.stamp.ID)}
           />
         </View>
@@ -716,6 +865,11 @@ export default function StampsScreen() {
       emptyStateIllustration,
       emptyStateTitle,
       handleStampPress,
+      beginSelection,
+      isAuthenticated,
+      isBulkBusy,
+      selectedIds,
+      selectionMode,
       currentUserProfile?.name,
       currentUserProfile?.picture,
       groupUserIds.length,
@@ -764,9 +918,13 @@ export default function StampsScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContent}>
           <View style={styles.loadingIntro}>
-            <View style={styles.loadingTitleRow}>
+            <View style={styles.loadingTitleRow} testID="stamps-title-row">
               <Text style={styles.title}>Stempelstellen</Text>
-              <Text style={styles.totalLabel}>-- gesamt</Text>
+              {isAuthenticated ? (
+                <GroupSelector testID="stamps-header-group-selector" />
+              ) : (
+                <Text style={styles.totalLabel}>-- gesamt</Text>
+              )}
             </View>
             <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.loadingProgressCard}>
               <SkeletonBlock height={14} radius={7} width="34%" />
@@ -781,7 +939,7 @@ export default function StampsScreen() {
               <View style={styles.searchIconWrap}>
                 <Feather color="#6d7d6e" name="search" size={14} />
               </View>
-              <TextInput
+              <ClearableSearchInput
                 editable={false}
                 placeholder="Suche nach Nummer oder Ort"
                 placeholderTextColor="#7b8776"
@@ -790,6 +948,7 @@ export default function StampsScreen() {
               />
             </View>
             <ScrollView
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.filterRow}
               horizontal
               style={styles.filterScroll}
@@ -811,12 +970,6 @@ export default function StampsScreen() {
                 </View>
               ))}
             </ScrollView>
-            {isAuthenticated ? (
-              <View style={styles.groupSelectorSection}>
-                <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
-                <GroupSelector />
-              </View>
-            ) : null}
           </View>
 
           <View style={styles.loadingCards}>
@@ -865,8 +1018,49 @@ export default function StampsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {selectionMode ? (
+        <View style={styles.selectionToolbar} testID="stamp-selection-toolbar">
+          <View style={styles.titleRow}>
+            <Text style={styles.selectionCount}>{selectedIds.length} ausgewählt</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Auswahl beenden" disabled={isBulkBusy} onPress={cancelSelection} style={styles.selectionButton}>
+              <Text style={styles.selectionButtonText}>Abbrechen</Text>
+            </Pressable>
+          </View>
+          <Text style={styles.totalLabel}>Deine Stempel · Weitere Einträge antippen</Text>
+          <View style={styles.selectionActions}>
+            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || stampableCount === 0} onPress={() => { void applyBulkAction(false); }} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || stampableCount === 0) && styles.selectionDisabled]}>
+              <Text style={styles.selectionButtonText}>Stempeln ({stampableCount})</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || removableCount === 0} onPress={() => { void prepareRemoval(); }} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || removableCount === 0) && styles.selectionDisabled]}>
+              <Text style={styles.selectionButtonText}>Entfernen ({removableCount})</Text>
+            </Pressable>
+          </View>
+          {isBulkBusy ? <Text style={styles.totalLabel}>Wird gespeichert…</Text> : !canPerformWrites ? <Text style={styles.filterHint}>Stempeln und Entfernen sind nur online möglich.</Text> : null}
+        </View>
+      ) : null}
+      <StampingSuccessToast key={toastRunId} message={bulkMessage} visible={toastVisible} onHide={() => setToastVisible(false)} topOffset={insets.top + (selectionMode ? 140 : 10)} />
+      <Modal visible={showRemoveConfirmation} transparent animationType="fade" onRequestClose={() => setShowRemoveConfirmation(false)}>
+        <View style={styles.confirmOverlay}>
+          <View accessibilityViewIsModal style={styles.confirmCard}>
+            <Text style={styles.selectionCount}>Stempel entfernen?</Text>
+            <Text style={styles.errorBody}>{removalVisitCount} {removalVisitCount === 1 ? 'Besuch' : 'Besuche'} an {removalPlan.length} {removalPlan.length === 1 ? 'ausgewählter Stempelstelle' : 'ausgewählten Stempelstellen'} {removalVisitCount === 1 ? 'wird' : 'werden'} entfernt.</Text>
+            <View style={styles.selectionActions}>
+              <Pressable accessibilityRole="button" onPress={() => setShowRemoveConfirmation(false)} style={styles.selectionButton}>
+                <Text style={styles.selectionButtonText}>Behalten</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || removableCount === 0} onPress={() => {
+                setShowRemoveConfirmation(false);
+                void applyBulkAction(true, removalPlan);
+              }} style={styles.selectionButton}>
+                <Text style={[styles.selectionButtonText, { color: '#9a3c30' }]}>Jetzt entfernen</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
       <View style={styles.listContainer}>
         <FlatList
+          keyboardShouldPersistTaps="handled"
           ref={listRef}
           data={listItems}
           keyExtractor={keyExtractor}
@@ -957,12 +1151,21 @@ export default function StampsScreen() {
 }
 
 const styles = StyleSheet.create({
+  confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.35)' },
+  confirmCard: { width: '100%', maxWidth: 420, padding: 24, borderRadius: 22, backgroundColor: '#f5f3ee', gap: 20 },
+  selectionToolbar: { paddingHorizontal: 20, paddingVertical: 12, gap: 8, backgroundColor: '#e2eee6', zIndex: 20 },
+  selectionCount: { color: '#1e2a1e', fontSize: 18, fontWeight: '700' },
+  selectionActions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  selectionButton: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: '#ffffff' },
+  selectionButtonText: { color: '#2e6b4b', fontWeight: '600', fontSize: 14 },
+  selectionDisabled: { opacity: 0.4 },
   safeArea: {
     flex: 1,
     backgroundColor: '#f5f3ee',
   },
   listContainer: {
     flex: 1,
+    overflow: 'hidden',
   },
   list: {
     flex: 1,
@@ -1152,17 +1355,6 @@ const styles = StyleSheet.create({
   },
   filterScroll: {
     height: 40,
-  },
-  groupSelectorSection: {
-    gap: 6,
-  },
-  groupSelectorLabel: {
-    color: '#5f705f',
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '700',
-    letterSpacing: 0.7,
-    textTransform: 'uppercase',
   },
   filterPill: {
     height: 32,

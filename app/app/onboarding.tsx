@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList, type FriendsListItem } from '@/components/friends-list';
 import { Fonts } from '@/constants/theme';
 import {
@@ -688,6 +689,7 @@ export default function OnboardingScreen() {
       <StatusBar style="dark" />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           bounces={false}
           contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
           showsVerticalScrollIndicator={false}>
@@ -862,7 +864,7 @@ export default function OnboardingScreen() {
                 <View style={styles.searchInputIconWrap}>
                   <Feather color="#6B7A6B" name="search" size={14} />
                 </View>
-                <TextInput
+                <ClearableSearchInput
                   autoCapitalize="none"
                   autoCorrect={false}
                   autoFocus

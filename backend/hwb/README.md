@@ -8,8 +8,9 @@
 | `dev-sso` | `npm run watch:sso` (or `start:sso`) | Build with `./scripts/build-and-copy-rnweb.sh` from repository root; `http://localhost:4004/app/rnweb` |
 | `production` | Existing container startup | Existing PostgreSQL and Auth0 configuration |
 
-Both local profiles inherit the development SQLite database (`db.sqlite`). For a new
-checkout, initialize it with `npm run deploy:sqlite` from this directory before starting.
+Both local profiles use the ignored SQLite database `db.local.db`. Their startup
+scripts copy the checked-in `db.sqlite` seed on first start only; existing local
+visits and profile edits are never overwritten and do not change tracked files.
 Start only one CAP profile on port 4004 at a time. `PORT=4005 npm run start:basic` can
 run alongside SSO, but then Expo must use `EXPO_PUBLIC_BACKEND_URL=http://localhost:4005`.
 

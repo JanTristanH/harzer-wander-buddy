@@ -11,12 +11,12 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
@@ -360,14 +360,12 @@ export default function ToursTabScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContent}>
           <View style={styles.headerWrap}>
-            <View style={styles.loadingTitleRow}>
-              <Text style={styles.title}>Touren</Text>
-              <Text style={styles.totalLabel}>-- gesamt</Text>
-            </View>
-
-            <View style={styles.groupSelectorSection}>
-              <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
-              <GroupSelector />
+            <View style={styles.loadingTitleRow} testID="tours-title-row">
+              <View style={styles.titleCopy}>
+                <Text style={styles.title}>Touren</Text>
+                <Text style={styles.totalLabel}>-- gesamt</Text>
+              </View>
+              <GroupSelector testID="tours-header-group-selector" />
             </View>
 
             <Pressable
@@ -389,7 +387,7 @@ export default function ToursTabScreen() {
             <View style={styles.loadingSearchRow}>
               <View style={styles.searchShell}>
                 <Feather color="#6d7d6e" name="search" size={14} />
-                <TextInput
+                <ClearableSearchInput
                   editable={false}
                   placeholder="Suche nach Tourname"
                   placeholderTextColor="#7b8776"
@@ -457,19 +455,18 @@ export default function ToursTabScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <FlatList
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContent}
         data={listItems}
         keyExtractor={(item) => item.key}
         ListHeaderComponent={
           <View style={styles.headerWrap}>
-            <View style={styles.titleRow}>
-              <Text style={styles.title}>Touren</Text>
-              <Text style={styles.totalLabel}>{`${tours.length} gesamt`}</Text>
-            </View>
-
-            <View style={styles.groupSelectorSection}>
-              <Text style={styles.groupSelectorLabel}>Wandergruppe</Text>
-              <GroupSelector />
+            <View style={styles.titleRow} testID="tours-title-row">
+              <View style={styles.titleCopy}>
+                <Text style={styles.title}>Touren</Text>
+                <Text style={styles.totalLabel}>{`${tours.length} gesamt`}</Text>
+              </View>
+              <GroupSelector testID="tours-header-group-selector" />
             </View>
 
             <Pressable
@@ -516,7 +513,7 @@ export default function ToursTabScreen() {
                 <View style={styles.searchRow}>
                   <View style={styles.searchShell}>
                     <Feather color="#6d7d6e" name="search" size={14} />
-                    <TextInput
+                    <ClearableSearchInput
                       onChangeText={setQuery}
                       placeholder="Suche nach Tourname"
                       placeholderTextColor="#7b8776"
@@ -665,7 +662,7 @@ const styles = StyleSheet.create({
   loadingTitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   loadingSearchRow: {
     flexDirection: 'row',
@@ -698,8 +695,13 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+  },
+  titleCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   title: {
     color: '#1e2a1e',
@@ -711,17 +713,6 @@ const styles = StyleSheet.create({
     color: '#6b7a6b',
     fontSize: 12,
     lineHeight: 16,
-  },
-  groupSelectorSection: {
-    gap: 6,
-  },
-  groupSelectorLabel: {
-    color: '#5f705f',
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '700',
-    letterSpacing: 0.7,
-    textTransform: 'uppercase',
   },
   quickstartCard: {
     borderRadius: 22,
