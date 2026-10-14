@@ -7,11 +7,11 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { AdminGuard } from '@/components/admin-guard';
 import { AdminPoiListItem } from '@/components/admin-poi-list-item';
 import { SkeletonBlock } from '@/components/skeleton';
@@ -75,7 +75,7 @@ export default function AdminParkingListScreen() {
 
           <View style={styles.searchWrap}>
             <Feather color="#6b7a6b" name="search" size={14} />
-            <TextInput
+            <ClearableSearchInput
               autoCapitalize="none"
               autoCorrect={false}
               onChangeText={setQuery}
@@ -93,6 +93,7 @@ export default function AdminParkingListScreen() {
             </View>
           ) : (
             <FlatList
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.listContent}
               data={filteredParkingSpots}
               keyExtractor={(item) => item.ID}

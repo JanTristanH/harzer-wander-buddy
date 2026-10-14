@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, Text
 import MapView, { Marker, type MapPressEvent, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { AdminGuard } from '@/components/admin-guard';
 import { SkeletonBlock } from '@/components/skeleton';
 import {
@@ -539,7 +540,7 @@ export default function AdminParkingEditorScreen() {
   return (
     <AdminGuard>
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.headerRow}>
             <Pressable
               onPress={() => router.back()}
@@ -645,7 +646,7 @@ export default function AdminParkingEditorScreen() {
                 </View>
 
                 <Text style={styles.fieldLabel}>Ort suchen</Text>
-                <TextInput
+                <ClearableSearchInput standalone
                   autoCapitalize="words"
                   autoCorrect={false}
                   onChangeText={setLocationSearchQuery}
