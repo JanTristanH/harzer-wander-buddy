@@ -136,6 +136,7 @@ export default function FriendProfileScreen() {
     return {
       mode: 'user',
       name: data.name,
+      badgeUserId: data.userId,
       subtitle: `${subtitleBase} • ${subtitleSuffix}`,
       headerAction: {
         type: 'back',

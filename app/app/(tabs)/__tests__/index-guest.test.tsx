@@ -2,6 +2,7 @@ import { act, render, screen, within } from '@testing-library/react-native';
 import React from 'react';
 
 import type { Stampbox } from '@/lib/api';
+jest.mock('@/lib/badges', () => ({ useBadgeAlbum: () => ({data:undefined}) }));
 
 jest.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: jest.fn() }),
