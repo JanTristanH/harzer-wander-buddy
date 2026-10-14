@@ -23,7 +23,7 @@ jobs:
     permissions:
       contents: write
       issues: write
-      pull-requests: read
+      pull-requests: write
     outputs:
       app_released: ${{ steps.release.outputs.app_released }}
       app_sha: ${{ steps.release.outputs.app_sha }}
