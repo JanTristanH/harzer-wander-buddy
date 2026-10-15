@@ -115,7 +115,7 @@ const catalog = [
     name: 'Goethe im Harz',
     category: 'Themenabzeichen',
     required: goethe,
-    frame: 'gold',
+    frame: 'goethe',
     icon: 'book-open',
   },
   {
@@ -125,7 +125,7 @@ const catalog = [
     required: [69, 140],
     pool: witch,
     poolCount: 9,
-    frame: 'silver',
+    frame: 'witch',
     icon: 'moon',
   },
   {
@@ -133,7 +133,7 @@ const catalog = [
     name: 'Grenzweg',
     category: 'Themenabzeichen',
     required: [...border, ...special],
-    frame: 'bronze',
+    frame: 'border',
     icon: 'map',
   },
   {

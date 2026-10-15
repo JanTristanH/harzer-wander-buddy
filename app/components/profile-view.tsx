@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList } from '@/components/friends-list';
+import { BadgeTitle } from '@/components/badge-title';
 import { BadgeArtwork } from '@/components/badge-artwork';
 import { BadgeProfileSection } from '@/components/badge-profile-section';
 import { useBadgeAlbum } from '@/lib/badges';
@@ -624,7 +625,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             </View>
             <View style={styles.headerBody}>
               <Text style={styles.headerName}>{data.name}</Text>
-              {selectedTitle ? <Text style={{fontSize:16,fontWeight:'600',color:'#2e6b4b',marginBottom:6}}>{selectedTitle}</Text> : null}
+              <BadgeTitle title={selectedTitle} />
               <Text style={styles.headerMeta}>{data.subtitle}</Text>
               {data.headerAction?.type === 'edit' ? (
                 <Pressable

@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { AuthGuard } from '@/components/auth-guard';
+import { BadgeTitle } from '@/components/badge-title';
 import { BadgeArtwork } from '@/components/badge-artwork';
 import {
   BadgeButton,
@@ -132,9 +133,7 @@ function Customize() {
             <Text style={s.heading}>
               {currentUserProfile?.name || 'Dein Profil'}
             </Text>
-            {badgeTitle(preview) ? (
-              <Text style={s.text}>{badgeTitle(preview)}</Text>
-            ) : null}
+            <BadgeTitle title={badgeTitle(preview)} />
             <View style={s.row}>
               {selection.featured.map((id) => {
                 const entry = data.entries.find((e) => e.id === id);

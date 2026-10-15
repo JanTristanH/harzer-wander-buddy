@@ -6,32 +6,57 @@ import type { BadgeEntry } from '@/lib/badge-types';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 
-const frames = [
-  'bronze',
-  'silver',
-  'gold',
-  'king',
-  'backpack',
-  'steiger',
-  'shoe',
-  'emperor',
-  'prince',
-];
-const atlas = require('@/assets/images/badges/metal-frames.png');
-const lockedAtlas = require('@/assets/images/badges/metal-frames-locked.png');
-// Atlas bounds isolate each generated frame, including crowns, without leaking
-// neighbouring cells into the avatar/medal. Coordinates refer to the 1254 atlas.
-const bounds = [
-  [40, 24, 382, 376],
-  [437, 24, 379, 375],
-  [831, 24, 381, 376],
-  [42, 404, 380, 412],
-  [440, 439, 373, 372],
-  [831, 436, 383, 379],
-  [43, 845, 380, 374],
-  [436, 811, 380, 410],
-  [834, 818, 372, 401],
-];
+// Individual transparent assets avoid atlas coordinates and neighbouring frame bleed.
+const frames: Record<string, { active: number; locked: number }> = {
+  bronze: {
+    active: require('@/assets/images/badges/bronze.png'),
+    locked: require('@/assets/images/badges/bronze-locked.png'),
+  },
+  silver: {
+    active: require('@/assets/images/badges/silver.png'),
+    locked: require('@/assets/images/badges/silver-locked.png'),
+  },
+  gold: {
+    active: require('@/assets/images/badges/gold.png'),
+    locked: require('@/assets/images/badges/gold-locked.png'),
+  },
+  king: {
+    active: require('@/assets/images/badges/king.png'),
+    locked: require('@/assets/images/badges/king-locked.png'),
+  },
+  backpack: {
+    active: require('@/assets/images/badges/backpack.png'),
+    locked: require('@/assets/images/badges/backpack-locked.png'),
+  },
+  steiger: {
+    active: require('@/assets/images/badges/steiger.png'),
+    locked: require('@/assets/images/badges/steiger-locked.png'),
+  },
+  shoe: {
+    active: require('@/assets/images/badges/shoe.png'),
+    locked: require('@/assets/images/badges/shoe-locked.png'),
+  },
+  emperor: {
+    active: require('@/assets/images/badges/emperor.png'),
+    locked: require('@/assets/images/badges/emperor-locked.png'),
+  },
+  prince: {
+    active: require('@/assets/images/badges/prince.png'),
+    locked: require('@/assets/images/badges/prince-locked.png'),
+  },
+  goethe: {
+    active: require('@/assets/images/badges/goethe.png'),
+    locked: require('@/assets/images/badges/goethe-locked.png'),
+  },
+  witch: {
+    active: require('@/assets/images/badges/witch.png'),
+    locked: require('@/assets/images/badges/witch-locked.png'),
+  },
+  border: {
+    active: require('@/assets/images/badges/border.png'),
+    locked: require('@/assets/images/badges/border-locked.png'),
+  },
+};
 
 export function BadgeArtwork({
   entry,
@@ -49,10 +74,9 @@ export function BadgeArtwork({
   locked?: boolean;
 }) {
   const { accessToken } = useAuth();
-  const index = frames.indexOf(entry?.frame || frame || '');
-  const centerSize = size * 0.57;
-  const rect = bounds[index];
-  const scale = rect ? size / Math.max(rect[2], rect[3]) : 1;
+  const frameId = entry?.frame || frame || '';
+  const artwork = frames[frameId];
+  const centerSize = size * (['prince', 'goethe', 'witch', 'border'].includes(frameId) ? 0.7 : 0.57);
   return (
     <View
       accessible={false}
@@ -98,31 +122,13 @@ export function BadgeArtwork({
           />
         )}
       </View>
-      {rect ? (
-        <View
+      {artwork ? (
+        <Image
           pointerEvents="none"
-          style={[
-            {
-              position: 'absolute',
-              width: rect[2] * scale,
-              height: rect[3] * scale,
-              overflow: 'hidden',
-              opacity: locked ? 0.65 : 1,
-            },
-          ]}
-        >
-          <Image
-            source={locked ? lockedAtlas : atlas}
-            contentFit="fill"
-            style={{
-              position: 'absolute',
-              width: 1254 * scale,
-              height: 1254 * scale,
-              left: -rect[0] * scale,
-              top: -rect[1] * scale,
-            }}
-          />
-        </View>
+          source={locked ? artwork.locked : artwork.active}
+          contentFit="contain"
+          style={[StyleSheet.absoluteFill, { opacity: locked ? 0.65 : 1 }]}
+        />
       ) : (
         <View
           style={[

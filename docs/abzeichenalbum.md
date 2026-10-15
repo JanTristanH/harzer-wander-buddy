@@ -1,7 +1,7 @@
 # Digitales Abzeichenalbum
 
 Die am 14. Oktober 2026 bestätigte Gestaltung verbindet ein Album mit frei
-wählbaren Profilabzeichen, Titeln und realistischen Metallrahmen.
+wählbaren Profilabzeichen, Titeln sowie Metall- und thematischen Materialrahmen.
 
 ## Auswahl und Freischaltung
 
@@ -19,10 +19,10 @@ Basistitel. Fremde Profile zeigen ausschließlich die aktive Auswahl ihres Besit
 | Harzer Steiger | 111 reguläre Nummern und alle 23 Bergbaustellen | Stein/Silber mit Bergbaurelief | Harzer Steiger |
 | Kaiserschuh | 150 reguläre Nummern | Kupfer mit Schuhrelief | – |
 | Wanderkaiser | alle 222 regulären Nummern | Gold/Grün mit Krone und Bergrelief | Wanderkaiser / Wanderkaiserin |
-| Goethe im Harz | alle 28 Pflichtstellen | Gold mit Buchmotiv im Album | – |
-| Hexen-Stieg | 9 aus der Auswahl sowie 69 und 140 | Silber mit Mondmotiv im Album | – |
-| Grenzweg | 20 reguläre Pflichtstellen und 3 Sonderstempel | Bronze mit Kartenmotiv im Album | – |
-| Wanderprinzessin / Wanderprinz | 11 reguläre Nummern, digital für jedes Alter | Silber/Kupfer mit kleiner Krone | Wanderprinzessin / Wanderprinz |
+| Goethe im Harz | alle 28 Pflichtstellen | Holz und Pergament mit Buchmotiv | – |
+| Hexen-Stieg | 9 aus der Auswahl sowie 69 und 140 | Waldzweige und Moos mit Mondmotiv | – |
+| Grenzweg | 20 reguläre Pflichtstellen und 3 Sonderstempel | Wanderseil und Wegweiser mit Kompass | – |
+| Wanderprinzessin / Wanderprinz | 11 reguläre Nummern, digital für jedes Alter | Mattes Terrakotta/Türkis mit Sternen und kleiner Krone | Wanderprinzessin / Wanderprinz |
 
 Die digitalen Erfolge basieren auf den persönlichen Besuchen. Sie bestätigen
 keine offizielle Ausgabe eines physischen Abzeichens. Beim Prinzenabzeichen
@@ -62,19 +62,41 @@ Schreiben ist offline gesperrt. Ladefehler werden nicht als leeres Album dargest
 
 ## Grafikassets
 
-Die Metallrahmen wurden mit dem eingebauten Image-Skill erstellt. Die transparenten
-Atlanten liegen unter `app/assets/images/badges/metal-frames.png` und
-`metal-frames-locked.png`. `BadgeArtwork` rendert abgegrenzte Ausschnitte aus dem
-Atlas; die zentrale Öffnung enthält Avatar, Initialen oder das Abzeichenmotiv.
-Eine eigene graue Variante erhält die Metalltextur auch unter iOS und Android.
+Die Rahmen liegen als **einzelne transparente PNG-Dateien** unter
+`app/assets/images/badges/<rahmen>.png`; `<rahmen>-locked.png` enthält die
+entsprechende graue Variante. `BadgeArtwork` lädt das ausgewählte Bild direkt,
+ohne Atlas-Koordinaten oder benachbarte Zellen. Die acht Metallrahmen wurden
+aus den bestehenden Assets ausgeschnitten und auf eine gemeinsame
+quadratische Zeichenfläche gesetzt. Die zentrale Öffnung bleibt transparent.
 
-Prompt für den farbigen Atlas (Referenz: bestätigte Materialstudie):
+Prinzessin/Prinz erhält einen verspielten, matten Material-Look in Terrakotta
+und Türkis mit Sternen und kleiner Krone. Die drei bestehenden Themenabzeichen
+haben eigene Rahmen: Goethe aus Holz/Pergament mit Buch, Hexen-Stieg aus
+Waldzweigen/Moos mit Mond und Grenzweg aus Wanderseil mit Kompass. Alle drei
+Rahmen sind nach den bestehenden fachlichen Regeln auch am Avatar auswählbar;
+Besuchskorrekturen entziehen sie nach derselben Regel wie Metallrahmen.
 
-> Create production raster UI assets for the approved hiking badge frames. Input is material style reference only. OUTPUT: a perfectly square PNG sprite atlas on truly transparent background with EXACTLY 9 empty circular metal frame rings arranged in a strict 3 columns by 3 rows equal square cell grid. No labels, no text, no emblem, no backdrop, no device. Every ring centered exactly on its cell center (x: 1/6, 1/2, 5/6 width; y: 1/6, 1/2, 5/6 height); equal outer ring diameter 76% of cell width; central hole diameter 54% cell width. Empty central holes are FULLY TRANSPARENT so avatar photos can show through. No shadow outside frame, no overlapping cells, no decorative element outside each 86%-wide cell safe bounds. Metallic rings realistic brushed microtexture and gleaming bevels, restrained mobile scale ornament, front view no perspective. Row 1 left bronze plain brushed copper; middle silver plain brushed silver; right gold plain brushed gold. Row 2 left KING silver-gold with small gold crown at top and oak leaf relief at bottom; middle BACKPACK silver metal with tiny backpack relief at bottom and rope border; right STEIGER dark stone/silver frame with crossed mining tools relief at bottom. Row 3 left SHOE copper metal ring with tiny hiking boot relief at bottom; middle EMPEROR regal gold and forest green enamel ring with fine mountain relief at bottom and crown at top; right PRINCE silver/copper ring with smaller delicate crown at top. Maintain circular opening unobstructed in every frame, all centers transparent, metallic material distinct from gray locked styling which is applied separately in app. Exact 3x3 grid is critical. Square entire canvas. NO letters or captions. High quality raster asset sprite sheet.
+Die neuen Motive wurden mit dem Image-Generator erstellt. Produktionsdateien
+sind einzeln ausgeschnitten und in farbiger sowie grauer Version exportiert.
+Verwendeter Prompt:
 
-Prompt für den grauen Atlas:
+> Four empty circular avatar frame rings on transparent background, equal cells
+> and transparent centers. Playful prince/princess: modern Material Design,
+> matte terracotta and teal, friendly yellow crown and stars, no precious metal.
+> Goethe: warm wood and parchment, carved leaves and open book.
+> Hexen-Stieg: forest twigs and moss, violet accents and crescent moon.
+> Grenzweg: green hiking cord, weathered trail marker and compass.
+> Cohesive tactile illustrated mobile assets, no labels, no background.
 
-> Edit target is this transparent 3x3 metal ring sprite atlas. Change ONLY all colored metal and green enamel pixels to neutral grayscale to represent locked badges. Preserve exact entire canvas dimensions, 3x3 cell positions, each ring's geometry, detailed metal microtextures, alpha transparency outside rings and in all central holes. Do not move or resize any frame. No additional graphics, no text. Identical atlas but desaturated silver/gray throughout, fully transparent background and holes.
+## Profilansicht und Anpassung
+
+Eigene und fremde Profile zeigen dieselbe Präsentation von Avatar, Titel-Badge
+und ausgewählten Abzeichen. Das eigene Profil hat genau einen Einstieg
+**Profil anpassen**. Dort führen zwei Bereiche zur bestehenden Bearbeitung von
+Name/Bild und zur Auswahl von Abzeichen, Titel und Rahmen sowie ins Album.
+Der eigene Footer mit Einstellungen, technischen Details und Abmeldung bleibt
+bestehen. Im Abzeichenbereich des Profils stehen keine zusätzlichen
+Bearbeitungsbuttons. Titel-Badges werden auch in der Auswahlvorschau verwendet.
 
 ## Screenshots und Prüfung
 

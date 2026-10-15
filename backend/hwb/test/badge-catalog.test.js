@@ -140,3 +140,19 @@ test('selection respects unlocks, independent title/frame, order, emptiness and 
     { featured: [], title: '', frame: '' }
   );
 });
+
+test('theme frames unlock independently and are revoked when their required visit disappears', () => {
+  for (const id of ['goethe', 'witch', 'border']) {
+    const rule = catalog.find((entry) => entry.id === id);
+    const numbers = [...rule.required, ...(rule.pool ?? []).slice(0, rule.poolCount)];
+    const themedStamps = numbers.map((number, i) => ({ ID: `theme${i}`, number: String(number) }));
+    const history = themedStamps.map((stamp) => ({ stamp_ID: stamp.ID, visitedAt: '2026-10-15' }));
+    const selection = { featured: [id], title: 'wanderer', frame: id };
+    const earned = buildAlbum(themedStamps, history);
+    assert.equal(badge(earned, id).unlocked, true);
+    assert.deepEqual(sanitizeSelection(selection, earned), selection);
+    assert.deepEqual(sanitizeSelection(selection, buildAlbum(themedStamps, history.slice(1))), {
+      featured: [], title: 'wanderer', frame: '',
+    });
+  }
+});

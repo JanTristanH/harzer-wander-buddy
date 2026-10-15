@@ -1,8 +1,7 @@
-import { useRouter } from 'expo-router';
 import React from 'react';
 import { Text, View } from 'react-native';
 import { BadgeArtwork } from '@/components/badge-artwork';
-import { BadgeButton, badgeStyles as s } from '@/components/badge-ui';
+import { badgeStyles as s } from '@/components/badge-ui';
 import type { BadgeAlbum } from '@/lib/badge-types';
 
 export function BadgeProfileSection({
@@ -14,10 +13,9 @@ export function BadgeProfileSection({
   own: boolean;
   error?: unknown;
 }) {
-  const router = useRouter();
   return (
     <View style={s.card}>
-      <Text style={s.heading}>Meine Abzeichen</Text>
+      <Text style={s.heading}>{own ? 'Meine Abzeichen' : 'Abzeichen'}</Text>
       {!album ? (
         <Text style={s.text}>
           {error
@@ -64,16 +62,7 @@ export function BadgeProfileSection({
           ) : null}
         </>
       )}
-      {own ? (
-        <>
-          <BadgeButton onPress={() => router.push('/profile/badges/customize')}>
-            Abzeichen, Titel & Rahmen auswählen
-          </BadgeButton>
-          <BadgeButton secondary onPress={() => router.push('/profile/badges')}>
-            Alle Abzeichen
-          </BadgeButton>
-        </>
-      ) : null}
+
     </View>
   );
 }
