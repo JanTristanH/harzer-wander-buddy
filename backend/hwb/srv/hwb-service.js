@@ -106,6 +106,11 @@ module.exports = class api extends cds.ApplicationService {
       return req.user;
     });
 
+    this.on('getServerInfo', () => ({
+      version: require('../package.json').version,
+      serverTime: new Date().toISOString(),
+    }));
+
     this.on('getVersion', async (req) => {
       return process.env.npm_package_version;
     });

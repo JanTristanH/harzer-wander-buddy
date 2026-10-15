@@ -738,6 +738,15 @@ async function fetchOData<T>(accessToken: string, url: string) {
   return (await response.json()) as T;
 }
 
+export type ServerInfo = {
+  version: string;
+  serverTime: string;
+};
+
+export function fetchServerInfo(accessToken: string) {
+  return fetchOData<ServerInfo>(accessToken, buildUrl('getServerInfo()'));
+}
+
 async function fetchPublicOData<T>(url: string) {
   const response = await fetch(url, {
     headers: {
