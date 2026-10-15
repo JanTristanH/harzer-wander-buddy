@@ -32,6 +32,10 @@ Get an overview of the progress of your badges. Even the more complicated ones, 
 
 Plan and share tours with your friends in a way, you can keep track the progress of each one of you.  
 
+## Produkt- und Preisstrategie
+
+Die [Preisstrategie](founder/pricing-strategy.md) beschreibt die kostenlose Basis, die Tourenautomatik als Premiumfunktion und gemeinsam mit Freunden nutzbare Urlaubspässe und Jahresabos. Sie enthält die Zielgruppen, den geprüften Funktionsstand und die Kostenbasis. Preise und Passregeln sind als Vorschläge beziehungsweise bestätigte Entscheidungen gekennzeichnet.
+
 ## Docker image
 
 [here](https://github.com/JanTristanH/harzer-wander-buddy/pkgs/container/hwb)
