@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.1](https://github.com/JanTristanH/harzer-wander-buddy/compare/app-v1.7.0...app-v1.7.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* **app:** Android-Bildbounce und adaptive Headerhöhe korrigieren ([#66](https://github.com/JanTristanH/harzer-wander-buddy/issues/66)) ([7ff60a7](https://github.com/JanTristanH/harzer-wander-buddy/commit/7ff60a70ad5d881eea829b50e1dc4d09f046ffe1))
+* **app:** Custom-Scroller begrenzen und Positionsanzeige vergrößern ([dd05336](https://github.com/JanTristanH/harzer-wander-buddy/commit/dd05336e900f37798dc01cafb35faea9e68a8a6a))
+
 ## [1.7.0](https://github.com/JanTristanH/harzer-wander-buddy/compare/app-v1.6.0...app-v1.7.0) (2026-10-14)
 
 
