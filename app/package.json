@@ -1,7 +1,7 @@
 {
   "name": "harzer-wander-buddy-app",
   "main": "expo-router/entry",
-  "version": "1.7.2",
+  "version": "1.8.0",
   "scripts": {
     "dev:basic:web": "npm run web:basic",
     "dev:basic:native": "npm run start:basic",

@@ -35,3 +35,15 @@ test('local Basic profile rejects missing/wrong credentials and provisions a nor
   const publicResponse = await fetch(`${server.url}/odata/v4/public/Stampboxes?$top=1`);
   assert.equal(publicResponse.status, 200);
 });
+
+test('server info returns the backend package version and current server time', async () => {
+  const before = Date.now();
+  const response = await fetch(`${server.url}/odata/v4/api/getServerInfo()`, {
+    headers: { Authorization: authorization('user1@hwb.deA') },
+  });
+  assert.equal(response.status, 200);
+  const info = await response.json();
+  assert.equal(info.version, require('../package.json').version);
+  const serverTime = Date.parse(info.serverTime);
+  assert.ok(serverTime >= before && serverTime <= Date.now());
+});

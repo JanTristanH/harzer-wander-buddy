@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/JanTristanH/harzer-wander-buddy/compare/app-v1.7.2...app-v1.8.0) (2026-10-15)
+
+
+### Features
+
+* **app:** Serverinformationen im Profil anzeigen ([#74](https://github.com/JanTristanH/harzer-wander-buddy/issues/74)) ([22ee5eb](https://github.com/JanTristanH/harzer-wander-buddy/commit/22ee5ebbb9cf613648878c6634ee1913797757ea))
+
 ## [1.7.2](https://github.com/JanTristanH/harzer-wander-buddy/compare/app-v1.7.1...app-v1.7.2) (2026-10-15)
 
 
