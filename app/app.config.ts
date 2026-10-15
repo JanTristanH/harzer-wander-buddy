@@ -1,7 +1,15 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-const config = (require('./app.json') as { expo: ExpoConfig }).expo;
-const { version } = require('./package.json') as { version: string };
+// Read JSON as data: require() also registers the raw files as config-plugin
+// sources, bypassing fingerprint's ExpoConfigVersions normalization.
+const config = (JSON.parse(readFileSync(join(__dirname, 'app.json'), 'utf8')) as {
+  expo: ExpoConfig;
+}).expo;
+const { version } = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')) as {
+  version: string;
+};
 export const LOCAL_BACKEND_URL = 'http://localhost:4004';
 
 type BuildEnvironment = Record<string, string | undefined>;

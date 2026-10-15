@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/JanTristanH/harzer-wander-buddy/compare/app-v1.7.1...app-v1.7.2) (2026-10-15)
+
+
+### Bug Fixes
+
+* **app:** OTA-Runtime über Versionsbumps stabil halten ([#71](https://github.com/JanTristanH/harzer-wander-buddy/issues/71)) ([d65506b](https://github.com/JanTristanH/harzer-wander-buddy/commit/d65506bfb14423483582044cac81fb7e4aa215d7))
+
 ## [1.7.1](https://github.com/JanTristanH/harzer-wander-buddy/compare/app-v1.7.0...app-v1.7.1) (2026-10-15)
 
 
