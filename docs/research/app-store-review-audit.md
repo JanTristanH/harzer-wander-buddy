@@ -116,7 +116,8 @@ Der bestehende [Preisstrategie-PR #76](https://github.com/JanTristanH/harzer-wan
 ## Tatsächlich ausgeführte Prüfung
 
 - Aktuelles `origin/develop` abgerufen und Code-/Roadmapstellen oben gelesen. Keine Produktionsdaten geändert.
-- Acht bestehende Jest-Suites gezielt gestartet: Gruppenmarker, Gruppen-API, Gruppenstempeln, Mehrfachauswahl, Offlinebanner, Standortrechte, Touren-Gruppenfortschritt und Gastliste.
-- Mit expliziter Konfiguration `jest.config.js`: **6 Suites / 31 Tests bestanden**. Zwei Suites (Mehrfachauswahl und Gastliste) konnten wegen nicht auflösbarem `react-native-svg/filter-image` nicht starten. Das ist ein offener Prüfblocker, kein bewiesener Laufzeitfehler der App.
-- Der allgemeine `npm test`-Aufruf scheitert außerdem an zwei gefundenen Jest-Konfigurationen; explizite Konfiguration löst diesen Startkonflikt.
+- Nach synchronisierter Installation mit `npm ci --prefix app --no-audit --no-fund` neun bestehende Jest-Suites gezielt ausgeführt: Gruppenmarker, Gruppen-API, Gruppenstempeln, Mehrfachauswahl, Offlinebanner, Standortrechte, Touren-Gruppenfortschritt, Gastliste und SVG-Stempelbilder. **9 Suites / 42 Tests bestanden**.
+- Der zunächst fehlende Import `react-native-svg/filter-image` kam aus einer unvollständigen lokalen Installation. `react-native-svg` ist bereits als direkte Abhängigkeit eingetragen und im Lockfile mit Version 15.12.1 fixiert. Nach `npm ci` ist der Unterpfad auflösbar; die beiden zuvor blockierten Suites bestehen ebenfalls.
+- Tests-, Native-Build- und OTA-Workflow führen bereits `npm ci` im App-Verzeichnis vor ihren Tests aus. Keine zusätzliche Paketinstallation im Workflow erforderlich. Der lokale Installationsweg ist in `app/README.md` dokumentiert.
+- Der allgemeine `npm test`-Aufruf benötigt wegen zwei vorhandenen Jest-Konfigurationen weiterhin `--config jest.config.js`; die CI verwendet diese explizite Auswahl bereits.
 - Keine Tests ergänzt und keine Implementierung geändert. Offlineverhalten im Gelände, Datenwiederherstellung, Akku, vollständige Stempeldaten und echte Kaufabläufe sind nicht praktisch abgenommen.
