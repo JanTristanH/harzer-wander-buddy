@@ -1,3 +1,4 @@
+import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import DateTimePicker, {
   type DateTimePickerEvent,
@@ -358,6 +359,8 @@ function StampDetailContent() {
     logout,
   } = useAuth();
   const requireSignIn = useRequireSignInAction();
+  const offlineVisits = useOfflineVisits();
+  const canRecordVisit = offlineVisits.isNative ? offlineVisits.canRecord : canPerformWrites || offlineVisits.canRecord;
   const claims = useIdTokenClaims<IdClaims>();
   const queryClient = useQueryClient();
   const { groupUserIds, selectedFriendIds, selectedMembers } = useHikingGroup();
@@ -860,6 +863,20 @@ function StampDetailContent() {
     }
 
     if (!accessToken || !stampId || isStamping) {
+      return;
+    }
+
+    if (offlineVisits.canRecord) {
+      const localStamp = detail?.stamp;
+      if (!localStamp) return;
+      setIsStamping(true);
+      try {
+        await offlineVisits.record(localStamp);
+        setStampSuccessMessage('Besuch auf diesem Gerät gespeichert.');
+        setIsStampSuccessToastVisible(true);
+      } catch (error) {
+        Alert.alert('Besuch nicht gespeichert', error instanceof Error ? error.message : 'Bitte erneut versuchen.');
+      } finally { setIsStamping(false); }
       return;
     }
 
@@ -2054,7 +2071,7 @@ function StampDetailContent() {
                         {isEditingVisits ? (
                           <View style={styles.visitInlineRow}>
                             <Pressable
-                              disabled={busyVisitId === visit.ID || !canPerformWrites}
+                              disabled={busyVisitId === visit.ID || !canPerformWrites || visit.pendingSync}
                               onPress={() => openVisitPicker(visit.ID, visitDrafts[visit.ID])}
                               style={({ pressed }) => [
                                 styles.visitPickerButton,
@@ -2072,7 +2089,7 @@ function StampDetailContent() {
                               <Feather color="#637062" name="calendar" size={16} />
                             </Pressable>
                             <Pressable
-                              disabled={busyVisitId === visit.ID || !canPerformWrites}
+                              disabled={busyVisitId === visit.ID || !canPerformWrites || visit.pendingSync}
                               onPress={() => confirmDeleteVisit(visit.ID)}
                               style={({ pressed }) => [
                                 styles.visitActionButton,
@@ -2374,7 +2391,7 @@ function StampDetailContent() {
               <Text style={styles.groupStampButtonLabel}>Für Gruppe stempeln</Text>
             </Pressable>
           ) : null}
-          <StampPressStage enabled={!isStamping && (isGuest || canPerformWrites)} style={styles.primaryStampStage}>
+          <StampPressStage enabled={!isStamping && (isGuest || canRecordVisit)} style={styles.primaryStampStage}>
             {({ buttonAnimatedStyle, isTouchActive, onPressIn, onPressOut }) => (
               <Animated.View
                 style={[
@@ -2383,15 +2400,15 @@ function StampDetailContent() {
                   buttonAnimatedStyle,
                 ]}>
                 <Pressable
-                  disabled={isStamping || (!isGuest && !canPerformWrites)}
+                  disabled={isStamping || (!isGuest && !canRecordVisit)}
                   onPress={handlePrimaryStampButtonPress}
                   onPressIn={onPressIn}
                   onPressOut={onPressOut}
                   style={({ pressed }) => [
                     styles.primaryButton,
                     styles.primaryButtonWithIcon,
-                    (isStamping || (!isGuest && !canPerformWrites)) && styles.primaryButtonDisabled,
-                    pressed && !isStamping && (isGuest || canPerformWrites) && styles.primaryButtonPressed,
+                    (isStamping || (!isGuest && !canRecordVisit)) && styles.primaryButtonDisabled,
+                    pressed && !isStamping && (isGuest || canRecordVisit) && styles.primaryButtonPressed,
                   ]}>
                   <Feather color="#f5f3ee" name={visited ? 'refresh-cw' : 'check-circle'} size={16} />
                   <Text style={styles.primaryButtonLabel}>

@@ -1,3 +1,4 @@
+import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
@@ -593,6 +594,8 @@ export default function MapScreen() {
     parkingId?: string | string[];
   }>();
   const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
+  const offlineVisits = useOfflineVisits();
+  const canRecordVisit = offlineVisits.isNative ? offlineVisits.canRecord : canPerformWrites || offlineVisits.canRecord;
   const { groupUserIds, selectedFriendIds, selectedMembers } = useHikingGroup();
   const isGroupActive = selectedFriendIds.length > 0;
   const { isOnline } = useConnectivity();
@@ -1486,6 +1489,20 @@ export default function MapScreen() {
       return;
     }
 
+    if (offlineVisits.canRecord) {
+      const localStamp = data?.stamps.find((stamp) => stamp.ID === selectedItem.stampId);
+      if (!localStamp) return;
+      setIsStamping(true);
+      try {
+        await offlineVisits.record(localStamp);
+        setStampSuccessMessage('Besuch auf diesem Gerät gespeichert.');
+        setIsStampSuccessToastVisible(true);
+      } catch (error) {
+        Alert.alert('Besuch nicht gespeichert', error instanceof Error ? error.message : 'Bitte erneut versuchen.');
+      } finally { setIsStamping(false); }
+      return;
+    }
+
     const stampId = selectedItem.stampId;
     const nowIsoTimestamp = new Date().toISOString();
     const optimisticVisitId = `optimistic-${stampId}-${Date.now()}`;
@@ -1829,6 +1846,7 @@ export default function MapScreen() {
   }, [
     accessToken,
     canPerformWrites,
+    offlineVisits,
     claims?.sub,
     data?.stamps,
     groupUserIds,
@@ -2038,9 +2056,9 @@ export default function MapScreen() {
 
     return (
       isStamping ||
-      (isAuthenticated && (!accessToken || !canPerformWrites))
+      (isAuthenticated && (!accessToken || !canRecordVisit))
     );
-  }, [accessToken, canPerformWrites, isAuthenticated, isStamping, selectedItem]);
+  }, [accessToken, canRecordVisit, isAuthenticated, isStamping, selectedItem]);
 
   const showGroupStampAction =
     isAuthenticated &&

@@ -2,12 +2,14 @@ import React from 'react';
 import { Platform, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useOfflineVisits } from '@/lib/offline-visits';
 import { useAuth } from '@/lib/auth';
 import { useConnectivity } from '@/lib/connectivity';
 
 export function OfflineBanner() {
   const { isAuthenticated, sessionMode } = useAuth();
   const { isOffline } = useConnectivity();
+  const offline = useOfflineVisits();
   const insets = useSafeAreaInsets();
 
   const topInset = Math.max(
@@ -23,7 +25,9 @@ export function OfflineBanner() {
     <View pointerEvents="none" style={[styles.container, { top: topInset + 8 }]}>
       <View style={styles.badge}>
         <Text style={styles.text}>
-          {sessionMode === 'offline_grace'
+          {offline.canRecord
+            ? 'Offline: Eigene Besuche auf diesem Gerät speichern'
+            : sessionMode === 'offline_grace'
             ? 'Offline-Modus: Lokale Daten, Schreiben deaktiviert'
             : 'Offline: Lokale Daten, Schreiben deaktiviert'}
         </Text>
