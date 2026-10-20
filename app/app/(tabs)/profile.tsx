@@ -178,6 +178,7 @@ export default function ProfileScreen() {
       refreshHint: isFetching && !isPending ? 'Aktualisiere Daten im Hintergrund...' : undefined,
       showDeferredSkeletons: isPlaceholderData,
       footerButtons: [
+        { key: 'theme-booklets', label: 'Themenhefte & Themenwege', onPress: () => router.push('/theme-booklets' as never) },
         ...(isAdmin
           ? [
               {

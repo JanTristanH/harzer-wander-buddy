@@ -32,6 +32,7 @@ module.exports = class api extends cds.ApplicationService {
   init() {
     require('./attachment-images')(this);
     require('./badge-service')(this);
+    require('./theme-collections')(this);
 
     this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
 
@@ -424,9 +425,9 @@ function applyDefaultCurrentValidityFilter(req) {
 
   const nowIso = new Date().toISOString();
   const currentValidityFilter = [
-    { ref: ['validFrom'] }, '<=', { val: nowIso },
+    { xpr: [{ ref: ['validFrom'] }, 'is', { val: null }, 'or', { ref: ['validFrom'] }, '<=', { val: nowIso }] },
     'and',
-    { ref: ['validTo'] }, '>', { val: nowIso }
+    { xpr: [{ ref: ['validTo'] }, 'is', { val: null }, 'or', { ref: ['validTo'] }, '>', { val: nowIso }] }
   ];
 
   if (!select.where || select.where.length === 0) {
@@ -2011,8 +2012,9 @@ async function getUsersProgress(req) {
 
   const allStampboxes = await SELECT
     .from(Stampboxes)
-    .columns('ID');
-  const totalCount = allStampboxes.length;
+    .columns('ID', 'stampKind', 'number');
+  const regularIds = new Set(allStampboxes.filter(stamp => stamp.stampKind !== 'special' && /^\d+$/.test(stamp.number || '') && Number(stamp.number) >= 1 && Number(stamp.number) <= 222).map(stamp => stamp.ID));
+  const totalCount = regularIds.size;
 
   const stampings = await SELECT
     .from(Stampings)
@@ -2025,7 +2027,7 @@ async function getUsersProgress(req) {
   for (const stamping of stampings) {
     const userId = stamping.createdBy;
     const stampId = stamping.stamp_ID;
-    if (!userId || !stampId) {
+    if (!userId || !stampId || !regularIds.has(stampId)) {
       continue;
     }
 

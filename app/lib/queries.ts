@@ -12,6 +12,7 @@ import {
   createTour,
   deleteTour,
   fetchAllPointsOfInterest,
+  fetchThemeCatalog,
   fetchParkingDetail,
   fetchPublicParkingDetail,
   fetchFriendsOverview,
@@ -958,5 +959,18 @@ export function useUpdateTourNameMutation(tourId?: string) {
         }),
       ]);
     },
+  });
+}
+
+
+export function useThemeCatalogQuery() {
+  const claims = useIdTokenClaims<AuthClaims>();
+  const { accessToken, isAuthenticated } = useAuth();
+  const authorizedRequest = useAuthorizedRequest();
+  return useQuery({
+    ...REMOTE_VISIT_REFETCH_OPTIONS,
+    queryKey: ['themeCatalog', claims?.sub],
+    enabled: Boolean(accessToken && isAuthenticated),
+    queryFn: () => authorizedRequest(fetchThemeCatalog),
   });
 }

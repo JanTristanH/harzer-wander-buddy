@@ -102,6 +102,60 @@ service api @(requires: 'authenticated-user') {
         failedIds : many UUID;
     };
 
+    type ThemeStampInput {
+        stampId : UUID;
+        required : Boolean;
+    };
+    type ThemeStampStatus {
+        stampId : UUID;
+        number : String;
+        name : String;
+        stampKind : String;
+        required : Boolean;
+        visited : Boolean;
+    };
+    type ThemeCatalogItem {
+        ID : UUID;
+        code : String;
+        edition : String;
+        name : String;
+        kind : String;
+        badgeId : String;
+        sourceUrl : String;
+        rulesNote : String;
+        expectedStampCount : Integer;
+        collectedCount : Integer;
+        requiredCount : Integer;
+        requiredCollected : Integer;
+        optionalCollected : Integer;
+        minimumOptionalCount : Integer;
+        regularVisitTarget : Integer;
+        regularVisited : Integer;
+        complete : Boolean;
+        stamps : many ThemeStampStatus;
+    };
+    @readonly
+    @restrict: [{ grant: 'READ', to: 'admin' }]
+    entity ThemeCollections as projection on db.ThemeCollections;
+    @readonly
+    @restrict: [{ grant: 'READ', to: 'admin' }]
+    entity ThemeStampLinks as projection on db.ThemeStampLinks;
+
+    function getThemeCatalog() returns many ThemeCatalogItem;
+    @requires: 'admin'
+    function getThemeMappingReport() returns String;
+
+    @requires: 'admin'
+    action saveThemeCollection(ID : UUID, revision : Integer, code : String, edition : String,
+        name : String, kind : String, badgeId : String, sourceUrl : String, reviewedAt : Date, rulesNote : String,
+        expectedStampCount : Integer, minimumOptionalCount : Integer, regularVisitTarget : Integer,
+        published : Boolean, entries : many ThemeStampInput) returns ThemeCollections;
+
+    @requires: 'admin'
+    action createSpecialStamp(catalogKey : String, number : String, name : String,
+        latitude : Double, longitude : Double, sourceUrl : String,
+        validFrom : Timestamp, validTo : Timestamp) returns Stampboxes;
+
     @requires: 'admin'
     action compressExistingImages(batchSize : Integer, afterId : UUID) returns ImageCompressionResult;
 
@@ -658,6 +712,7 @@ service public @(requires: 'any') {
         projection on db.Stampboxes {
             ID,
             number,
+            stampKind,
             orderBy,
             name,
             description,
