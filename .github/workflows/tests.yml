@@ -6,9 +6,30 @@ on:
     branches:
       - main
       - develop
+  workflow_call:
   workflow_dispatch:
 
 jobs:
+  docker-build:
+    name: Docker build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      # Match Google's existing main trigger: no build args, no image push.
+      - name: Build deployment image with defaults
+        run: docker build --tag harzer-wander-buddy:ci .
+
+  release-tests:
+    name: Release automation tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test scripts/*.test.cjs
+
   app-tests:
     name: App Jest tests
     runs-on: ubuntu-latest
@@ -30,6 +51,10 @@ jobs:
 
       - name: Run app tests
         run: npm test -- --runInBand --config jest.config.js
+        working-directory: app
+
+      - name: Verify OTA runtime compatibility across releases
+        run: node --test scripts/fingerprint.test.cjs
         working-directory: app
 
   backend-tests:

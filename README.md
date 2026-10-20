@@ -1,5 +1,7 @@
 # Harzer-Wander-Buddy
 
+[Gitflow, automatische Versionierung und Release-Einrichtung](docs/releases.md)
+
 
 |Harzer Wanderbuddy for stamp collecting|![Logo](https://www.harzer-wander-buddy.de/assets/images/BuddyWithMapNoBG.webp)|
 |-----|-----|
@@ -39,3 +41,15 @@ Plan and share tours with your friends in a way, you can keep track the progress
 [here](./backend/hwb/README.md)
 
 > Information on the `@sap/cap-cds` license [here](https://answers.sap.com/questions/13018451/cap-runtime-license.html)
+
+
+## Starting the Project for development
+
+## backend
+````
+npm run watch:basic --prefix backend/hwb
+````
+
+````
+npm run web:basic --prefix app
+````

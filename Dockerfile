@@ -2,7 +2,9 @@ FROM node:22-bookworm-slim AS expo-web-builder
 
 WORKDIR /usr/src/expo-app
 
-ARG EXPO_PUBLIC_BACKEND_URL
+# Google's existing Docker trigger does not pass build arguments.
+# Keep the deployed backend as the default; other environments can override it.
+ARG EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de
 ENV EXPO_PUBLIC_BACKEND_URL=${EXPO_PUBLIC_BACKEND_URL}
 
 RUN test -n "${EXPO_PUBLIC_BACKEND_URL}"

@@ -143,7 +143,7 @@ describe('web map primitives', () => {
     const options = mockDivIcon.mock.calls[0][0] as { html: string };
 
     expect(options.html).toContain('hwb-css-marker');
-    expect(options.html).toContain('--hwb-marker-badge-width:19px');
+    expect(options.html).toContain('--hwb-marker-badge-width:21.8px');
     expect(options.html).not.toMatch(/<svg\b/i);
     expect(options.html).not.toMatch(/<filter\b/i);
     expect(options.html).not.toMatch(/feDropShadow/i);
@@ -154,9 +154,9 @@ describe('web map primitives', () => {
 
     const markerCss = global.document.getElementById('hwb-leaflet-runtime-css')?.textContent;
     expect(markerCss).toMatch(/\.hwb-css-marker \{[^}]*display: block;/s);
-    expect(markerCss).toMatch(/height: 32px;[^}]*left: 8px;[^}]*top: 10px;/s);
-    expect(markerCss).toContain('transform: scaleX(0.72) rotate(-45deg)');
-    expect(markerCss).toContain('font: 700 12px/1 Arial, Helvetica, sans-serif');
+    expect(markerCss).toContain('mask-image: url("data:image/svg+xml,');
+    expect(markerCss).toContain('transform: scale(var(--hwb-marker-scale-x), var(--hwb-marker-scale-y))');
+    expect(markerCss).toContain('font: 700 var(--hwb-marker-font-size)/1 Arial, Helvetica, sans-serif');
     expect(markerCss).toContain('width: var(--hwb-marker-badge-width)');
     expect(markerCss).toContain('.leaflet-zoom-anim .leaflet-zoom-hide');
     expect(markerCss).toContain('transition: transform 0.25s');

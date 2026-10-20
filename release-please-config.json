@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "9780df42bc83d640b49953676f73ab48baa6109b",
+  "release-type": "node",
+  "include-component-in-tag": true,
+  "tag-separator": "-",
+  "separate-pull-requests": true,
+  "packages": {
+    "app": {
+      "component": "app"
+    },
+    "backend/hwb": {
+      "component": "cap"
+    }
+  }
+}

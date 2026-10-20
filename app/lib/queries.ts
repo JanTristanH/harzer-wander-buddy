@@ -26,6 +26,7 @@ import {
   fetchTourPath,
   fetchTours,
   fetchProfileOverview,
+  fetchServerInfo,
   fetchUserProfileOverview,
   fetchStampboxes,
   updateTourByPOIList,
@@ -416,6 +417,19 @@ function useAuthorizedRequest() {
       throw error;
     }
   };
+}
+
+export function useServerInfoQuery(enabled: boolean) {
+  const { accessToken, isAuthenticated } = useAuth();
+  const authorizedRequest = useAuthorizedRequest();
+
+  return useQuery({
+    queryKey: ['serverInfo'],
+    enabled: enabled && Boolean(accessToken && isAuthenticated),
+    queryFn: () => authorizedRequest(fetchServerInfo),
+    staleTime: 0,
+    retry: false,
+  });
 }
 
 export function useStampsOverviewQuery() {

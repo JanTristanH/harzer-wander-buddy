@@ -1,6 +1,15 @@
-import type { ExpoConfig } from 'expo/config';
+import type { ConfigContext, ExpoConfig } from 'expo/config';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
-const config = (require('./app.json') as { expo: ExpoConfig }).expo;
+// Read JSON as data: require() also registers the raw files as config-plugin
+// sources, bypassing fingerprint's ExpoConfigVersions normalization.
+const config = (JSON.parse(readFileSync(join(__dirname, 'app.json'), 'utf8')) as {
+  expo: ExpoConfig;
+}).expo;
+const { version } = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8')) as {
+  version: string;
+};
 export const LOCAL_BACKEND_URL = 'http://localhost:4004';
 
 type BuildEnvironment = Record<string, string | undefined>;
@@ -22,7 +31,10 @@ export function resolveBackendUrl(envValue?: string) {
   return candidate.replace(/\/+$/, '');
 }
 
-export function createExpoConfig(env: BuildEnvironment = process.env): ExpoConfig {
+export function createExpoConfig(
+  env: BuildEnvironment = process.env,
+  baseConfig: ExpoConfig = config
+): ExpoConfig {
   const androidGoogleMapsApiKey = env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const isAndroidEasBuild = env.EAS_BUILD_PLATFORM === 'android';
 
@@ -33,11 +45,16 @@ export function createExpoConfig(env: BuildEnvironment = process.env): ExpoConfi
   }
 
   return {
-    ...config,
+    ...baseConfig,
+    version,
+    experiments: {
+      ...baseConfig.experiments,
+      baseUrl: env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : baseConfig.experiments?.baseUrl,
+    },
     android: {
-      ...config.android,
+      ...baseConfig.android,
       config: {
-        ...(config.android?.config ?? {}),
+        ...(baseConfig.android?.config ?? {}),
         ...(androidGoogleMapsApiKey
           ? {
               googleMaps: {
@@ -48,10 +65,11 @@ export function createExpoConfig(env: BuildEnvironment = process.env): ExpoConfi
       },
     },
     extra: {
-      ...(config.extra ?? {}),
+      ...(baseConfig.extra ?? {}),
       backendUrl: resolveBackendUrl(env.EXPO_PUBLIC_BACKEND_URL),
     },
   };
 }
 
-export default (): ExpoConfig => createExpoConfig();
+export default ({ config: contextConfig }: ConfigContext): ExpoConfig =>
+  createExpoConfig(process.env, { ...config, ...contextConfig });
