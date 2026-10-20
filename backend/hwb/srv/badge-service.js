@@ -1,17 +1,18 @@
 const cds = require('@sap/cds');
 const { buildAlbum, sanitizeSelection } = require('./badge-catalog');
+const { loadThemeBadgeRules } = require('./theme-badge-rules');
 
 module.exports = function registerBadgeService(service) {
   const { BadgeProfiles, Stampboxes, Stampings } = cds.entities('hwb.db');
   async function load(userId) {
     const [stamps, visits, stored] = await Promise.all([
-      SELECT.from(Stampboxes).columns('ID', 'number', 'name'),
+      SELECT.from(Stampboxes).columns('ID', 'number', 'name', 'stampKind', 'catalogKey'),
       SELECT.from(Stampings)
         .columns('stamp_ID', 'visitedAt')
         .where({ createdBy: userId }),
       SELECT.one.from(BadgeProfiles).where({ userId }),
     ]);
-    const entries = buildAlbum(stamps, visits);
+    const entries = buildAlbum(stamps, visits, await loadThemeBadgeRules(stamps));
     const previous = {
       featured: stored ? JSON.parse(stored.featured || '[]') : [],
       title: stored?.title || '',

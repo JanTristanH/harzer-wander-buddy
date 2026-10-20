@@ -18,6 +18,7 @@ function Album() {
   const [filter, setFilter] = useState('Alle');
   return (
     <BadgePage title="Abzeichenalbum">
+      <BadgeButton onPress={() => router.push('/theme-booklets' as never)}>Themenhefte & Themenwege</BadgeButton>
       {!data ? (
         <BadgeLoadState error={error} retry={() => void refetch()} />
       ) : (
