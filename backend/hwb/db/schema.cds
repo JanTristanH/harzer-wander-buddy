@@ -139,6 +139,7 @@ entity StampNotes : cuid, managed {
 
 @cds.autoexpose
 entity Tours : cuid, managed {
+    previewSvg            : LargeString @readonly;
     name                  : String;
     /** distance in meters */
     distance              : Integer64;

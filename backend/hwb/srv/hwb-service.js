@@ -13,6 +13,7 @@ const {
 const fetch = require('node-fetch');
 const routingManager = require('./routingManager');
 const tourAutomation = require('./tour-automation');
+const { createTourPreview } = require('./tour-preview');
 
 const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MAX_REQUESTS_PER_CALL : 1000;
 const PLACE_SEARCH_MIN_QUERY_LENGTH = 3;
@@ -34,6 +35,8 @@ module.exports = class api extends cds.ApplicationService {
     this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
 
     this.on('READ', 'Tours', onTourRead.bind(this));
+
+    this.before('CREATE', 'Tours', prepareCreatedTour);
 
     this.after('CREATE', 'Tours', async (req) => {
       return upsertTourDetailsById(req, this.entities('hwb.db'));
@@ -260,6 +263,7 @@ async function onTourRead(req, next) {
       ? groupFilterStampings.split(',').map(u => u.trim())
       : [req.user.id];
 
+  await ensureTourPreviews(db, tours);
   const result = await addGroupDetailsToTours(db, tours, groupUserIds, req.user.id);
 
   return bReturnOnlyFirst ? result[0] : result;
@@ -553,10 +557,48 @@ async function addIsFriend(users, req) {
   return Array.isArray(users) ? usersList : usersList[0];
 }
 
+async function prepareCreatedTour(req) {
+  const db = this.entities('hwb.db');
+  const ids = (req.data.idListTravelTimes || '').split(';').filter(Boolean);
+  if (!ids.length) return;
+  const edges = await SELECT.from(db.TravelTimes).where({ ID: { in: ids } });
+  const byId = new Map(edges.map(edge => [edge.ID, edge]));
+  if (ids.some(id => !byId.has(id)) || new Set(ids).size !== ids.length) {
+    return req.reject(400, 'The tour contains missing or duplicate route segments.');
+  }
+  const ordered = ids.map(id => byId.get(id));
+  if (ordered.some((edge, index) => index > 0 && ordered[index - 1].toPoi !== edge.fromPoi)) {
+    return req.reject(400, 'The tour route segments must be connected.');
+  }
+  const poiIds = new Set(ordered.flatMap(edge => [edge.fromPoi, edge.toPoi]));
+  const stamps = await SELECT.from(db.Stampboxes).columns('ID').where({ ID: { in: [...poiIds] } });
+  Object.assign(req.data, {
+    stampCount: stamps.length,
+    distance: ordered.reduce((sum, edge) => sum + (isDriveTravelMode(edge.travelMode) ? 0 : Number(edge.distanceMeters) || 0), 0),
+    duration: ordered.reduce((sum, edge) => sum + (Number(edge.durationSeconds) || 0), 0),
+    totalElevationGain: ordered.reduce((sum, edge) => sum + (Number(edge.elevationGain) || 0), 0),
+    totalElevationLoss: ordered.reduce((sum, edge) => sum + (Number(edge.elevationLoss) || 0), 0),
+    previewSvg: createTourPreview(ordered),
+  });
+}
+
+async function ensureTourPreviews(db, tours) {
+  const missing = (tours || []).filter(tour => !tour.previewSvg && tour.idListTravelTimes);
+  const ids = [...new Set(missing.flatMap(tour => tour.idListTravelTimes.split(';').filter(Boolean)))];
+  if (!ids.length) return;
+  const edges = await SELECT.from(db.TravelTimes).columns('ID', 'positionString').where({ ID: { in: ids } });
+  const byId = new Map(edges.map(edge => [edge.ID, edge]));
+  for (const tour of missing) {
+    tour.previewSvg = createTourPreview(tour.idListTravelTimes.split(';').map(id => byId.get(id)).filter(Boolean));
+    if (tour.previewSvg) await UPDATE(db.Tours).set({ previewSvg: tour.previewSvg }).where({ ID: tour.ID });
+  }
+}
+
 function upsertTourDetailsById(req, entities) {
   const { Tour2TravelTime } = entities;
   //TODO recalculate Details of distance & duration
-  const aTravelTimeIds = req.idListTravelTimes.split(";");
+  const aTravelTimeIds = (req.idListTravelTimes || "").split(";").filter(Boolean);
+  if (!aTravelTimeIds.length) return;
   let rank = 0;
   let aTour2TravelTime = aTravelTimeIds.map(travelTime_ID => {
     rank = rank + 512;
@@ -796,6 +838,12 @@ async function handleTourByPOIList(req, options = { persist: true }) {
     await UPSERT(oTour).into(Tours);
   }
 
+  if (persist) {
+    const geometry = await SELECT.from(TravelTimes).columns('ID', 'positionString')
+      .where({ ID: { in: orderedTravelTimes.map(edge => edge.ID) } });
+    const byId = new Map(geometry.map(edge => [edge.ID, edge]));
+    await UPDATE(Tours).set({ previewSvg: createTourPreview(orderedTravelTimes.map(edge => byId.get(edge.ID) || edge)) }).where({ ID: id });
+  }
   oTour.idListTravelTimes = idListTravelTimes;
   oTour.newStampCountForUser = newStampCountForUser;
   oTour.path = orderedTour2TravelTime;

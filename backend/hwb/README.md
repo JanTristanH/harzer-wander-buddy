@@ -244,6 +244,14 @@ Wie bei `Tours` enthält `path` sortierte Links mit `travelTime_ID`, `rank`
 `idListTravelTimes` kann direkt zum Speichern über die vorhandene `Tours`-API
 verwendet werden. Das Speichern erfolgt separat vom Berechnen.
 
+`previewSvg` enthält ein kompaktes Routenbild aus der echten Segmentgeometrie.
+Gespeicherte Touren cachen es in `Tours.previewSvg`; bestehende Touren erhalten
+fehlende Vorschaubilder beim Lesen. Änderungen an der POI-Liste erzeugen das Bild
+neu. Die große App-Vorschau verwendet weiterhin eine interaktive Karte.
+Vor dem Start der aktualisierten App muss das Backend-Schema mit dem zusätzlichen
+Feld `Tours.previewSvg` deployt werden (`npm run deploy:postgres` für die
+Produktionsdatenbank). Das Seed-/SQLite-Deployment ist nur für lokale Testdaten.
+
 Die Suche ist durch `maxDepth` (2–24 Segmente, Standard 12) und 100.000 Suchzustände
 pro Startparkplatz begrenzt. Bei `searchLimited: true` sind die Ergebnisse gültige
 Vorschläge innerhalb des Budgets, aber die Suche wurde vorzeitig begrenzt. Auch

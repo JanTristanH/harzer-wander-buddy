@@ -51,6 +51,7 @@ service api @(requires: 'authenticated-user') {
     };
 
     type HikingRouteResult {
+        previewSvg          : LargeString;
         stampCount          : Integer;
         matchingStampCount  : Integer;
         newStampCountForUser: Integer;

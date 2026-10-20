@@ -3,6 +3,7 @@ import React from 'react';
 
 import { TourCard } from '@/app/(tabs)/tours';
 import type { Tour } from '@/lib/api';
+jest.mock('@/components/maps/map-primitives', () => ({ __esModule: true, default: () => null, Marker: () => null, Polyline: () => null }));
 
 function makeTour(overrides: Partial<Tour> = {}): Tour {
   return {
