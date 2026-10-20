@@ -87,6 +87,17 @@ service api @(requires: 'authenticated-user') {
         provider         : String;
     };
 
+    @readonly
+    @requires: 'admin'
+    entity StampNotices as projection on db.StampNotices;
+
+    action reportStampNotice(stampId : UUID, kind : String, message : String) returns UUID;
+    @requires: 'admin'
+    action reviewStampNotice(noticeId : UUID, status : String) returns String;
+    // Preview and sync return JSON to include unmatched source entries.
+    @requires: 'admin'
+    action syncOfficialNotices(preview : Boolean) returns LargeString;
+
     type ImageCompressionResult {
         processed : Integer;
         compressed : Integer;
@@ -651,6 +662,7 @@ service api @(requires: 'authenticated-user') {
 
 }
 
+@impl: './public.js'
 service public @(requires: 'any') {
     @readonly
     entity Stampboxes as
@@ -660,6 +672,7 @@ service public @(requires: 'any') {
             orderBy,
             name,
             description,
+            activeNotices,
             heroImageUrl,
             image,
             imageCaption,

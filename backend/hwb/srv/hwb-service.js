@@ -32,6 +32,8 @@ module.exports = class api extends cds.ApplicationService {
   init() {
     require('./attachment-images')(this);
 
+    require('./stamp-notices').register(this);
+
     this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
 
     this.on('READ', 'Tours', onTourRead.bind(this));

@@ -73,6 +73,7 @@ type MapViewProps = {
 };
 
 type MarkerProps = {
+  noticeBadge?: boolean;
   accessibilityLabel?: string;
   anchor?: { x: number; y: number };
   children?: React.ReactNode;
@@ -424,12 +425,13 @@ function resolveImageSource(source: unknown): ResolvedImageSource | null {
 function createIcon(options: {
   anchor?: { x: number; y: number };
   color: string;
+  noticeBadge?: boolean;
   imageUri?: string | null;
   imageSize?: { height?: number; width?: number } | null;
   label?: string | null;
   size: number;
 }) {
-  const { anchor, color, imageSize, imageUri, label, size } = options;
+  const { anchor, color, imageSize, imageUri, label, size, noticeBadge } = options;
   const width = size;
   const inferredImageRatio =
     imageSize?.width && imageSize?.height && imageSize.width > 0 && imageSize.height > 0
@@ -446,7 +448,7 @@ function createIcon(options: {
   ];
 
   const normalizedLabel = normalizeWebMarkerLabel(label ?? null);
-  const cacheKey = `${imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
+  const cacheKey = `${noticeBadge ? 'notice' : ''}:${imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
     imageSize?.width ?? ''
   }x${imageSize?.height ?? ''}`;
   const existing = iconCache.get(cacheKey);
@@ -457,7 +459,14 @@ function createIcon(options: {
     return existing;
   }
 
-  const icon = imageUri
+  const badge = '<span style="position:absolute;right:-3px;top:-3px;border-radius:9px;background:#ffe19a;color:#713b09;padding:1px 4px;font-size:14px;line-height:20px">⚡</span>';
+  const escapeAttribute = (value: string) => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+  const icon = noticeBadge
+    ? L.divIcon({
+        className: 'hwb-leaflet-div-icon', iconAnchor, iconSize: [width, height],
+        html: `<span style="position:relative;display:block;width:${width}px;height:${height}px">${imageUri ? `<img alt="" src="${escapeAttribute(imageUri)}" style="width:100%;height:100%" />` : createCssMapMarkerHtml({ color, label: normalizedLabel, size })}${badge}</span>`,
+      })
+    : imageUri
     ? L.icon({
         iconAnchor,
         iconSize: [width, height],
@@ -860,6 +869,7 @@ type InternalMarkerProps = MarkerProps & {
 function Marker(props: InternalMarkerProps) {
   const {
     accessibilityLabel,
+    noticeBadge,
     anchor,
     children,
     coordinate,
@@ -934,6 +944,7 @@ function Marker(props: InternalMarkerProps) {
   const derivedColor =
     pinColor ?? (typeof zIndex === 'number' && zIndex <= 14 ? '#2f7dd7' : '#2e6b4b');
   const icon = createIcon({
+    noticeBadge,
     anchor,
     color: derivedColor,
     imageSize: imageSource,

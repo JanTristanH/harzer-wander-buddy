@@ -1,3 +1,4 @@
+import { AdminNoticesPanel } from '@/components/admin-notices-panel';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -197,6 +198,8 @@ export default function AdminHomeScreen() {
               <Feather color="#2e6b4b" name="chevron-right" size={18} />
             </Pressable>
           </View>
+
+          <AdminNoticesPanel />
 
           <AdminImageCompression />
 

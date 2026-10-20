@@ -9,7 +9,33 @@ export type StampedUser = {
   picture?: string;
 };
 
+export type StampNotice = {
+  ID: string;
+  kind: 'closure' | 'defect' | 'info';
+  message: string;
+  source: 'official' | 'community';
+  sourceUrl?: string;
+  checkedAt?: string;
+  reviewedAt?: string;
+};
+
+export type StampNoticeReport = StampNotice & {
+  stamp_ID: string;
+  stamp?: { number: string; name: string };
+  status: 'pending' | 'approved' | 'rejected' | 'resolved';
+  createdAt: string;
+};
+export type NoticeSyncResult = {
+  preview: boolean;
+  sourceUrl: string;
+  checkedAt: string;
+  matched: { stamp_ID: string; stampName: string; kind: string; message: string }[];
+  unmatched: { message: string }[];
+  retainedPrevious?: boolean;
+};
+
 export type Stampbox = {
+  activeNotices?: string;
   ID: string;
   number: string;
   orderBy?: string;
@@ -72,7 +98,7 @@ type NeighborStampRow = {
   NeighborsID: string;
   NeighborsNumber?: string;
   distanceKm?: number;
-  neighborStamp?: Pick<Stampbox, 'ID' | 'number' | 'name' | 'heroImageUrl' | 'image' | 'imageCaption'>;
+  neighborStamp?: Pick<Stampbox, 'ID' | 'number' | 'activeNotices' | 'name' | 'heroImageUrl' | 'image' | 'imageCaption'>;
 };
 
 type NeighborParkingRow = {
@@ -373,6 +399,7 @@ export type UserProfileOverviewData = {
 export type StampDetailData = {
   stamp: Stampbox;
   nearbyStamps: {
+    activeNotices?: string;
     ID: string;
     number?: string;
     name: string;
@@ -404,6 +431,7 @@ export type StampDetailData = {
 export type ParkingDetailData = {
   parking: ParkingSpot;
   nearbyStamps: {
+    activeNotices?: string;
     ID: string;
     number?: string;
     name: string;
@@ -1331,7 +1359,7 @@ async function fetchComparisonStampboxes(accessToken: string, groupUserIds: stri
   const rows = await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
     select: [
       'ID',
-      'number',
+      'number', 'activeNotices',
       'orderBy',
       'name',
       'description',
@@ -1874,7 +1902,7 @@ async function fetchStampWithRecentStampings(
   const stampFilter = combineODataFilters(groupFilter, `ID eq ${stampId}`);
   const stampSelect = [
     'ID',
-    'number',
+    'number', 'activeNotices',
     'orderBy',
     'name',
     'description',
@@ -2043,7 +2071,7 @@ export async function fetchStampboxes(
   const rows = await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
     select: [
       'ID',
-      'number',
+      'number', 'activeNotices',
       'orderBy',
       'name',
       'description',
@@ -2125,7 +2153,7 @@ export async function fetchPublicStampboxes(mode: StampboxFetchMode = 'default')
   const rows = await fetchPublicCollection<Stampbox>('Stampboxes', {
     select: [
       'ID',
-      'number',
+      'number', 'activeNotices',
       'orderBy',
       'name',
       'description',
@@ -2184,7 +2212,7 @@ export async function fetchPublicStampDetail(stampId: string) {
   const stamp = await fetchPublicEntityById<Stampbox>('Stampboxes', stampId, [
     [
       '$select',
-      'ID,number,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
+      'ID,number,activeNotices,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
     ],
   ]);
 
@@ -2586,7 +2614,7 @@ export async function fetchLatestVisitedStamp(accessToken: string, currentUserId
     top: 1,
     expand: {
       stamp: {
-        select: ['ID', 'number', 'name'],
+        select: ['ID', 'number', 'activeNotices', 'name'],
       },
     },
   });
@@ -2817,7 +2845,7 @@ export async function fetchStampDetail(
       top: 3,
       expand: {
         neighborStamp: {
-          select: ['ID', 'number', 'name', 'heroImageUrl', 'image', 'imageCaption'],
+          select: ['ID', 'number', 'activeNotices', 'name', 'heroImageUrl', 'image', 'imageCaption'],
         },
       },
     }),
@@ -2869,7 +2897,7 @@ export async function fetchStampDetail(
         'ID',
         missingNeighborStampIds,
         {
-          select: ['ID', 'number', 'name', 'heroImageUrl', 'image', 'imageCaption'],
+          select: ['ID', 'number', 'activeNotices', 'name', 'heroImageUrl', 'image', 'imageCaption'],
         }
       ),
       fetchGuidEntitiesByIds<ParkingSpot>(
@@ -2917,6 +2945,7 @@ export async function fetchStampDetail(
         name: relatedStamp?.name || `${neighbor.NeighborsNumber || ''}`.trim(),
         heroImageUrl: relatedStamp?.heroImageUrl || relatedStamp?.image,
         imageCaption: relatedStamp?.imageCaption,
+        activeNotices: relatedStamp?.activeNotices,
         distanceKm: routeMetrics.distanceKm,
         durationMinutes: routeMetrics.durationMinutes,
         elevationGainMeters: routeMetrics.elevationGainMeters,
@@ -3043,7 +3072,7 @@ export async function fetchParkingDetail(accessToken: string, parkingId: string)
       top: 3,
       expand: {
         neighborStamp: {
-          select: ['ID', 'number', 'name', 'heroImageUrl', 'image', 'imageCaption'],
+          select: ['ID', 'number', 'activeNotices', 'name', 'heroImageUrl', 'image', 'imageCaption'],
         },
       },
     }),
@@ -3097,7 +3126,7 @@ export async function fetchParkingDetail(accessToken: string, parkingId: string)
         'ID',
         missingNeighborStampIds,
         {
-          select: ['ID', 'number', 'name', 'heroImageUrl', 'image', 'imageCaption'],
+          select: ['ID', 'number', 'activeNotices', 'name', 'heroImageUrl', 'image', 'imageCaption'],
         }
       ),
       fetchGuidEntitiesByIds<ParkingSpot>(
@@ -3146,6 +3175,7 @@ export async function fetchParkingDetail(accessToken: string, parkingId: string)
         (neighbor.NeighborsNumber ? `Stempel ${neighbor.NeighborsNumber}` : 'Stempelstelle'),
       heroImageUrl: relatedStamp?.heroImageUrl || relatedStamp?.image,
       imageCaption: relatedStamp?.imageCaption,
+      activeNotices: relatedStamp?.activeNotices,
       distanceKm: routeMetrics.distanceKm,
       durationMinutes: routeMetrics.durationMinutes,
       elevationGainMeters: routeMetrics.elevationGainMeters,
@@ -3978,4 +4008,36 @@ export async function fetchOwnStampings(accessToken: string, stampId: string, cu
     stampings.push(...page);
     if (page.length < pageSize) return stampings;
   }
+}
+
+export function reportStampNotice(accessToken: string, stampId: string, kind: StampNotice['kind'], message: string) {
+  return mutateOData(accessToken, buildUrl('reportStampNotice'), {
+    method: 'POST', body: JSON.stringify({ stampId, kind, message }),
+  });
+}
+export async function fetchNoticeReports(accessToken: string) {
+  const reports: StampNoticeReport[] = [];
+  const pageSize = 250;
+  for (let skip = 0; ; skip += pageSize) {
+    const page = await fetchCollection<StampNoticeReport>(accessToken, 'StampNotices', {
+      expand: { stamp: { select: ['number', 'name'] } },
+      filter: "source eq 'community' and (status eq 'pending' or status eq 'approved')",
+      orderBy: 'status desc,createdAt desc,ID asc',
+      top: pageSize,
+      skip,
+    });
+    reports.push(...page);
+    if (page.length < pageSize) return reports;
+  }
+}
+export function reviewStampNotice(accessToken: string, noticeId: string, status: string) {
+  return mutateOData(accessToken, buildUrl('reviewStampNotice'), {
+    method: 'POST', body: JSON.stringify({ noticeId, status }),
+  });
+}
+export async function syncOfficialNotices(accessToken: string, preview: boolean): Promise<NoticeSyncResult> {
+  const result = await mutateOData<{ value: string }>(accessToken, buildUrl('syncOfficialNotices'), {
+    method: 'POST', body: JSON.stringify({ preview }),
+  });
+  return JSON.parse(result.value);
 }
