@@ -12,6 +12,7 @@ const {
 
 const fetch = require('node-fetch');
 const routingManager = require('./routingManager');
+const tourAutomation = require('./tour-automation');
 
 const MAX_REQUESTS_PER_CALL = process.env.MAX_REQUESTS_PER_CALL ? process.env.MAX_REQUESTS_PER_CALL : 1000;
 const PLACE_SEARCH_MIN_QUERY_LENGTH = 3;
@@ -26,7 +27,6 @@ const STAMP_NOTE_MAX_LENGTH = 500;
 // 40.000 free 
 //  2.500 used
 let count = 0;
-let aTravelTimesGlobal = [];
 
 module.exports = class api extends cds.ApplicationService {
   init() {
@@ -956,62 +956,48 @@ async function getTourByIdListTravelTimes(req) {
 }
 
 async function calculateHikingRoute(req) {
+  let params;
+  try {
+    params = tourAutomation.validateParameters(req.data);
+  } catch (error) {
+    return req.reject(400, error.message);
+  }
   const db = this.entities('hwb.db');
-  // req.data.startId = "5810c033-235d-4836-b09d-f7829929e2fe";
-  console.log(req.data);
-  const { typedTravelTimes, Stampboxes, Stampings } = getApiEntities(this) || {};
-  if (!typedTravelTimes) {
-    req.error(500, "Unable to resolve travel time view.");
-    return;
+  const groupUserIds = [...new Set([req.user.id,
+    ...(params.groupFilterStampings || '').split(',').map(id => id.trim()).filter(Boolean)
+  ])];
+  if (groupUserIds.length > 20) return req.reject(400, 'A group can contain at most 20 people.');
+  const friendIds = groupUserIds.filter(id => id !== req.user.id);
+  if (friendIds.length) {
+    const friendships = await SELECT.from(db.Friendships).where({
+      fromUser_ID: req.user.id, toUser_ID: { in: friendIds }, status: 'accepted'
+    });
+    const accepted = new Set(friendships.map(friendship => friendship.toUser_ID));
+    if (friendIds.some(id => !accepted.has(id))) {
+      return req.reject(403, 'Only accepted friends can be included in route planning.');
+    }
   }
-  if (aTravelTimesGlobal.length == 0) {
-    aTravelTimesGlobal = await SELECT
-      .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
-      .from(typedTravelTimes);
+  const { typedTravelTimes } = getApiEntities(this) || {};
+  if (!typedTravelTimes) return req.reject(500, 'Unable to resolve travel time view.');
+  // Load per request: changes to the graph and different users must never share stale results.
+  const edges = await SELECT.from(typedTravelTimes);
+  const stampings = await SELECT.from(db.Stampings).columns('stamp_ID', 'createdBy')
+    .where({ createdBy: { in: groupUserIds } });
+  const parking = await determineStartingParking.call(this, params);
+  let candidates = [];
+  let searchLimited = false;
+  for (const start of parking) {
+    const result = tourAutomation.findRoutes({ ...params, startId: start.NeighborsID },
+      edges, stampings, groupUserIds, req.user.id);
+    candidates.push(...result.results);
+    searchLimited ||= result.searchLimited;
   }
-
-  let aStampsDoneByUser = await SELECT
-    .columns('stamp_ID')
-    .where({ createdBy: req.user.id })
-    .from(Stampings);
-  aStampsDoneByUser = aStampsDoneByUser.map(s => s.stamp_ID);
-
-  //Determine starting Parking spaces and iterate
-  let aStartingParking = await determineStartingParking.bind(this)(req.data);
-
-  let results = [];
-  for (let i = 0; i < aStartingParking.length; i++) {
-    req.data.startId = aStartingParking[i].NeighborsID;
-    let newRoutes = await routingManager.calculateHikingRoutes(req.data, aTravelTimesGlobal, aStampsDoneByUser);
-    results = results.concat(newRoutes);
-  }
-
-  if (results.length > 0) {
-    const groupFilterStampings = req.data.groupFilterStampings;
-    const groupUserIds =
-      groupFilterStampings && groupFilterStampings.trim().length > 0
-        ? groupFilterStampings.split(',').map(u => u.trim())
-        : [req.user.id];
-
-    results = await addGroupDetailsToTours(db, results, groupUserIds, req.user.id);
-  }
-
-  return { results }
-
-  return {
-    Points: [{
-      "ID": "00012d90-308f-427b-a80d-1a4b6f287fa6",
-      "fromPoi": "5810c033-235d-4836-b09d-f7829929e2fe",
-      "toPoi": "5810c033-235d-4836-b09d-f7829929e2fe",
-      "durationSeconds": "2397",
-      "distanceMeters": "2484",
-      "travelMode": "walk",
-      "positionString": "10.8015411;51.8247587;0;10.8015486;51.8247947;0;"
-    }],
-    totalDistance: 1,
-    totalDuration: 2,
-    totalNewStamps: 3
-  }
+  candidates = tourAutomation.selectRoutes(candidates);
+  const ids = [...new Set(candidates.flatMap(route => route.path.map(edge => edge.ID)))];
+  const geometry = ids.length ? await SELECT.from(db.TravelTimes).columns('ID', 'positionString')
+    .where({ ID: { in: ids } }) : [];
+  const geometryById = new Map(geometry.map(edge => [edge.ID, edge]));
+  return { results: candidates.map(route => tourAutomation.toTourResult(route, geometryById)), searchLimited };
 }
 
 async function getRouteToStampFromPosition(req) {
@@ -1149,26 +1135,18 @@ function estimateWalkingDurationSeconds(distanceMeters) {
 }
 
 async function determineStartingParking(params) {
-  return new Promise(async (resolve, reject) => {
-
-    const { RouteCalculationRequest } = this.entities('hwb.db');
-    let calculationRequest = {
-      ID: uuidv4(),
-      latitude: params.latitudeStart,
-      longitude: params.longitudeStart
-    }
-    await INSERT(calculationRequest).into(RouteCalculationRequest);
-
-    const { NeighborsCalculationRequestParking } = getApiEntities(this) || {};
-    if (!NeighborsCalculationRequestParking) {
-      reject(new Error("Unable to resolve NeighborsCalculationRequestParking view."));
-      return;
-    }
-    let parking = await SELECT.from(NeighborsCalculationRequestParking)
-      .where({ ID: calculationRequest.ID })
-      .limit(2);
-    resolve(parking);
+  const { RouteCalculationRequest } = this.entities('hwb.db');
+  const { NeighborsCalculationRequestParking } = getApiEntities(this) || {};
+  if (!NeighborsCalculationRequestParking) throw new Error('Unable to resolve parking view.');
+  const ID = uuidv4();
+  await INSERT.into(RouteCalculationRequest).entries({
+    ID, latitude: params.latitudeStart, longitude: params.longitudeStart
   });
+  try {
+    return await SELECT.from(NeighborsCalculationRequestParking).where({ ID }).limit(2);
+  } finally {
+    await DELETE.from(RouteCalculationRequest).where({ ID });
+  }
 }
 
 /** Check if all expected routes are present */

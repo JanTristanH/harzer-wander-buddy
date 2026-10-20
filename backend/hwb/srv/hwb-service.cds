@@ -46,22 +46,20 @@ service api @(requires: 'authenticated-user') {
     };
 
     type HikingRoutePathItem {
-        poi                 : UUID;
-        id                  : String;
-        name                : String;
-        toPoiType           : String;
-        travelMode          : String(128);
-        duration            : Integer64;
-        distance            : Integer64;
-        positionString      : LargeString;
-        order               : Integer;
+        travelTime : Association to TravelTimes;
+        rank       : Integer;
     };
 
     type HikingRouteResult {
         stampCount          : Integer;
+        matchingStampCount  : Integer;
+        newStampCountForUser: Integer;
         distance            : Integer64;
         duration            : Integer64;
         id                  : String;
+        idListTravelTimes   : LargeString;
+        totalElevationGain  : Double;
+        totalElevationLoss  : Double;
         groupSize           : Integer;
         AverageGroupStampings : Double;
         path                : many HikingRoutePathItem;
@@ -76,6 +74,7 @@ service api @(requires: 'authenticated-user') {
 
     type HikingRouteCalculationResponse {
         results             : many HikingRouteResult;
+        searchLimited       : Boolean;
     };
 
     type PlaceSearchResult {
@@ -102,10 +101,11 @@ service api @(requires: 'authenticated-user') {
     function calculateHikingRoute(maxDepth : Integer,
                                   maxDuration : Integer,
                                   maxDistance : Integer,
-                                  minStampCount : Integer, //TODO implement
+                                  minStampCount : Integer,
                                   allowDriveInRoute : Boolean,
                                   latitudeStart : String,
                                   longitudeStart : String,
+                                  groupMode : String,
                                   groupFilterStampings : String)       returns HikingRouteCalculationResponse;
 
     action   getRouteToStampFromPosition(stampId : UUID,

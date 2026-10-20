@@ -217,6 +217,44 @@ npm run download-csv-exports -- \
 - Deal with legacy Stamps & check for deviation on HWN site
 - History view for changed stamps
 
+## Tourenautomatik: API-Vertrag
+
+`calculateHikingRoute` liefert `{ results, searchLimited }`. `maxDuration` ist das
+Zeitbudget in Sekunden inklusive Rückweg und optionaler Fahrten zwischen
+Parkplätzen; die Anreise zum ersten Parkplatz und Pausen sind nicht enthalten.
+`maxDistance` begrenzt die Gehstrecke in Metern. Die Suche beginnt an den zwei
+nächsten Parkplätzen zur angegebenen Position.
+
+`groupFilterStampings` enthält kommaseparierte IDs akzeptierter Freunde. Der
+aktuelle Nutzer ist immer dabei; doppelte IDs und wiederholte Stempelbesuche
+werden nur einmal gezählt. `groupMode` ist `missing_all` (fehlt jeder Person) oder
+`missing_any` (fehlt mindestens einer Person, Standard). `minStampCount` bezieht
+sich auf die Anzahl passender Stempel im gewählten Modus.
+
+Die höchstens fünf Vorschläge werden nach passenden Stempeln absteigend, dann
+nach Dauer und Gehstrecke aufsteigend sortiert. Vorschläge mit derselben
+Stempelmenge werden zusammengefasst. `stampCount` zählt alle unterschiedlichen
+Stempel der Route; `matchingStampCount` zählt die zum Modus passenden und
+`newStampCountForUser` die für den aktuellen Nutzer neuen Stempel.
+`AverageGroupStampings` ist die durchschnittliche Anzahl bereits vorhandener
+Stempel pro Gruppenmitglied, unabhängig von Wiederholungsbesuchen.
+
+Wie bei `Tours` enthält `path` sortierte Links mit `travelTime_ID`, `rank`
+(512er-Schritte) und eingebettetem `travelTime`, einschließlich `positionString`.
+`idListTravelTimes` kann direkt zum Speichern über die vorhandene `Tours`-API
+verwendet werden. Das Speichern erfolgt separat vom Berechnen.
+
+Die Suche ist durch `maxDepth` (2–24 Segmente, Standard 12) und 100.000 Suchzustände
+pro Startparkplatz begrenzt. Bei `searchLimited: true` sind die Ergebnisse gültige
+Vorschläge innerhalb des Budgets, aber die Suche wurde vorzeitig begrenzt. Auch
+ansonsten gilt die Optimierung nur innerhalb des vorhandenen Wegegraphen, der
+beiden Startparkplätze und der gewählten Segmenttiefe. Die App darf deshalb keine
+global optimale Route versprechen. Fehlerhafte Parameter werden mit 400 und
+nicht akzeptierte Gruppenmitglieder mit 403 abgelehnt.
+
+Tests: `npm test` aus diesem Verzeichnis, inklusive HTTP-Tests für Berechnung und
+Speichern über die bestehende Touren-API.
+
 ## Build with Docker locally 
 
 - run `docker build . -t hwb`
