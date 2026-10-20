@@ -11,13 +11,14 @@ import {
   type StyleProp,
   Switch,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList } from '@/components/friends-list';
 import { InstallAppBanner } from '@/components/profile/install-app-banner';
+import { TechnicalDetails } from '@/components/profile/technical-details';
 import { ProfileTimelineSummarySection } from '@/components/profile-timeline-summary-section';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
 import { useAuth } from '@/lib/auth';
@@ -441,7 +442,7 @@ function SkeletonFriendRow() {
 export function ProfileLoadingState({ label }: { label: string }) {
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.loadingContent} showsVerticalScrollIndicator={false}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.loadingContent} showsVerticalScrollIndicator={false}>
         <View style={styles.loadingHeaderRow}>
           <SkeletonCircle size={104} tone="muted" />
           <View style={styles.loadingHeaderCopy}>
@@ -580,6 +581,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.content}
         contentInset={{ bottom: 160 }}
         refreshControl={
@@ -879,6 +881,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             </>
           ) : (
             <ScrollView
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={styles.chipRow}
               horizontal
               showsHorizontalScrollIndicator={false}>
@@ -915,10 +918,9 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
               <View style={styles.stampSearchInputIconWrap}>
                 <Feather color="#6b7a6b" name="search" size={14} />
               </View>
-              <TextInput
+              <ClearableSearchInput
                 autoCapitalize="none"
                 autoCorrect={false}
-                clearButtonMode="while-editing"
                 onChangeText={setStampSearchQuery}
                 placeholder="Stempelstelle suchen"
                 placeholderTextColor="#6b7a6b"
@@ -1021,6 +1023,8 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             ) : null}
           </ProfileSection>
         ) : null}
+
+        {data.mode === 'self' ? <TechnicalDetails /> : null}
 
         {data.footerButtons?.length ? (
           <View style={styles.footerButtonStack}>

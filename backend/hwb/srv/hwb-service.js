@@ -31,6 +31,7 @@ let count = 0;
 
 module.exports = class api extends cds.ApplicationService {
   init() {
+    require('./attachment-images')(this);
 
     this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
 
@@ -107,6 +108,11 @@ module.exports = class api extends cds.ApplicationService {
     this.on('getCurrentUserID', async (req) => {
       return req.user;
     });
+
+    this.on('getServerInfo', () => ({
+      version: require('../package.json').version,
+      serverTime: new Date().toISOString(),
+    }));
 
     this.on('getVersion', async (req) => {
       return process.env.npm_package_version;

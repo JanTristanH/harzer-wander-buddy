@@ -2,12 +2,13 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
   type PressableProps,
   type PressableStateCallbackType,
@@ -16,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Fonts } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
+import { appConfig } from '@/lib/config';
 
 const bearIllustration = require('@/assets/images/onboarding-bear.png');
 
@@ -61,6 +63,10 @@ export default function LoginScreen() {
   const { authError, configError, hasCompletedOnboarding, isAuthenticated, isLoading, login, signup } =
     useAuth();
 
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const isBasic = appConfig.authMode === 'basic';
+
   if (isAuthenticated && !isLoading) {
     return <Redirect href={(hasCompletedOnboarding ? '/(tabs)' : '/onboarding') as never} />;
   }
@@ -91,18 +97,26 @@ export default function LoginScreen() {
             <Text style={styles.cardTitle}>Konto</Text>
             {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
+            {isBasic ? (
+              <View style={styles.buttonColumn}>
+                <TextInput accessibilityLabel="Nutzername" placeholder="Nutzername" autoCapitalize="none"
+                  autoComplete="username" value={username} onChangeText={setUsername} style={styles.input} />
+                <TextInput accessibilityLabel="Passwort" placeholder="Passwort" secureTextEntry
+                  autoComplete="current-password" value={password} onChangeText={setPassword} style={styles.input} />
+              </View>
+            ) : null}
             <View style={styles.buttonColumn}>
               <ActionButton
                 disabled={!!configError || isLoading}
                 label={isLoading ? 'Wird vorbereitet...' : 'Anmelden'}
-                onPress={login}
+                onPress={() => void login(username, password)}
                 variant="primary"
               />
-              <ActionButton
+              {!isBasic ? <ActionButton
                 disabled={!!configError || isLoading}
                 label={isLoading ? 'Wird vorbereitet...' : 'Konto erstellen'}
                 onPress={signup}
-              />
+              /> : null}
             </View>
           </View>
 
@@ -124,6 +138,9 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  input: {
+    borderWidth: 1, borderColor: '#bda981', borderRadius: 12, padding: 14, color: '#263127',
+  },
   gradient: {
     flex: 1,
   },

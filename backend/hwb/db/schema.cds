@@ -34,6 +34,7 @@ entity ExternalUsers : cuid {
 }
 
 entity Attachments_local : Attachments {
+    compressionProfile : String(100) @readonly;
     
 }
 

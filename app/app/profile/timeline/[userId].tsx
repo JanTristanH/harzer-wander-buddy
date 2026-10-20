@@ -27,7 +27,7 @@ type TimelineClaims = {
 
 const FAST_SCROLLER_HIDE_DELAY_MS = 850;
 const FAST_SCROLLER_THUMB_HEIGHT = 44;
-const FAST_SCROLLER_PREVIEW_HEIGHT = 38;
+const FAST_SCROLLER_PREVIEW_HEIGHT = 44;
 
 function formatVisitDate(value?: string) {
   if (!value) {
@@ -299,22 +299,33 @@ export default function ProfileTimelineScreen() {
     [groupedDayKeys, hasScrollableTimeline, maxScrollY, scrollToDayKey, trackHeight]
   );
 
+  const fastScrollerDragStart = useRef({ touchY: 0, dy: 0 });
+
   const fastScrollerPanResponder = useMemo(
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gestureState) =>
-          hasScrollableTimeline && (Math.abs(gestureState.dy) > 1 || Math.abs(gestureState.dx) > 1),
-        onPanResponderGrant: (event) => {
+          hasScrollableTimeline &&
+          (Platform.OS === 'android'
+            ? Math.abs(gestureState.dy) > 6 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx)
+            : Math.abs(gestureState.dy) > 1 || Math.abs(gestureState.dx) > 1),
+        onPanResponderGrant: (event, gestureState) => {
           if (!hasScrollableTimeline) {
             return;
           }
 
+          fastScrollerDragStart.current = {
+            touchY: event.nativeEvent.locationY,
+            dy: gestureState.dy,
+          };
           showFastScroller();
           setIsThumbDragging(true);
-          updateScrollFromTouch(event.nativeEvent.locationY);
+          updateScrollFromTouch(fastScrollerDragStart.current.touchY);
         },
-        onPanResponderMove: (event) => {
-          updateScrollFromTouch(event.nativeEvent.locationY);
+        onPanResponderMove: (_, gestureState) => {
+          // Native locationY can change its origin outside the touch area.
+          const start = fastScrollerDragStart.current;
+          updateScrollFromTouch(start.touchY + gestureState.dy - start.dy);
         },
         onPanResponderRelease: () => {
           setIsThumbDragging(false);
@@ -326,7 +337,8 @@ export default function ProfileTimelineScreen() {
           setThumbRatioOverride(null);
           scheduleFastScrollerHide();
         },
-        onStartShouldSetPanResponder: () => hasScrollableTimeline,
+        // Wait for a vertical drag on Android so a back swipe cannot jump the timeline on touch-down.
+        onStartShouldSetPanResponder: () => hasScrollableTimeline && Platform.OS !== 'android',
       }),
     [hasScrollableTimeline, scheduleFastScrollerHide, showFastScroller, updateScrollFromTouch]
   );
@@ -578,7 +590,7 @@ export default function ProfileTimelineScreen() {
         </ScrollView>
         {hasScrollableTimeline ? (
           <View pointerEvents="box-none" style={[styles.fastScrollerOverlay, { top: fastScrollerTopInset }]}>
-            <View style={styles.fastScrollerRail}>
+            <View pointerEvents="box-none" style={styles.fastScrollerRail}>
               <View
                 onLayout={(event) => {
                   setTrackHeight(event.nativeEvent.layout.height);
@@ -801,14 +813,15 @@ const styles = StyleSheet.create({
   fastScrollerTouchArea: {
     position: 'absolute',
     top: 0,
-    right: 0,
+    // Keep the outermost 4 px free for edge gestures.
+    right: 4,
     bottom: 0,
-    width: 42,
+    width: 38,
   },
   fastScrollerPreview: {
     position: 'absolute',
     right: 34,
-    minWidth: 96,
+    minWidth: 140,
     height: FAST_SCROLLER_PREVIEW_HEIGHT,
     borderRadius: 11,
     backgroundColor: 'rgba(30, 42, 30, 0.92)',
@@ -818,8 +831,8 @@ const styles = StyleSheet.create({
   },
   fastScrollerPreviewText: {
     color: '#f5f3ee',
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 18,
+    lineHeight: 24,
     fontWeight: '700',
   },
   pressed: {

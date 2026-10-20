@@ -1,7 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -19,11 +18,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { MapSelectionSheet } from '@/components/map-selection-sheet';
 import { GroupSelector } from '@/components/group-selector';
 import { GroupStampDialog } from '@/components/group-stamp-dialog';
 import MapView, { Marker, type MapViewRef, type Region } from '@/components/maps/map-primitives';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
+import { useMapLocation } from '@/hooks/use-map-location';
 import {
   createStamping,
   fetchRouteMetrics,
@@ -49,7 +50,8 @@ import {
 } from '@/lib/group-marker';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images';
-import { areMapCoordinatesEqual, isCoordinateInPaddedRegion } from '@/lib/map-viewport';
+import { geometry, resolveMapMarkerLabelStyle } from '@/lib/map-marker-style';
+import { isCoordinateInPaddedRegion } from '@/lib/map-viewport';
 import { canCreateMapVisit, getMapPrimaryActionLabel } from '@/lib/map-stamp-action';
 import {
   isNetworkUnavailableError,
@@ -68,7 +70,6 @@ type Coordinate = {
   longitude: number;
 };
 
-type LocationState = 'idle' | 'loading' | 'granted' | 'denied';
 type SelectionSheetMode = 'expanded' | 'compact';
 type AuthClaims = {
   sub?: string;
@@ -96,6 +97,7 @@ type StampMarkerItem = BaseMarkerItem & {
   visitedAt?: string;
   groupSize?: number;
   totalGroupStampings?: number;
+  stampedUserIds?: Stampbox['stampedUserIds'];
 };
 
 type ParkingMarkerItem = BaseMarkerItem & {
@@ -485,20 +487,13 @@ function normalizeStampMarkerToken(value?: string | null): string | null {
   return null;
 }
 
-function groupMarkerBadgeWidth(label: string) {
-  if (label.length <= 1) {
-    return 15;
-  }
-
-  if (label.length === 2) {
-    return 19;
-  }
-
-  if (label.length === 3) {
-    return 22;
-  }
-
-  return 25;
+function groupMarkerBadgeDimensions(label: string) {
+  const radius = resolveMapMarkerLabelStyle(label).badgeRadius;
+  const diameter = radius * 2 * geometry.outputWidth / geometry.width;
+  return {
+    diameter,
+    top: geometry.badgeY * geometry.outputHeight / geometry.height - diameter / 2,
+  };
 }
 
 function stampMarkerAccessibilityLabel(
@@ -597,8 +592,8 @@ export default function MapScreen() {
     stampId?: string | string[];
     parkingId?: string | string[];
   }>();
-  const { accessToken, canPerformWrites, isAuthenticated, logout } = useAuth();
-  const { groupUserIds, selectedFriendIds } = useHikingGroup();
+  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
+  const { groupUserIds, selectedFriendIds, selectedMembers } = useHikingGroup();
   const isGroupActive = selectedFriendIds.length > 0;
   const { isOnline } = useConnectivity();
   const claims = useIdTokenClaims<AuthClaims>();
@@ -632,8 +627,7 @@ export default function MapScreen() {
   const [remoteSearchResults, setRemoteSearchResults] = useState<PlaceSearchResult[]>([]);
   const [isRemoteSearchLoading, setIsRemoteSearchLoading] = useState(false);
   const [remoteSearchError, setRemoteSearchError] = useState<string | null>(null);
-  const [locationState, setLocationState] = useState<LocationState>('idle');
-  const [userLocation, setUserLocation] = useState<Coordinate | null>(null);
+  const { locationState, userLocation, handleUserLocationChange, locateMe } = useMapLocation();
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('all');
   const [showStamps, setShowStamps] = useState(true);
   const [showParking, setShowParking] = useState(true);
@@ -741,6 +735,7 @@ export default function MapScreen() {
           visitedAt: stamp.visitedAt,
           groupSize: stamp.groupSize,
           totalGroupStampings: stamp.totalGroupStampings,
+          stampedUserIds: stamp.stampedUserIds,
         } satisfies StampMarkerItem;
       })
       .filter((item): item is StampMarkerItem => item !== null);
@@ -893,6 +888,7 @@ export default function MapScreen() {
         visual.visualKind === 'group-partial-stamp';
 
       if (usesGeneratedGroupBackground && visual.image) {
+        const badge = groupMarkerBadgeDimensions(visual.label);
         return (
           <Marker
             accessibilityLabel={accessibilityLabel}
@@ -908,11 +904,11 @@ export default function MapScreen() {
                 source={visual.image}
                 style={styles.generatedGroupMarkerBackground}
               />
-              <View style={styles.generatedGroupMarkerBadgePositioner}>
+              <View style={[styles.generatedGroupMarkerBadgePositioner, { top: badge.top }]}>
                 <View
                   style={[
                     styles.generatedGroupMarkerBadge,
-                    { width: groupMarkerBadgeWidth(visual.label) },
+                    { width: badge.diameter, height: badge.diameter },
                   ]}>
                   <Text style={styles.generatedGroupMarkerLabel}>{visual.label}</Text>
                 </View>
@@ -1117,65 +1113,6 @@ export default function MapScreen() {
       }
     };
   }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadLocation() {
-      try {
-        setLocationState('loading');
-        let permission = await Location.getForegroundPermissionsAsync();
-        if (!permission.granted && permission.canAskAgain) {
-          permission = await Location.requestForegroundPermissionsAsync();
-        }
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (!permission.granted) {
-          setUserLocation(null);
-          setLocationState(permission.status === 'denied' ? 'denied' : 'idle');
-          return;
-        }
-
-        setLocationState('granted');
-      } catch {
-        if (!isMounted) {
-          return;
-        }
-
-        setLocationState('denied');
-      }
-    }
-
-    void loadLocation();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const handleUserLocationChange = useCallback(
-    (event: { nativeEvent: { coordinate?: Coordinate } }) => {
-      const coordinate = event.nativeEvent.coordinate;
-      if (
-        !coordinate ||
-        !Number.isFinite(coordinate.latitude) ||
-        !Number.isFinite(coordinate.longitude)
-      ) {
-        return;
-      }
-
-      setUserLocation((currentCoordinate) =>
-        areMapCoordinatesEqual(currentCoordinate, coordinate) ? currentCoordinate : coordinate
-      );
-      setLocationState((currentState) =>
-        currentState === 'granted' ? currentState : 'granted'
-      );
-    },
-    []
-  );
 
   useEffect(() => {
     if (!selectedItemId) {
@@ -1518,16 +1455,17 @@ export default function MapScreen() {
     [suppressSelectionSheetCompactionForAutoZoom]
   );
 
-  const handleLocateMePress = useCallback(() => {
-    if (!userLocation) {
+  const handleLocateMePress = useCallback(async () => {
+    const coordinate = await locateMe();
+    if (!coordinate) {
       return;
     }
 
     const targetDelta = Math.min(regionRef.current.longitudeDelta, LOCATE_ME_TARGET_DELTA);
-    const nextRegion = createSinglePointRegion(userLocation, targetDelta);
+    const nextRegion = createSinglePointRegion(coordinate, targetDelta);
     suppressSelectionSheetCompactionForAutoZoom();
     mapRef.current?.animateToRegion(nextRegion, 260);
-  }, [suppressSelectionSheetCompactionForAutoZoom, userLocation]);
+  }, [locateMe, suppressSelectionSheetCompactionForAutoZoom]);
 
   const handleStampVisit = useCallback(async () => {
     if (
@@ -2138,15 +2076,8 @@ export default function MapScreen() {
         : formatVisitDate(selectedItem.visitedAt)
           ? `Besucht am ${formatVisitDate(selectedItem.visitedAt)}`
           : 'Noch kein Besuchsdatum vorhanden.';
-    const groupMetadata =
-      selectedItem.kind !== 'parking' && selectedFriendIds.length > 0
-        ? `Gruppe: ${selectedItem.totalGroupStampings ?? 0} von ${
-            selectedItem.groupSize ?? groupUserIds.length
-          } besucht`
-        : null;
-
-    return [groupMetadata, nearestCounterpartMeta || visitMetadata].filter(Boolean).join(' • ');
-  }, [groupUserIds.length, nearestCounterpartMeta, selectedFriendIds.length, selectedItem]);
+    return nearestCounterpartMeta || visitMetadata;
+  }, [nearestCounterpartMeta, selectedItem]);
 
   const handleGroupStampPress = useCallback(() => {
     if (!selectedItem || selectedItem.kind === 'parking') {
@@ -2268,7 +2199,7 @@ export default function MapScreen() {
           <View style={styles.primaryControlsRow} testID="map-primary-controls-row">
             <View style={styles.searchBarWrap}>
               <View style={styles.searchBar}>
-                <TextInput
+                <ClearableSearchInput standalone
                   ref={searchInputRef}
                   onBlur={() => {
                     if (searchBlurTimeoutRef.current) {
@@ -2367,12 +2298,14 @@ export default function MapScreen() {
 
         <View style={[styles.zoomControls, { bottom: zoomControlsBottomOffset }]}>
           <Pressable
-            disabled={!userLocation}
+            accessibilityLabel="Orte mich"
+            accessibilityRole="button"
+            disabled={locationState === 'loading'}
             onPress={handleLocateMePress}
             style={({ pressed }) => [
               styles.zoomButton,
-              !userLocation && styles.disabledControl,
-              pressed && userLocation && styles.pressed,
+              locationState === 'loading' && styles.disabledControl,
+              pressed && styles.pressed,
             ]}>
             <Feather color={userLocation ? '#2e3a2e' : '#9ba59a'} name="crosshair" size={19} />
           </Pressable>
@@ -2395,6 +2328,16 @@ export default function MapScreen() {
                 selectedItem.kind === 'parking' ? undefined : selectedItem.description,
               imageUrl: selectedItem.imageUrl,
             }}
+            groupStatus={isGroupActive && selectedItem.kind !== 'parking' ? {
+              item: {
+                hasVisited: selectedItem.kind === 'visited-stamp',
+                stampedUserIds: selectedItem.stampedUserIds,
+                totalGroupStampings: selectedItem.totalGroupStampings,
+              },
+              groupMembers: selectedMembers,
+              currentUser: currentUserProfile ?? undefined,
+              groupSize: selectedItem.groupSize ?? groupUserIds.length,
+            } : undefined}
             metadata={selectionMetadata}
             onPrimaryActionPress={
               showGroupStampAction ? undefined : selectionPrimaryActionPress
@@ -2810,8 +2753,7 @@ const styles = StyleSheet.create({
   generatedGroupMarkerBadge: {
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 8,
-    height: 15,
+    borderRadius: 999,
     justifyContent: 'center',
   },
   generatedGroupMarkerLabel: {
