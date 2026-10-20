@@ -2196,6 +2196,11 @@ export default function MapScreen() {
           pointerEvents="box-none"
           style={[styles.topControls, { top: insets.top + MAP_TOP_CONTROLS_TOP }]}
           testID="map-top-controls">
+          <Pressable accessibilityRole="button" accessibilityLabel="Offline-Wanderkarten öffnen"
+            onPress={() => router.push({ pathname: '/offline-maps', params: { latitude: String(region.latitude), longitude: String(region.longitude) } } as never)}
+            style={{ alignSelf: 'flex-start', backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8 }}>
+            <Text style={{ color: '#2e6b4b', fontWeight: '700' }}>Offline-Karten</Text>
+          </Pressable>
           <View style={styles.primaryControlsRow} testID="map-primary-controls-row">
             <View style={styles.searchBarWrap}>
               <View style={styles.searchBar}>
