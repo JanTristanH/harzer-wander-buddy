@@ -72,6 +72,8 @@ def main():
     parser.add_argument("--as-of", required=True, help="Validity date, YYYY-MM-DD (UTC)")
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
+    if subprocess.run(["git", "diff", "--quiet", "HEAD", "--", str(SOURCE)], cwd=ROOT).returncode:
+        parser.error("Commit the source CSV before exporting so its revision is reproducible")
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     result = catalogue(ROOT / SOURCE, args.as_of, revision)
     args.output.parent.mkdir(parents=True, exist_ok=True)
