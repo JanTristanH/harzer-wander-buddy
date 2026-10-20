@@ -21,7 +21,8 @@
     "postinstall": "patch-package",
     "web:basic": "EXPO_PUBLIC_AUTH_MODE=basic EXPO_PUBLIC_BACKEND_URL=http://localhost:4004 expo start --web --port 8081",
     "start:basic": "EXPO_PUBLIC_AUTH_MODE=basic EXPO_PUBLIC_BACKEND_URL=http://localhost:4004 expo start",
-    "build:web:sso": "EXPO_PUBLIC_AUTH_MODE=sso expo export --platform web"
+    "build:web:sso": "EXPO_PUBLIC_AUTH_MODE=sso expo export --platform web",
+    "build:web:static-website": "node ../scripts/build-static-website.mjs"
   },
   "jest": {
     "preset": "jest-expo",

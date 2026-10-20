@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { isStaticWebsite, openStaticStampArticle } from '@/lib/static-website';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -2363,7 +2364,9 @@ export default function MapScreen() {
             onDetailsPress={() =>
               selectedItem.kind === 'parking'
                 ? router.push(`/parking/${selectedItem.parkingId}` as never)
-                : router.push(`/stamps/${selectedItem.stampId}` as never)
+                : isStaticWebsite
+                  ? void openStaticStampArticle(selectedItem.stampId)
+                  : router.push(`/stamps/${selectedItem.stampId}` as never)
             }
             onHeightChange={setSelectedSheetHeight}
             onToggleExpand={handleSelectionSheetToggleExpand}

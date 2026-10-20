@@ -2,6 +2,9 @@ import csv
 import importlib.util
 from pathlib import Path
 import tempfile
+import json
+import subprocess
+import sys
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / "export-public-stamps.py"
@@ -48,6 +51,15 @@ class PublicCatalogueTest(unittest.TestCase):
                      [dict(self.rows[0], latitude="nan")] + self.rows[1:]]:
             with self.subTest(), self.assertRaises(ValueError):
                 self.export(rows)
+
+    def test_cli_exports_public_parking_and_provenance(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'catalogue.json'
+            subprocess.run([sys.executable, str(SCRIPT), '--as-of', '2026-10-20', '--output', str(path)], check=True, capture_output=True)
+            data = json.loads(path.read_text())
+            self.assertTrue(data['parkingSpots'])
+            self.assertEqual(len(data['source']['parkingSha256']), 64)
+            self.assertTrue(all(set(row) == {'ID', 'name', 'description', 'latitude', 'longitude'} for row in data['parkingSpots']))
 
 
 if __name__ == "__main__":

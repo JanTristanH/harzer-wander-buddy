@@ -15,6 +15,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = Path("backend/hwb/db/doNotDeploy-data/hwb.db.Stampboxes.csv")
+PARKING_SOURCE = Path("backend/hwb/db/doNotDeploy-data/hwb.db.ParkingSpots.csv")
 
 
 def timestamp(value):
@@ -72,10 +73,21 @@ def main():
     parser.add_argument("--as-of", required=True, help="Validity date, YYYY-MM-DD (UTC)")
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
-    if subprocess.run(["git", "diff", "--quiet", "HEAD", "--", str(SOURCE)], cwd=ROOT).returncode:
+    if subprocess.run(["git", "diff", "--quiet", "HEAD", "--", str(SOURCE), str(PARKING_SOURCE)], cwd=ROOT).returncode:
         parser.error("Commit the source CSV before exporting so its revision is reproducible")
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     result = catalogue(ROOT / SOURCE, args.as_of, revision)
+    parking = []
+    with (ROOT / PARKING_SOURCE).open(encoding="utf-8-sig", newline="") as stream:
+        for row in csv.DictReader(stream):
+            latitude, longitude = float(row["latitude"]), float(row["longitude"])
+            if not (50 < latitude < 53 and 9 < longitude < 13):
+                raise ValueError(f"Invalid parking coordinates: {row['ID']}")
+            parking.append({"ID": row["ID"], "name": row["name"].strip(),
+                            "description": row["description"].strip(),
+                            "latitude": latitude, "longitude": longitude})
+    result["parkingSpots"] = parking
+    result["source"]["parkingSha256"] = hashlib.sha256((ROOT / PARKING_SOURCE).read_bytes()).hexdigest()
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     print(f"Exported {len(result['stamps'])} public stamps to {args.output}")

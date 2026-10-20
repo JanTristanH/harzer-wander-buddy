@@ -1,2 +1,4 @@
 .playwright-cli
+app/dist-static-website/
+__pycache__/
 content/

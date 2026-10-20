@@ -6,6 +6,7 @@ on:
       - 'scripts/export-public-stamps.py'
       - 'scripts/tests/**'
       - 'backend/hwb/db/doNotDeploy-data/hwb.db.Stampboxes.csv'
+      - 'backend/hwb/db/doNotDeploy-data/hwb.db.ParkingSpots.csv'
       - '.github/workflows/public-catalogue.yml'
   push:
     branches: [develop, main]
@@ -13,6 +14,7 @@ on:
       - 'scripts/export-public-stamps.py'
       - 'scripts/tests/**'
       - 'backend/hwb/db/doNotDeploy-data/hwb.db.Stampboxes.csv'
+      - 'backend/hwb/db/doNotDeploy-data/hwb.db.ParkingSpots.csv'
       - '.github/workflows/public-catalogue.yml'
   workflow_dispatch:
 
