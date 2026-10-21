@@ -29,3 +29,6 @@ writeFileSync(resolve(output, 'app-build.json'), JSON.stringify({
   repository: 'JanTristanH/harzer-wander-buddy', revision, basePath, dataMode: 'static',
   ui: 'app/app/(tabs)/index.tsx + app/app/(tabs)/map.tsx',
 }, null, 2) + '\n');
+execFileSync(process.execPath, [resolve(root, 'scripts/measure-web-bundle.mjs'), output, '--check'], {
+  stdio: 'inherit',
+});

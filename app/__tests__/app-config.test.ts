@@ -77,6 +77,21 @@ describe('Expo backend configuration', () => {
     expect(createExpoConfig({}).experiments?.baseUrl).toBe('/app/rnweb');
   });
 
+  it('splits production web routes only in the static website profile', () => {
+    const base = {
+      name: 'Test', slug: 'test',
+      plugins: [['expo-router', { origin: 'https://example.com' }], 'expo-font'],
+    } as NonNullable<Parameters<typeof createExpoConfig>[1]>;
+    expect(createExpoConfig({ EXPO_PUBLIC_DATA_MODE: 'static' }, base).plugins).toEqual([
+      ['expo-router', { origin: 'https://example.com', asyncRoutes: { web: 'production' } }],
+      'expo-font',
+    ]);
+    expect(createExpoConfig({}, base).plugins).toEqual(base.plugins);
+    expect(createExpoConfig({ EXPO_PUBLIC_DATA_MODE: 'static' }).plugins).toContainEqual([
+      'expo-router', { asyncRoutes: { web: 'production' } },
+    ]);
+  });
+
   it('maps localhost to the Android emulator while preserving other platforms', () => {
     expect(resolveBackendUrlForPlatform(LOCAL_BACKEND_URL, 'android')).toBe(
       'http://10.0.2.2:4004'

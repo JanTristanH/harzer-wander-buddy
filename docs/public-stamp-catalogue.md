@@ -65,3 +65,45 @@ npm test --prefix app -- --runInBand --config jest.config.js
 Zusätzlich prüft die Website-CI die erzeugten HTML-/Expo-Dateien und den
 Browserbetrieb mit blockiertem Backend: Liste, Karte, Artikelnavigation,
 Anmeldeübergang und den HTML-Index ohne JavaScript.
+
+## JavaScript-Ladegewicht
+
+Das statische Profil aktiviert Expos asynchrone Produktionsrouten für Web.
+Zusätzlich lädt die Webkarte Leaflet und MapLibre erst beim Einhängen ihrer
+Kartenkomponente. Diese eigene Importgrenze ist nötig, weil Expo Bibliotheken,
+die mehrere Routen verwenden, sonst in das sofort geladene gemeinsame Paket
+verschiebt. Marker, Linien, Karten-Refs und OpenFreeMap bleiben erhalten.
+Während des Downloads erscheint eine Ladeanzeige; nach einem Ladefehler kann
+der Nutzer erneut versuchen. Die native Kartenimplementierung bleibt unverändert.
+
+Stempelbilder ohne Besuch werden im Browser per CSS entsättigt. Dadurch entfällt
+der bisher dafür ausgelieferte SVG-Filter samt `react-native-svg` im Webexport.
+Native Builds verwenden weiter ihren authentifizierten Bildcache und SVG-Filter.
+
+Vergleich mit PR #90 (`6ce12a9`), gleicher Lockfile-Stand, Produktions-Webexport:
+
+| JavaScript | Vorher | Nachher |
+| --- | ---: | ---: |
+| Initialer Listenaufruf im Browser | 4,91 MB | ca. 3,20 MB |
+| Einstieg inklusive Listen-Abhängigkeiten, gzip-Schätzung | 1,26 MB | ca. 0,81 MB |
+| Einstieg inklusive Listen-Abhängigkeiten, Brotli-Schätzung | 1,12 MB | ca. 0,72 MB |
+| Gesamter Export, unkomprimiert | 4,91 MB | ca. 4,83 MB |
+
+Die Einsparung betrifft vor allem den Einstieg: etwa 35 % weniger JavaScript.
+Beim Öffnen der Karte kommen etwa 1,25 MB für die Kartenbibliotheken hinzu.
+Die Summe aller komprimierten Dateien bleibt durch zusätzlichen Chunk-Overhead
+etwa auf dem bisherigen Niveau; Code-Aufteilung allein entfernt keinen Code.
+Komprimierte Werte sind pro Datei berechnet (gzip Level 6, Brotli Qualität 5),
+keine Behauptung über die tatsächlich aktivierte GitHub-Pages-Kompression.
+
+Der Build schreibt `bundle-size.json` mit Gesamtgröße, einzelnen
+HTML-Einstiegspunkten und der deduplizierten Vereinigung von Root- und
+Listen-Abhängigkeiten. Script-Tags und JavaScript-Preloads werden mitgezählt.
+Über 3,5 MB unkomprimiert für diesen Listeneinstieg schlägt der Build fehl.
+Das Budget ist eine Regressionserkennung; der Browsercheck bestätigt zusätzlich,
+dass die Kartenbibliotheken tatsächlich erst beim Öffnen der Karte geladen werden.
+
+```sh
+node scripts/measure-web-bundle.mjs /tmp/expo-website --check
+node --test scripts/tests/measure-web-bundle.test.mjs
+```

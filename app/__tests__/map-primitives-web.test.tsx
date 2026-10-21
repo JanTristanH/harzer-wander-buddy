@@ -1,7 +1,7 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 
-import MapView, { Marker } from '@/components/maps/map-primitives.web';
+import MapView, { Marker } from '@/components/maps/map-primitives-leaflet.web';
 
 const mockDivIcon = jest.fn((options: unknown) => ({ options, type: 'div-icon' }));
 const mockIcon = jest.fn((options: unknown) => ({ options, type: 'icon' }));

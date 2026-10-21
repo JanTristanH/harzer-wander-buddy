@@ -2,10 +2,10 @@ name: Static website Expo build
 
 on:
   pull_request:
-    paths: ['app/**', 'scripts/build-static-website.mjs', '.github/workflows/static-website.yml']
+    paths: ['app/**', 'scripts/build-static-website.mjs', 'scripts/measure-web-bundle.mjs', 'scripts/tests/**', '.github/workflows/static-website.yml']
   push:
     branches: [develop, main]
-    paths: ['app/**', 'scripts/build-static-website.mjs', '.github/workflows/static-website.yml']
+    paths: ['app/**', 'scripts/build-static-website.mjs', 'scripts/measure-web-bundle.mjs', 'scripts/tests/**', '.github/workflows/static-website.yml']
   workflow_dispatch:
 
 permissions:
@@ -23,6 +23,7 @@ jobs:
           cache-dependency-path: app/package-lock.json
       - run: npm ci --no-audit --no-fund
         working-directory: app
+      - run: node --test scripts/tests/measure-web-bundle.test.mjs
       - run: node scripts/build-static-website.mjs /tmp/expo-static-website
       - uses: actions/upload-artifact@v5
         with:

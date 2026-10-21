@@ -47,6 +47,12 @@ export function createExpoConfig(
   return {
     ...baseConfig,
     version,
+    plugins: baseConfig.plugins?.map((plugin) => {
+      const name = typeof plugin === 'string' ? plugin : plugin[0];
+      if (name !== 'expo-router' || env.EXPO_PUBLIC_DATA_MODE !== 'static') return plugin;
+      const options = typeof plugin === 'string' ? {} : plugin[1];
+      return [name, { ...options, asyncRoutes: { web: 'production' } }];
+    }),
     experiments: {
       ...baseConfig.experiments,
       baseUrl: env.EXPO_PUBLIC_DATA_MODE === 'static'
