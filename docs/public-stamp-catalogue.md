@@ -50,7 +50,7 @@ die echte Expo-App und veröffentlicht beides zusammen als Pages-Artefakt.
 Die Website rahmt den Export als vollflächige, gleichursprüngliche App ein;
 darunter stehen alle 222 Artikelverweise als sichtbarer HTML-Index.
 
-Der Website-Workflow prüft stündlich auf einen neuen App-/Website-Stand und
+Der Website-Workflow prüft alle 12 Stunden auf einen neuen App-/Website-Stand und
 überspringt unveränderte Builds am selben UTC-Tag. Nach UI-Änderungen ist kein
 Kopieren von Komponenten nötig. Die Details der einmaligen Umstellung von
 GitHub Pages auf die Quelle **GitHub Actions** stehen im Website-PR.
