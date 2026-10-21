@@ -58,6 +58,27 @@ path even after a Basic Expo session. Run the script after changes to `app/` and
 the browser. `npm run web:basic` is the separate Expo Web workflow; it does not require
 Auth0 callback changes.
 
+Production web exports load routes asynchronously, including the CAP-served SSO
+build. Expo emits shared files and route chunks under `/app/rnweb/_expo/`;
+deploy the complete export together using the build-and-copy script. Direct
+page loads, Auth0 callbacks and logout keep the `/app/rnweb` prefix. The setting
+applies to production web routes only; native route loading is unchanged.
+
+CAP validation of the production SSO export (compared with `4090fa8`, which
+already defers the map libraries): initial root/list JavaScript decreases from
+3.57 MB to 3.18 MB, about 11%; estimated gzip decreases from 0.91 MB to 0.81 MB.
+The full export stays near 4.82 MB; route splitting defers code and adds a small
+amount of chunk overhead.
+
+Tested against the real local CAP server with the `dev-basic` profile and an
+in-memory database: guest list/map navigation, direct `/map`, `/tours`, `/profile`,
+`/admin` and `/login` loads, map reload, JavaScript MIME types, missing-chunk 404
+and dynamic HTML fallback. Browser tests used controlled Auth0 discovery and
+map-style responses. Mobile authorization redirects and desktop popups preserved
+the callback prefix and PKCE; cancelled callbacks, invalid state and the logout
+return route were checked. A complete login against external Auth0 and the
+production OIDC server middleware were not exercised by these local checks.
+
 ## Get started
 
 1. Install dependencies (from this directory)

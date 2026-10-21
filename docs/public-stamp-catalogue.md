@@ -68,7 +68,8 @@ Anmeldeübergang und den HTML-Index ohne JavaScript.
 
 ## JavaScript-Ladegewicht
 
-Das statische Profil aktiviert Expos asynchrone Produktionsrouten für Web.
+Alle Webprofile einschließlich des CAP-SSO-Builds aktivieren Expos asynchrone
+Produktionsrouten für Web. Mount-Pfade und native Routen bleiben unverändert.
 Zusätzlich lädt die Webkarte Leaflet und MapLibre erst beim Einhängen ihrer
 Kartenkomponente. Diese eigene Importgrenze ist nötig, weil Expo Bibliotheken,
 die mehrere Routen verwenden, sonst in das sofort geladene gemeinsame Paket

@@ -77,7 +77,7 @@ describe('Expo backend configuration', () => {
     expect(createExpoConfig({}).experiments?.baseUrl).toBe('/app/rnweb');
   });
 
-  it('splits production web routes only in the static website profile', () => {
+  it('splits production web routes for CAP, Basic and static exports while preserving router options', () => {
     const base = {
       name: 'Test', slug: 'test',
       plugins: [['expo-router', { origin: 'https://example.com' }], 'expo-font'],
@@ -86,7 +86,12 @@ describe('Expo backend configuration', () => {
       ['expo-router', { origin: 'https://example.com', asyncRoutes: { web: 'production' } }],
       'expo-font',
     ]);
-    expect(createExpoConfig({}, base).plugins).toEqual(base.plugins);
+    for (const env of [{}, { EXPO_PUBLIC_AUTH_MODE: 'sso' }, { EXPO_PUBLIC_AUTH_MODE: 'basic' }]) {
+      expect(createExpoConfig(env, base).plugins).toEqual([
+        ['expo-router', { origin: 'https://example.com', asyncRoutes: { web: 'production' } }],
+        'expo-font',
+      ]);
+    }
     expect(createExpoConfig({ EXPO_PUBLIC_DATA_MODE: 'static' }).plugins).toContainEqual([
       'expo-router', { asyncRoutes: { web: 'production' } },
     ]);
