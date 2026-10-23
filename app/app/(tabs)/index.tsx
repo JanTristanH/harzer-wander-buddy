@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Animated,
@@ -31,6 +31,7 @@ import { createStamping, deleteStamping, fetchOwnStampings, type Stampbox } from
 import { useAuth } from '@/lib/auth';
 import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
+import { useBadgeAlbum } from '@/lib/badges';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
 
 type FilterKey = 'all' | 'visited' | 'open' | 'near' | 'relocated';
@@ -144,6 +145,15 @@ function isRelocatedStamp(validTo?: string) {
 
 export default function StampsScreen() {
   const router = useRouter();
+  const goalParams = useLocalSearchParams<{badgeGoal?:string}>();
+  const goalAlbum = useBadgeAlbum(undefined,Boolean(goalParams.badgeGoal));
+  const badgeGoal = goalAlbum.data?.entries.find(entry => entry.id === goalParams.badgeGoal);
+  const goalStampIds = useMemo(() => {
+    if (!badgeGoal) return null;
+    if (!badgeGoal.required.length || (badgeGoal.id === 'steiger' && badgeGoal.progress[0].current < badgeGoal.progress[0].total)) return null;
+    const poolComplete = badgeGoal.id === 'witch' && badgeGoal.progress[0].current >= badgeGoal.progress[0].total;
+    return new Set(badgeGoal.required.filter(stamp => !stamp.visited && (!poolComplete || stamp.mandatory)).map(stamp => stamp.id));
+  },[badgeGoal]);
   const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
@@ -162,6 +172,14 @@ export default function StampsScreen() {
   const stampRowHeight = isGroupActive ? GROUP_STAMP_ROW_HEIGHT : KNOWN_STAMP_ROW_HEIGHT;
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  useEffect(() => {
+    if (goalParams.badgeGoal) {
+      setActiveFilter('all');
+      setQuery('');
+      setSelectionMode(false);
+      setSelectedIds([]);
+    }
+  },[goalParams.badgeGoal]);
   const [locationState, setLocationState] = useState<LocationState>('idle');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
@@ -386,6 +404,10 @@ export default function StampsScreen() {
   const filteredStamps = useMemo(
     () =>
       stampDistances.filter(({ stamp, distanceKm }) => {
+        if (goalParams.badgeGoal) {
+          if (!badgeGoal || stamp.hasVisited) return false;
+          if (goalStampIds ? !goalStampIds.has(stamp.ID) : !/^\d+$/.test(stamp.number) || Number(stamp.number) < 1 || Number(stamp.number) > 222) return false;
+        }
         const matchesQuery =
           normalizedQuery.length === 0 ||
           stamp.name.toLowerCase().includes(normalizedQuery) ||
@@ -413,7 +435,7 @@ export default function StampsScreen() {
 
         return true;
       }),
-    [activeFilter, normalizedQuery, stampDistances]
+    [activeFilter, normalizedQuery, stampDistances,goalParams.badgeGoal,badgeGoal,goalStampIds]
   );
   const isVisitedEmptyState = activeFilter === 'visited' && visitedCount === 0;
   const isNearEmptyState = activeFilter === 'near' && filteredStamps.length === 0;
@@ -765,6 +787,9 @@ export default function StampsScreen() {
 
   const renderControls = useCallback(() => (
     <View style={styles.controlsContent}>
+      {goalParams.badgeGoal ? <Pressable accessibilityRole="button" accessibilityLabel="Zielfilter entfernen" onPress={() => router.setParams({badgeGoal:''})} style={{padding:12,backgroundColor:'#e8eee5',borderRadius:14}}>
+        <Text style={{color:'#2e6b4b',fontSize:15}}>{badgeGoal ? `Ziel: ${badgeGoal.name}` : goalAlbum.error ? 'Ziel konnte nicht geladen werden' : 'Ziel wird geladen …'} · Filter entfernen ×</Text>
+      </Pressable> : null}
       <View style={styles.searchShell}>
         <View style={styles.searchIconWrap}>
           <Feather color="#6d7d6e" name="search" size={14} />
@@ -809,7 +834,7 @@ export default function StampsScreen() {
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, locationState, query]);
+  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {

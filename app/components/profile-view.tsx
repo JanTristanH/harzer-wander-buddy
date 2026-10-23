@@ -17,6 +17,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList } from '@/components/friends-list';
+import { BadgeTitle } from '@/components/badge-title';
+import { BadgeArtwork } from '@/components/badge-artwork';
+import { BadgeProfileSection } from '@/components/badge-profile-section';
+import { useBadgeAlbum } from '@/lib/badges';
+import { badgeTitle } from '@/lib/badge-types';
 import { InstallAppBanner } from '@/components/profile/install-app-banner';
 import { TechnicalDetails } from '@/components/profile/technical-details';
 import { ProfileTimelineSummarySection } from '@/components/profile-timeline-summary-section';
@@ -80,6 +85,7 @@ type CompareStampItem = {
 };
 
 export type ProfileViewModel = {
+  badgeUserId?: string;
   mode: 'self' | 'user';
   name: string;
   subtitle: string;
@@ -515,6 +521,9 @@ export function ProfileErrorState({
 }
 
 export function ProfileView({ data }: { data: ProfileViewModel }) {
+  const badges = useBadgeAlbum(data.badgeUserId);
+  const selectedFrame = badges.data?.entries.find(entry => entry.id === badges.data?.selection.frame)?.frame;
+  const selectedTitle = badgeTitle(badges.data);
   const actionCard = data.actionCard;
   const [showAllVisits, setShowAllVisits] = useState(false);
   const [showAllFriends, setShowAllFriends] = useState(false);
@@ -608,17 +617,15 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
           ) : null}
           <View style={styles.heroRow}>
             <View style={styles.avatarBadgeWrap}>
-              <HeaderAvatar
+              {selectedFrame ? <BadgeArtwork frame={selectedFrame} image={data.avatarImage} initials={data.name.slice(0,2).toUpperCase()} size={118} /> : <HeaderAvatar
                 color={data.avatarColor || avatarColor()}
                 compact={false}
                 image={data.avatarImage}
-              />
-              <View style={styles.profileBadge}>
-                <Text style={styles.profileBadgeLabel}>WANDERER</Text>
-              </View>
+              />}
             </View>
             <View style={styles.headerBody}>
               <Text style={styles.headerName}>{data.name}</Text>
+              <BadgeTitle title={selectedTitle} />
               <Text style={styles.headerMeta}>{data.subtitle}</Text>
               {data.headerAction?.type === 'edit' ? (
                 <Pressable
@@ -743,6 +750,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
           </View>
         ) : null}
 
+        <BadgeProfileSection album={badges.data} error={badges.error} own={data.mode === 'self'} />
         {data.achievements && data.achievements.length > 0 ? (
           <ProfileSection title="Erfolge & Meilensteine">
             <View style={styles.achievementRow}>

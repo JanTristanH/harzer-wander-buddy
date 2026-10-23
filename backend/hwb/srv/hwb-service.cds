@@ -211,6 +211,12 @@ service api @(requires: 'authenticated-user') {
 
     function getCurrentUser()                                          returns Users;
 
+    @requires: 'authenticated-user'
+    function getBadgeAlbum(userId: String) returns String;
+
+    @requires: 'authenticated-user'
+    action saveBadgeProfile(featured: many String, title: String, frame: String) returns String;
+
     function getCurrentUserID()                                        returns Users;
 
     function getVersion()                                              returns String;

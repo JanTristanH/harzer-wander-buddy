@@ -8,6 +8,9 @@ const mockDelete = jest.fn();
 const mockVisits = jest.fn();
 const mockInvalidate = jest.fn();
 const mockPush = jest.fn();
+const mockGoalParams: { badgeGoal?: string } = {};
+const mockBadgeAlbum = jest.fn();
+const mockSetParams = jest.fn();
 const mockAuth = jest.fn();
 const mockClient = { invalidateQueries: mockInvalidate };
 const mockGroup = { groupUserIds: [], selectedFriendIds: [], selectedMembers: [] };
@@ -17,7 +20,8 @@ const mockStamps = [
 ];
 
 jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => mockClient }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, setParams: mockSetParams }), useLocalSearchParams: () => mockGoalParams }));
+jest.mock('@/lib/badges', () => ({ useBadgeAlbum: () => mockBadgeAlbum() }));
 jest.mock('@/lib/auth', () => ({ useAuth: () => mockAuth() }));
 jest.mock('@/lib/hiking-group', () => ({ useHikingGroup: () => mockGroup }));
 jest.mock('@/components/group-selector', () => ({ GroupSelector: () => null }));
@@ -44,6 +48,8 @@ function hold(id: string) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  delete mockGoalParams.badgeGoal;
+  mockBadgeAlbum.mockReturnValue({data:undefined});
   jest.useFakeTimers();
   mockAuth.mockReturnValue({ isAuthenticated: true, accessToken: 'test-token', canPerformWrites: true, currentUserProfile: { id: 'self' } });
   mockCreate.mockResolvedValue({});
@@ -52,6 +58,16 @@ beforeEach(() => {
   mockVisits.mockResolvedValue([]);
 });
 afterEach(() => { jest.useRealTimers(); });
+
+it('shows only missing goal stamps and allows resetting the goal filter',async () => {
+  mockGoalParams.badgeGoal = 'goethe';
+  mockBadgeAlbum.mockReturnValue({data:{entries:[{id:'goethe',name:'Goethe im Harz',required:[{id:'open',visited:false},{id:'visited',visited:true}],progress:[]}]}});
+  await openScreen();
+  expect(screen.getByTestId('stamp-list-item-open')).toBeTruthy();
+  expect(screen.queryByTestId('stamp-list-item-visited')).toBeNull();
+  fireEvent.press(screen.getByLabelText('Zielfilter entfernen'));
+  expect(mockSetParams).toHaveBeenCalledWith({badgeGoal:''});
+});
 
 it('opens details normally, then toggles rows without navigation after holding', async () => {
   await openScreen();

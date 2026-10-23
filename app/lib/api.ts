@@ -2,6 +2,24 @@ import { normalizeRoleTokens } from '@/lib/admin-access';
 import { appConfig } from '@/lib/config';
 import { prepareProfileImageForUpload, type UploadableImage } from '@/lib/image-upload';
 import buildODataQuery, { type QueryOptions } from 'odata-query';
+import type { BadgeAlbum, BadgeSelection } from '@/lib/badge-types';
+
+export async function fetchBadgeAlbum(token: string, userId?: string): Promise<BadgeAlbum> {
+  const parameters = userId ? `userId='${escapeODataString(userId)}'` : 'userId=null';
+  const payload = await fetchOData<unknown>(token, buildUrl(`getBadgeAlbum(${parameters})`));
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Das Abzeichenalbum konnte nicht geladen werden.');
+  return JSON.parse(raw) as BadgeAlbum;
+}
+
+export async function saveBadgeProfile(token: string, selection: BadgeSelection): Promise<BadgeAlbum> {
+  const payload = await mutateOData<unknown>(token, buildUrl('saveBadgeProfile'), {
+    method: 'POST', body: JSON.stringify(selection),
+  });
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Die Auswahl konnte nicht gespeichert werden.');
+  return JSON.parse(raw) as BadgeAlbum;
+}
 
 export type StampedUser = {
   ID: string;
