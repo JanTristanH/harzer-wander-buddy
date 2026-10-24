@@ -1,4 +1,6 @@
 .playwright-cli
+app/dist-static-website/
+__pycache__/
 content/
 # Local video runs and upstream skill assets (reinstall with skills CLI)
 /brag-output*/
