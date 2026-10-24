@@ -1,3 +1,4 @@
+import { StampNoticeBadge } from '@/components/stamp-notice-badge';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
@@ -34,6 +35,7 @@ export function MapSelectionSheet({
     kind: MarkerKind;
     title: string;
     description?: string;
+    activeNotices?: string;
     imageUrl?: string;
   };
   metadata?: string;
@@ -92,6 +94,7 @@ export function MapSelectionSheet({
             <Text numberOfLines={1} style={styles.detailTitle}>
               {item.title}
             </Text>
+            <StampNoticeBadge value={item.activeNotices} />
             {!isCompact && item.description?.trim() ? (
               <Text numberOfLines={2} style={styles.detailDescription}>
                 {item.description}

@@ -1,3 +1,4 @@
+import { StampNoticeBadge } from '@/components/stamp-notice-badge';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -123,6 +124,7 @@ function StampListItemComponent({
             {item.description?.trim() || 'Keine Beschreibung verfügbar.'}
           </Text>
 
+          <StampNoticeBadge value={item.activeNotices} />
           <View style={styles.cardMetaRow}>
             <View style={[styles.statePill, item.hasVisited ? styles.statePillVisited : styles.statePillOpen]}>
               <Feather

@@ -1,3 +1,4 @@
+import { StampNoticeBadge } from '@/components/stamp-notice-badge';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -468,6 +469,7 @@ function ParkingDetailContent() {
                     <Text style={styles.rowTitle}>
                       {neighbor.number || '--'} {'\u2022'} {neighbor.name}
                     </Text>
+                    <StampNoticeBadge value={neighbor.activeNotices} />
                     <Text style={styles.rowMeta}>
                       {formatDistance(neighbor.distanceKm)}
                       {neighbor.durationMinutes ? ` • ${formatDuration(neighbor.durationMinutes)}` : ''}

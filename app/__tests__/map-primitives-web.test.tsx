@@ -149,6 +149,18 @@ describe('web map primitives', () => {
     expect(options.html).not.toMatch(/feDropShadow/i);
   });
 
+  it('adds the warning badge while preserving the marker number and escaping image attributes', () => {
+    render(<Marker noticeBadge coordinate={{ latitude: 51.75, longitude: 10.61 }} pinColor="#2e6b4b">146</Marker>);
+    const css = mockDivIcon.mock.calls[0][0] as { html: string };
+    expect(css.html).toContain('⚡');
+    expect(css.html).toContain('146');
+    render(<Marker noticeBadge coordinate={{ latitude: 51.76, longitude: 10.62 }} image={{ uri: 'https://example.test/pin.png?name="quoted"' }} />);
+    const image = mockDivIcon.mock.calls[1][0] as { html: string };
+    expect(image.html).toContain('<img');
+    expect(image.html).toContain('&quot;quoted&quot;');
+    expect(image.html).toContain('⚡');
+  });
+
   it('uses lightweight CSS zoom animations and batches wheel zoom input', () => {
     render(<MapView />);
 
