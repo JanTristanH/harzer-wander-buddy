@@ -178,6 +178,8 @@ export default function ProfileScreen() {
       refreshHint: isFetching && !isPending ? 'Aktualisiere Daten im Hintergrund...' : undefined,
       showDeferredSkeletons: isPlaceholderData,
       footerButtons: [
+        ...(Platform.OS !== 'web' ? [{ key: 'offline-maps', label: 'Offline-Wanderkarten',
+          onPress: () => router.push('/offline-maps' as never) }] : []),
         ...(isAdmin
           ? [
               {
