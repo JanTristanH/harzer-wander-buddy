@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LegalLinks } from '@/components/legal-links';
 import { Fonts } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { appConfig } from '@/lib/config';
@@ -120,6 +121,7 @@ export default function LoginScreen() {
             </View>
           </View>
 
+          <Text style={styles.copy}>Dein Profilname und Profilbild sind für andere angemeldete Nutzer auffindbar. Informationen über Standort, Kontodaten und Löschung findest du unter Datenschutz.</Text>
           {!hasCompletedOnboarding ? (
             <View style={styles.noteCard}>
               <Text style={styles.noteTitle}>Neu hier?</Text>
@@ -131,6 +133,7 @@ export default function LoginScreen() {
               </Link>
             </View>
           ) : null}
+          <LegalLinks />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

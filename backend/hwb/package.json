@@ -39,7 +39,9 @@
     "watch:basic": "node util/prepareLocalDatabase.js && cds watch --profile dev-basic",
     "start:basic": "node util/prepareLocalDatabase.js && cds serve --profile dev-basic",
     "watch:sso": "node util/prepareLocalDatabase.js && cds watch --profile dev-sso",
-    "start:sso": "node util/prepareLocalDatabase.js && cds serve --profile dev-sso"
+    "start:sso": "node util/prepareLocalDatabase.js && cds serve --profile dev-sso",
+    "check:legal-release": "node util/checkLegalRelease.js",
+    "job:account-deletions": "node util/runAccountDeletionJob.js"
   },
   "cds": {
     "requires": {
@@ -162,7 +164,7 @@
   },
   "hwbProfiles": {
     "dev-basic": {
-      "description": "Lokaler CAP-Server mit SQLite und HTTP Basic Auth; benötigt kein Auth0.",
+      "description": "Lokaler CAP-Server mit SQLite und HTTP Basic Auth; ben\u00f6tigt kein Auth0.",
       "watch": "npm run dev:basic:cap",
       "start": "npm run start:basic",
       "frontend": "Im zweiten Terminal: npm run dev:basic:web --prefix app (vom Projektroot).",
@@ -177,7 +179,7 @@
       "url": "http://localhost:4004/app/rnweb"
     },
     "production": {
-      "description": "Bestehendes Container-Profil mit PostgreSQL und Auth0; unverändert.",
+      "description": "Bestehendes Container-Profil mit PostgreSQL und Auth0; unver\u00e4ndert.",
       "start": "npm start (im bestehenden Container mit Produktionsprofil)"
     },
     "note": "Nur einen CAP-Server auf Port 4004 starten; vor dem Profilwechsel den laufenden Server beenden."
