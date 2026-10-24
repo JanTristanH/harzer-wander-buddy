@@ -16,11 +16,14 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { TourThumbnail } from '@/components/tour-planner-ui';
+import { useTourSuggestions } from '@/lib/tour-suggestions';
+import { formatTourDistance, formatTourDuration, routeName } from '@/lib/tour-automation';
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
-import type { Tour } from '@/lib/api';
+import type { HikingRouteResult, Tour } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useRequireSignInAction } from '@/lib/auth-actions';
 import { useHikingGroup } from '@/lib/hiking-group';
@@ -30,18 +33,21 @@ import {
   requireOnlineForWrite,
 } from '@/lib/offline-write';
 import { getFloatingActionBottomOffset } from '@/lib/tab-bar-layout';
-import { useCreateTourMutation, useToursOverviewQuery } from '@/lib/queries';
+import { useCreateTourMutation, useToursOverviewQuery, usePointsOfInterestQuery } from '@/lib/queries';
 
-type FilterKey = 'mine' | 'all';
+type FilterKey = 'mine' | 'buddy' | 'all';
 type SortKey = 'newest' | 'oldest' | 'nameAsc' | 'nameDesc';
 type ToursListItem =
   | { type: 'controls'; key: 'controls' }
   | { type: 'empty'; key: 'empty' }
-  | { type: 'tour'; key: string; tour: Tour };
+  | { type: 'tour'; key: string; tour: Tour }
+  | { type: 'buddy-intro'; key: string }
+  | { type: 'suggestion'; key: string; route: HikingRouteResult; index: number };
 
 const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'mine', label: 'Meine' },
-  { key: 'all', label: 'Alle' },
+  { key: 'mine', label: 'Meine Touren' },
+  { key: 'buddy', label: 'Buddy-Empfehlungen' },
+  { key: 'all', label: 'Entdecken' },
 ];
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -138,6 +144,9 @@ export function TourCard({
 
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
+      <View style={{ flexDirection: 'row', gap: 14 }}>
+      <TourThumbnail svg={item.previewSvg} />
+      <View style={{ flex: 1, gap: 5 }}>
       <View style={styles.cardHeaderRow}>
         <Text numberOfLines={1} style={styles.cardTitle}>
           {item.name}
@@ -173,6 +182,7 @@ export function TourCard({
         {`${formatDistance(item.distance)} • ${formatDuration(item.duration)}`}
       </Text>
 
+      </View></View>
       <View style={styles.cardFooterRow}>
         <Text style={styles.cardFooterText}>
           {`↑${formatElevation(item.totalElevationGain)} • ↓${formatElevation(item.totalElevationLoss)}`}
@@ -183,6 +193,21 @@ export function TourCard({
       </View>
     </Pressable>
   );
+}
+
+function BuddySuggestionCard({ route, index, saved, onPress }: { route: HikingRouteResult; index: number; saved: boolean; onPress: () => void }) {
+  const { data: points = [] } = usePointsOfInterestQuery();
+  return <View style={styles.cardRow}><Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+    <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
+      <TourThumbnail svg={route.previewSvg} />
+      <View style={{ flex: 1, gap: 7 }}>
+        <Text style={styles.cardTitle}>{routeName(route, points, index)}</Text>
+        <Text style={styles.cardMeta}>{formatTourDuration(route.duration)} · {formatTourDistance(route.distance)}</Text>
+        <Text style={styles.cardGroupProgress}>{route.matchingStampCount} passende Stempel · Für dich {route.newStampCountForUser ?? 0} neu</Text>
+        <Text style={styles.cardMeta}>{saved ? '✓ Gespeichert · Details ansehen' : 'Vorschlag ansehen und speichern'}</Text>
+      </View><Feather name="chevron-right" size={20} color="#2e6b4b" />
+    </View>
+  </Pressable></View>;
 }
 
 export default function ToursTabScreen() {
@@ -205,6 +230,7 @@ export default function ToursTabScreen() {
   const { data, error, isPending, isFetching, refetch } = useToursOverviewQuery({
     groupUserIds,
   });
+  const { suggestions } = useTourSuggestions();
   const createTourMutation = useCreateTourMutation();
   const isCreateDisabled = createTourMutation.isPending || !canPerformWrites;
   const tours = useMemo(() => data ?? [], [data]);
@@ -275,6 +301,11 @@ export default function ToursTabScreen() {
   }, [activeSort, filteredTours]);
   const listItems = useMemo<ToursListItem[]>(() => {
     const items: ToursListItem[] = [{ type: 'controls', key: 'controls' }];
+    if (activeFilter === 'buddy') {
+      items.push({ type: 'buddy-intro', key: 'buddy-intro' });
+      items.push(...(suggestions?.results ?? []).map((route, index) => ({ type: 'suggestion' as const, key: route.id, route, index })));
+      return items;
+    }
     if (sortedTours.length === 0) {
       items.push({ type: 'empty', key: 'empty' });
       return items;
@@ -282,7 +313,7 @@ export default function ToursTabScreen() {
 
     items.push(...sortedTours.map((tour) => ({ type: 'tour' as const, key: tour.ID, tour })));
     return items;
-  }, [sortedTours]);
+  }, [activeFilter, sortedTours, suggestions]);
 
   const blockingError = !data ? error : null;
   const isMineFilter = activeFilter === 'mine';
@@ -290,8 +321,8 @@ export default function ToursTabScreen() {
   const emptyStateTitle = isMineFilter ? 'Keine eigenen Touren gefunden' : 'Keine Touren gefunden';
   const emptyStateCopy = isMineFilter
     ? isSearching
-      ? 'Passe die Suche an oder wechsle auf Alle.'
-      : 'Erstelle eine neue Tour oder wechsle auf Alle.'
+      ? 'Passe die Suche an oder wechsle zu Entdecken.'
+      : 'Erstelle eine neue Tour oder wechsle zu Entdecken.'
     : 'Passe die Suche an oder erstelle eine neue Tour.';
   const emptyStateIllustration = isMineFilter && !isSearching ? emptyVisitedIllustration : emptySearchIllustration;
   const handleOpenTour = useCallback(
@@ -510,7 +541,7 @@ export default function ToursTabScreen() {
           if (item.type === 'controls') {
             return (
               <View style={styles.stickyControlsWrap}>
-                <View style={styles.searchRow}>
+                {activeFilter !== 'buddy' ? <View style={styles.searchRow}>
                   <View style={styles.searchShell}>
                     <Feather color="#6d7d6e" name="search" size={14} />
                     <ClearableSearchInput
@@ -528,7 +559,7 @@ export default function ToursTabScreen() {
                     <MaterialIcons name="sort" size={24} color="black" />
                     <Text style={styles.sortButtonLabel}>Sortieren</Text>
                   </Pressable>
-                </View>
+                </View> : null}
 
                 <View style={styles.controlsRow}>
                   <View style={styles.filterRow}>
@@ -537,6 +568,9 @@ export default function ToursTabScreen() {
                       return (
                         <Pressable
                           key={filter.key}
+                          accessibilityRole="tab"
+                          aria-selected={isActive}
+                          accessibilityState={{ selected: isActive }}
                           onPress={() => setActiveFilter(filter.key)}
                           style={({ pressed }) => [
                             styles.filterPill,
@@ -555,6 +589,20 @@ export default function ToursTabScreen() {
                 {isFetching ? <Text style={styles.refreshHint}>Aktualisiere Touren im Hintergrund...</Text> : null}
               </View>
             );
+          }
+
+          if (item.type === 'buddy-intro') {
+            return <View style={styles.cardRow}><View style={[styles.card, { gap: 12 }]}>
+                <Text style={styles.cardTitle}>Empfehlungen von Buddy</Text>
+                <Text style={[styles.cardMeta, { fontSize: 15, lineHeight: 22 }]}>{suggestions?.results.length
+                  ? `Deine ${suggestions.results.length} Vorschläge vom ${new Date(suggestions.generatedAt).toLocaleDateString('de-DE')}. Jeder Vorschlag lässt sich einzeln ansehen und speichern.`
+                  : 'Wie viel Zeit hast du? Buddy findet passende Stempelrunden für dich oder deine Wandergruppe.'}</Text>
+                <Pressable accessibilityRole="button" onPress={() => router.push('/tours/automatic' as never)} style={styles.buddyAction}><MaterialIcons name="auto-awesome" size={18} color="#2e6b4b" /><Text style={styles.buddyActionLabel}>Neue Vorschläge finden</Text></Pressable>
+            </View></View>;
+          }
+          if (item.type === 'suggestion') {
+            return <BuddySuggestionCard route={item.route} index={item.index} saved={Boolean(suggestions?.savedTourIds[item.route.id])}
+              onPress={() => router.push({ pathname: '/tours/proposal', params: { session: suggestions?.sessionId, index: String(item.index) } } as never)} />;
           }
 
           if (item.type === 'empty') {
@@ -583,6 +631,12 @@ export default function ToursTabScreen() {
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}
       />
+
+      <Pressable accessibilityRole="button" accessibilityLabel="Tour automatisch planen" testID="tour-automation-button"
+        onPress={() => router.push('/tours/automatic' as never)}
+        style={({ pressed }) => [styles.floatingAddButton, { bottom: floatingActionBottom + 66, borderRadius: 26, backgroundColor: '#e0ecdc' }, pressed && styles.pressed]}>
+        <MaterialIcons name="auto-awesome" size={25} color="#2e6b4b" />
+      </Pressable>
 
       <Pressable
         accessibilityLabel="Neue Tour erstellen"
@@ -889,7 +943,7 @@ const styles = StyleSheet.create({
   floatingAddButton: {
     alignItems: 'center',
     backgroundColor: '#2E6B4B',
-    borderRadius: 18,
+    borderRadius: 26,
     height: 52,
     justifyContent: 'center',
     position: 'absolute',
@@ -903,6 +957,8 @@ const styles = StyleSheet.create({
   floatingAddButtonDisabled: {
     opacity: 0.7,
   },
+  buddyAction: { minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  buddyActionLabel: { color: '#2e6b4b', fontSize: 16, fontWeight: '600' },
   cardRow: {
     paddingHorizontal: 20,
     paddingBottom: 12,

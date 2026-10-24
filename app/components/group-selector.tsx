@@ -118,6 +118,7 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
                         isSelected ? 'aus der Wandergruppe entfernen' : 'zur Wandergruppe hinzufügen'
                       }`}
                       accessibilityRole="checkbox"
+                      aria-checked={isSelected}
                       accessibilityState={{ checked: isSelected }}
                       key={member.id}
                       onPress={() => toggleFriend(member.id)}
