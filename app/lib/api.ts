@@ -84,6 +84,7 @@ type NeighborParkingRow = {
 
 type TravelTimeRow = {
   ID: string;
+  positionString?: string;
   fromPoi?: string;
   toPoi?: string;
   durationSeconds?: number;
@@ -466,6 +467,7 @@ export type TourPathEntry = {
     durationSeconds: number | null;
     distanceMeters: number | null;
     travelMode?: string;
+    positionString?: string;
     elevationGain: number | null;
     elevationLoss: number | null;
   };
@@ -987,6 +989,7 @@ function normalizeTravelTime(value?: TravelTimeRow) {
 
   return {
     ID: value.ID,
+    positionString: safeTrim(value.positionString) || undefined,
     fromPoi: safeTrim(value.fromPoi) || undefined,
     toPoi: safeTrim(value.toPoi) || undefined,
     durationSeconds: toRoundedNumberOrNull(value.durationSeconds),

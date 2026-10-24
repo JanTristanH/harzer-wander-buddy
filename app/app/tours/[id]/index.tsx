@@ -25,6 +25,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import MapView, { Marker, Polyline, type MapViewRef, type Region } from '@/components/maps/map-primitives';
+import { TourGpxExport } from '@/components/tour-gpx-export';
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
@@ -2919,6 +2920,7 @@ export default function TourDetailScreen() {
 
             {!isEditMode ? (
               <View style={styles.headerActions}>
+                <TourGpxExport name={data.tour.name} path={data.path} disabled={isFetching} />
                 <Pressable
                   onPress={() => void handleShareTour()}
                   style={({ pressed }) => [styles.shareHeaderButton, pressed && styles.pressed]}>
