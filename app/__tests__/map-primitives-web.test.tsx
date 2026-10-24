@@ -149,6 +149,30 @@ describe('web map primitives', () => {
     expect(options.html).not.toMatch(/feDropShadow/i);
   });
 
+  it.each([1, 2, 3])('limits only the basemap resolution at device pixel ratio %s', (devicePixelRatio) => {
+    const originalRatio = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+    Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: devicePixelRatio });
+    try {
+      render(<MapView />);
+      const container = mockMapContainer.mock.calls[0][0] as { children: React.ReactNode };
+      const basemap = React.Children.toArray(container.children).find(
+        (child) => React.isValidElement(child) && typeof child.type === 'function' && child.type.name === 'OpenFreeMapLayer'
+      );
+      const layer = render(basemap as React.ReactElement);
+      expect(mockMaplibreGL).toHaveBeenCalledWith(expect.objectContaining({
+        pixelRatio: Math.min(devicePixelRatio, 1.5),
+        fadeDuration: 0,
+        style: 'https://tiles.openfreemap.org/styles/liberty',
+      }));
+      const { remove } = mockMaplibreGL.mock.results[0].value.addTo.mock.results[0].value;
+      layer.unmount();
+      expect(remove).toHaveBeenCalledTimes(1);
+    } finally {
+      if (originalRatio) Object.defineProperty(window, 'devicePixelRatio', originalRatio);
+      else Reflect.deleteProperty(window, 'devicePixelRatio');
+    }
+  });
+
   it('uses lightweight CSS zoom animations and batches wheel zoom input', () => {
     render(<MapView />);
 

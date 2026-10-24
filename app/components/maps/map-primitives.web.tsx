@@ -99,6 +99,9 @@ const DEFAULT_REGION: Region = {
 
 const MAP_CONTAINER_STYLE = { height: '100%', width: '100%' } as const;
 const OPEN_FREE_MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+// High-DPI phones otherwise rasterize nine physical pixels per CSS pixel.
+// Keep DOM markers/text at full device resolution; limit only the GL basemap.
+const MAX_BASEMAP_PIXEL_RATIO = 1.5;
 const OPEN_FREE_MAP_ATTRIBUTION =
   '<a href="https://openfreemap.org/">OpenFreeMap</a> <a href="https://openmaptiles.org/">&copy; OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>';
 const WEB_MARKER_SIZE = 48;
@@ -560,6 +563,9 @@ function OpenFreeMapLayer() {
   useEffect(() => {
     const layer = L.maplibreGL({
       attributionControl: { customAttribution: OPEN_FREE_MAP_ATTRIBUTION },
+      pixelRatio: Math.min(window.devicePixelRatio || 1, MAX_BASEMAP_PIXEL_RATIO),
+      // Leaflet already animates the map. Avoid extra GL label fade frames.
+      fadeDuration: 0,
       style: OPEN_FREE_MAP_STYLE_URL,
     }).addTo(map);
 
