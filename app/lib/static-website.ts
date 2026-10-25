@@ -14,16 +14,28 @@ type CatalogueStamp = {
 type Catalogue = { schemaVersion: number; stamps: CatalogueStamp[]; parkingSpots: ParkingSpot[] };
 let cataloguePromise: Promise<Catalogue> | undefined;
 
+function validateCatalogue(data: Catalogue): Catalogue {
+  if (data?.schemaVersion !== 1 || !Array.isArray(data.stamps) || !Array.isArray(data.parkingSpots)) {
+    throw new Error('Unbekanntes Format des öffentlichen Stempelstellen-Katalogs.');
+  }
+  return data;
+}
+
 export function loadStaticCatalogue(): Promise<Catalogue> {
+  // Private Sites may require authentication for every JSON/font request.
+  // The preview packager embeds this public catalogue in the HTML document.
+  const embedded = isStaticWebsite && typeof window !== 'undefined'
+    ? (window as Window & { __HWB_STATIC_CATALOGUE__?: Catalogue }).__HWB_STATIC_CATALOGUE__
+    : undefined;
+  if (embedded !== undefined) {
+    return Promise.resolve().then(() => validateCatalogue(embedded));
+  }
   if (!cataloguePromise) {
-    cataloguePromise = fetch(`${staticWebsiteBasePath}/public-catalogue.json`, { credentials: 'omit' })
+    cataloguePromise = fetch(`${staticWebsiteBasePath}/public-catalogue.json`, { credentials: 'same-origin' })
       .then(async (response) => {
         if (!response.ok) throw new Error('Die statischen Stempelstellen konnten nicht geladen werden.');
         const data = await response.json() as Catalogue;
-        if (data.schemaVersion !== 1 || !Array.isArray(data.stamps) || !Array.isArray(data.parkingSpots)) {
-          throw new Error('Unbekanntes Format des öffentlichen Stempelstellen-Katalogs.');
-        }
-        return data;
+        return validateCatalogue(data);
       }).catch((error) => { cataloguePromise = undefined; throw error; });
   }
   return cataloguePromise;
@@ -63,7 +75,7 @@ export async function openStaticStampArticle(stampId: string) {
   if (!stamp || !/^\/stempelstelle-\d{3}-[^/]+\/$/.test(stamp.articleUrl)) {
     throw new Error('Für diese Stempelstelle fehlt die bestehende Artikelseite.');
   }
-  (window.top || window).location.assign(stamp.articleUrl);
+  (window.top || window).location.assign(new URL(stamp.articleUrl, 'https://www.harzer-wander-buddy.de').href);
 }
 
 export function assertLiveBackend() {
