@@ -1,7 +1,7 @@
 import type { LeafletEventHandlerFnMap, Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
 import '@maplibre/maplibre-gl-leaflet';
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { createContext, forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Marker as LeafletMarker,
   Polyline as LeafletPolyline,
@@ -12,6 +12,7 @@ import {
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { areMapCoordinatesEqual } from '@/lib/map-viewport';
+import { CanvasMapMarkers, type CanvasMapMarker } from '@/lib/canvas-map-markers';
 import { defaultWebMapStyle, reduceWalkingStyle, WEB_MAP_STYLES, type WebMapStyleId } from '@/lib/web-map-style';
 import { createCssMapMarkerHtml, normalizeWebMarkerLabel, WEB_MAP_MARKER_CSS } from '@/lib/web-map-marker';
 
@@ -267,8 +268,44 @@ svg.leaflet-zoom-animated { will-change: transform; }
   border: 0;
   overflow: visible;
 }
+.hwb-canvas-marker-target { background: transparent; border: 0; }
+.hwb-canvas-marker-target .hwb-css-marker__label {
+  clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden;
+  padding: 0; position: absolute; white-space: nowrap;
+}
 ${WEB_MAP_MARKER_CSS}
 `;
+
+const CanvasMarkerContext = createContext<CanvasMapMarkers | null>(null);
+
+function CanvasMarkerProvider({ children }: { children: React.ReactNode }) {
+  const map = useMap();
+  const renderer = useMemo(() => new CanvasMapMarkers(map), [map]);
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    // Explicit diagnostic baseline for same-build touch/paint comparisons.
+    if (query.get('markerRenderer') !== 'dom') setActive(renderer.attach());
+    if (process.env.EXPO_PUBLIC_DATA_MODE === 'static' && query.has('mapPerf')) {
+      (window as Window & { __HWB_MAP_PERF__?: LeafletMap }).__HWB_MAP_PERF__ = map;
+    }
+    return () => {
+      renderer.detach();
+      delete (window as Window & { __HWB_MAP_PERF__?: LeafletMap }).__HWB_MAP_PERF__;
+    };
+  }, [map, renderer]);
+  return <CanvasMarkerContext.Provider value={active ? renderer : null}>{children}</CanvasMarkerContext.Provider>;
+}
+
+function CanvasMarkerRegistration({ renderer, record }: { renderer: CanvasMapMarkers; record: CanvasMapMarker }) {
+  const key = useRef(Symbol('map-marker')).current;
+  const { latitude, longitude, color, label, size, anchorX, anchorY, zIndex } = record;
+  useEffect(() => {
+    renderer.set(key, { latitude, longitude, color, label, size, anchorX, anchorY, zIndex });
+    return () => renderer.delete(key);
+  }, [renderer, key, latitude, longitude, color, label, size, anchorX, anchorY, zIndex]);
+  return null;
+}
 
 const iconCache = new Map<string, L.Icon | L.DivIcon>();
 const webMapPerfDebugState = {
@@ -434,8 +471,9 @@ function createIcon(options: {
   imageSize?: { height?: number; width?: number } | null;
   label?: string | null;
   size: number;
+  canvas?: boolean;
 }) {
-  const { anchor, color, imageSize, imageUri, label, size } = options;
+  const { anchor, color, imageSize, imageUri, label, size, canvas } = options;
   const width = size;
   const inferredImageRatio =
     imageSize?.width && imageSize?.height && imageSize.width > 0 && imageSize.height > 0
@@ -452,7 +490,7 @@ function createIcon(options: {
   ];
 
   const normalizedLabel = normalizeWebMarkerLabel(label ?? null);
-  const cacheKey = `${imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
+  const cacheKey = `${canvas ? 'canvas' : imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
     imageSize?.width ?? ''
   }x${imageSize?.height ?? ''}`;
   const existing = iconCache.get(cacheKey);
@@ -470,8 +508,10 @@ function createIcon(options: {
         iconUrl: imageUri,
       })
     : L.divIcon({
-        className: 'hwb-leaflet-div-icon',
-        html: createCssMapMarkerHtml({ color, label: normalizedLabel, size }),
+        className: canvas ? 'hwb-canvas-marker-target' : 'hwb-leaflet-div-icon',
+        html: canvas
+          ? `<span aria-hidden="true" class="hwb-css-marker__label">${(normalizedLabel ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')}</span>`
+          : createCssMapMarkerHtml({ color, label: normalizedLabel, size }),
         iconAnchor,
         iconSize: [width, height],
       });
@@ -932,7 +972,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
             zIndexOffset={80}
           />
         ) : null}
-        {children}
+        <CanvasMarkerProvider>{children}</CanvasMarkerProvider>
       </MapContainer>
     </View>
   );
@@ -943,6 +983,7 @@ type InternalMarkerProps = MarkerProps & {
 };
 
 function Marker(props: InternalMarkerProps) {
+  const canvasRenderer = useContext(CanvasMarkerContext);
   const {
     accessibilityLabel,
     anchor,
@@ -1018,13 +1059,16 @@ function Marker(props: InternalMarkerProps) {
   const shouldUseCompactMarker = Boolean(children) && !imageUri && !markerLabel;
   const derivedColor =
     pinColor ?? (typeof zIndex === 'number' && zIndex <= 14 ? '#2f7dd7' : '#2e6b4b');
+  const size = shouldUseCompactMarker ? WEB_MARKER_SIZE_COMPACT : WEB_MARKER_SIZE;
+  const useCanvas = Boolean(canvasRenderer) && !imageUri;
   const icon = createIcon({
     anchor,
     color: derivedColor,
     imageSize: imageSource,
     imageUri,
     label: markerLabel,
-    size: shouldUseCompactMarker ? WEB_MARKER_SIZE_COMPACT : WEB_MARKER_SIZE,
+    size,
+    canvas: useCanvas,
   });
 
   if (perfDebugEnabled) {
@@ -1032,6 +1076,12 @@ function Marker(props: InternalMarkerProps) {
   }
 
   return (
+    <>
+    {useCanvas && canvasRenderer ? <CanvasMarkerRegistration renderer={canvasRenderer} record={{
+      latitude: markerLatitude, longitude: markerLongitude, color: derivedColor,
+      label: normalizeWebMarkerLabel(markerLabel), size, anchorX: anchor?.x ?? 0.5,
+      anchorY: anchor?.y ?? 1, zIndex: zIndex ?? 0,
+    }} /> : null}
     <LeafletMarker
       alt={accessibilityLabel}
       eventHandlers={markerEventHandlers}
@@ -1041,6 +1091,7 @@ function Marker(props: InternalMarkerProps) {
       title={accessibilityLabel}
       zIndexOffset={typeof zIndex === 'number' ? zIndex : 0}
     />
+    </>
   );
 }
 
