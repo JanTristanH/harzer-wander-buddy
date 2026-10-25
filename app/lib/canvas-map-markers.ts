@@ -146,9 +146,8 @@ export class CanvasMapMarkers {
       // only its image creation with our existing canvas (no bitmap readback).
       const canvas = this.canvas;
       class Overlay extends L.ImageOverlay {
-        declare _image: HTMLCanvasElement;
         _initImage() {
-          this._image = canvas;
+          (this as unknown as { _image: HTMLCanvasElement })._image = canvas;
           canvas.classList.add('leaflet-image-layer', 'leaflet-zoom-animated', 'hwb-marker-canvas');
           canvas.style.zIndex = '0';
         }
