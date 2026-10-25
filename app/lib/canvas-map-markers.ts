@@ -60,7 +60,10 @@ export class CanvasMapMarkers {
 
   private schedule = () => {
     if (!this.canvas || this.frame !== null || this.zooming) return;
-    this.frame = requestAnimationFrame(() => { this.frame = null; this.draw(); });
+    this.frame = requestAnimationFrame(() => {
+      this.frame = null;
+      if (!this.zooming) this.draw();
+    });
   };
 
   private checkBuffer = () => {
