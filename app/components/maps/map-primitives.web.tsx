@@ -664,6 +664,14 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
       toggle.setAttribute('aria-label', 'Karten-Attribution anzeigen');
       toggle.textContent = 'i';
       content.innerHTML = styleId === 'raster' ? RASTER_MAP_ATTRIBUTION : OPEN_FREE_MAP_ATTRIBUTION;
+      if (styleId === 'raster') {
+        // The raster tile provider requires visible attribution, not a hidden
+        // credit behind the information toggle.
+        container.classList.add('is-expanded');
+        container.style.cssText = 'min-height:0;border:1px solid #cad4cc;border-radius:6px;padding:3px 5px;';
+        toggle.style.display = 'none';
+        content.style.cssText = 'max-width:none;opacity:1;padding:0;font-size:11px;';
+      }
 
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.on(toggle, 'click', () => {

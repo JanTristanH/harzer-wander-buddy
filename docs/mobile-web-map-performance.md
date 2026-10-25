@@ -47,3 +47,33 @@ Viewportbegrenzung für Parkplätze bleibt erhalten.
 Screenshot des exportierten Builds:
 
 ![Mobile Karte nach Zoom, Verschieben und Marker-Auswahl](screenshots/mobile-web-map-performance/after.png)
+
+## Weiterer mobiler Engpass: Vektorhintergrund (25.10.2026)
+
+Der reduzierte Stil behält die Vektorkachel-Decodierung, Beschriftungsberechnung
+und den GL-Renderer bei. Deshalb steht nun „Schnell (Raster)“ zur Verfügung;
+auf schmalen oder per Touch bedienten Geräten ist dies die Vorauswahl.
+Die vorhandenen Vektorstile bleiben zum Vergleichen auswählbar.
+
+Raster verwendet normale 256px-OSM-Bildkacheln über Leaflet, ohne Retina-
+Vervielfachung, mit `updateWhenIdle: true`, `updateWhenZooming: false` und einem
+Pufferring. Während Gesten verschiebt/skaliert der Browser vorhandene Bilder.
+Ein Raster-/Vektorwechsel entfernt den bisherigen Hintergrund vollständig;
+Marker und Kartenposition bleiben bestehen. Die OSM-Attribution ist im
+Rastermodus ständig sichtbar. Die Darstellung unterscheidet sich vom bisherigen
+Liberty-Stil; dies ist keine vorgerenderte Kopie des reduzierten Vektorstils.
+
+Vergleich im Chromium-Software-WebGL-Browser bei 390×844, DPR 3 und vierfacher
+CPU-Drosselung: dieselben zwei Pan-/Zoom-Sequenzen je Modus, nach dem Laden des
+Stils. Der 95%-Bildabstand lag bei 250 ms für „Wandern reduziert“ und 33,4 ms
+für Raster. Die Anzahl der Long Tasks fiel von 66 auf 4, die längste von 600
+auf 73 ms. Diese einzelnen simulierten Messungen sind keine FPS-Garantie für
+physische Handys. Der strukturelle Unterschied ist reproduzierbar: Raster startet
+beim mobilen Einstieg keinen WebGL-Kontext und hat kein GL-Canvas; beim Wechsel
+auf einen Vektorstil erscheint ein Canvas, beim Zurückwechseln verschwindet es.
+
+Alle 222 Stempelnummern bleiben in jedem Modus montiert. Zusätzlich geprüft:
+Schriftstatus, gleiche Marker-DOM-Knoten und Positionen beim Stilwechsel,
+Zoom/Pan, Marker-Auswahl, korrekt geladene Rasterkacheln und Anbieter-Attribution.
+Der vorhandene JavaScript-Build enthält weiterhin die Vektorbibliothek für die
+optionalen Stile; eine kleinere JS-Downloadgröße wird hier nicht behauptet.
