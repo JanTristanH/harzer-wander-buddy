@@ -18,6 +18,7 @@ export class CanvasMapMarkers {
   private height = 0;
   private draws = 0;
   private ratio = 1;
+  private zooming = false;
 
   constructor(private map: L.Map) {}
 
@@ -29,14 +30,18 @@ export class CanvasMapMarkers {
     canvas.style.pointerEvents = 'none';
     canvas.setAttribute('aria-hidden', 'true');
     this.ratio = Math.min(window.devicePixelRatio || 1, 1.5);
-    this.map.on('moveend zoomend resize', this.schedule);
+    this.map.on('resize', this.schedule);
+    this.map.on('zoomstart', this.onZoomStart);
+    this.map.on('zoomend', this.onZoomEnd);
     this.map.on('move', this.checkBuffer);
     this.draw();
     return true;
   }
 
   detach() {
-    this.map.off('moveend zoomend resize', this.schedule);
+    this.map.off('resize', this.schedule);
+    this.map.off('zoomstart', this.onZoomStart);
+    this.map.off('zoomend', this.onZoomEnd);
     this.map.off('move', this.checkBuffer);
     if (this.frame !== null) cancelAnimationFrame(this.frame);
     this.frame = null;
@@ -50,18 +55,23 @@ export class CanvasMapMarkers {
   set(key: symbol, record: CanvasMapMarker) { this.records.set(key, record); this.schedule(); }
   delete(key: symbol) { this.records.delete(key); this.schedule(); }
 
+  private onZoomStart = () => { this.zooming = true; };
+  private onZoomEnd = () => { this.zooming = false; this.schedule(); };
+
   private schedule = () => {
-    if (!this.canvas || this.frame !== null) return;
+    if (!this.canvas || this.frame !== null || this.zooming) return;
     this.frame = requestAnimationFrame(() => { this.frame = null; this.draw(); });
   };
 
   private checkBuffer = () => {
-    if (!this.bounds) return;
+    if (!this.bounds || this.zooming) return;
     const point = this.map.latLngToContainerPoint(this.bounds.getNorthWest());
     const size = this.map.getSize();
     // Long flings may cross the prepainted margin. Refill at that boundary,
     // rather than painting every marker on every touchmove.
-    if (point.x > -64 || point.y > -64 || point.x + this.width < size.x + 64 || point.y + this.height < size.y + 64) this.schedule();
+    const north = this.bounds.getNorth() < 85.05 && point.y > -64;
+    const south = this.bounds.getSouth() > -85.05 && point.y + this.height < size.y + 64;
+    if (point.x > -64 || north || point.x + this.width < size.x + 64 || south) this.schedule();
   };
 
   private sprite(record: CanvasMapMarker) {
@@ -112,11 +122,16 @@ export class CanvasMapMarkers {
       this.map.containerPointToLatLng(L.point(-padding, -padding)),
       this.map.containerPointToLatLng(L.point(size.x + padding, size.y + padding))
     );
+    const origin = this.map.latLngToLayerPoint(this.bounds.getNorthWest());
+    const end = this.map.latLngToLayerPoint(this.bounds.getSouthEast());
+    // At world zoom the buffer may exceed Web Mercator's latitude limits.
+    // Match the projected overlay size instead of stretching the marker bitmap.
+    this.width = Math.max(1, end.x - origin.x);
+    this.height = Math.max(1, end.y - origin.y);
     this.canvas.width = Math.ceil(this.width * this.ratio);
     this.canvas.height = Math.ceil(this.height * this.ratio);
     const context = this.canvas.getContext('2d')!;
     context.scale(this.ratio, this.ratio);
-    const origin = this.map.latLngToLayerPoint(this.bounds.getNorthWest());
     const projected = Array.from(this.records.values(), record => ({ record, point: this.map.latLngToLayerPoint([record.latitude, record.longitude]) }));
     projected.sort((a, b) => (a.point.y + a.record.zIndex) - (b.point.y + b.record.zIndex));
     for (const { record, point } of projected) {
@@ -130,13 +145,14 @@ export class CanvasMapMarkers {
       // Reuse Leaflet's geographic positioning and zoom animation, replacing
       // only its image creation with our existing canvas (no bitmap readback).
       const canvas = this.canvas;
-      const Overlay = L.ImageOverlay.extend({
-        _initImage(this: { _image: HTMLCanvasElement }) {
+      class Overlay extends L.ImageOverlay {
+        declare _image: HTMLCanvasElement;
+        _initImage() {
           this._image = canvas;
           canvas.classList.add('leaflet-image-layer', 'leaflet-zoom-animated', 'hwb-marker-canvas');
           canvas.style.zIndex = '0';
-        },
-      });
+        }
+      }
       this.overlay = new Overlay('', this.bounds, {
         pane: 'markerPane', interactive: false, zIndex: 0, className: 'hwb-marker-canvas',
       }).addTo(this.map);
