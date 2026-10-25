@@ -1,5 +1,8 @@
 # Projektwissen
 
+- [`hwb-sites-preview`](../skills/hwb-sites-preview/SKILL.md): echte Expo-App als
+  private Sites-Vorschau paketieren und mit 222 Stempeln sowie Symbolschriften prüfen.
+
 - [`local-rnweb-development.md`](./local-rnweb-development.md): RN-Web über CAP bauen,
   starten, testen und typische lokale Fehler beheben.
 - [`web-map-zoom-performance.md`](./web-map-zoom-performance.md): Erkenntnisse zur

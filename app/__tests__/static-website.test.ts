@@ -30,7 +30,7 @@ describe('static website data boundary', () => {
     const adapter = require('@/lib/static-website');
     const [stamps] = await Promise.all([adapter.staticStampboxes('validToday'), adapter.loadStaticCatalogue()]);
     expect(global.fetch).toHaveBeenCalledTimes(1);
-    expect(global.fetch).toHaveBeenCalledWith('/preview/overview/app/public-catalogue.json', { credentials: 'omit' });
+    expect(global.fetch).toHaveBeenCalledWith('/preview/overview/app/public-catalogue.json', { credentials: 'same-origin' });
     expect(stamps[0]).toMatchObject({ ID: 'stamp-9', hasVisited: false, totalGroupStampings: 0, stampedUsers: [] });
     expect(await adapter.staticStampboxes('visited')).toEqual([]);
     expect(await adapter.staticStampboxes('relocated')).toEqual([]);
@@ -42,11 +42,46 @@ describe('static website data boundary', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
+  it('uses embedded public data even when every separate asset request returns 401', async () => {
+    const catalogue = { schemaVersion: 1, stamps: [], parkingSpots: [] };
+    Object.defineProperty(window, '__HWB_STATIC_CATALOGUE__', { configurable: true, value: catalogue });
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
+    try {
+      await expect(require('@/lib/static-website').loadStaticCatalogue()).resolves.toBe(catalogue);
+      expect(global.fetch).not.toHaveBeenCalled();
+    } finally {
+      Reflect.deleteProperty(window, '__HWB_STATIC_CATALOGUE__');
+    }
+  });
+
+  it('rejects malformed embedded data instead of displaying an empty map', async () => {
+    Object.defineProperty(window, '__HWB_STATIC_CATALOGUE__', { configurable: true, value: { schemaVersion: 2 } });
+    try {
+      await expect(require('@/lib/static-website').loadStaticCatalogue()).rejects.toThrow(/Format/);
+    } finally {
+      Reflect.deleteProperty(window, '__HWB_STATIC_CATALOGUE__');
+    }
+  });
+
   it('does not affect live builds', () => {
     delete process.env.EXPO_PUBLIC_DATA_MODE;
     const adapter = require('@/lib/static-website');
     expect(adapter.isStaticWebsite).toBe(false);
     expect(() => adapter.assertLiveBackend()).not.toThrow();
+  });
+
+  it('opens public articles on the website rather than on the private preview host', async () => {
+    mockCatalogue();
+    const originalTop = Object.getOwnPropertyDescriptor(window, 'top');
+    const assign = jest.fn();
+    Object.defineProperty(window, 'top', { configurable: true, value: { location: { assign } } });
+    try {
+      await require('@/lib/static-website').openStaticStampArticle('stamp-9');
+      expect(assign).toHaveBeenCalledWith('https://www.harzer-wander-buddy.de/stempelstelle-009-brockenhaus/');
+    } finally {
+      if (originalTop) Object.defineProperty(window, 'top', originalTop);
+      else Reflect.deleteProperty(window, 'top');
+    }
   });
 
   it('retries a failed static catalogue instead of caching a rejected promise', async () => {
