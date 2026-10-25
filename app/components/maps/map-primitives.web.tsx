@@ -1009,6 +1009,13 @@ function Marker(props: InternalMarkerProps) {
               event.originalEvent?.stopPropagation?.();
               onPressRef.current?.();
             },
+            keydown(event) {
+              const key = event.originalEvent.key;
+              if (key !== 'Enter' && key !== ' ') return;
+              event.originalEvent.preventDefault();
+              event.originalEvent.stopPropagation();
+              if (!event.originalEvent.repeat) onPressRef.current?.();
+            },
           }
         : undefined,
     [isPressable]

@@ -100,7 +100,7 @@ async def main():
     selected=[r for r in results if r['renderer']==mode and r['zoom']==zoom]
     lat=sorted(v for r in selected for v in r['latencyMs'].get('TOUCH_MOVED',[]))
     release=sorted(v for r in selected for v in r['latencyMs'].get('TOUCH_RELEASED',[]))
-    rows.append({'renderer':mode,'zoom':zoom,'samples':len(selected),'touchMoveP95Ms':lat[int(len(lat)*.95)] if lat else None,'touchReleaseP95Ms':release[int(len(release)*.95)] if release else None,'worstFrameMs':max(r['after']['max'] for r in selected),'worstTbtMs':max(r['after']['totalBlocking'] for r in selected),'medianDrawingLayers':statistics.median(r['drawingLayers'] for r in selected),'parkingAtStart':selected[0]['before']['parking']})
+    rows.append({'renderer':mode,'zoom':zoom,'samples':len(selected),'touchMoveP95Ms':lat[int(len(lat)*.95)] if lat else None,'touchReleaseP95Ms':release[int(len(release)*.95)] if release else None,'touchReleaseMaxMs':max(release) if release else None,'touchMoveMaxMs':max(lat) if lat else None,'worstFrameMs':max(r['after']['max'] for r in selected),'worstTbtMs':max(r['after']['totalBlocking'] for r in selected),'medianDrawingLayers':statistics.median(r['drawingLayers'] for r in selected),'parkingAtStart':selected[0]['before']['parking']})
   (ROOT/'summary.json').write_text(json.dumps(rows,indent=2))
   with (ROOT/'summary.csv').open('w') as output:
    writer=csv.DictWriter(output,fieldnames=list(rows[0]));writer.writeheader();writer.writerows(rows)

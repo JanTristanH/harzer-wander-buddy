@@ -8,6 +8,7 @@ const mockIcon = jest.fn((options: unknown) => ({ options, type: 'icon' }));
 const mockMaplibreGL = jest.fn((_options: unknown) => ({ addTo: jest.fn(() => ({ remove: jest.fn() })) }));
 const mockTileLayer = jest.fn((_url: string, _options: unknown) => ({ addTo: jest.fn(() => ({ remove: jest.fn() })) }));
 const mockMapContainer = jest.fn((_props: unknown) => null);
+const mockLeafletMarker = jest.fn((_props: unknown) => null);
 
 jest.mock('leaflet', () => ({
   __esModule: true,
@@ -25,7 +26,7 @@ jest.mock('@maplibre/maplibre-gl-leaflet', () => ({}));
 jest.mock('react-leaflet', () => {
   return {
     MapContainer: (props: unknown) => mockMapContainer(props),
-    Marker: () => null,
+    Marker: (props: unknown) => mockLeafletMarker(props),
     Polyline: () => null,
     useMap: jest.fn(),
     useMapEvents: jest.fn(),
@@ -149,6 +150,21 @@ describe('web map primitives', () => {
     expect(options.html).not.toMatch(/<svg\b/i);
     expect(options.html).not.toMatch(/<filter\b/i);
     expect(options.html).not.toMatch(/feDropShadow/i);
+  });
+
+  it('activates individual keyboard targets once for Enter and Space', () => {
+    const onPress = jest.fn();
+    render(<Marker coordinate={{ latitude: 51.8, longitude: 10.6 }} onPress={onPress}>9</Marker>);
+    const { eventHandlers } = mockLeafletMarker.mock.calls[0][0] as {
+      eventHandlers: { keydown: (event: { originalEvent: Partial<KeyboardEvent> }) => void };
+    };
+    const event = { key: 'Enter', repeat: false, preventDefault: jest.fn(), stopPropagation: jest.fn() };
+    eventHandlers.keydown({ originalEvent: event });
+    eventHandlers.keydown({ originalEvent: { ...event, repeat: true } });
+    eventHandlers.keydown({ originalEvent: { ...event, key: ' ' } });
+    eventHandlers.keydown({ originalEvent: { ...event, key: 'ArrowDown' } });
+    expect(onPress).toHaveBeenCalledTimes(2);
+    expect(event.preventDefault).toHaveBeenCalledTimes(3);
   });
 
   it('uses raster tiles without initializing GL and cleans up when changing renderer', () => {
