@@ -1,12 +1,21 @@
 import type { StyleSpecification } from 'maplibre-gl';
 
 export const WEB_MAP_STYLES = {
+  raster: { label: 'Schnell (Raster)', url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png' },
   standard: { label: 'Standard', url: 'https://tiles.openfreemap.org/styles/liberty' },
   light: { label: 'Hell', url: 'https://tiles.openfreemap.org/styles/positron' },
   walking: { label: 'Wandern reduziert', url: 'https://tiles.openfreemap.org/styles/liberty' },
 } as const;
 
 export type WebMapStyleId = keyof typeof WEB_MAP_STYLES;
+
+export function defaultWebMapStyle(): WebMapStyleId {
+  if (typeof window !== 'undefined' && (
+    window.matchMedia?.('(pointer: coarse)')?.matches ||
+    (window.innerWidth > 0 && window.innerWidth <= 768)
+  )) return 'raster';
+  return 'standard';
+}
 
 export function reduceWalkingStyle(style: StyleSpecification): StyleSpecification {
   return {

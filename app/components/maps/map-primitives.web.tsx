@@ -12,7 +12,7 @@ import {
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { areMapCoordinatesEqual } from '@/lib/map-viewport';
-import { reduceWalkingStyle, WEB_MAP_STYLES, type WebMapStyleId } from '@/lib/web-map-style';
+import { defaultWebMapStyle, reduceWalkingStyle, WEB_MAP_STYLES, type WebMapStyleId } from '@/lib/web-map-style';
 import { createCssMapMarkerHtml, normalizeWebMarkerLabel, WEB_MAP_MARKER_CSS } from '@/lib/web-map-marker';
 
 export type LatLng = {
@@ -105,6 +105,8 @@ const OPEN_FREE_MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 const MAX_BASEMAP_PIXEL_RATIO = 1.5;
 const OPEN_FREE_MAP_ATTRIBUTION =
   '<a href="https://openfreemap.org/">OpenFreeMap</a> <a href="https://openmaptiles.org/">&copy; OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>';
+const RASTER_MAP_ATTRIBUTION =
+  '<a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap contributors</a>';
 const WEB_MARKER_SIZE = 48;
 const WEB_MARKER_SIZE_COMPACT = 24;
 const MIN_ZOOM = 2;
@@ -562,8 +564,23 @@ function OpenFreeMapLayer({ styleId = 'standard' }: { styleId?: WebMapStyleId })
   const map = useMap();
   const layerRef = useRef<L.MaplibreGL | null>(null);
   const appliedStyleRef = useRef<WebMapStyleId>('standard');
+  const isRaster = styleId === 'raster';
 
   useEffect(() => {
+    if (isRaster) {
+      // Browser-composited images avoid vector decoding, label placement and GL
+      // rendering during gestures. Keep ordinary 256px tiles on high-DPI phones.
+      const layer = L.tileLayer(WEB_MAP_STYLES.raster.url, {
+        attribution: RASTER_MAP_ATTRIBUTION,
+        detectRetina: false,
+        maxNativeZoom: MAX_ZOOM,
+        maxZoom: MAX_ZOOM,
+        updateWhenIdle: true,
+        updateWhenZooming: false,
+        keepBuffer: 1,
+      }).addTo(map);
+      return () => { layer.remove(); };
+    }
     const layer = L.maplibreGL({
       attributionControl: { customAttribution: OPEN_FREE_MAP_ATTRIBUTION },
       pixelRatio: Math.min(window.devicePixelRatio || 1, MAX_BASEMAP_PIXEL_RATIO),
@@ -578,7 +595,7 @@ function OpenFreeMapLayer({ styleId = 'standard' }: { styleId?: WebMapStyleId })
       layer.remove();
       layerRef.current = null;
     };
-  }, [map]);
+  }, [map, isRaster]);
 
   useEffect(() => {
     if (!layerRef.current || appliedStyleRef.current === styleId) return;
@@ -592,8 +609,11 @@ function OpenFreeMapLayer({ styleId = 'standard' }: { styleId?: WebMapStyleId })
   return null;
 }
 
-function WebMapStyleControl({ onChange }: { onChange: (style: WebMapStyleId) => void }) {
+function WebMapStyleControl({ onChange, styleId }: { onChange: (style: WebMapStyleId) => void; styleId: WebMapStyleId }) {
   const map = useMap();
+  const selectRef = useRef<HTMLSelectElement | null>(null);
+  const styleRef = useRef(styleId);
+  styleRef.current = styleId;
   useEffect(() => {
     const control = new L.Control({ position: 'bottomleft' });
     control.onAdd = () => {
@@ -610,18 +630,23 @@ function WebMapStyleControl({ onChange }: { onChange: (style: WebMapStyleId) => 
         option.textContent = style.label;
         select.appendChild(option);
       }
+      select.value = styleRef.current;
+      selectRef.current = select;
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.disableScrollPropagation(container);
       L.DomEvent.on(select, 'change', () => onChange(select.value as WebMapStyleId));
       return container;
     };
     control.addTo(map);
-    return () => { control.remove(); };
+    return () => { control.remove(); selectRef.current = null; };
   }, [map, onChange]);
+  useEffect(() => {
+    if (selectRef.current) selectRef.current.value = styleId;
+  }, [styleId]);
   return null;
 }
 
-function OpenFreeMapAttribution({ attributionPlacement }: Pick<MapViewProps, 'attributionPlacement'>) {
+function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewProps, 'attributionPlacement'> & { styleId: WebMapStyleId }) {
   const map = useMap();
 
   useEffect(() => {
@@ -638,7 +663,7 @@ function OpenFreeMapAttribution({ attributionPlacement }: Pick<MapViewProps, 'at
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Karten-Attribution anzeigen');
       toggle.textContent = 'i';
-      content.innerHTML = OPEN_FREE_MAP_ATTRIBUTION;
+      content.innerHTML = styleId === 'raster' ? RASTER_MAP_ATTRIBUTION : OPEN_FREE_MAP_ATTRIBUTION;
 
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.on(toggle, 'click', () => {
@@ -654,7 +679,7 @@ function OpenFreeMapAttribution({ attributionPlacement }: Pick<MapViewProps, 'at
     return () => {
       control.remove();
     };
-  }, [attributionPlacement, map]);
+  }, [attributionPlacement, map, styleId]);
 
   return null;
 }
@@ -673,7 +698,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
     style,
   } = props;
   const [map, setMap] = useState<LeafletMap | null>(null);
-  const [mapStyle, setMapStyle] = useState<WebMapStyleId>('standard');
+  const [mapStyle, setMapStyle] = useState<WebMapStyleId>(defaultWebMapStyle);
   const [isClient, setIsClient] = useState(false);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
   const lastUserLocationRef = useRef<LatLng | null>(null);
@@ -881,8 +906,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           }}
         />
         <OpenFreeMapLayer styleId={mapStyle} />
-        <WebMapStyleControl onChange={setMapStyle} />
-        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} />
+        <WebMapStyleControl onChange={setMapStyle} styleId={mapStyle} />
+        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} styleId={mapStyle} />
         <MapEventBridge
           onPress={onPress}
           onRegionChange={onRegionChange}

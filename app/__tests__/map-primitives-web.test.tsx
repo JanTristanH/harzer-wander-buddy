@@ -6,6 +6,7 @@ import MapView, { Marker } from '@/components/maps/map-primitives.web';
 const mockDivIcon = jest.fn((options: unknown) => ({ options, type: 'div-icon' }));
 const mockIcon = jest.fn((options: unknown) => ({ options, type: 'icon' }));
 const mockMaplibreGL = jest.fn((_options: unknown) => ({ addTo: jest.fn(() => ({ remove: jest.fn() })) }));
+const mockTileLayer = jest.fn((_url: string, _options: unknown) => ({ addTo: jest.fn(() => ({ remove: jest.fn() })) }));
 const mockMapContainer = jest.fn((_props: unknown) => null);
 
 jest.mock('leaflet', () => ({
@@ -15,6 +16,7 @@ jest.mock('leaflet', () => ({
     icon: (options: unknown) => mockIcon(options),
     latLngBounds: jest.fn(),
     maplibreGL: (options: unknown) => mockMaplibreGL(options),
+    tileLayer: (url: string, options: unknown) => mockTileLayer(url, options),
   },
 }));
 
@@ -147,6 +149,26 @@ describe('web map primitives', () => {
     expect(options.html).not.toMatch(/<svg\b/i);
     expect(options.html).not.toMatch(/<filter\b/i);
     expect(options.html).not.toMatch(/feDropShadow/i);
+  });
+
+  it('uses raster tiles without initializing GL and cleans up when changing renderer', () => {
+    render(<MapView />);
+    const container = mockMapContainer.mock.calls[0][0] as { children: React.ReactNode };
+    const basemap = React.Children.toArray(container.children).find(
+      child => React.isValidElement(child) && typeof child.type === 'function' && child.type.name === 'OpenFreeMapLayer'
+    ) as React.ReactElement<{ styleId: 'raster' | 'standard' }>;
+    const layer = render(React.cloneElement(basemap, { styleId: 'raster' }));
+    expect(mockMaplibreGL).not.toHaveBeenCalled();
+    expect(mockTileLayer).toHaveBeenCalledWith('https://tile.openstreetmap.org/{z}/{x}/{y}.png', expect.objectContaining({
+      detectRetina: false, updateWhenIdle: true, updateWhenZooming: false, keepBuffer: 1,
+    }));
+    const raster = mockTileLayer.mock.results[0].value.addTo.mock.results[0].value;
+    layer.rerender(React.cloneElement(basemap, { styleId: 'standard' }));
+    expect(raster.remove).toHaveBeenCalledTimes(1);
+    expect(mockMaplibreGL).toHaveBeenCalledTimes(1);
+    const vector = mockMaplibreGL.mock.results[0].value.addTo.mock.results[0].value;
+    layer.unmount();
+    expect(vector.remove).toHaveBeenCalledTimes(1);
   });
 
   it.each([1, 2, 3])('limits only the basemap resolution at device pixel ratio %s', (devicePixelRatio) => {
