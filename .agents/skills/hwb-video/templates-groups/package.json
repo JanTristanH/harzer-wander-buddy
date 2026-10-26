@@ -1,0 +1,13 @@
+{
+  "name": "hwb-video-composition",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npx --yes hyperframes@0.8.188 preview --background",
+    "check": "npx --yes hyperframes@0.8.188 check --json",
+    "render": "npx --yes hyperframes@0.8.188 render --quality delivery --fps 30 --output ../brag.mp4"
+  }
+}
