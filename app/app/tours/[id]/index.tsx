@@ -39,6 +39,7 @@ import {
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import { triggerHaptic } from '@/lib/haptics-preferences';
+import { buildTourRouteSegments } from '@/lib/tour-route';
 import { useHikingGroup } from '@/lib/hiking-group';
 import {
   getPreGeneratedMapMarkerFallbackImageSource,
@@ -1318,7 +1319,12 @@ export default function TourDetailScreen() {
     [markerRenderStates]
   );
 
-  const routeCoordinates = useMemo(
+  const routeSegments = useMemo(
+    () => buildTourRouteSegments(livePathEntries, draftPoiIds),
+    [livePathEntries, draftPoiIds]
+  );
+  const routeCoordinates = useMemo(() => routeSegments.flat(), [routeSegments]);
+  const stopCoordinates = useMemo(
     () =>
       draftPoiIds
         .map((poiId) => mapItemById.get(poiId.toLowerCase()))
@@ -1796,8 +1802,8 @@ export default function TourDetailScreen() {
     }
 
     const coordinatesToFit =
-      routeCoordinates.length > 0
-        ? routeCoordinates
+      routeCoordinates.length > 0 || stopCoordinates.length > 0
+        ? [...routeCoordinates, ...stopCoordinates]
         : allMapItems
             .slice(0, 16)
             .map((item) => ({ latitude: item.latitude, longitude: item.longitude }));
@@ -1824,7 +1830,7 @@ export default function TourDetailScreen() {
       edgePadding: MAP_EDGE_PADDING,
       animated: true,
     });
-  }, [allMapItems, isEditMode, isMapReady, routeCoordinates]);
+  }, [allMapItems, isEditMode, isMapReady, routeCoordinates, stopCoordinates]);
 
   const handleZoomBy = useCallback((factor: number) => {
     const map = mapRef.current;
@@ -2599,9 +2605,9 @@ export default function TourDetailScreen() {
         }}
         style={StyleSheet.absoluteFill}
         toolbarEnabled={false}>
-        {routeCoordinates.length > 1 ? (
-          <Polyline coordinates={routeCoordinates} strokeColor="#2e6b4b" strokeWidth={4} />
-        ) : null}
+        {routeSegments.map((coordinates, index) => (
+          <Polyline key={`route-${index}`} coordinates={coordinates} strokeColor="#2e6b4b" strokeWidth={4} />
+        ))}
 
         {markerRenderStates.map((state) => (
           <Marker
