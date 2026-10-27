@@ -1,4 +1,6 @@
-# Aufnahmeablauf
+# Aufnahmeablauf: aktuelle echte Web-App
+
+Vor neuen Aufnahmen und Exporten den aktuellen **develop pullen**, wie im [Video-Skill](../SKILL.md) beschrieben. Tatsächlichen Commit dokumentieren. Diese Datei ergänzt den aktuellen Video-/Brand-Skill; die historische Generator-Dateiliste weiter unten ist optional.
 
 ## Lokale App mit Anmeldung
 
@@ -25,7 +27,7 @@ Der Entwicklungsserver hatte bei dieser Aufnahme gelegentlich Icon-Font-Timeouts
 
 Nur eigene Demo-Daten aufnehmen. Bei der ursprünglichen Fassung wurden die Stempel 1–5 über die App gestempelt; die Liste zeigte danach „5 von 222“. Diesen Wert nicht bloß als Zahl in ein Bild schreiben. Vorhandene Testbesuche verwenden; wenn schon mehr vorhanden sind, entweder den tatsächlichen Stand zeigen oder eine ausdrücklich getrennte Testdatenbank nutzen. Keine bestehenden Besuche für eine runde Zahl löschen.
 
-Dateien für den Generator:
+Dateien nur für die ausdrücklich gewünschte historische klassische Generator-Vorlage:
 
 | Dateiname | Inhalt |
 |---|---|
@@ -54,3 +56,13 @@ Labels müssen „besucht“ für die Demo-Stempel und „unbesucht“ für die 
 Für einen zusätzlichen Actor-Screenshot den bereits besuchten Stempel öffnen, auf „Erneut stempeln“ drücken und etwa 1000 ms halten. Den Stempel noch bei gedrückter Maustaste fotografieren. Danach außerhalb des Knopfes ziehen und erst dort loslassen. So wird die Animation sichtbar, ohne einen zusätzlichen Besuch zu bestätigen. Falls doch ein Klick abgeschickt wurde, den tatsächlichen Stand prüfen und nicht unbemerkt doppelte Demo-Besuche sammeln.
 
 Browser-Kontext zum Schluss schließen; keine angemeldeten Profile oder Sitzungsarchive speichern.
+
+## Aktuelle Chatreihe: Tour und Gruppenbilder
+
+- Standard ist eine echte mobile Aufnahme390×844 bei DPR2. Für einen besser lesbaren Bildanhang darf die echte App auch z.B.600×600 bei DPR2 geöffnet werden; dabei das originale Seitenverhältnis des aufgenommenen Bereichs bewahren.
+- Die Tour über die echte SPA öffnen. Statisch exportierte dynamische Direkt-URLs können im Ladezustand hängen; dann über „Touren“ zur bestehenden lokalen Demo-Tour navigieren.
+- Kartenkacheln und gespeicherte Routensegmente laden lassen. Echten Kartenbereich mit `page.screenshot(clip=<gemessene-bounds>)` aufnehmen, ohne DOM-Manipulation, gezeichnete Ersatzroute oder versteckte Fehlermeldungen. Eine funktionierende, auf die Tour angepasste Inlinekarte ist besser als eine unpassend weit herausgezoomte Vollbildkarte.
+- Die aktuelle Implementierung lädt Route/TravelTime-Geometrie. Kontrollieren, dass tatsächlich Fußwege gezeichnet werden, nicht nur Stopps geradlinig verbunden sind. App-Commit und Wegdaten/Koordinaten im Manifest festhalten.
+- Stempelnummer und Ortsname auch bei A/B/C-Tourmarkern erkennbar zuordnen. Für Gruppenstände die echte ausgewählte Gruppe und die zugehörigen gespeicherten Besuche dokumentieren.
+- Für die Demo nur isolierte lokale Daten verwenden. Reale angemeldete Aufnahmen mit echten Aktionen bevorzugen; keine Produktansichten aus Fantasie erzeugen. Falls lokale API-Fixtures technisch nötig sind, ausdrücklich dokumentieren und keine Funktion simulieren, die die App nicht besitzt.
+- Im Video jede Aufnahme proportional skalieren. Nummern/Namen, Marker, Details und Attribution nicht wegschneiden. Quelle/Autor/Lizenz für tatsächliche Landschaftsbilder dokumentieren. Der Aufnahmeprozess darf den Screenshot nicht vorab verzerren.
