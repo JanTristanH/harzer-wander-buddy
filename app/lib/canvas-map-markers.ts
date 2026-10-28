@@ -1,7 +1,9 @@
 import L from 'leaflet';
+import { SELECTED_MAP_PIN } from './map-marker-selection';
 import { geometry, resolveMapMarkerLabelStyle } from './map-marker-style';
 
 export type CanvasMapMarker = {
+  selected?: boolean;
   latitude: number; longitude: number; color: string; label: string | null;
   size: number; anchorX: number; anchorY: number; zIndex: number;
 };
@@ -78,7 +80,7 @@ export class CanvasMapMarkers {
   };
 
   private sprite(record: CanvasMapMarker) {
-    const key = `${record.color}:${record.label}:${record.size}`;
+    const key = `${record.color}:${record.label}:${record.size}:${Boolean(record.selected)}`;
     const cached = this.sprites.get(key);
     if (cached) return cached;
     const width = record.size;
@@ -89,7 +91,16 @@ export class CanvasMapMarkers {
     const context = image.getContext('2d')!;
     context.scale(this.ratio, this.ratio);
     context.translate(8, 8);
-    if (record.size <= 18) {
+    if (record.selected) {
+      const pin = SELECTED_MAP_PIN;
+      context.scale(width / pin.width, height / pin.height);
+      context.fillStyle = pin.color;
+      context.fill(new Path2D(pin.path));
+      context.beginPath();
+      context.arc(pin.dotX, pin.dotY, pin.dotRadius, 0, Math.PI * 2);
+      context.fillStyle = pin.dotColor;
+      context.fill();
+    } else if (record.size <= 18) {
       context.beginPath(); context.arc(width / 2, height / 2, width / 2 - 2, 0, Math.PI * 2);
       context.fillStyle = record.color; context.fill();
       context.strokeStyle = '#fff'; context.lineWidth = 2; context.stroke();
