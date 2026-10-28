@@ -39,7 +39,7 @@ import {
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import { triggerHaptic } from '@/lib/haptics-preferences';
-import { buildTourRouteSegments } from '@/lib/tour-route';
+import { buildRouteDirectionArrows, buildTourRouteSegments, TOUR_ROUTE_STYLES } from '@/lib/tour-route';
 import { useHikingGroup } from '@/lib/hiking-group';
 import {
   getPreGeneratedMapMarkerFallbackImageSource,
@@ -981,6 +981,8 @@ export default function TourDetailScreen() {
   const [isRemoteSearchLoading, setIsRemoteSearchLoading] = useState(false);
   const [remoteSearchError, setRemoteSearchError] = useState<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [routeRegion, setRouteRegion] = useState(HARZ_REGION);
+  const [routeMapHeight, setRouteMapHeight] = useState(350);
   const [mapCenter, setMapCenter] = useState<Coordinate>({
     latitude: HARZ_REGION.latitude,
     longitude: HARZ_REGION.longitude,
@@ -1323,7 +1325,14 @@ export default function TourDetailScreen() {
     () => buildTourRouteSegments(livePathEntries, draftPoiIds),
     [livePathEntries, draftPoiIds]
   );
-  const routeCoordinates = useMemo(() => routeSegments.flat(), [routeSegments]);
+  const routeCoordinates = useMemo(() => routeSegments.flatMap((segment) => segment.coordinates), [routeSegments]);
+  const routeDirections = useMemo(
+    () => routeSegments.map((segment) => ({
+      color: TOUR_ROUTE_STYLES[segment.mode].color,
+      arrows: buildRouteDirectionArrows(segment.coordinates, routeRegion.latitudeDelta, routeMapHeight),
+    })),
+    [routeSegments, routeRegion.latitudeDelta, routeMapHeight]
+  );
   const stopCoordinates = useMemo(
     () =>
       draftPoiIds
@@ -2581,11 +2590,13 @@ export default function TourDetailScreen() {
   }
 
   const renderTourMap = (isFullscreen: boolean) => (
-    <View style={[styles.mapCard, isFullscreen && styles.mapCardFullscreen]}>
+    <View
+      onLayout={(event) => setRouteMapHeight(event.nativeEvent.layout.height)}
+      style={[styles.mapCard, isFullscreen && styles.mapCardFullscreen]}>
       <MapView
         attributionPlacement="bottom-right"
         ref={mapRef}
-        initialRegion={HARZ_REGION}
+        initialRegion={routeRegion}
         onMapReady={() => setIsMapReady(true)}
         onPress={() => {
           if (Date.now() - lastMarkerPressAtRef.current < 250) {
@@ -2598,6 +2609,7 @@ export default function TourDetailScreen() {
         }}
         onRegionChangeComplete={(nextRegion) => {
           regionRef.current = nextRegion;
+          setRouteRegion(nextRegion);
           setMapCenter({
             latitude: nextRegion.latitude,
             longitude: nextRegion.longitude,
@@ -2605,9 +2617,18 @@ export default function TourDetailScreen() {
         }}
         style={StyleSheet.absoluteFill}
         toolbarEnabled={false}>
-        {routeSegments.map((coordinates, index) => (
-          <Polyline key={`route-${index}`} coordinates={coordinates} strokeColor="#2e6b4b" strokeWidth={4} />
+        {routeSegments.map((segment, index) => (
+          <Polyline key={`route-${index}`} coordinates={segment.coordinates}
+            strokeColor={TOUR_ROUTE_STYLES[segment.mode].color} strokeWidth={5} />
         ))}
+        {routeDirections.flatMap(({ arrows, color }, segmentIndex) =>
+          arrows.map((coordinates, arrowIndex) => (
+            <React.Fragment key={`direction-${segmentIndex}-${arrowIndex}`}>
+              <Polyline coordinates={coordinates} strokeColor="#ffffff" strokeWidth={7} />
+              <Polyline coordinates={coordinates} strokeColor={color} strokeWidth={3} />
+            </React.Fragment>
+          ))
+        )}
 
         {markerRenderStates.map((state) => (
           <Marker
@@ -2764,6 +2785,17 @@ export default function TourDetailScreen() {
           </Text>
         ) : null}
       </View>
+
+      {routeSegments.length > 0 && !selectedMapItem ? (
+        <View pointerEvents="none" style={[styles.routeLegend, isFullscreen && { bottom: insets.bottom + 24 }]}>
+          {(['walk', 'drive'] as const).filter((mode) => routeSegments.some((segment) => segment.mode === mode)).map((mode) => (
+            <View key={mode} style={styles.routeLegendItem}>
+              <Feather name="arrow-right" color={TOUR_ROUTE_STYLES[mode].color} size={18} />
+              <Text style={styles.routeLegendLabel}>{TOUR_ROUTE_STYLES[mode].label}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
 
       <View style={[styles.mapZoomControls, isFullscreen && { top: insets.top + 72 }]}>
         <Pressable onPress={() => handleZoomBy(0.65)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
@@ -3729,6 +3761,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
+  routeLegend: {
+    position: 'absolute', bottom: 24, left: 12,
+    backgroundColor: '#ffffff', borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 7, gap: 4,
+  },
+  routeLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  routeLegendLabel: { color: '#263526', fontSize: 12, fontWeight: '600' },
   mapCard: {
     height: 390,
     borderRadius: 22,
