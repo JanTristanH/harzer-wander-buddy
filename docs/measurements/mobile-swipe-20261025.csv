@@ -1,0 +1,7 @@
+renderer,zoom,samples,touchMoveP95Ms,touchReleaseP95Ms,touchReleaseMaxMs,touchMoveMaxMs,worstFrameMs,worstTbtMs,medianDrawingLayers,parkingAtStart
+dom,2,3,17.503,7.553,8.628,18.122,16.80000000000291,0,232,0
+dom,8,3,17.453,9.645,12.581,68.839,50,23,238,0
+dom,12,3,17.485,10.867,11.738,53.713,100,5,262,28
+canvas,2,3,17.42,7.483,7.729,18.577,16.80000000000291,0,11,0
+canvas,8,3,17.488,9.161,11.629,31.092,16.80000000000291,0,17,0
+canvas,12,3,17.731,19.135,45.708,50.26,50,5,13,28

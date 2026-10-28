@@ -784,13 +784,9 @@ export default function MapScreen() {
     });
   }, [showStamps, stampItems, visitFilter]);
 
-  const viewportStampItems = useMemo(() => {
-    if (Platform.OS !== 'web') {
-      return visibleStampItems;
-    }
-
-    return visibleStampItems.filter((item) => isCoordinateInPaddedRegion(item.coordinate, region));
-  }, [region, visibleStampItems]);
+  // Keep all stamp markers mounted, including the 222 regular stamps on web.
+  // A viewport update must not rebuild their elements or mount/unmount pins.
+  const viewportStampItems = visibleStampItems;
 
   const visibleParkingItems = useMemo(() => {
     if (!showParking) {
