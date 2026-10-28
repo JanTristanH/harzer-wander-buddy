@@ -11,6 +11,7 @@ import {
 } from 'react-leaflet';
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { SELECTED_MARKER_Z_INDEX, MARKER_SELECTION_COLOR } from '@/lib/map-marker-selection';
 import { areMapCoordinatesEqual } from '@/lib/map-viewport';
 import { CanvasMapMarkers, type CanvasMapMarker } from '@/lib/canvas-map-markers';
 import { defaultWebMapStyle, reduceWalkingStyle, WEB_MAP_STYLES, type WebMapStyleId } from '@/lib/web-map-style';
@@ -75,6 +76,8 @@ type MapViewProps = {
 };
 
 type MarkerProps = {
+  identifier?: string;
+  selected?: boolean;
   accessibilityLabel?: string;
   anchor?: { x: number; y: number };
   children?: React.ReactNode;
@@ -115,6 +118,10 @@ const MAX_ZOOM = 19;
 const WEB_MAP_DIAGNOSTIC_INTERVAL_MS = 4000;
 const LEAFLET_STYLE_TAG_ID = 'hwb-leaflet-runtime-css';
 const LEAFLET_RUNTIME_CSS = `
+.hwb-map-marker-selected {
+  filter: drop-shadow(2px 0 0 ${MARKER_SELECTION_COLOR}) drop-shadow(-2px 0 0 ${MARKER_SELECTION_COLOR}) drop-shadow(0 2px 0 ${MARKER_SELECTION_COLOR}) drop-shadow(0 -2px 0 ${MARKER_SELECTION_COLOR});
+}
+
 .leaflet-container {
   background: #ddd;
   overflow: hidden;
@@ -299,11 +306,11 @@ function CanvasMarkerProvider({ children }: { children: React.ReactNode }) {
 
 function CanvasMarkerRegistration({ renderer, record }: { renderer: CanvasMapMarkers; record: CanvasMapMarker }) {
   const key = useRef(Symbol('map-marker')).current;
-  const { latitude, longitude, color, label, size, anchorX, anchorY, zIndex } = record;
+  const { latitude, longitude, color, label, size, anchorX, anchorY, zIndex, selected } = record;
   useEffect(() => {
-    renderer.set(key, { latitude, longitude, color, label, size, anchorX, anchorY, zIndex });
+    renderer.set(key, { latitude, longitude, color, label, size, anchorX, anchorY, zIndex, selected });
     return () => renderer.delete(key);
-  }, [renderer, key, latitude, longitude, color, label, size, anchorX, anchorY, zIndex]);
+  }, [renderer, key, latitude, longitude, color, label, size, anchorX, anchorY, zIndex, selected]);
   return null;
 }
 
@@ -472,8 +479,9 @@ function createIcon(options: {
   label?: string | null;
   size: number;
   canvas?: boolean;
+  selected?: boolean;
 }) {
-  const { anchor, color, imageSize, imageUri, label, size, canvas } = options;
+  const { anchor, color, imageSize, imageUri, label, size, canvas, selected = false } = options;
   const width = size;
   const inferredImageRatio =
     imageSize?.width && imageSize?.height && imageSize.width > 0 && imageSize.height > 0
@@ -490,7 +498,7 @@ function createIcon(options: {
   ];
 
   const normalizedLabel = normalizeWebMarkerLabel(label ?? null);
-  const cacheKey = `${canvas ? 'canvas' : imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
+  const cacheKey = `${selected}:${canvas ? 'canvas' : imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
     imageSize?.width ?? ''
   }x${imageSize?.height ?? ''}`;
   const existing = iconCache.get(cacheKey);
@@ -503,12 +511,13 @@ function createIcon(options: {
 
   const icon = imageUri
     ? L.icon({
+        className: selected ? 'hwb-map-marker-selected' : '',
         iconAnchor,
         iconSize: [width, height],
         iconUrl: imageUri,
       })
     : L.divIcon({
-        className: canvas ? 'hwb-canvas-marker-target' : 'hwb-leaflet-div-icon',
+        className: `${canvas ? 'hwb-canvas-marker-target' : 'hwb-leaflet-div-icon'}${selected && !canvas ? ' hwb-map-marker-selected' : ''}`,
         html: canvas
           ? `<span aria-hidden="true" class="hwb-css-marker__label">${(normalizedLabel ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')}</span>`
           : createCssMapMarkerHtml({ color, label: normalizedLabel, size }),
@@ -996,6 +1005,7 @@ function Marker(props: InternalMarkerProps) {
     onPress,
     pinColor,
     zIndex,
+    selected = false,
   } = props;
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
   const markerRef = useRef<L.Marker | null>(null);
@@ -1053,10 +1063,12 @@ function Marker(props: InternalMarkerProps) {
 
     if (isPressable) {
       markerElement.setAttribute('role', 'button');
+      markerElement.setAttribute('aria-pressed', String(selected));
     } else {
       markerElement.removeAttribute('role');
+      markerElement.removeAttribute('aria-pressed');
     }
-  }, [accessibilityLabel, isPressable]);
+  }, [accessibilityLabel, isPressable, selected]);
 
   const imageSource = resolveImageSource(image);
   const imageUri = imageSource?.uri ?? null;
@@ -1079,6 +1091,7 @@ function Marker(props: InternalMarkerProps) {
     label: markerLabel,
     size,
     canvas: useCanvas,
+    selected,
   });
 
   if (perfDebugEnabled) {
@@ -1090,7 +1103,7 @@ function Marker(props: InternalMarkerProps) {
     {useCanvas && canvasRenderer ? <CanvasMarkerRegistration renderer={canvasRenderer} record={{
       latitude: markerLatitude, longitude: markerLongitude, color: derivedColor,
       label: normalizeWebMarkerLabel(markerLabel), size, anchorX: anchor?.x ?? 0.5,
-      anchorY: anchor?.y ?? 1, zIndex: zIndex ?? 0,
+      anchorY: anchor?.y ?? 1, zIndex: selected ? SELECTED_MARKER_Z_INDEX : zIndex ?? 0, selected,
     }} /> : null}
     <LeafletMarker
       alt={accessibilityLabel}
@@ -1099,7 +1112,7 @@ function Marker(props: InternalMarkerProps) {
       position={position}
       ref={markerRef}
       title={accessibilityLabel}
-      zIndexOffset={typeof zIndex === 'number' ? zIndex : 0}
+      zIndexOffset={selected ? SELECTED_MARKER_Z_INDEX : zIndex ?? 0}
     />
     </>
   );

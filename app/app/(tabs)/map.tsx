@@ -51,6 +51,7 @@ import {
 } from '@/lib/group-marker';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images';
+import { selectMapMarker } from '@/lib/map-marker-selection';
 import { geometry, resolveMapMarkerLabelStyle } from '@/lib/map-marker-style';
 import { isCoordinateInPaddedRegion } from '@/lib/map-viewport';
 import { canCreateMapVisit, getMapPrimaryActionLabel } from '@/lib/map-stamp-action';
@@ -891,6 +892,7 @@ export default function MapScreen() {
             accessibilityLabel={accessibilityLabel}
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
+            identifier={stampItem.id}
             key={`${stampItem.id}:${visual.visualKind}`}
             onPress={() => handleMarkerPress(stampItem)}
             tracksViewChanges={false}
@@ -921,6 +923,7 @@ export default function MapScreen() {
             accessibilityLabel={accessibilityLabel}
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
+            identifier={stampItem.id}
             key={`${stampItem.id}:${visual.visualKind}:fallback`}
             onPress={() => handleMarkerPress(stampItem)}
             pinColor={Platform.OS === 'web' ? colors.fill : undefined}
@@ -948,6 +951,7 @@ export default function MapScreen() {
           accessibilityLabel={accessibilityLabel}
           anchor={MARKER_ANCHOR}
           coordinate={stampItem.coordinate}
+          identifier={stampItem.id}
           image={visual.image}
           key={`${stampItem.id}:${visual.visualKind}`}
           onPress={() => handleMarkerPress(stampItem)}
@@ -981,6 +985,7 @@ export default function MapScreen() {
             accessibilityLabel={`Parkplatz: ${item.title}`}
             anchor={MARKER_ANCHOR}
             coordinate={item.coordinate}
+            identifier={item.id}
             key={item.id}
             onPress={() => handleMarkerPress(item)}
             zIndex={markerZIndex(item.kind)}>
@@ -1006,6 +1011,7 @@ export default function MapScreen() {
           accessibilityLabel={`Parkplatz: ${item.title}`}
           anchor={MARKER_ANCHOR}
           coordinate={item.coordinate}
+          identifier={item.id}
           image={markerImage}
           key={item.id}
           onPress={() => handleMarkerPress(item)}
@@ -1019,6 +1025,15 @@ export default function MapScreen() {
     parkingMarkerBuildDurationMsRef.current = getNowMs() - buildStartMs;
     return elements;
   }, [handleMarkerPress, viewportParkingItems]);
+
+  const selectedStampMarkerElements = useMemo(
+    () => Platform.OS === 'web' ? selectMapMarker(stampMarkerElements, selectedItemId) : stampMarkerElements,
+    [stampMarkerElements, selectedItemId]
+  );
+  const selectedParkingMarkerElements = useMemo(
+    () => Platform.OS === 'web' ? selectMapMarker(parkingMarkerElements, selectedItemId) : parkingMarkerElements,
+    [parkingMarkerElements, selectedItemId]
+  );
 
   useEffect(() => {
     if (!localhostPerfEnabled || typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') {
@@ -2172,8 +2187,8 @@ export default function MapScreen() {
         showsMyLocationButton={false}
         style={StyleSheet.absoluteFill}
         toolbarEnabled={false}>
-        {stampMarkerElements}
-        {parkingMarkerElements}
+        {selectedStampMarkerElements}
+        {selectedParkingMarkerElements}
         {selectedExternalPlace ? (
           <Marker
             anchor={MARKER_ANCHOR}

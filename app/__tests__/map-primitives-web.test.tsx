@@ -152,6 +152,21 @@ describe('web map primitives', () => {
     expect(options.html).not.toMatch(/feDropShadow/i);
   });
 
+  it('highlights selection above other pins and restores the normal icon on close', () => {
+    const props = { coordinate: { latitude: 51.7, longitude: 10.6 }, pinColor: '#123abc', zIndex: 12 };
+    const view = render(<Marker {...props}>SEL</Marker>);
+    const normal = mockLeafletMarker.mock.calls.at(-1)![0] as { icon: unknown; zIndexOffset: number };
+    view.rerender(<Marker {...props} selected>SEL</Marker>);
+    const selected = mockLeafletMarker.mock.calls.at(-1)![0] as typeof normal;
+    expect(selected.zIndexOffset).toBeGreaterThan(10000);
+    expect(selected.icon).not.toBe(normal.icon);
+    const icon = mockDivIcon.mock.calls.at(-1)![0] as { className: string; html: string };
+    expect(icon.className).toContain('hwb-map-marker-selected');
+    expect(icon.html).toContain('#123abc');
+    view.rerender(<Marker {...props}>SEL</Marker>);
+    expect(mockLeafletMarker.mock.calls.at(-1)![0]).toEqual(expect.objectContaining(normal));
+  });
+
   it('activates individual keyboard targets once for Enter and Space', () => {
     const onPress = jest.fn();
     render(<Marker coordinate={{ latitude: 51.8, longitude: 10.6 }} onPress={onPress}>9</Marker>);

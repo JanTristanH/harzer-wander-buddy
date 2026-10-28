@@ -21,3 +21,28 @@ Der Browservergleich prüfte vor/nach Auswahl jeweils unveränderte Icon-Kindele
 ## Ansatz für die separate Behebung
 
 Den Auswahlzustand explizit vom Bildschirm an beide Marker-Renderer übergeben und bei Auswahlwechsel ausschließlich den vorherigen und den neuen Pin aktualisieren. Hervorhebung und höhere Zeichen-/Trefferebene gemeinsam behandeln. Beim Schließen des Detailblatts muss die Hervorhebung entfallen. Browserfokus und dauerhaft ausgewählter Stempel sind dabei verschiedene Zustände.
+
+## Behebung (28.10.2026)
+
+Die Web-Karte übergibt die Auswahl nun explizit an Canvas- und DOM-Marker.
+Der ausgewählte Stempel oder Parkplatz erhält eine goldene Kontur und eine
+höhere Zeichen- und Trefferebene. Die fachliche Statusfarbe bleibt erhalten.
+Beim Wechsel kehrt der vorherige Pin zur normalen Darstellung zurück; beim
+Schließen des Detailblatts verschwindet die Hervorhebung. `aria-pressed`
+kommuniziert die Auswahl unabhängig vom Tastaturfokus.
+
+Die memoisierten Basis-Elemente bleiben erhalten. Nur das ausgewählte Element
+wird mit dem Auswahlzustand ergänzt, sodass bei einem reinen Auswahlwechsel
+nur der vorherige und der neue Marker neu rendern. Der Canvas zeichnet seine
+komponierte Ebene neu, nutzt dabei aber weiterhin die gecachten Sprites.
+Native Android-/iOS-Marker sind von dieser Web-Behebung nicht betroffen.
+
+Geprüft mit 36 Tests in sechs Karten-Testsuites, TypeScript und gezieltem ESLint.
+Zusätzlich echter statischer Expo-Export und Playwright/Chromium bei 390 × 844,
+DPR 3 mit allen 222 öffentlichen Stempeln: sichtbare Kontur in beiden Renderern,
+Auswahlwechsel per Enter, separater Browserfokus, Schließen durch Antippen der
+Karte und erhaltene Stempel-DOM-Knoten; keine JavaScript-Fehler.
+
+![Ausgewählter Stempel mit Canvas-Renderer](screenshots/marker-selection/canvas.png)
+
+![Ausgewählter Stempel mit DOM-Fallback](screenshots/marker-selection/dom.png)

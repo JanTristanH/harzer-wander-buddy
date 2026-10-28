@@ -1,7 +1,9 @@
 import L from 'leaflet';
+import { MARKER_SELECTION_COLOR } from './map-marker-selection';
 import { geometry, resolveMapMarkerLabelStyle } from './map-marker-style';
 
 export type CanvasMapMarker = {
+  selected?: boolean;
   latitude: number; longitude: number; color: string; label: string | null;
   size: number; anchorX: number; anchorY: number; zIndex: number;
 };
@@ -78,7 +80,7 @@ export class CanvasMapMarkers {
   };
 
   private sprite(record: CanvasMapMarker) {
-    const key = `${record.color}:${record.label}:${record.size}`;
+    const key = `${record.color}:${record.label}:${record.size}:${Boolean(record.selected)}`;
     const cached = this.sprites.get(key);
     if (cached) return cached;
     const width = record.size;
@@ -92,7 +94,7 @@ export class CanvasMapMarkers {
     if (record.size <= 18) {
       context.beginPath(); context.arc(width / 2, height / 2, width / 2 - 2, 0, Math.PI * 2);
       context.fillStyle = record.color; context.fill();
-      context.strokeStyle = '#fff'; context.lineWidth = 2; context.stroke();
+      context.strokeStyle = record.selected ? MARKER_SELECTION_COLOR : '#fff'; context.lineWidth = record.selected ? 4 : 2; context.stroke();
     } else {
       context.scale(width / geometry.width, height / geometry.height);
       const path = new Path2D(geometry.pinPath);
@@ -101,6 +103,9 @@ export class CanvasMapMarkers {
       context.shadowOffsetY = 4;
       context.fillStyle = '#fff'; context.fill(path, 'evenodd');
       context.shadowColor = 'transparent';
+      if (record.selected) {
+        context.strokeStyle = MARKER_SELECTION_COLOR; context.lineWidth = 8; context.stroke(path);
+      }
       context.strokeStyle = '#fff'; context.lineWidth = 2; context.stroke(path);
       context.fillStyle = record.color; context.fill(path, 'evenodd');
       const label = record.label ?? '';
