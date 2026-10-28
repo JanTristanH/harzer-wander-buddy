@@ -26,7 +26,6 @@ const STAMP_NOTE_MAX_LENGTH = 500;
 // 40.000 free 
 //  2.500 used
 let count = 0;
-let aTravelTimesGlobal = [];
 
 module.exports = class api extends cds.ApplicationService {
   init() {
@@ -970,11 +969,11 @@ async function calculateHikingRoute(req) {
     req.error(500, "Unable to resolve travel time view.");
     return;
   }
-  if (aTravelTimesGlobal.length == 0) {
-    aTravelTimesGlobal = await SELECT
-      .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
-      .from(typedTravelTimes);
-  }
+  // Reuse one snapshot within this request only. A process-wide cache retains
+  // the entire graph indefinitely and misses inserts, updates and deletions.
+  const travelTimes = await SELECT
+    .columns('ID', 'fromPoi', 'toPoi', 'toPoiType', 'durationSeconds', 'distanceMeters', 'travelMode', 'name')
+    .from(typedTravelTimes);
 
   let aStampsDoneByUser = await SELECT
     .columns('stamp_ID')
@@ -988,7 +987,7 @@ async function calculateHikingRoute(req) {
   let results = [];
   for (let i = 0; i < aStartingParking.length; i++) {
     req.data.startId = aStartingParking[i].NeighborsID;
-    let newRoutes = await routingManager.calculateHikingRoutes(req.data, aTravelTimesGlobal, aStampsDoneByUser);
+    let newRoutes = await routingManager.calculateHikingRoutes(req.data, travelTimes, aStampsDoneByUser);
     results = results.concat(newRoutes);
   }
 
