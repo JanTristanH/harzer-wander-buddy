@@ -1,71 +1,91 @@
 ---
 name: hwb-video
-description: Erstelle oder überarbeite ein Harzer-Wander-Buddy-Launchvideo mit dem projektspezifischen Brag-Ablauf, echter angemeldeter Web-App, sichtbarem Stempelmoment und der freigegebenen Hochkant-Vorlage. Verwenden bei HWB-Video, Instagram-Reel, Hochkant-Version oder Änderungen an diesem Produktvideo.
+description: Erstelle oder überarbeite deutsche Instagram-Reels für Harzer Wander Buddy mit dem konsistenten Chat-, Landschafts- und Motion-Stil, echten aktuellen Web-App-Aufnahmen und geprüfter Vertonung. Für neue Geschichten zuerst diesen Skill und hwb-brand lesen.
 ---
 
-# Harzer Wander Buddy — Produktvideo
+# Harzer Wander Buddy: Video und Stil
 
-Dieser Skill ergänzt den allgemeinen **brag**-Skill um die freigegebenen HWB-Anpassungen. Er erstellt lokale Videos; er veröffentlicht weder Videos noch App-Änderungen.
+Für jedes HWB-Reel zusätzlich [hwb-brand](../hwb-brand/SKILL.md) lesen: Dort stehen Marke, Charaktere, Stimmen, Assets und Produktwahrheit. Dieser Skill beschreibt Erzählweise, Aufnahmen, Animation und Prüfung. Der aktuelle Standard ist die korrigierte V6-Chatfassung. Ältere Vorlagen sind ausdrücklich keine verbindlichen Vorgaben mehr.
 
-## Vor dem Aufnehmen
+## Vor jeder Produktion: develop pullen
 
-1. Repository-`AGENTS.md` und `app/README.md` / `backend/hwb/README.md` lesen. Vorhandene Änderungen und Caches erhalten. In der vorbereiteten Cloud-Umgebung bei Shell-Aufrufen `/workspace/android-flow/env.sh` sourcen, falls vorhanden; außerhalb dieser Umgebung sind keine `/workspace`-Pfade vorausgesetzt.
-2. Den gewünschten **App-Quellstand** prüfen. Standard für Aufnahmen ist der aktuelle Remote-`main`, nicht ein alter `work`- oder `develop`-Checkout. Eine ausdrückliche Nutzeranweisung wie „vorher develop pullen“ hat Vorrang. Den gewünschten Remote-Branch fetchen, tatsächlichen `HEAD` damit vergleichen und den verwendeten Commit im Ausgabeordner dokumentieren. Nicht mit „aktueller main“ werben, wenn ein anderer Stand aufgenommen wird. Bestehende lokale Änderungen niemals dafür verwerfen.
-3. Fehlt der allgemeine Brag-Skill: im Repository `npx skills add https://github.com/latent-spaces/brag --skill brag --yes`. Seine Anleitung und die zur installierten Hyperframes-Version gehörenden Format-/Motion-/CLI-Regeln lesen. Die Vorlage hier ersetzt nicht den Brag-Plan und die Sichtprüfung.
-4. Node.js ≥22, FFmpeg und einen funktionierenden Chromium-Browser prüfen. Hyperframes ist in der Vorlage auf `0.8.188` fixiert. `HYPERFRAMES_BROWSER_PATH` kann auf einen vorhandenen kompatiblen Browser zeigen. Keine Pfade aus einem früheren npm-Cache erraten oder als Voraussetzung speichern.
+1. Repository-`AGENTS.md` sowie die aktuellen Startanleitungen in `app/README.md` und `backend/hwb/README.md` lesen. In der vorbereiteten Cloud-Umgebung bei Shell-Aufrufen `/workspace/android-flow/env.sh` sourcen, falls vorhanden. Andere Umgebungen brauchen diesen Pfad nicht.
+2. **Vor neuen Screenshots und vor Wiederverwendung alter App-Aufnahmen den aktuellen `develop`-Stand holen.** In einem sauberen, dafür vorgesehenen develop-Checkout `git pull --ff-only origin develop` ausführen. Nicht standardmäßig `main`, einen alten Work-Branch oder einen fest hinterlegten Commit aufnehmen.
+3. Lokale Änderungen, Demo-Besuche und Caches erhalten. Ist der vorhandene Checkout belegt oder verändert, einen isolierten Checkout verwenden, statt zu resetten oder Änderungen automatisch zu stashen:
 
-## Echte App-Aufnahmen
+   ```bash
+   git fetch origin develop
+   git worktree add --detach <neuer-aufnahme-checkout> origin/develop
+   git -C <neuer-aufnahme-checkout> pull --ff-only origin develop
+   git -C <neuer-aufnahme-checkout> rev-parse HEAD
+   ```
 
-Siehe [Aufnahmeablauf](references/capture.md). Die Web-App im Handy-Viewport **390×844, DPR 2** aufnehmen. Den unterstützten lokalen `dev-basic`-Login und ausschließlich das Testkonto aus der Repository-`AGENTS.md` verwenden. Zugangsdaten nicht in Skripte, Skill, Plan, Bild oder Logs kopieren.
+4. Tatsächlichen App-Commit, Datum, verwendete Ansichten und Demo-Daten im Produktionsordner dokumentieren. Auch Renderer/Export neu aus diesem Quellstand bauen. Alte Screens nur wiederverwenden, wenn sie die betreffende aktuelle UI unverändert zeigen. Eine explizite andere Branch-Anweisung des Nutzers geht vor; Abweichung festhalten.
+5. Web statt Android verwenden. Keine Emulatoren, Expo Go oder EAS für diese Aufnahmen starten. [Aufnahmeablauf](references/capture.md) beachten.
 
-- Angemeldet aufnehmen; kein als Gast getarntes UI und keine nachgebauten Screenshots.
-- Vorhandene Demo-Besuche wiederverwenden. Für eine gewünschte Demo fehlen gegebenenfalls Besuche der Stempel **1–5**: nur diese über die echte Schaltfläche im lokalen Test-Backend erfassen, keine unnötigen Doppelbesuche und keine Produktionsschreibzugriffe.
-- Liste muss den gespeicherten Fortschritt zeigen; Karte muss grüne besuchte und offene Marker gemeinsam zeigen. Nah genug zoomen, damit nicht alle Marker übereinanderliegen. Aktuelle Kartenmarker und Listenabstände aus dem tatsächlichen Quellstand beibehalten.
-- **Holzstempel aufnehmen:** Auf dem echten Stempelknopf etwa eine Sekunde gedrückt halten; dann ist der Actor gut sichtbar. Für eine zusätzliche reine Animationsaufnahme den Zeiger vor dem Loslassen aus dem Knopf bewegen, damit kein weiterer Besuch abgeschickt wird. Den sichtbaren Stempel im Film etwa 1,5 Sekunden halten, danach Erfolg zeigen. Eine reine Erfolgs-Toast-Aufnahme reicht nicht.
-- Eingabefokus vor der endgültigen Listenaufnahme entfernen. Keine Fehlerüberlagerungen, Zugangsdaten, privaten Profildaten oder Browser-Sitzungsdateien ausliefern.
+## Konstanten und variable Geschichte
 
-## Freigegebenes Hochkant-Layout
+- Instagram, Deutsch, **1080×1920 / 9:16**, **15–70 Sekunden**: so kurz wie möglich, so lang wie für die Geschichte nötig. Kein fixes 20-Sekunden-Schema.
+- Wanderlust, Landschaft und Vorfreude auf einen gemeinsamen Ausflug tragen die Geschichte. Konkreter Dialog statt Feature-Aufzählung oder gesprochener Farblegende.
+- Neue Stories dürfen andere Funktionen zeigen: eine Region vervollständigen, eine Wanderung für ein Abzeichen planen oder eine Tour mit Freunden. Nur tatsächlich vorhandene Funktionen zeigen.
+- Die Charaktere und ihre Stimmen bleiben konstant; Ziele, Stempelstände, Orte, Konflikt und Verabredung ändern sich. Nicht jedes Reel muss dieselben drei Stempel oder alle Figuren enthalten.
+- Nur fehlende relevante Inputs erfragen: Story/Ziel, gewünschte Funktion, notwendige Demo-Daten, besondere Referenz oder CTA. Bestätigte Defaults nicht erneut abfragen. Bei unklarer Kernidee erst einen konkreten Vorschlag machen.
 
-Die konkrete Vorlage liegt unter `templates/`. Den Inhalt für ein neues Video aktualisieren, die bewussten Layoutentscheidungen erhalten:
+## Erzählweise: eine Unterhaltung bleibt eine Unterhaltung
 
-- **1080×1920, 30 fps, 20 Sekunden** als Standard für Instagram. Eine Querformatfassung bleibt erhalten.
-- Das Handy nutzt die Höhe: **620×1360 bei x=200, y=400**, statt einen großen leeren Bereich unten als „Footer“ zu reservieren. Der Nutzer hat diese große Darstellung ausdrücklich der früheren reservierten unteren Fläche vorgezogen.
-- Durchgehend `#f4efe4` als Hintergrund; Text `#183d2b`, Akzent `#2e6b4b`, Inter. Kein andersfarbiger unterer Balken, kein zusätzlicher Footer, kein grauer Home-Indikator am Videorahmen. Die echte Navigation innerhalb der App bleibt Bestandteil der UI, sofern nicht ausdrücklich anders gewünscht.
-- Das Buddy-Icon steht **in allen Szenen neben** dem Gerät bei **x=850, y=1540, 170×170**. Nicht wieder darunter in einen Footer setzen.
-- Auf Cover/Schlussbild den Namen **nur einmal** als große Überschrift anzeigen. Keine zusätzliche kleine Zeile „HARZER WANDER BUDDY“ darüber.
-- App-Screenshots nicht verzerren. Der sichtbare Stempelmoment und die besuchten Kartenmarker müssen auch im Hochkant-Export erhalten bleiben.
+- Standard für diese Reihe ist **ein durchgehender, natürlich scrollender Gruppenchat** vor bewegter Harz-Landschaft. Kopfzeile, Hintergrund und Senderseiten bleiben konsistent.
+- Tom rechts; Lena und Ben links. Jede Nachricht hat den richtigen Namen und Originalavatar. Zwei Nachrichten von Lena kommen beide von links. Vergangene Nachrichten bleiben Teil desselben Verlaufs und scrollen aus dem Sichtfenster.
+- Produkt-Screens, Tourkarte, Statusdetails und Landschaftsfotos sind **gesendete Bildanhänge im Chat**. Insbesondere das Taubenklippe-Foto verlässt den Chat nicht. Kein plötzlicher Wechsel zu einer freistehenden Karte, Vollbildlandschaft oder Schlusskarte.
+- Keine separaten Discord-Sprecherblasen, Aktivitätsringe oder Sprecher-HUDs. Kein Erzähler im Standardformat; die Figuren tragen die Geschichte.
+- Die Unterhaltung soll einen kleinen Spannungsbogen haben: Einladung/Frage → konkreter Vorschlag → unterschiedliche Wünsche oder Fortschritte → gemeinsamer Grund mitzukommen → konkrete Verabredung. Ein neuer Bild- oder Informationsimpuls etwa alle 2–4 Sekunden; komplexe Karten dürfen länger lesbar stehen.
+- Aussicht wird als emotionales Versprechen im Chat gezeigt. Der Landschaftshintergrund behält die ruhige Kamerafahrt der bevorzugten frühen Fassung; keine statischen Illustrationstafeln als Ersatz.
+- Der Chat ist eine inszenierte Rahmenhandlung außerhalb der App. Keine vorhandene In-App-Chatfunktion behaupten.
 
-Storyboard: Hook `0–3.02`, Entdecken `3.02–7.02`, Besuche `7.02–12.02` mit Holzstempel `8.02–9.52`, Karte `12.02–17.02`, Outro `17.02–20`. Musik und dezente Klicks; keine Stimme, sofern nicht angefordert.
+## Storyboard vor Animation
 
-Für Gruppen gilt die ebenfalls freigegebene [20-Sekunden-Charaktergeschichte](references/groups-story.md): Problem → Gruppenauswahl → gemeinsames Ziel → echte Aktion → gespeicherter Erfolg. Diese Variante hat andere Zeitmarken, insbesondere Holzstempel `9.5–11`. Sie enthält wiederverwendbare Figurenillustrationen und eine eigene Kompositionsvorlage; keine funktionalen App-Ansichten generieren.
+`docs/style_guide.md` und `docs/shotlist.md` schreiben. Jede Zeile enthält Zeitpunkt, Figur, exakten gesprochenen Text, sichtbare Nachricht/Medium, Stempelnummer und Ort, Sprachdauer, Lesezeit und Soundereignis. Zuerst ein aktualisiertes Board zeigen; bei ausdrücklicher Bitte um Board-Freigabe vor Umsetzung auf diese warten. Sonst innerhalb des autorisierten Auftrags fortfahren.
 
-## Vorlage verwenden
+Eine wiederverwendbare V6-Beispielgeschichte mit variablen Slots steht in [Gruppenstory](references/groups-story.md). Die dortigen Samstagsdialoge und Stempel sind Beispiele, keine Pflichttexte für neue Reels.
 
-Die in [Aufnahmeablauf](references/capture.md) genannten elf Mediendateien in einem neuen Aufnahmeordner bereitstellen. Musik, SFX und GSAP lokal aus einer freigegebenen Quelle beziehen; nicht als fremde Binärsammlung ins Repository aufnehmen.
+## Referenzen und Gestaltung
 
-```bash
-python3 .agents/skills/hwb-video/scripts/create_composition.py \
-  --assets-dir <aufnahmeordner> \
-  --output <neuer-ausgabeordner>/composition
-cd <neuer-ausgabeordner>/composition
-npm run check
-npm run dev
-```
+- Stilreferenzen: [Reel 1](https://www.instagram.com/reel/DeZRVmkvhiR/) und [Reel 2](https://www.instagram.com/reel/De1g_WXsVJC/). Wenn verfügbar herunterladen, Frames und Timing analysieren; sonst den Zugriffsmangel benennen. Nur visuelle Grammatik übernehmen, keine fremden Filmframes oder Tonspuren kopieren.
+- Echte Landschaft, klare große Nachrichten, sanfte Kamerafahrt und gewichtete, zurückhaltende Bewegung. Kein Gradiententitel als Hook, wahllose Fades, UI-Glow, Partikelbursts, permanente Ecklabels, Rahmen oder starkes Bouncing.
+- Oberste **220 px** im 1080×1920-Frame frei von wichtigem Text. Untere und rechte Instagram-Bedienelemente ebenfalls berücksichtigen. Safe Areas zusätzlich am Telefon beurteilen.
+- Falls zusätzliche Captions außerhalb eines Chattextes nötig sind: fette weiße Schrift mit weichem dunklem Schatten, **ohne Hintergrundbox**. Kein Screenshotinhalt verdecken. Gesprochener Chattext erhält keine doppelte Caption.
+- Medien **niemals strecken**: ein gemeinsamer Skalierungsfaktor, gegebenenfalls proportionaler Cover-Ausschnitt. Wesentliche UI und Marker nicht wegschneiden; sonst die Fläche anpassen oder `contain` verwenden. Kartenpins, Ziffern, Avatare und Fotos müssen ihre Originalproportionen behalten.
+- Avatare gegen die tatsächliche Chat-Clip-Fläche prüfen, nicht nur gegen die Canvasbreite. Historischer V6-Fehler: Avatar endete bei996, Clip bei980. Korrigiert: Tom914–972 innerhalb40–980. Das ist ein geprüftes Beispiel, keine Pflichtgeometrie für neue Layouts.
 
-Der Generator kopiert ausschließlich die genannten Mediendateien. Er überschreibt keinen vorhandenen Ausgabeordner und übernimmt keine Profile, Datenbanken oder Sitzungsarchive. Für eine andere Geschichte Texte, Bilder und Timing gezielt in der neuen Komposition ändern.
+## Karten brauchen Kontext
 
-Die Gruppenfassung wird mit `--variant groups` erzeugt. Aufnahme-Dateinamen, Figuren, Caption, Cover und Prüfpunkte stehen in [Gruppenstory und Learnings](references/groups-story.md). Renderdateien und angemeldete Aufnahmen bleiben lokal; die neue Vorlage benötigt keinen alten Ausgabeordner.
+- Echte aktuelle Web-App und echte gespeicherte Wege zeigen. Keine Route oder UI aus Fantasie nachzeichnen. Buchstaben allein verlieren den Kontext: Route und späterer Detailanhang zeigen **konkrete Stempelnummern und Namen**.
+- Bei A/B/C-Markern eine sichtbare Zuordnung im selben Bildanhang ergänzen. Beispiel: B · #4 Taubenklippe, C · #3 Am Kruzifix, D · #6 Bremer Hütte; A/E bezeichnet Start/Ziel. Nicht den Screenshot als vermeintliche App-Funktion übermalen.
+- Für einen solchen Tourvorschlag zunächst **mindestens fünf Sekunden** Lesezeit einplanen. In 360px prüfen und bei Bedarf mehr Zeit geben.
+- Ortsnähe, Reihenfolge, Start/Ziel, Entfernungen und Gehzeit anhand realer Koordinaten und vorhandener Fußwegdaten prüfen. Keine Karte mit geraden Verbindungen als Wanderweg ausgeben. Einen geografisch plausiblen Tourvorschlag dokumentieren; keine erfundene Routenoptimierung versprechen.
 
-## Prüfen und liefern
+## Rendervertrag und Ton
 
-1. `brag-plan.md` und `composition-brief.md` im neuen Ausgabeordner schreiben; verwendeten App-Commit festhalten.
-2. `npm run check` muss fehlerfrei sein. Warnungen prüfen und beheben, wenn sie die Lesbarkeit betreffen.
-3. `npx hyperframes@0.8.188 snapshot --at 1.5,8.7,14.7,18.5`: Bilder tatsächlich ansehen; für die Gruppenfassung die Zeitmarken aus ihrer Referenz verwenden. Prüfen: richtige UI/Abstände, tatsächlicher Fortschritt, grüne/offene Marker, Holzstempel, kein unnötiger Footer, Name auf dem Cover nur einmal, Buddy neben dem Gerät.
-4. Lokale Vorschau erreichbar halten. Wenn der Nutzer eine Datei angefordert hat, direkt nach bestandener Prüfung rendern: `npm run render`.
-5. `ffprobe` muss 1080×1920, 600 Frames / 30 fps, 20 Sekunden und eine Audiospur bestätigen. Dekodiertes Stempelbild bei ca. 8.7 Sekunden ansehen.
-6. Das gesetzte Schlussbild bei ca. **18.5 Sekunden** als Cover wählen: Titel einmal, Gerät und Buddy nebeneinander. Poster mit FFmpeg als Frame 0 einbacken, Audio durchkopieren; Details im allgemeinen Brag-Skill. Aktuellen Dateinamen verwenden, damit alte Cover nicht versehentlich erneut ausgeliefert werden.
-7. MP4, Cover und kurzen Share-Text lokal bereitstellen. Alte Fassungen erhalten. `REVIEW.md` mit geprüften Punkten und Grenzen schreiben; gemessenen Ton nicht als angehört beschreiben.
+- Bevorzugt eine HTML-Seite mit Canvas `#c` und reinem `window.seek(t)`: beliebiger Zeitpunkt ohne vorheriges Abspielen reproduzierbar. Keine CSS-Transitions, Timer oder `requestAnimationFrame` im Renderpfad, kein Framezustand, kein ungesetztes `Math.random`; nur deterministisches Noise.
+- Geschlossene Springs mit höchstens kleinem Overshoot, auf Typografie kein sichtbares Nachfedern. Mehrere Ziele über gestapelte Sprungantworten; nicht bei jedem Ziel die Bewegung neu starten.
+- **60 fps, vier zeitliche Subframes pro Frame**, gemischt für Motion Blur; Master H.264, yuv420p, CRF16. Ein kleinerer Web-Export behält Framerate und Timeline. Zuerst Stills und günstigen Rohschnitt rendern.
+- Casting aus dem Brand-Skill. Sprachclips vor Timing-Festlegung erzeugen, tatsächliche Dauer messen und Wörter prüfen. Natürliche Pausen lassen. Keine Effekte über wichtige Wörter legen.
+- Originalmusik synthetisieren oder passend lizenzierte Musik verwenden. Startpunkt, Beatgrid, BPM und Cue-Liste dokumentieren;120 BPM ist ein bewährter Ausgangspunkt, kein Zwang bei anderer Geschichte. Gemessene Downbeats nicht ungeprüft aus jedem vierten erkannten Beat ableiten.
+- Mehr unterscheidbares, gezieltes Sounddesign mit [Earshot](https://github.com/Leonxlnx/earshot): Nachrichten, Bildversand, Klicks, Reaktionen und Akzente. Onsets/Peaks mit Handlung und Sprache synchronisieren; Musik unter Dialog ducken.
+- Mix etwa **−14 LUFS**, True Peak höchstens **−1 dBTP**, vorzugsweise um−1,5 dBTP. Am fertigen MP4 messen. Earshot-Modus und übersprungene Modelle ausdrücklich protokollieren.
 
-## Was gespeichert wird
+## Prüfen, korrigieren und liefern
 
-Versioniert werden dieser Skill, Textvorlagen, Generator und die eigens generierten Figurenillustrationen mit Herkunftshinweis. Laufzeitdaten bleiben im ignorierten `brag-output*/`: angemeldete Aufnahmen, Videos, generierte Kompositionen und Prüfberichte. Browser-Tokens/-Profile, Zugangsdaten, angemeldete Emulator-Daten, SQLite-Datenbanken, SDKs, Build-Caches und heruntergeladene Musik nicht committen. Die generische Brag-Installation bleibt lokal installierbar; `skills-lock.json` dokumentiert ihre Herkunft.
+1. Mindestens drei echte Prüfrunden: Script/Storyboard, Stills/Rohschnitt bei360px, finaler Film. Pro Runde Befunde, Zeitpunkte und Korrekturen in `docs/review_log.md` festhalten. Bei Fehlern weiterarbeiten.
+2. Hook, Spannungsbogen, Telefonlesbarkeit, Motion, Abwechslung, Komposition, Sprecherklarheit, Produkt-/Markentreue, Sprachverständlichkeit und Sound-Sync jeweils1–10 bewerten. Ziel **alle mindestens8/10**; eigene redaktionelle Einschätzung, keine unabhängige Garantie. Keine Scores ohne tatsächliche Verbesserungen hochsetzen.
+3. Finalen Web-/Liefer-MP4 vollständig dekodieren, alle Frames auf nummerierten fortlaufenden Bögen öffnen. Zusätzlich große codierte Karten-/Fotostills und schnelle Übergänge prüfen. Miniaturen allein reichen nicht für Proportionen oder feine Anschnitte; Grenzen der Sichtung ehrlich benennen.
+4. Für alle Zeitpunkte Text-/Safe-Area-Grenzen, aktive Nachrichten, proportionale Bildskalierung (`scaleX = scaleY`) und horizontale Avatar-Clip-Grenzen prüfen. Auch Seek-Reihenfolge wechseln und identische Frames nachweisen.
+5. Sprachclips und fertigen Mix automatisch transkribieren, Auffälligkeiten korrigieren. ASR-Artefakte als solche protokollieren. Audio-/Videoprüfung nicht als menschliches Anhören ausgeben. Bei unverändertem Ton bzw. reinem Remux kann dekodierte Track-Identität per Hash die vorige Prüfung belegen.
+6. MP4, Poster/Cover, vollständige Kontaktbögen, Untertitel, Asset-/Lizenzmanifest, App-Commit, Prüfbericht und reproduzierbare saubere Quellen liefern. Bei beabsichtigtem Loop die Naht prüfen; ein Story-Reel darf einen klaren Schluss haben.
+7. Caption: kurzer natürlicher Bezug zur Geschichte, gemeinsames Erlebnis, leichte Einladung zum Teilen/Verabreden und wenige passende Hashtags. Cover: wenige große Wörter, auch im Profilraster lesbar. Konkrete Cover-Entscheidung an die Geschichte anpassen.
+8. Wenn eine Site angefordert oder als Ziel etabliert ist, den Sites-Skill verwenden, bestehende Seite und Zugriffsrechte erhalten. Alte Fassungen auswählbar lassen, Korrektur unter ihrer Versionsnummer ersetzen, neue Assets mit frischen URLs ausliefern. Wiedergabe, Seeking, Download, Telefonansicht und Einzelbildansicht prüfen. Hörproben mit gleichem Satz/vergleichbarer Lautheit, Rollenwahl und JSON-Export erhalten; eine Auswahl vertont ein vorhandenes MP4 nicht automatisch neu.
+
+Keine Video- oder App-Veröffentlichung allein durch Aufruf dieses Skills ableiten. Im bestehenden Veröffentlichungsauftrag die freigegebene Site aktualisieren; andernfalls lokale Lieferdateien bereitstellen. Keine Tokens, Browserprofile, Sitzungsarchive, angemeldeten Emulator-Daten, Datenbanken, SDKs oder Build-Caches committen.
+
+## Vorhandene ältere Vorlagen
+
+`templates/`, `templates-groups/` und `scripts/create_composition.py` bleiben für ausdrücklich gewünschte alte20s-/30fps-Illustrationsfassungen verfügbar. Ihr Hyperframes-Layout, Stempelzwang, Cover-Frame0 und „Du“-Casting gelten **nicht** für die aktuelle Chatreihe. Sie erfordern weder eine obligatorische Brag-Installation noch einen Wechsel des aktuellen Rendervertrags. Bei expliziter Nutzung die dortigen paketgebundenen Checks ausführen und Asset-Anforderungen aus der Referenz beachten.

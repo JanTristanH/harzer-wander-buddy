@@ -1,106 +1,59 @@
-# Gruppen-Reel: Du, Lena, Tom und Buddy
+# Beispielgeschichte: eine Runde mit drei Freunden
 
-Freigegebener Stand vom 26.10.2026: genau 20 Sekunden, 1080×1920, 30 fps. Eine kleine Geschichte mit Problem, Lösung und Erfolg trägt die Funktion. Der frühere schnelle Wechsel vieler Stempel wirkte hektisch. Gruppenauswahl und ein konkretes gemeinsames Ziel erhalten deshalb mehr Zeit. Ein reduziertes Cover mit den Figuren ersetzt die detailreiche App-Ansicht.
+Aktuelle Referenz ist die **korrigierte V6**: durchgehender Chat, echte aktuelle Tourwege, klare Nummern/Namen, Anna/Giovanni/Jean und unverzerrte Medien. [Video-Skill](../SKILL.md) und [Brand-Skill](../../hwb-brand/SKILL.md) sind die verbindlichen Regeln. Dieses Beispiel zeigt ein Erzählmuster und darf für neue Geschichten geändert werden.
 
-## Figuren und Texte
+## Storybogen statt fester Funktionsliste
 
-- **Du:** grünes Oberteil, braune Hose, grüner Rucksack; steht für die betrachtende Person.
-- **Lena:** brauner Dutt, cremefarbenes Oberteil, grüne Hose, gelber Rucksack. „Ich bin dabei!“
-- **Tom:** Bart, grüne Kappe, orangefarbener Hoodie, Shorts; fragt mit einer Karte in der Hand „Aber wohin?“ und sagt am Schluss „Geschafft!“
-- **Buddy:** originales Bären-Artwork der App, unverändert und durchgehend neben dem Gerät.
-
-Die Figuren sind eine fiktive redaktionelle Rahmenhandlung. Ihre Dialoge und das High-five behaupten keine gefilmte reale Wanderung. Die App beantwortet Toms Frage mit einem für alle offenen Ziel. Nur die Illustrationen dürfen generiert sein; funktionale App-Ansichten stammen aus der echten lokalen angemeldeten Web-App.
-
-## Schnittplan der Vorlage
-
-| Zeit | Text | Bild / Handlung |
+| Schritt | Beispiel | Sichtbares Medium / Zweck |
 |---|---|---|
-| 0–3,5 s | Ein Tag / im Harz. | Große Planungsillustration; Lena und Tom sprechen nacheinander über lesbare Sprechblasen. |
-| 3,5–4,5 s | Deine Gruppe. / Euer nächstes Ziel. | Echte Gruppenauswahl vor der Auswahl. |
-| 4,5–6,5 s | gleiche Überschrift | Lena und Tom ausgewählt. |
-| 6,5–9,5 s | gleiche Überschrift | Echte Karte mit ausgewähltem Ziel, für alle noch offen (0/3). |
-| 9,5–11 s | Zusammen / festhalten. | Tatsächlicher persönlicher Holzstempel, volle 1,5 Sekunden sichtbar. |
-| 11–14 s | gleiche Überschrift | Echter separater Gruppendialog: freigegebene Freunde gewählt, Selbstbesuch nicht wiederholen. |
-| 14–17 s | Alle drei / waren hier. | Dasselbe Ziel zeigt den tatsächlich gespeicherten Stand 3/3. |
-| 17–20 s | Harzer / Wander Buddy | Passende High-five-Illustration, „Geschafft!“ und „Zusammen losziehen.“; Buddy neben Gerät. |
+| Einladung | Tom: „Habt ihr Samstag Zeit für eine Runde Wandern?“ | Tom rechts, echte Luchs-Profilgrafik; Landschaft bleibt Hintergrund |
+| Interesse | Ben: „Kommt drauf an. Wohin?“ | Antwort links; Verlauf bleibt erhalten |
+| Vorschlag | Tom: „Wie wär’s mit der Runde hier?“ | Neu aufgenommene echte App-Tour als Bild rechts; mindestens fünf Sekunden lesbar |
+| Kleiner Konflikt | Lena: „Den Stempel hab ich schon.“ / Ben: „Ich noch nicht.“ | Gelbe Gruppenansicht #4 Taubenklippe,1/3; Nummer und Name explizit |
+| Gemeinsamer Grund | Lena: „Ich komme trotzdem mit.“ | Zweite Lena-Nachricht ebenfalls links |
+| Emotionales Versprechen | Tom: „Mit Aussicht, bitte.“ / Lena: „Versprochen.“ | Echtes Taubenklippe-Foto als Lenas Bildanhang, nicht als neue Szene |
+| Nächste Stopps | Lena: „Und hier machen wir Pause.“ / Tom: „Und die Hütte nehmen wir auch mit.“ | Grüne #3 Am Kruzifix3/3 und rote #6 Bremer Hütte0/3 als Chatbilder |
+| Vorfreude | Ben: „Die wollte ich eh mal sehen.“ | Kleine persönliche Motivation statt Kartenerklärung |
+| Konkrete Verabredung | Tom: „Samstag um 9 Uhr bei mir los?“ | Danach nur zwei visuelle Daumen-Reaktionen; Chat bleibt sichtbar |
 
-Ruhige kurze Einblendungen, kein dauerndes Pumpen, keine Klick- oder Stempelserie. Namensschilder mindestens 28 px, Sprechblasen mindestens 32 px in der 1080er-Komposition. Das Cover stammt aus 18,5 s: App-Name genau einmal, wenig Details, keine zusätzliche Kopfzeile oder Footer.
+Die Referenz dauert30,5s. Zeiten aus tatsächlichen Sprachlängen ableiten, nicht starr kopieren. Für neue Storys Einladung, Konflikt, Orte und Abschluss ändern. Eine Abzeichen-Story muss weder diese Stempel noch Samstag um9Uhr wiederholen.
 
-## Tatsächliche Gruppenfunktion
+## Geografische Referenz, keine feste Tour für alle Videos
 
-Vor einer neuen Aufnahme erneut den aktuellen Code und die echte Web-App prüfen. Diese Erkenntnisse gelten für den aufgenommenen `develop`-Commit `b8a663c3a94e59737805f533b924b8a5473b668b`:
+Ilsenburg-Parkplatz → **#4 Taubenklippe** → **#3 Am Kruzifix** → **#6 Bremer Hütte (Obere Ilsefälle)** → derselbe Parkplatz. Vier gespeicherte walking-Segmente ergeben in der Demo17.080m und15.607s (rund4:20h), mit identischem Start-/Endpunkt. Bei neuer Produktion erneut anhand aktueller Daten prüfen.
 
-- Eine Wandergruppe ist eine Auswahl akzeptierter Freunde in der Sitzung, keine dauerhaft benannte Gruppe. Nicht mit einer erfundenen Gruppenverwaltung werben.
-- Die eigene Person zählt zum Gruppenfortschritt. Lena und Tom plus eigene Person ergeben drei.
-- Für andere stempeln setzt eine eingehende akzeptierte Freundschaft mit entsprechender Erlaubnis voraus. Der Gruppendialog zeigt die tatsächlichen verfügbaren Personen.
-- Der sichtbare Holzstempel gehört zum persönlichen Stempelknopf. Der Gruppendialog besitzt diese Animation nicht. Deshalb zuerst den echten eigenen Besuch aufnehmen, anschließend für Freunde stempeln und die eigene Person im Gruppendialog abwählen. Keine Montage, die eine erfundene Gruppenanimation suggeriert.
-- Vorher, Aktion und Ergebnis müssen dieselbe Stempelstelle zeigen. Erfolg anhand neu geöffneter Ansicht und gespeicherter lokaler Besuche prüfen; ein Toast allein reicht nicht.
-- Bestehende erfolgreiche Aufnahmen wiederverwenden, falls Quellstand und Geschichte passen. Keine Doppelbesuche erzeugen, um einen weiteren Schnitt zu erhalten.
+Die echte Touransicht verwendet A/E für Start/Ziel, B für#4, C für#3 und D für#6. Diese Zuordnung steht sichtbar unter der Karte im selben Chat-Bildanhang; nicht nur A/B/C/D zeigen. Nachfolgende Medien behalten Nummer und Namen.
 
-Code-Einstiegspunkte: `app/lib/hiking-group.tsx`, `app/components/group-selector.tsx`, `app/components/group-stamp-dialog.tsx`, `app/app/stamps/[id].tsx`, `app/lib/group-marker.ts`, `app/app/(tabs)/map.tsx` und `backend/hwb/srv/hwb-service.js` (`stampForGroup`). Pfade am aktuellen Quellstand überprüfen.
+Die Wegdarstellung wurde in `9e4544e` auf gespeicherte OData-Routenverläufe korrigiert (`app/lib/tour-route.ts`, `app/app/tours/[id]/index.tsx`). Das ist ein historischer Referenzcommit: **vor Aufnahmen aktuellen develop pullen**, keinen alten Commit fest als „aktuell“ verwenden. Keine alte geradlinige Tourvorschau wieder einsetzen.
 
-## Statusbelege: Tom fehlt und alle / einige / niemand
+## Produktprüfung
 
-Zusätzlich zum Reel echte Screenshots der Liste, Karte und eines Details aufnehmen:
+- Originalavatare: Lena Fuchs, Tom Luchs, Ben Bär. Casting siehe Brand-Skill.
+- Demo-Stände lokal gespeichert und mit Karte/Gruppe abgeglichen; persönliche Besuchsanzeige und Gruppenfortschritt unterscheiden.
+- Die eigene Person zählt bisher zum Gruppenfortschritt. Eine Sitzungsauswahl akzeptierter Freunde nicht als neue dauerhafte Gruppenverwaltung darstellen.
+- Für andere stempeln setzt die tatsächlichen Berechtigungen voraus. Nur falls die neue Geschichte diese Aktion braucht: persönlichen Holzstempel tatsächlich aufnehmen, danach den echten Gruppendialog und gespeicherten Erfolg prüfen. Der Gruppendialog besitzt nicht automatisch die persönliche Holzstempelanimation. Doppelbesuche vermeiden.
+- Code-Einstiege am aktuellen Stand prüfen: `app/lib/hiking-group.tsx`, `app/components/group-selector.tsx`, `app/components/group-stamp-dialog.tsx`, `app/app/stamps/[id].tsx`, `app/lib/group-marker.ts`, `app/app/(tabs)/map.tsx`, `backend/hwb/srv/hwb-service.js`.
 
-| Lokales Beispiel | Vor der gezeigten Aktion | Aussage |
-|---|---|---|
-| 1 · Eckertalsperre – Staumauer | 3/3, grün | Alle haben den Stempel. |
-| 2 · Scharfenstein – Rangerstation | 2/3, gelb; Tom offen | Einige haben ihn, Tom fehlt. |
-| 3 · Am Kruzifix | 0/3, rot | Niemand aus der gewählten Gruppe hat ihn. |
+## Bekannte Darstellungsfehler ausdrücklich prüfen
 
-Danach zeigt Ziel 3 tatsächlich 3/3. Der frühere 0/3-Screenshot ist ein **Vorher-Beleg**, kein aktueller Live-Zustand. Die Beispieldaten sind keine globale Voraussetzung. Falls sie fehlen, eine passende getrennte lokale Demo vorbereiten; vorhandene Besuche niemals löschen, um diese Tabelle nachzustellen. Keine echten Einladungen oder Produktionsschreibzugriffe.
+V6 hatte anfangs zwei übersehene Fehler:480×500-Kartenausschnitte wurden auf672×500 gestreckt; Toms Avatar ragte16px über die Chat-Clip-Grenze. Die korrigierte Fassung skaliert Medien einheitlich, beschneidet gegebenenfalls proportional und hält den Avatar vollständig innerhalb der Clip-Fläche. **Miniaturbögen allein fanden diese Fehler nicht.** Zusätzlich große codierte Kartenstills, Telefonbilder und Geometrie über die ganze Timeline prüfen.
 
-Empfohlene lokale Belege: `gruppenstatus-liste.png`, `gruppenstatus-karte-uebersicht.png`, `gruppenstatus-karte-tom-fehlt.png`, `tom-fehlt-detail.png` sowie bereinigte Vorher-/Nachher-Prüfnotizen. Karte so zoomen, dass alle drei Statusfarben sichtbar auseinanderliegen. Farbe zusammen mit zugänglichem Markerlabel und tatsächlichem Fortschritt prüfen. „Alle haben“ (3/3), „einige haben“ (2/3) und „niemand hat“ (0/3) ausdrücklich unterscheiden.
+## Caption und Cover als variable Begleittexte
 
-## Wiederverwendbare Komposition erzeugen
+Caption-Beispiel für diese Story:
 
-Die Vorlage `templates-groups/` enthält HTML/GSAP, feste Zeitmarken und beide generierten Figurenbilder. Sie ist unabhängig von alten lokalen Ausgabeordnern. Benötigte frische, bereinigte Dateien im Aufnahmeordner:
-
-| Datei | Inhalt |
-|---|---|
-| `group-choose.png` | Gruppenauswahl vor Auswahl |
-| `group-chosen.png` | Lena und Tom ausgewählt |
-| `chosen-goal-map.png` | Gemeinsames offenes Ziel mit 0/3 auf echter Karte |
-| `stamp-moment.png` | Echter persönlicher Holzstempel sichtbar |
-| `group-confirm.png` | Tatsächlicher Gruppendialog, Freunde gewählt, eigene Wiederholung aus |
-| `together-saved.png` | Dieselbe Stempelstelle nach gespeichertem Gruppenbesuch mit 3/3 |
-| `buddy.png` | Original `app/assets/images/onboarding-bear.png` |
-| `music.mp3`, `click.ogg`, `gsap.min.js` | Freigegebene lokale Medien und GSAP 3.14.2 |
-
-```bash
-python3 .agents/skills/hwb-video/scripts/create_composition.py \
-  --variant groups --assets-dir <aufnahmeordner> \
-  --output <neuer-ausgabeordner>/composition
-cd <neuer-ausgabeordner>/composition
-npm run check
-npm run dev
-npx --yes hyperframes@0.8.188 snapshot \
-  --at 1.5,4.2,5.5,8,10.2,12.5,15.5,18.5 --output ../snapshots
-npm run render
-```
-
-Der Generator kopiert nur die erlaubten Medien. Fehlende Dateien und existierende Ausgaben werden vor dem Kopieren abgewiesen. Figurenherkunft: [Illustrationen](../templates-groups/assets/README.md). Neue Charakterbilder bei Bedarf mit diesen Bildern als Referenz generieren; Gesichter, Kleidung und Farbwelt erhalten. Keinen Screenshot in eine generierte App-Oberfläche umwandeln.
-
-## Aufnahme-Learnings
-
-- Nach Login innerhalb der SPA navigieren: Reload oder `page.goto` verliert den lokalen Basic-Login im Speicher.
-- Freundauswahl kann den Dialog nach dem Query-Reload schließen. Nach jeder Auswahl auf die Aktualisierung warten, Auswahl erneut öffnen und Endzustand visuell prüfen.
-- React-Native-Web-Checkboxen nicht allein anhand von `aria-checked` beurteilen. Sichtbaren Zustand, Label und gespeichertes Ergebnis zusammen prüfen.
-- Auf Leaflet echte Ziehgesten und Zoomknöpfe verwenden. Marker nach jedem Schritt neu zentrieren; geladene Kartenkacheln abwarten. Ein Text mit `pointer-events: none` lässt sich gegebenenfalls über seine gemessene Position am realen Sheet anklicken.
-- Bei langsamen WebGL-Karten längere Screenshot-Timeouts nutzen. Keine leeren Karten oder nachgebauten Marker als Ersatz liefern.
-- Statischer Web-Export vermeidet Entwicklungs-Overlays. Fehlende lokale Pakete ohne Lockfile-Änderung installieren; vorhandene Caches erhalten.
-
-## Abnahme und Caption
-
-Jede Szene visuell prüfen, anschließend auch das **dekodierte MP4**: Figuren bei 1,5 s, Holzstempel bei 10,2 s, gespeichertes Ergebnis bei 15,5 s, Cover bei 18,5 s und eingebranntes Frame 0. `ffprobe`: 1080×1920, 30 fps, 600 Frames, exakt 20 s und Audiospur. Hyperframes-Fehler beheben, Textkontrast und Warnungen prüfen. Tonpegel messen; nur nach tatsächlichem Anhören behaupten, dass der Ton angehört wurde.
-
-Caption-Vorlage:
-
-> Lena ist dabei. Tom fragt: Wohin? 🥾🌲 Mit Harzer Wander Buddy findet ihr ein gemeinsames Ziel – und haltet euren Erfolg fest.
+> „Den Stempel hab ich schon.“
+> „Ich komme trotzdem mit.“ 🥾
 >
-> #HarzerWanderBuddy #Harz #Wandern #HarzerWandernadel
+> Manche Orte besucht man eben gern zweimal – mit den richtigen Leuten.
+> Wer wäre bei deiner nächsten Harzrunde dabei? Schick’s in eure Wandergruppe. 🌲
+>
+> #Harz #WandernImHarz #HarzerWandernadel #HarzerWanderBuddy
 
-Bei denselben Medien zusätzlich: „Musik: Sascha Ende, ende.app (CC BY 4.0)“, „Karte: OpenFreeMap / © OpenMapTiles / © OpenStreetMap-Mitwirkende“, „Foto ‚Am Kruzifix‘: Thomas Binder (CC BY-SA 4.0)“. Quellen bei Medienwechsel aktualisieren. Die Referenzfassung nutzte Happy Beats / Business Moves Vol. 10, Musiklautstärke 0,16, Fade-in 0,6 s / Fade-out 1,5 s und einen leisen CC0-Klick bei 14 s.
+Cover-Idee: **„Drei Freunde. Eine Runde.“**, echte Tourkarte plus drei Avatare. Wenige große Wörter und sicheren Beschnitt fürs Profilraster verwenden; keine kleinteilige Chatnachricht als einzige Coveraussage. Neue Story braucht einen passenden eigenen Aufhänger, keine immer gleiche Caption.
 
-Im neuen Ausgabeordner Plan, Brief, tatsächlichen App-Commit, Medienquellen und Prüfbericht festhalten. Keine alten Freigaben als Prüfung einer neuen Aufnahme ausgeben. MP4, Cover und Caption lokal liefern; keine Zugangsdaten, Basic-Tokens, Browserprofile, angemeldeten Sitzungsdateien oder SQLite-Dateien versionieren.
+## Erhaltene historische Vorlagen
+
+Die20s-/30fps-Menschenillustrationen unter `templates-groups/` und die klassische Vorlage unter `templates/` bleiben erhalten. Nur bei ausdrücklich gewünschtem altem Stil verwenden; ihre Namen „Du“, Figurenkleidung, starren Zeitmarken, Schlusskarte und Holzstempelpflicht sind kein aktueller Standard.
+
+Der historische Generator benötigt für `--variant groups`: `group-choose.png`, `group-chosen.png`, `chosen-goal-map.png`, `stamp-moment.png`, `group-confirm.png`, `together-saved.png`, `buddy.png`, `music.mp3`, `click.ogg`, `gsap.min.js`. Aufruf mit `--assets-dir <lokale-medien>` und `--output <neuer-ordner>`. Nur explizit gelieferte Medien werden kopiert, bestehende Ausgaben nicht überschrieben. Herkunft der alten Illustrationen: [README](../templates-groups/assets/README.md). Vorlagenspezifische Hyperframes-Checks weiter beachten.
