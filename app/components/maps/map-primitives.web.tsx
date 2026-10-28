@@ -826,6 +826,9 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
         <MapInstanceBridge
           onMapReady={(nextMap) => {
             setMap(nextMap);
+            // Report the measured viewport on mount as well as after gestures.
+            // Overlays need its actual scale when a fullscreen map replaces a card.
+            onRegionChangeComplete?.(regionFromMap(nextMap));
             onMapReady?.();
           }}
         />
