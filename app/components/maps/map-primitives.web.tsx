@@ -11,7 +11,7 @@ import {
 } from 'react-leaflet';
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { SELECTED_MARKER_Z_INDEX, MARKER_SELECTION_COLOR } from '@/lib/map-marker-selection';
+import { SELECTED_MARKER_Z_INDEX, createSelectedMapPinHtml } from '@/lib/map-marker-selection';
 import { areMapCoordinatesEqual } from '@/lib/map-viewport';
 import { CanvasMapMarkers, type CanvasMapMarker } from '@/lib/canvas-map-markers';
 import { defaultWebMapStyle, reduceWalkingStyle, WEB_MAP_STYLES, type WebMapStyleId } from '@/lib/web-map-style';
@@ -119,7 +119,9 @@ const WEB_MAP_DIAGNOSTIC_INTERVAL_MS = 4000;
 const LEAFLET_STYLE_TAG_ID = 'hwb-leaflet-runtime-css';
 const LEAFLET_RUNTIME_CSS = `
 .hwb-map-marker-selected {
-  filter: drop-shadow(2px 0 0 ${MARKER_SELECTION_COLOR}) drop-shadow(-2px 0 0 ${MARKER_SELECTION_COLOR}) drop-shadow(0 2px 0 ${MARKER_SELECTION_COLOR}) drop-shadow(0 -2px 0 ${MARKER_SELECTION_COLOR});
+  background: transparent;
+  border: 0;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
 }
 
 .leaflet-container {
@@ -509,9 +511,8 @@ function createIcon(options: {
     return existing;
   }
 
-  const icon = imageUri
+  const icon = imageUri && !selected
     ? L.icon({
-        className: selected ? 'hwb-map-marker-selected' : '',
         iconAnchor,
         iconSize: [width, height],
         iconUrl: imageUri,
@@ -520,7 +521,7 @@ function createIcon(options: {
         className: `${canvas ? 'hwb-canvas-marker-target' : 'hwb-leaflet-div-icon'}${selected && !canvas ? ' hwb-map-marker-selected' : ''}`,
         html: canvas
           ? `<span aria-hidden="true" class="hwb-css-marker__label">${(normalizedLabel ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')}</span>`
-          : createCssMapMarkerHtml({ color, label: normalizedLabel, size }),
+          : selected ? createSelectedMapPinHtml() : createCssMapMarkerHtml({ color, label: normalizedLabel, size }),
         iconAnchor,
         iconSize: [width, height],
       });
@@ -1081,7 +1082,7 @@ function Marker(props: InternalMarkerProps) {
   const shouldUseCompactMarker = Boolean(children) && !imageUri && !markerLabel;
   const derivedColor =
     pinColor ?? (typeof zIndex === 'number' && zIndex <= 14 ? '#2f7dd7' : '#2e6b4b');
-  const size = shouldUseCompactMarker ? WEB_MARKER_SIZE_COMPACT : WEB_MARKER_SIZE;
+  const size = shouldUseCompactMarker && !selected ? WEB_MARKER_SIZE_COMPACT : WEB_MARKER_SIZE;
   const useCanvas = Boolean(canvasRenderer) && !imageUri;
   const icon = createIcon({
     anchor,

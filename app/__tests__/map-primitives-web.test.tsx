@@ -162,7 +162,9 @@ describe('web map primitives', () => {
     expect(selected.icon).not.toBe(normal.icon);
     const icon = mockDivIcon.mock.calls.at(-1)![0] as { className: string; html: string };
     expect(icon.className).toContain('hwb-map-marker-selected');
-    expect(icon.html).toContain('#123abc');
+    expect(icon.html).toContain('fill="#ea4335"');
+    expect(icon.html).toContain('<circle fill="#a50e0e"');
+    expect(icon.html).not.toContain('SEL');
     view.rerender(<Marker {...props}>SEL</Marker>);
     expect(mockLeafletMarker.mock.calls.at(-1)![0]).toEqual(expect.objectContaining(normal));
   });

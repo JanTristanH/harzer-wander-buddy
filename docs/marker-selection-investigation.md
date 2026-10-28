@@ -25,8 +25,10 @@ Den Auswahlzustand explizit vom Bildschirm an beide Marker-Renderer übergeben u
 ## Behebung (28.10.2026)
 
 Die Web-Karte übergibt die Auswahl nun explizit an Canvas- und DOM-Marker.
-Der ausgewählte Stempel oder Parkplatz erhält eine goldene Kontur und eine
-höhere Zeichen- und Trefferebene. Die fachliche Statusfarbe bleibt erhalten.
+Der ausgewählte Stempel oder Parkplatz wird als roter GPS-Pin mit dunklem
+Mittelpunkt dargestellt, entsprechend den Maps-/Komoot-Referenzen. Er liegt
+auf einer höheren Zeichen- und Trefferebene. Die normale Statusdarstellung
+und Nummer werden während der Auswahl durch diesen Pin ersetzt.
 Beim Wechsel kehrt der vorherige Pin zur normalen Darstellung zurück; beim
 Schließen des Detailblatts verschwindet die Hervorhebung. `aria-pressed`
 kommuniziert die Auswahl unabhängig vom Tastaturfokus.
@@ -39,7 +41,7 @@ Native Android-/iOS-Marker sind von dieser Web-Behebung nicht betroffen.
 
 Geprüft mit 36 Tests in sechs Karten-Testsuites, TypeScript und gezieltem ESLint.
 Zusätzlich echter statischer Expo-Export und Playwright/Chromium bei 390 × 844,
-DPR 3 mit allen 222 öffentlichen Stempeln: sichtbare Kontur in beiden Renderern,
+DPR 3 mit allen 222 öffentlichen Stempeln: roter GPS-Pin in beiden Renderern,
 Auswahlwechsel per Enter, separater Browserfokus, Schließen durch Antippen der
 Karte und erhaltene Stempel-DOM-Knoten; keine JavaScript-Fehler.
 
