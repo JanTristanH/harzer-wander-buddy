@@ -23,6 +23,11 @@ keine dauerhaft laufende View-Aufzeichnung.
   und Wiederherstellung von Bild und Kindansichten, Press-Handler und Touren-Badge.
 - TypeScript, gezieltes ESLint und `git diff --check` erfolgreich.
 - Beide neuen PRs lassen sich konfliktfrei kombinieren.
+- Lokaler Android-Release-Build erfolgreich, einschließlich der neuen nativen
+  Assets: erster Build 6 min 38 s, zweiter Build mit warmem Cache 10 s.
+- Der Software-Emulator bootete, reagierte danach aber nicht auf UI-/Screenshot-
+  Befehle und beendete sich. Daher keine interaktive Android-Prüfung und kein
+  nativer Bildschirm-Screenshot; die folgende Abbildung ist nur die Asset-Vorschau.
 - iOS-Laufzeitprüfung ist in der Linux-Umgebung nicht verfügbar.
 
 Native Asset-Vorschau (kein Geräte-Screenshot):
