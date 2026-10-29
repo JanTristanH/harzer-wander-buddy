@@ -66,6 +66,17 @@ Auth0 callback changes.
    npm ci
    ```
 
+   Run `npm ci` after checkout or when the lockfile changes. It installs the locked
+   dependencies, including `react-native-svg` and its `filter-image` entry point.
+   The test, native-build and OTA workflows use the same installation. From the
+   repository root, use `npm ci --prefix app`.
+
+   Run the app tests with the configuration also used by CI:
+
+   ```bash
+   npm test -- --runInBand --config jest.config.js
+   ```
+
 2. Start Expo for native development
 
    ```bash

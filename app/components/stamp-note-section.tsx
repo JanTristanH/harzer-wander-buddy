@@ -10,6 +10,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SectionCard } from '@/components/section-card';
+import { AppColors } from '@/constants/theme';
+
 type StampNoteSectionProps = {
   syncStatus?: string;
   remoteNote?: string;
@@ -42,9 +45,9 @@ export function StampNoteSection({
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 12 : 0}>
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Meine Notiz</Text>
+      <SectionCard
+        title="Meine Notiz"
+        action={
           <View style={styles.noteActionSlot}>
             {isDirty || isSaving ? (
               <Pressable
@@ -59,8 +62,7 @@ export function StampNoteSection({
               </Pressable>
             ) : null}
           </View>
-        </View>
-
+        }>
         <View style={styles.noteInputContainer}>
           <TextInput
             editable={!isSaving}
@@ -99,39 +101,15 @@ export function StampNoteSection({
             {noteLength}/{maxLength}
           </Text>
         </View>
-      </View>
+      </SectionCard>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 8,
-    shadowColor: '#141e14',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 3,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  sectionTitle: {
-    color: '#1e2a1e',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '600',
-  },
   sectionAction: {
     borderRadius: 999,
-    backgroundColor: '#eef4ef',
+    backgroundColor: AppColors.actionSurface,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
@@ -139,7 +117,7 @@ const styles = StyleSheet.create({
     opacity: 0.82,
   },
   sectionActionLabel: {
-    color: '#2e6b4b',
+    color: AppColors.primary,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '600',
@@ -179,7 +157,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   noteCountText: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
