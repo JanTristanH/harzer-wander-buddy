@@ -1,16 +1,8 @@
 import React from 'react';
+import selectedMapPin from './selected-map-pin.json';
 
 export const SELECTED_MARKER_Z_INDEX = 1000000;
-export const SELECTED_MAP_PIN = {
-  width: 48,
-  height: 52,
-  color: '#ea4335',
-  dotColor: '#a50e0e',
-  path: 'M24 51C22 44 7 32 7 19a17 17 0 1 1 34 0c0 13-15 25-17 32Z',
-  dotX: 24,
-  dotY: 19,
-  dotRadius: 6,
-};
+export const SELECTED_MAP_PIN = selectedMapPin;
 
 export function createSelectedMapPinHtml() {
   const pin = SELECTED_MAP_PIN;
