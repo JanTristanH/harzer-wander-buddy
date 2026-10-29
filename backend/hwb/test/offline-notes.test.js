@@ -65,3 +65,17 @@ test('validates length, stamp existence and authentication', async () => {
   const unauthenticated = await fetch(`${server.url}/odata/v4/api/syncStampNote`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ stampId, note: 'x' }) });
   assert.equal(unauthenticated.status, 401);
 });
+
+test('simultaneous first creation is serialized and remote deletion requires explicit resolution', async () => {
+  await db.run(DELETE.from('hwb.db.StampNotes').where({ createdBy: 'alice', stamp_ID: stampId }));
+  const results = await Promise.all([sync('erstes Gerät'), sync('zweites Gerät')]);
+  assert.equal(results.filter((r) => !r.conflict).length, 1);
+  assert.equal(results.filter((r) => r.conflict).length, 1);
+  const created = results.find((r) => !r.conflict).current;
+  const deleted = await request(`StampNotes(${created.ID})`, undefined, 'alice', 'DELETE');
+  assert.equal(deleted.status, 204);
+  const stale = await sync('offline nach Löschung', created);
+  assert.equal(stale.conflict, true); assert.equal(stale.current, null);
+  const recreate = await sync('offline nach Löschung', stale.current);
+  assert.equal(recreate.conflict, false); assert.equal(recreate.current.note, 'offline nach Löschung');
+});

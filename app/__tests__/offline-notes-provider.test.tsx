@@ -3,11 +3,10 @@ import { act, renderHook, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import { Platform } from 'react-native';
 
-import { syncStampNote, type Stampbox } from '@/lib/api';
-import { NativeOfflineNotesProvider } from '@/lib/offline-notes';
-import { useOfflineNotes } from '@/lib/offline-notes';
+import { syncStampNote } from '@/lib/api';
+import { NativeOfflineNotesProvider, useOfflineNotes } from '@/lib/offline-notes';
 
-let mockUser = 'alice'; let mockOnline = false; let mockNumber = 0;
+let mockUser = 'alice'; let mockOnline = false;
 const mockInvalidate = jest.fn(async () => undefined);
 const mockQueryClient = { invalidateQueries: mockInvalidate, setQueriesData: jest.fn() };
 const mockToken = jest.fn(async () => `token-for-${mockUser}`);
@@ -18,19 +17,18 @@ jest.mock('@/lib/auth', () => ({
 }));
 jest.mock('@/lib/connectivity', () => ({ useConnectivity: () => ({ isOnline: mockOnline }) }));
 jest.mock('@/lib/config', () => ({ appConfig: { backendUrl: 'https://backend.test' } }));
-jest.mock('expo-crypto', () => ({ randomUUID: () => `11111111-1111-4111-8111-${String(++mockNumber).padStart(12, '0')}` }));
 jest.mock('@/lib/api', () => ({ ...jest.requireActual('@/lib/api'), syncStampNote: jest.fn(async () => ({ conflict: false, current: { ID: 'note', note: 'Notiz' } })) }));
 const mockSync = syncStampNote as jest.MockedFunction<typeof syncStampNote>;
-const stamp = { ID: 'stamp', number: '1', name: 'Brocken', hasVisited: false } as Stampbox;
+const stamp = { ID: 'stamp' };
 const originalPlatform = Platform.OS;
 function wrapper({ children }: React.PropsWithChildren) { return <NativeOfflineNotesProvider>{children}</NativeOfflineNotesProvider>; }
 beforeEach(async () => {
   Object.defineProperty(Platform, 'OS', { configurable: true, value: 'ios' });
-  mockUser = 'alice'; mockOnline = false; mockNumber = 0; jest.clearAllMocks(); await AsyncStorage.clear();
+  mockUser = 'alice'; mockOnline = false; jest.clearAllMocks(); await AsyncStorage.clear();
 });
 afterEach(() => { Object.defineProperty(Platform, 'OS', { configurable: true, value: originalPlatform }); });
 
-it('records offline, restores on remount and uploads with the same visit time on reconnect', async () => {
+it('saves offline, restores on remount and uploads the same note and base on reconnect', async () => {
   const first = renderHook(useOfflineNotes, { wrapper });
   await waitFor(() => expect(first.result.current.ready).toBe(true));
   await act(async () => { await first.result.current.save(stamp.ID, 'Notiz', null); });
@@ -42,7 +40,7 @@ it('records offline, restores on remount and uploads with the same visit time on
   expect(mockSync).toHaveBeenCalledWith('token-for-alice', original.stampId, original.note, original.base);
 });
 
-it('hides pending visits on logout/account switch and reloads them only for their owner', async () => {
+it('hides pending notes on logout/account switch and reloads them only for their owner', async () => {
   const view = renderHook(useOfflineNotes, { wrapper });
   await waitFor(() => expect(view.result.current.ready).toBe(true));
   await act(async () => { await view.result.current.save(stamp.ID, 'Notiz', null); });
@@ -63,7 +61,7 @@ it('never enables the native outbox on web', async () => {
   expect(AsyncStorage.setItem).not.toHaveBeenCalled();
 });
 
-it('does not publish a saved visit when device storage rejects the write', async () => {
+it('does not report a saved note when device storage rejects the write', async () => {
   const view = renderHook(useOfflineNotes, { wrapper });
   await waitFor(() => expect(view.result.current.ready).toBe(true));
   jest.spyOn(AsyncStorage, 'setItem').mockRejectedValueOnce(new Error('disk full'));
@@ -84,4 +82,34 @@ it('rechecks the account after async token renewal before sending', async () => 
   await act(async () => { finish('token-for-alice'); });
   expect(mockSync).not.toHaveBeenCalled();
   expect(view.result.current.entries).toEqual([]);
+});
+
+it('keeps conflicts through remount and resumes only after explicit resolution', async () => {
+  mockSync.mockResolvedValueOnce({ conflict: true, current: { ID: 'remote', note: 'anderes Gerät', modifiedAt: '2026-10-29T10:00:00Z' } });
+  const first = renderHook(useOfflineNotes, { wrapper });
+  await waitFor(() => expect(first.result.current.ready).toBe(true));
+  await act(async () => { await first.result.current.save('stamp', 'lokal', null); });
+  mockOnline = true; first.rerender({});
+  await waitFor(() => expect(first.result.current.entries[0]?.status).toBe('conflict'));
+  first.unmount();
+  const restored = renderHook(useOfflineNotes, { wrapper });
+  await waitFor(() => expect(restored.result.current.ready).toBe(true));
+  expect(restored.result.current.entries[0]).toMatchObject({ note: 'lokal', remote: { note: 'anderes Gerät' } });
+  expect(mockSync).toHaveBeenCalledTimes(1);
+  await act(async () => { await restored.result.current.resolve('stamp', 'local'); });
+  await waitFor(() => expect(restored.result.current.entries).toHaveLength(0));
+  expect(mockSync).toHaveBeenLastCalledWith('token-for-alice', 'stamp', 'lokal', expect.objectContaining({ ID: 'remote' }));
+});
+
+it('shows an upload error without losing work and retries after reconnect', async () => {
+  mockSync.mockRejectedValueOnce(new Error('offline'));
+  const view = renderHook(useOfflineNotes, { wrapper });
+  await waitFor(() => expect(view.result.current.ready).toBe(true));
+  await act(async () => { await view.result.current.save('stamp', 'lokal', null); });
+  mockOnline = true; view.rerender({});
+  await waitFor(() => expect(view.result.current.entries[0]?.status).toBe('error'));
+  expect(view.result.current.entries[0].note).toBe('lokal');
+  mockOnline = false; view.rerender({}); mockOnline = true; view.rerender({});
+  await waitFor(() => expect(view.result.current.entries).toHaveLength(0));
+  expect(mockSync).toHaveBeenCalledTimes(2);
 });

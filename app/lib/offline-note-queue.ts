@@ -31,11 +31,12 @@ export class OfflineNoteQueue {
     return this.serialize(async () => {
       const raw = await this.storage.getItem(this.key);
       const data = raw ? JSON.parse(raw) : { version: 1, entries: [] };
+      const validNote = (note: StampNote | null | undefined) => note === null ||
+        (typeof note?.ID === 'string' && typeof note?.note === 'string' && note.note.length <= 500);
       if (data.version !== 1 || !Array.isArray(data.entries) || data.entries.some((e: OfflineNote) =>
-        !e || typeof e.stampId !== 'string' || !e.stampId || !Number.isSafeInteger(e.revision) ||
+        !e || typeof e.stampId !== 'string' || !e.stampId || (!Number.isSafeInteger(e.revision) || e.revision < 1) ||
         typeof e.note !== 'string' || e.note.length > 500 || !['pending', 'error', 'conflict'].includes(e.status) ||
-        !('base' in e) || (e.base !== null && (typeof e.base?.ID !== 'string' || typeof e.base?.note !== 'string')) ||
-        (e.status === 'conflict' && !('remote' in e)))) throw new Error('Lokaler Notizspeicher ist beschädigt.');
+        !validNote(e.base) || (e.status === 'conflict' && !validNote(e.remote)))) throw new Error('Lokaler Notizspeicher ist beschädigt.');
       this.entries = data.entries; this.notify();
     });
   }

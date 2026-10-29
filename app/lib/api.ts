@@ -4031,8 +4031,20 @@ export async function syncOfflineStamping(
 
 // Server-side comparison is atomic; a preceding GET alone would race other devices.
 export async function syncStampNote(accessToken: string, stampId: string, note: string, base: StampNote | null) {
-  return mutateOData<{ conflict: boolean; current: StampNote | null }>(accessToken, buildUrl('syncStampNote'), {
-    method: 'POST',
-    body: JSON.stringify({ stampId, note, expectedId: base?.ID ?? null, expectedModifiedAt: base?.modifiedAt ?? null, expectedNote: base?.note ?? null }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const result = await mutateOData<{ conflict: boolean; current: StampNote | null }>(accessToken, buildUrl('syncStampNote'), {
+      method: 'POST', signal: controller.signal,
+      body: JSON.stringify({ stampId, note, expectedId: base?.ID ?? null,
+        expectedModifiedAt: base?.modifiedAt ?? null, expectedNote: base?.note ?? null }),
+    });
+    // Never acknowledge malformed/empty responses, including an older backend.
+    if (!result || typeof result.conflict !== 'boolean' ||
+      (result.current !== null && (typeof result.current?.ID !== 'string' || typeof result.current?.note !== 'string')) ||
+      (!result.conflict && (!result.current || result.current.note !== note.trim()))) {
+      throw new Error('Der Server hat die Notiz nicht bestätigt.');
+    }
+    return result;
+  } finally { clearTimeout(timeout); }
 }
