@@ -1,6 +1,6 @@
 # Tourenautomatik: Review und Rollout
 
-Stand: 2026-10-29, PR #91, `develop` 31adccd3237438e27bad6e3e0fd73f1346c4e232 integriert. Die Konflikte in Tourenliste, API-Typen und Berechnung sind aufgelöst. Der während der CI hinzugekommene Auswahlmarker-Fix #106 ist im bestehenden Editor enthalten.
+Stand: 2026-10-29, PR #91, `develop` 7b7b9314db3567d229038198291b521c20a51c9f integriert. Die Konflikte in Tourenliste, API-Typen und Berechnung sind aufgelöst. Der während der CI hinzugekommene Auswahlmarker-Fixes #106 und #107 ist im bestehenden Editor enthalten.
 
 ## Verhalten
 
@@ -18,7 +18,7 @@ Keine Demo-API, kein Demo-Login, keine Offline-Kartenfixtures, kein Demo-Reset, 
 
 ## Prüfungen auf diesem Stand
 
-- App: 51 Jest-Suiten, 254 Tests erfolgreich; darunter Gruppen-/Solo-Planung, Speichern mehrerer Vorschläge, expliziter Editorwechsel, Drehradgrenzen, leere Ergebnisse, Session-Persistenz, Rechte, Offline-Sperren und Löschbestätigung.
+- App: 52 Jest-Suiten, 256 Tests erfolgreich; darunter Gruppen-/Solo-Planung, Speichern mehrerer Vorschläge, expliziter Editorwechsel, Drehradgrenzen, leere Ergebnisse, Session-Persistenz, Rechte, Offline-Sperren und Löschbestätigung.
 - Backend: 48 Tests erfolgreich, einschließlich HTTP-Vertrag, Gruppenrechten, Budgetgrenzen, Rückweg, neuen/gelöschten/geänderten Wegedaten und Tour-Vorschaubildern. Der neue Freshness-Test aus `develop` prüft jetzt `path[].travelTime_ID` entsprechend dem neuen Vertrag.
 - TypeScript ohne Fehler; ESLint der geänderten Laufzeitkomponenten ohne Befund; `git diff --check` erfolgreich.
 - Release-Automation: 31 Tests erfolgreich; Expo-Fingerprint-Test erfolgreich.
