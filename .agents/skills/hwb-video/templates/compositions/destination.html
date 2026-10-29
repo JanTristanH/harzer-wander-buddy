@@ -1,0 +1,22 @@
+<template><style>
+#root{position:absolute;inset:0;background:#f4efe4;color:#183d2b;font-family:Inter,Arial,sans-serif}
+.brand{position:absolute;left:108px;top:80px;width:864px;font-size:28px;font-weight:700;letter-spacing:1px;text-align:center}
+.copy{position:absolute;left:108px;top:150px;width:864px;text-align:center}
+h1{font-size:94px;line-height:1.02;letter-spacing:-3px;margin:0;font-weight:750}
+p{display:none}
+.phone{position:absolute;left:200px;top:400px;width:620px;height:1360px;border:18px solid #1a2820;border-radius:87px;box-shadow:0 26px 52px #183d2b28;background:#1a2820;overflow:hidden}
+.screen{position:absolute;left:0;top:30px;width:584px;height:1264px;overflow:hidden;border-radius:47px;background:#f4f4f4}
+.screen img{position:absolute;inset:0;width:584px;height:1264px;object-fit:contain}
+.buddy{position:absolute;width:170px;height:170px;object-fit:contain;left:850px;top:1540px}
+</style><div id="root" data-composition-id="destination" data-width="1080" data-height="1920">
+<div class="brand">HARZER WANDER BUDDY</div>
+<div class="copy" id="destination-copy"><h1>Besuche<br>festhalten.</h1><p>Ein Tipp. Ein neuer Stempel.</p></div>
+<div id="destination-phone" class="phone"><div class="screen"><img src="assets/before-stamp.png"/><img id="destination-actor" src="assets/stamp-animation.png" /><img id="destination-success" src="assets/stamp-success.png" /></div></div>
+</div>
+<script>const tl=gsap.timeline({paused:true});
+tl.fromTo("#destination-copy",{opacity:.1,y:20},{opacity:1,y:0,duration:.5,ease:"power4.out"},.05);
+tl.fromTo("#destination-phone",{x:40,opacity:.2},{x:0,opacity:1,duration:.65,ease:"expo.out"},0);
+tl.fromTo("#destination-actor",{opacity:0},{opacity:1,duration:.15},1);
+tl.fromTo("#destination-success",{opacity:0},{opacity:1,duration:.18},2.5);
+window.__timelines["destination"]=tl;
+</script></template>

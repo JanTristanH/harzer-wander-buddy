@@ -1,5 +1,8 @@
 # Harzer Wanderbuddy app
 
+Die öffentliche Website baut dieselbe Expo-App mit statischem Datenprofil:
+[Buildprofil und Datenadapter](../docs/public-stamp-catalogue.md).
+
 This is the React Native app for Harzer Wanderbuddy. Basic development uses a separate Expo Web server; Auth0 web development is served by CAP; see [Local web development and Auth0](#local-web-development-and-auth0).
 
 ## Local development profiles
