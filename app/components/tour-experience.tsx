@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -52,6 +53,7 @@ export function TourExperience({
   onSecondary,
   description,
 }: Props) {
+  const router = useRouter();
   const [height, setHeight] = useState(700),
     [visible, setVisible] = useState(350),
     [summary, setSummary] = useState(160),
@@ -254,7 +256,14 @@ export function TourExperience({
             Stationen
           </Text>
           {stops.map((point, i) => (
-            <View
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${i === 0 ? "Start" : i === stops.length - 1 ? "Ziel" : `Station ${i}`}: ${point.name} öffnen`}
+              onPress={() =>
+                router.push(
+                  `/${point.poiType === "parking" ? "parking" : "stamps"}/${encodeURIComponent(point.ID)}` as never,
+                )
+              }
               key={`${point.ID}-${i}`}
               style={{
                 flexDirection: "row",
@@ -285,7 +294,7 @@ export function TourExperience({
                       : `Stopp ${i}`}
                 </Text>
               </View>
-            </View>
+            </Pressable>
           ))}
           {!stops.length && (
             <Text>

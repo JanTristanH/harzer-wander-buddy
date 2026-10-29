@@ -251,3 +251,13 @@ test("empty production results stay empty and offer a parameter change", async (
   fireEvent.press(screen.getByText("Parameter ändern"));
   expect(screen.getByTestId("time-dial")).toBeTruthy();
 });
+
+test("stations open their existing detail page directly from the sheet", async () => {
+  render(<AutomaticTourScreen />);
+  await openStepTwo();
+  await act(async () => fireEvent.press(screen.getByText("Touren finden")));
+  fireEvent.press(
+    screen.getByRole("button", { name: "Start: Parkplatz am Wald öffnen" }),
+  );
+  expect(useRouter().push).toHaveBeenLastCalledWith("/parking/p");
+});

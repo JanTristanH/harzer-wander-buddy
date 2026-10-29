@@ -1,7 +1,7 @@
 import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { AccessibilityInfo } from "react-native";
-import TourScreen from "@/app/tours/[id]";
+import TourScreenView from "@/components/tour-screen";
 let mockParams = { id: "tour", edit: "0" };
 let mockUser = "alice";
 let mockAuthenticated = true;
@@ -17,16 +17,8 @@ jest.mock("expo-router", () => ({
     push: jest.fn(),
   }),
 }));
-jest.mock("@/components/classic-tour-editor", () => ({
-  __esModule: true,
-  default: function Editor() {
-    return require("react").createElement(
-      require("react-native").Text,
-      null,
-      "Manueller Editor",
-    );
-  },
-}));
+function Editor() { return React.createElement(require('react-native').Text, null, 'Manueller Editor'); }
+function TourScreen() { return <TourScreenView Editor={Editor} />; }
 jest.mock("@/components/group-selector", () => ({ GroupSelector: () => null }));
 jest.mock("@/components/maps/map-primitives", () => {
   const React = require("react");

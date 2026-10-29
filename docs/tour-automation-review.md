@@ -1,14 +1,14 @@
 # Tourenautomatik: Review und Rollout
 
-Stand: 2026-10-29, PR #91, `develop` 31adccd3237438e27bad6e3e0fd73f1346c4e232 integriert. Die Konflikte in Tourenliste, API-Typen und Berechnung sind aufgelöst. Der während der CI hinzugekommene Auswahlmarker-Fix #106 ist im verschobenen Editor enthalten.
+Stand: 2026-10-29, PR #91, `develop` 31adccd3237438e27bad6e3e0fd73f1346c4e232 integriert. Die Konflikte in Tourenliste, API-Typen und Berechnung sind aufgelöst. Der während der CI hinzugekommene Auswahlmarker-Fix #106 ist im bestehenden Editor enthalten.
 
 ## Verhalten
 
 - Zeitwahl: 1/2/3 Stunden oder Drehrad; eine Umdrehung = 60 Minuten, Schritte à 5 Minuten, 15–720 Minuten. Drehen aktiviert „Eigene“. Native Gesten laufen mit Gesture Handler/Reanimated auf dem UI-Thread; Screenreader können schrittweise erhöhen/verringern. Web unterstützt Touch, Maus und Tastatur. Kein zweites Minuten-Eingabefeld.
 - „Wanderzeit ab Startpunkt“; Anreise und Pausen bleiben zusätzlich einzuplanen. Tourenautomatik und Routendarstellung verwenden das helle App-Design auch bei dunklem Systemdesign.
 - „Touren finden“ zeigt Funkel-Icon, Busy-Zustand und den lokalen Buddy-Loop nur während der echten Berechnung. Reduzierte Bewegung verwendet das Poster. Reproduzierbare Remotion-Quellen: [media/buddy-loading](../media/buddy-loading/README.md).
-- Vorschläge liegen in einem ziehbaren Bottom Sheet über der Karte. Stationen sind direkt erreichbar; die zusätzliche Detail-Aktion entfällt. Die Route baut sich weiterhin animiert auf. Geometrieparser, Modi/Farben, Richtungspfeile und der aktuelle produktive Web-Kartenrenderer stammen aus `develop`.
-- Gespeicherte Touren verwenden dieselbe Kartenansicht. Manuelles Erstellen, Namen ändern und Stationen bearbeiten bleiben im vorhandenen Editor erhalten. Der Editor wurde verschoben, nicht nachgebaut. „Fertig“ merkt sich den ersten Tipp während der Namensspeicherung und wartet auf deren Abschluss. Teilen verwendet unverändert die öffentliche `/share/tour/`-Seite; die Navigationslogik bleibt erhalten. Löschen erfordert Bestätigung und eigene Tourrechte; offline sind Schreibaktionen gesperrt.
+- Vorschläge liegen in einem ziehbaren Bottom Sheet über der Karte. Stationen sind direkt erreichbar und öffnen ihre bestehenden Detailseiten zum Stempeln bzw. Navigieren; die zusätzliche Detail-Aktion entfällt. Die Route baut sich weiterhin animiert auf. Geometrieparser, Modi/Farben, Richtungspfeile und der aktuelle produktive Web-Kartenrenderer stammen aus `develop`.
+- Gespeicherte Touren verwenden dieselbe Kartenansicht. Manuelles Erstellen, Namen ändern und Stationen bearbeiten bleiben im vorhandenen Editor erhalten. Der bestehende Editor bleibt in seiner bisherigen Routendatei; die neue Leseansicht ist eine separate Komponente. „Fertig“ merkt sich den ersten Tipp während der Namensspeicherung und wartet auf deren Abschluss. Teilen verwendet unverändert die öffentliche `/share/tour/`-Seite; die Navigationslogik bleibt erhalten. Löschen erfordert Bestätigung und eigene Tourrechte; offline sind Schreibaktionen gesperrt.
 - Speichern bleibt beim Vorschlag. „Gespeichert · Bearbeiten“ öffnet erst auf einen weiteren Tipp den Editor. Alle weiteren Vorschläge bleiben verfügbar.
 - „Buddy-Empfehlungen“ sind die letzte nutzerspezifisch persistierte Berechnung, kein redaktioneller Feed. „Entdecken“ zeigt die vom Backend lesbaren Touren; bestehende Schreibrechte bleiben erhalten.
 
@@ -18,7 +18,7 @@ Keine Demo-API, kein Demo-Login, keine Offline-Kartenfixtures, kein Demo-Reset, 
 
 ## Prüfungen auf diesem Stand
 
-- App: 51 Jest-Suiten, 253 Tests erfolgreich; darunter Gruppen-/Solo-Planung, Speichern mehrerer Vorschläge, expliziter Editorwechsel, Drehradgrenzen, leere Ergebnisse, Session-Persistenz, Rechte, Offline-Sperren und Löschbestätigung.
+- App: 51 Jest-Suiten, 254 Tests erfolgreich; darunter Gruppen-/Solo-Planung, Speichern mehrerer Vorschläge, expliziter Editorwechsel, Drehradgrenzen, leere Ergebnisse, Session-Persistenz, Rechte, Offline-Sperren und Löschbestätigung.
 - Backend: 48 Tests erfolgreich, einschließlich HTTP-Vertrag, Gruppenrechten, Budgetgrenzen, Rückweg, neuen/gelöschten/geänderten Wegedaten und Tour-Vorschaubildern. Der neue Freshness-Test aus `develop` prüft jetzt `path[].travelTime_ID` entsprechend dem neuen Vertrag.
 - TypeScript ohne Fehler; ESLint der geänderten Laufzeitkomponenten ohne Befund; `git diff --check` erfolgreich.
 - Release-Automation: 31 Tests erfolgreich; Expo-Fingerprint-Test erfolgreich.

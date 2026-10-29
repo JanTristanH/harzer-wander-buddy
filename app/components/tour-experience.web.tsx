@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { AccessibilityInfo } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
 import type { HikingRouteResult, PointOfInterest } from "@/lib/api";
@@ -47,6 +48,7 @@ export function TourExperience({
   onSecondary,
   description,
 }: Props) {
+  const router = useRouter();
   const [reduced, setReduced] = useState(true);
   useEffect(() => {
     let mounted = true;
@@ -362,39 +364,66 @@ export function TourExperience({
                   alignItems: "center",
                 }}
               >
-                <span
+                <button
+                  type="button"
+                  aria-label={`${i === 0 ? "Start" : i === stops.length - 1 ? "Ziel" : `Station ${i}`}: ${point.name} öffnen`}
+                  onClick={() =>
+                    router.push(
+                      `/${point.poiType === "parking" ? "parking" : "stamps"}/${encodeURIComponent(point.ID)}` as never,
+                    )
+                  }
                   style={{
-                    background:
-                      point.poiType === "parking" ? "#e5edf5" : "#e6eee4",
-                    color: green,
-                    minWidth: 34,
-                    height: 34,
-                    borderRadius: 12,
                     display: "flex",
+                    gap: 12,
                     alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 12,
-                    fontWeight: 750,
+                    width: "100%",
+                    padding: 0,
+                    border: 0,
+                    background: "transparent",
+                    textAlign: "left",
+                    font: "inherit",
+                    color: "inherit",
+                    cursor: "pointer",
                   }}
                 >
-                  {point.poiType === "parking"
-                    ? "P"
-                    : `#${point.stampNumber || "·"}`}
-                </span>
-                <span style={{ fontSize: 14, lineHeight: 1.4 }}>
-                  {point.name}
-                  <small
-                    style={{ display: "block", color: "#6b7765", fontSize: 11 }}
+                  <span
+                    style={{
+                      background:
+                        point.poiType === "parking" ? "#e5edf5" : "#e6eee4",
+                      color: green,
+                      minWidth: 34,
+                      height: 34,
+                      borderRadius: 12,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 12,
+                      fontWeight: 750,
+                    }}
                   >
-                    {i === 0
-                      ? "Start"
-                      : i === stops.length - 1
-                        ? point.ID === stops[0]?.ID
-                          ? "Ziel / Rückkehr"
-                          : "Ziel"
-                        : `Stopp ${i}`}
-                  </small>
-                </span>
+                    {point.poiType === "parking"
+                      ? "P"
+                      : `#${point.stampNumber || "·"}`}
+                  </span>
+                  <span style={{ fontSize: 14, lineHeight: 1.4 }}>
+                    {point.name}
+                    <small
+                      style={{
+                        display: "block",
+                        color: "#6b7765",
+                        fontSize: 11,
+                      }}
+                    >
+                      {i === 0
+                        ? "Start"
+                        : i === stops.length - 1
+                          ? point.ID === stops[0]?.ID
+                            ? "Ziel / Rückkehr"
+                            : "Ziel"
+                          : `Stopp ${i}`}
+                    </small>
+                  </span>
+                </button>
               </li>
             ))}
           </ol>
