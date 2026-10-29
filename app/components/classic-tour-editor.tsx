@@ -11,6 +11,7 @@ import {
   type ImageRequireSource,
   Linking,
   Modal,
+  Platform,
   Pressable,
   Animated as RNAnimated,
   Easing as RNEasing,
@@ -2611,6 +2612,10 @@ export default function TourDetailScreen() {
             anchor={{ x: 0.5, y: 1 }}
             coordinate={state.coordinate}
             image={state.baseImage}
+            {...(Platform.OS === 'web' ? {
+              selected: normalizedSelectedMapItemId === state.id.toLowerCase(),
+            } : {})}
+            accessibilityLabel={`${state.item.markerLabel} • ${state.item.name}`}
             key={state.baseKey}
             onPress={() => focusMapItemOnMap(state.item)}
             tracksViewChanges={false}
@@ -2620,7 +2625,7 @@ export default function TourDetailScreen() {
 
         {markerRenderStates.map((state) => {
           const isSelected = normalizedSelectedMapItemId === state.id.toLowerCase();
-          if (!isSelected) {
+          if (!isSelected || Platform.OS === 'web') {
             return null;
           }
 
@@ -2644,6 +2649,9 @@ export default function TourDetailScreen() {
           }
 
           const isSelected = normalizedSelectedMapItemId === state.id.toLowerCase();
+          if (Platform.OS === 'web' && isSelected) {
+            return null;
+          }
 
           return (
             <Marker

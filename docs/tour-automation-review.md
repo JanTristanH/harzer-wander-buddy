@@ -1,6 +1,6 @@
 # Tourenautomatik: Review und Rollout
 
-Stand: 2026-10-29, PR #91, `develop` 8e939ef4522f90fe1013751e04d34c34d8ac5d5f integriert. Die Konflikte in Tourenliste, API-Typen und Berechnung sind aufgelöst.
+Stand: 2026-10-29, PR #91, `develop` 31adccd3237438e27bad6e3e0fd73f1346c4e232 integriert. Die Konflikte in Tourenliste, API-Typen und Berechnung sind aufgelöst. Der während der CI hinzugekommene Auswahlmarker-Fix #106 ist im verschobenen Editor enthalten.
 
 ## Verhalten
 
