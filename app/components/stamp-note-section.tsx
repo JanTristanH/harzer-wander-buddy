@@ -11,6 +11,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type StampNoteSectionProps = {
+  syncStatus?: string;
+  remoteNote?: string;
+  onResolve?: (choice: 'local' | 'remote') => void;
+  onRetry?: () => void;
   noteDraft: string;
   noteLength: number;
   maxLength: number;
@@ -22,6 +26,7 @@ type StampNoteSectionProps = {
 };
 
 export function StampNoteSection({
+  syncStatus, remoteNote, onResolve, onRetry,
   noteDraft,
   noteLength,
   maxLength,
@@ -69,6 +74,21 @@ export function StampNoteSection({
           />
         </View>
 
+        {syncStatus ? <Text accessibilityLiveRegion="polite" style={styles.noteCountText}>{syncStatus}</Text> : null}
+        {remoteNote !== undefined ? <View>
+          <Text style={styles.noteCountText}>Andere Fassung: {remoteNote || '(leere Notiz)'}</Text>
+          <Text style={styles.noteCountText}>Deine gespeicherte Fassung bleibt bis zur Auswahl erhalten.</Text>
+          <Pressable accessibilityRole="button" disabled={isDirty || isSaving} onPress={() => onResolve?.('local')}>
+            <Text style={styles.sectionActionLabel}>Meine gespeicherte Fassung übernehmen</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" disabled={isDirty || isSaving} onPress={() => onResolve?.('remote')}>
+            <Text style={styles.sectionActionLabel}>Andere Fassung übernehmen</Text>
+          </Pressable>
+          {isDirty ? <Text style={styles.noteCountText}>Änderungen vor der Auswahl speichern.</Text> : null}
+        </View> : null}
+        {onRetry ? <Pressable accessibilityRole="button" onPress={onRetry}>
+          <Text style={styles.sectionActionLabel}>Synchronisierung erneut versuchen</Text>
+        </Pressable> : null}
         <View style={styles.noteMetaRow}>
           {isTooLong ? (
             <Text style={styles.noteErrorText}>Maximal {maxLength} Zeichen (nach trim()).</Text>

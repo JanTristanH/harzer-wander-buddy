@@ -126,6 +126,7 @@ module.exports = class api extends cds.ApplicationService {
     this.before("CREATE", "StampNotes", validateAndNormalizeStampNoteCreate.bind(this))
     this.before("UPDATE", "StampNotes", validateAndNormalizeStampNoteUpdate.bind(this))
     this.on("CREATE", "StampNotes", upsertStampNote.bind(this))
+    this.on('syncStampNote', syncStampNote.bind(this));
 
     return super.init()
   }
@@ -219,6 +220,32 @@ function validateAndNormalizeStampNoteUpdate(req) {
   normalizeAndValidateNote(req, false);
 }
 
+async function syncStampNote(req) {
+  if (!normalizeAndValidateNote(req, true)) return;
+  const { stampId, note, expectedId, expectedModifiedAt, expectedNote } = req.data;
+  if (!stampId || !await assertStampExists.call(this, req, stampId)) return req.reject(404, 'Stamp not found.');
+  const tx = cds.transaction(req);
+  const db = this.entities('hwb.db');
+  // A parent row exists even for the first note. Lock it before reading, so two
+  // devices cannot both pass a check against an absent note (Postgres included).
+  await tx.run(SELECT.one.from(db.Stampboxes).where({ ID: stampId }).forUpdate());
+  const current = await tx.run(SELECT.one.from(db.StampNotes).where({ createdBy: req.user.id, stamp_ID: stampId }).forUpdate());
+  // A lost response is safe to replay; equal contents need no write.
+  if (current && current.note === note) return { conflict: false, current };
+  const matches = current
+    ? expectedId === current.ID && expectedNote === current.note && expectedModifiedAt &&
+      new Date(expectedModifiedAt).getTime() === new Date(current.modifiedAt).getTime()
+    : !expectedId && !expectedModifiedAt;
+  if (!matches) return { conflict: true, current: current || null };
+  if (current) {
+    await tx.update(db.StampNotes).set({ note }).where({ ID: current.ID });
+  } else {
+    await tx.create(db.StampNotes).entries({ ID: uuidv4(), stamp_ID: stampId, note });
+  }
+  return { conflict: false, current: await tx.run(SELECT.one.from(db.StampNotes)
+    .where({ createdBy: req.user.id, stamp_ID: stampId })) };
+}
+
 async function upsertStampNote(req) {
   const tx = cds.transaction(req);
   const db = this.entities('hwb.db');
@@ -227,6 +254,8 @@ async function upsertStampNote(req) {
   const stampId = extractStampIdFromPayload(req.data);
   const createdBy = req.user.id;
 
+  // Serialize creation as well as updates for a stamp, including legacy online writers.
+  await tx.run(SELECT.one.from(db.Stampboxes).where({ ID: stampId }).forUpdate());
   const [existingNote] = await tx.read(StampNotes).where({ createdBy, stamp_ID: stampId });
 
   if (existingNote) {

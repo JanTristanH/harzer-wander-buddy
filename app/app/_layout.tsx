@@ -1,3 +1,4 @@
+import { NativeOfflineNotesProvider } from '@/lib/offline-notes';
 import {
   focusManager,
   useQueryClient,
@@ -153,6 +154,7 @@ export default function RootLayout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
           <AuthProvider>
             <NativeOfflineVisitsProvider>
+              <NativeOfflineNotesProvider>
               <HikingGroupProvider>
                 <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
                   <Stack screenOptions={{ headerShown: false }}>
@@ -182,6 +184,7 @@ export default function RootLayout() {
                 <OfflineBanner />
                 <OfflineVisitStatus />
               </HikingGroupProvider>
+            </NativeOfflineNotesProvider>
             </NativeOfflineVisitsProvider>
           </AuthProvider>
         </GestureHandlerRootView>

@@ -4014,3 +4014,11 @@ export async function syncOfflineStamping(
     }
   } finally { clearTimeout(timeout); }
 }
+
+// Server-side comparison is atomic; a preceding GET alone would race other devices.
+export async function syncStampNote(accessToken: string, stampId: string, note: string, base: StampNote | null) {
+  return mutateOData<{ conflict: boolean; current: StampNote | null }>(accessToken, buildUrl('syncStampNote'), {
+    method: 'POST',
+    body: JSON.stringify({ stampId, note, expectedId: base?.ID ?? null, expectedModifiedAt: base?.modifiedAt ?? null, expectedNote: base?.note ?? null }),
+  });
+}
