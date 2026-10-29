@@ -60,6 +60,9 @@ export type MapViewRef = {
 };
 
 type MapViewProps = {
+  userInterfaceStyle?: 'light' | 'dark';
+  controlsAtTop?: boolean;
+  mapPadding?: {top:number;right:number;bottom:number;left:number};
   attributionPlacement?: 'bottom-right' | 'below-zoom';
   children?: React.ReactNode;
   initialRegion?: Region;
@@ -659,16 +662,17 @@ function OpenFreeMapLayer({ styleId = 'standard' }: { styleId?: WebMapStyleId })
   return null;
 }
 
-function WebMapStyleControl({ onChange, styleId }: { onChange: (style: WebMapStyleId) => void; styleId: WebMapStyleId }) {
+function WebMapStyleControl({ onChange, styleId, controlsAtTop }: { controlsAtTop?: boolean; onChange: (style: WebMapStyleId) => void; styleId: WebMapStyleId }) {
   const map = useMap();
   const selectRef = useRef<HTMLSelectElement | null>(null);
   const styleRef = useRef(styleId);
   styleRef.current = styleId;
   useEffect(() => {
-    const control = new L.Control({ position: 'bottomleft' });
+    const control = new L.Control({ position: controlsAtTop ? 'topleft' : 'bottomleft' });
     control.onAdd = () => {
       const container = L.DomUtil.create('div', 'leaflet-control hwb-map-style-control');
       container.style.cssText = 'margin:0 0 160px 10px;padding:8px 10px;background:#fff;border-radius:12px;color:#24352a;font:14px Arial,sans-serif;box-shadow:0 1px 5px #0002;';
+      if (controlsAtTop) container.style.margin = '60px 0 0 10px';
       const label = L.DomUtil.create('label', '', container);
       label.textContent = 'Kartenstil ';
       const select = L.DomUtil.create('select', '', label);
@@ -689,19 +693,19 @@ function WebMapStyleControl({ onChange, styleId }: { onChange: (style: WebMapSty
     };
     control.addTo(map);
     return () => { control.remove(); selectRef.current = null; };
-  }, [map, onChange]);
+  }, [map, onChange, controlsAtTop]);
   useEffect(() => {
     if (selectRef.current) selectRef.current.value = styleId;
   }, [styleId]);
   return null;
 }
 
-function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewProps, 'attributionPlacement'> & { styleId: WebMapStyleId }) {
+function OpenFreeMapAttribution({ attributionPlacement, styleId, controlsAtTop }: Pick<MapViewProps, 'attributionPlacement' | 'controlsAtTop'> & { styleId: WebMapStyleId }) {
   const map = useMap();
 
   useEffect(() => {
     const control = new L.Control({
-      position: attributionPlacement === 'below-zoom' ? 'bottomleft' : 'bottomright',
+      position: controlsAtTop ? 'topleft' : attributionPlacement === 'below-zoom' ? 'bottomleft' : 'bottomright',
     });
 
     control.onAdd = () => {
@@ -737,7 +741,7 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
     return () => {
       control.remove();
     };
-  }, [attributionPlacement, map, styleId]);
+  }, [attributionPlacement, map, styleId, controlsAtTop]);
 
   return null;
 }
@@ -745,6 +749,7 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
 const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref) {
   const {
     attributionPlacement = 'bottom-right',
+    controlsAtTop = false,
     children,
     initialRegion,
     onMapReady,
@@ -967,8 +972,8 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           }}
         />
         <OpenFreeMapLayer styleId={mapStyle} />
-        <WebMapStyleControl onChange={setMapStyle} styleId={mapStyle} />
-        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} styleId={mapStyle} />
+        <WebMapStyleControl onChange={setMapStyle} styleId={mapStyle} controlsAtTop={controlsAtTop} />
+        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} styleId={mapStyle} controlsAtTop={controlsAtTop} />
         <MapEventBridge
           onPress={onPress}
           onRegionChange={onRegionChange}

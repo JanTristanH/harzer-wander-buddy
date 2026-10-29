@@ -1,3 +1,19 @@
+# Aktueller Review-Stand (2026-10-29)
+
+Aktuelle Screenshots aus der Expo-Web-App mit echtem lokalem CAP-Backend und separater SQLite-Testdatenbank:
+
+| Zeitwahl | Vorschläge | Manueller Editor |
+| --- | --- | --- |
+| [Drehrad](current/time-mobile.png) | [Bottom Sheet](current/results-mobile.png) | [Bestehender Editor](current/editor-mobile.png) |
+
+Die Web-Grundkarte lädt externe Kartendaten; deren Verfügbarkeit in der Testumgebung ist kein nativer Nachweis. Die Routen stammen aus dem echten lokalen Backend. Prüfstand, offene native Prüfung und Rollout: [Review-Nachweis](../../tour-automation-review.md).
+
+[Gespeicherte Tour mit direkten Stationen](current/reader-mobile.png).
+
+## Historische Screenshots des ersten B1-Standes
+
+Die folgenden Bilder zeigen die frühere Oberfläche vor Drehrad und Bottom Sheet. Die dort beschriebenen Abläufe sind historisch, keine aktuelle Freigabe.
+
 # Tourenautomatik (B1)
 
 Screenshots der implementierten Expo-Web-App, keine Design-Mockups. Der mobile

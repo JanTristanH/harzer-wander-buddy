@@ -12,10 +12,11 @@ export type { Camera, LatLng, Region };
 export type MapViewRef = MapView;
 type NativeMapViewProps = React.ComponentProps<typeof MapView> & {
   attributionPlacement?: 'bottom-right' | 'below-zoom';
+  controlsAtTop?: boolean;
 };
 
 const NativeMapView = React.forwardRef<MapView, NativeMapViewProps>(function NativeMapView(
-  { attributionPlacement: _attributionPlacement, ...props },
+  { attributionPlacement: _attributionPlacement, controlsAtTop: _controlsAtTop, ...props },
   ref
 ) {
   return <MapView ref={ref} {...props} />;

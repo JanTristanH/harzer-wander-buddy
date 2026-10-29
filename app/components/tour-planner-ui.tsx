@@ -1,8 +1,9 @@
-import { Feather } from '@expo/vector-icons';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
+  ActivityIndicator,
   Animated,
   Pressable,
   StyleSheet,
@@ -15,38 +16,18 @@ import MapView, {
   Polyline,
   type MapViewRef,
 } from '@/components/maps/map-primitives';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { buildRouteDirectionArrows, buildTourRouteSegments, TOUR_ROUTE_STYLES } from '@/lib/tour-route';
 import type { HikingRouteResult, PointOfInterest } from '@/lib/api';
 import {
-  formatTourDistance,
-  formatTourDuration,
-  parseRouteCoordinates,
-  routeName,
   routeStops,
 } from '@/lib/tour-automation';
 
 export function usePlannerColors() {
-  return useColorScheme() === 'dark'
-    ? {
-        background: '#172019',
-        surface: '#222e25',
-        text: '#edf2ea',
-        secondary: '#b5c3b5',
-        accent: '#a2d1ad',
-        button: '#2e6b4b',
-        soft: '#2c3e30',
-        border: '#596b5a',
-      }
-    : {
-        background: '#f5f3ee',
-        surface: '#ffffff',
-        text: '#1e2a1e',
-        secondary: '#596553',
-        accent: '#2e6b4b',
-        button: '#2e6b4b',
-        soft: '#e6eee4',
-        border: '#c7d2c3',
-      };
+  return {
+    background: '#f5f3ee', surface: '#ffffff', text: '#1e2a1e',
+    secondary: '#596553', accent: '#2e6b4b', button: '#2e6b4b',
+    soft: '#e6eee4', border: '#c7d2c3',
+  };
 }
 
 export function PlannerButton({
@@ -55,19 +36,24 @@ export function PlannerButton({
   disabled,
   secondary,
   testID,
+  sparkle,
+  loading,
 }: {
   title: string;
   onPress: () => void;
   disabled?: boolean;
   secondary?: boolean;
   testID?: string;
+  sparkle?: boolean;
+  loading?: boolean;
 }) {
   const colors = usePlannerColors();
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={title}
       aria-disabled={Boolean(disabled)}
-      accessibilityState={{ disabled: Boolean(disabled) }}
+      accessibilityState={{ disabled: Boolean(disabled), busy: Boolean(loading) }}
       disabled={disabled}
       onPress={onPress}
       testID={testID}
@@ -76,13 +62,10 @@ export function PlannerButton({
         { backgroundColor: secondary ? colors.soft : colors.button },
         (pressed || disabled) && { opacity: disabled ? 0.5 : 0.8 },
       ]}>
-      <Text
-        style={[
-          ui.buttonText,
-          { color: secondary ? colors.accent : '#ffffff' },
-        ]}>
-        {title}
-      </Text>
+      <View style={{flexDirection:'row',alignItems:'center',justifyContent:'center',gap:10}}>
+        {loading ? <ActivityIndicator color={secondary?colors.accent:'#ffffff'} size="small"/> : sparkle ? <MaterialIcons name="auto-awesome" size={21} color={secondary?colors.accent:'#ffffff'}/> : null}
+        <Text style={[ui.buttonText,{color:secondary?colors.accent:'#ffffff'}]}>{title}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -196,24 +179,27 @@ export function TourRouteMap({
   points,
   animate = true,
   compact = false,
+  fullHeight = false,
 }: {
   route: HikingRouteResult;
   points: PointOfInterest[];
   animate?: boolean;
   compact?: boolean;
+  fullHeight?: boolean;
 }) {
   const ref = useRef<MapViewRef | null>(null);
   const { height } = useWindowDimensions();
-  const segments = useMemo(
-    () =>
-      route.path
-        .map((link) => ({
-          coordinates: parseRouteCoordinates(link.travelTime?.positionString),
-          drive: link.travelTime?.travelMode === 'drive',
-        }))
-        .filter((segment) => segment.coordinates.length > 1),
-    [route.path]
-  );
+  const [latitudeDelta, setLatitudeDelta] = useState(.02);
+  const [mapHeight, setMapHeight] = useState(height);
+  const segments = useMemo(() => {
+    const path = [...route.path].sort((left,right) => left.rank-right.rank);
+    const ids = [path[0]?.travelTime?.fromPoi, ...path.map(link => link.travelTime?.toPoi)].filter((id): id is string => Boolean(id));
+    return buildTourRouteSegments(path,ids);
+  }, [route.path]);
+  const directions = useMemo(() => segments.map(segment => ({
+    color: TOUR_ROUTE_STYLES[segment.mode].color,
+    arrows: buildRouteDirectionArrows(segment.coordinates, latitudeDelta, mapHeight),
+  })), [segments, latitudeDelta, mapHeight]);
   const coordinates = useMemo(
     () => segments.flatMap((segment) => segment.coordinates),
     [segments]
@@ -264,6 +250,11 @@ export function TourRouteMap({
       progress.removeListener(listener);
     };
   }, [animate, progress, ready, reduceMotion]);
+  useEffect(() => {
+    if (!ready || !fullHeight || !coordinates.length) return;
+    const frame = requestAnimationFrame(() => ref.current?.fitToCoordinates(coordinates, {edgePadding:{top:45,right:45,bottom:Math.min(370,(height-52)*.52+20),left:45},animated:false}));
+    return () => cancelAnimationFrame(frame);
+  }, [ready, fullHeight, coordinates, height]);
   if (!coordinates.length)
     return (
       <View style={ui.noMap}>
@@ -273,7 +264,7 @@ export function TourRouteMap({
     );
   const fit = () => {
     ref.current?.fitToCoordinates(coordinates, {
-      edgePadding: { top: 40, right: 40, bottom: 45, left: 40 },
+      edgePadding: { top: 45, right: 45, bottom: fullHeight ? Math.min(370,(height-52)*.52+20) : 45, left: 45 },
       animated: false,
     });
     setReady(true);
@@ -287,12 +278,17 @@ export function TourRouteMap({
   let offset = 0;
   return (
     <View
+      onLayout={event => setMapHeight(event.nativeEvent.layout.height)}
       style={[
         ui.map,
         compact && { height: Math.max(200, Math.min(270, height * 0.28)) },
+        fullHeight && { height: '100%', borderRadius: 0 },
       ]}>
       <MapView
         ref={ref}
+        userInterfaceStyle="light"
+        controlsAtTop={fullHeight}
+        mapPadding={{top:0,right:0,bottom:fullHeight?Math.min(370,(height-52)*.52+20):0,left:0}}
         style={StyleSheet.absoluteFill}
         initialRegion={{
           latitude: (minLat + maxLat) / 2,
@@ -300,6 +296,7 @@ export function TourRouteMap({
           latitudeDelta: Math.max(0.008, (maxLat - minLat) * 1.4),
           longitudeDelta: Math.max(0.008, (maxLng - minLng) * 1.4),
         }}
+        onRegionChangeComplete={region => setLatitudeDelta(region.latitudeDelta)}
         onMapReady={fit}>
         {segments.map((segment, index) => {
           const visibleCount = Math.max(
@@ -311,11 +308,15 @@ export function TourRouteMap({
             <Polyline
               key={index}
               coordinates={segment.coordinates.slice(0, visibleCount)}
-              strokeColor={segment.drive ? '#897449' : '#2e6b4b'}
+              strokeColor={TOUR_ROUTE_STYLES[segment.mode].color}
               strokeWidth={5}
             />
           );
         })}
+        {fraction >= .95 && directions.flatMap(({arrows,color},segmentIndex) => arrows.map((coordinates,arrowIndex) => <React.Fragment key={`direction-${segmentIndex}-${arrowIndex}`}>
+          <Polyline coordinates={coordinates} strokeColor="#ffffff" strokeWidth={7}/>
+          <Polyline coordinates={coordinates} strokeColor={color} strokeWidth={3}/>
+        </React.Fragment>))}
         {stops
           .filter(
             (point) =>
@@ -340,6 +341,11 @@ export function TourRouteMap({
             </Marker>
           ))}
       </MapView>
+      {segments.length > 0 && <View pointerEvents="none" style={{position:'absolute',top:12,left:12,backgroundColor:'#ffffff',borderRadius:12,paddingHorizontal:10,paddingVertical:7,gap:4}}>
+        {(['walk','drive'] as const).filter(mode => segments.some(segment => segment.mode === mode)).map(mode => <View key={mode} style={{flexDirection:'row',alignItems:'center',gap:6}}>
+          <Feather name="arrow-right" color={TOUR_ROUTE_STYLES[mode].color} size={18}/><Text style={{fontSize:12,color:'#263526',fontWeight:'600'}}>{TOUR_ROUTE_STYLES[mode].label}</Text>
+        </View>)}
+      </View>}
       <Pressable
         onPress={fit}
         accessibilityRole="button"
@@ -347,100 +353,6 @@ export function TourRouteMap({
         style={ui.fitButton}>
         <Feather name="maximize" size={20} color="#2e6b4b" />
       </Pressable>
-    </View>
-  );
-}
-
-export function TourProposal({
-  route,
-  points,
-  index,
-  total,
-  groupMode,
-  onSelect,
-  onDetail,
-}: {
-  route: HikingRouteResult;
-  points: PointOfInterest[];
-  index: number;
-  total: number;
-  groupMode?: 'missing_all' | 'missing_any';
-  onSelect?: (index: number) => void;
-  onDetail?: () => void;
-}) {
-  const colors = usePlannerColors();
-  const solo = (route.groupSize ?? 1) <= 1;
-  return (
-    <View>
-      <TourRouteMap
-        key={route.id}
-        route={route}
-        points={points}
-        compact={Boolean(onDetail)}
-      />
-      <View style={[ui.proposal, { backgroundColor: colors.surface }]}>
-        <View style={ui.grabber} />
-        <Text
-          style={[
-            ui.badge,
-            { color: colors.accent, backgroundColor: colors.soft },
-          ]}>
-          {`${route.matchingStampCount} ${solo ? 'neue' : 'passende'} Stempel${solo ? ' für dich' : ''}`}
-        </Text>
-        <Text style={[ui.title, { color: colors.text }]}>
-          {routeName(route, points, index)}
-        </Text>
-        <Text
-          style={[
-            ui.metrics,
-            { color: colors.text },
-          ]}>{`${formatTourDuration(route.duration)} · ${formatTourDistance(route.distance)}`}</Text>
-        <Text
-          style={[
-            ui.body,
-            { color: colors.secondary },
-          ]}>{`↑ ${Math.round(route.totalElevationGain ?? 0)} m · ↓ ${Math.round(route.totalElevationLoss ?? 0)} m · ${route.stampCount ?? 0} Stempel insgesamt`}</Text>
-        {!solo ? (
-          <Text
-            style={[
-              ui.body,
-              { color: colors.secondary },
-            ]}>{`Für dich ${route.newStampCountForUser ?? 0} neue Stempel · ${groupMode === 'missing_all' ? 'Passende Stempel fehlen allen.' : 'Passende Stempel fehlen mindestens einer Person.'}`}</Text>
-        ) : null}
-        {onSelect ? (
-          <View style={[ui.pager, { borderColor: colors.border }]}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Vorheriger Vorschlag"
-              disabled={index === 0}
-              onPress={() => onSelect(index - 1)}
-              style={[ui.iconButton, index === 0 && ui.disabled]}>
-              <Feather name="chevron-left" color={colors.accent} size={22} />
-            </Pressable>
-            <Text
-              accessibilityLiveRegion="polite"
-              style={[
-                ui.body,
-                { color: colors.text },
-              ]}>{`${index + 1} / ${total} Vorschläge`}</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Nächster Vorschlag"
-              disabled={index === total - 1}
-              onPress={() => onSelect(index + 1)}
-              style={[ui.iconButton, index === total - 1 && ui.disabled]}>
-              <Feather name="chevron-right" color={colors.accent} size={22} />
-            </Pressable>
-          </View>
-        ) : null}
-        {onDetail ? (
-          <PlannerButton
-            title="Details und Stationen ansehen"
-            secondary
-            onPress={onDetail}
-          />
-        ) : null}
-      </View>
     </View>
   );
 }

@@ -15,20 +15,22 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { TimeDial } from '@/components/time-dial';
+import { SuggestionResults } from '@/components/suggestion-results';
+import { BuddyLoading } from '@/components/buddy-loading';
 import { GroupSelector } from '@/components/group-selector';
 import { FriendAvatar } from '@/components/friends-list';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import {
   PlannerButton,
   PlannerStepper,
-  TourProposal,
   ui,
   usePlannerColors,
 } from '@/components/tour-planner-ui';
 import { useAuth } from '@/lib/auth';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { usePointsOfInterestQuery } from '@/lib/queries';
-import { routeName, validateTimeBudget } from '@/lib/tour-automation';
+import { validateTimeBudget } from '@/lib/tour-automation';
 import { useTourSuggestions } from '@/lib/tour-suggestions';
 
 type Start = { latitude: number; longitude: number; name: string };
@@ -40,7 +42,7 @@ export default function AutomaticTourScreen() {
   const group = useHikingGroup();
   const { data: points = [], isPending: pointsPending } =
     usePointsOfInterestQuery();
-  const { suggestions, generation, save } = useTourSuggestions();
+  const { suggestions, generation } = useTourSuggestions();
   const [step, setStep] = useState(1);
   const [minutes, setMinutes] = useState('120');
   const [customTime, setCustomTime] = useState(false);
@@ -57,7 +59,6 @@ export default function AutomaticTourScreen() {
   const [minStamps, setMinStamps] = useState(1);
   const [allowDrive, setAllowDrive] = useState(false);
   const [index, setIndex] = useState(0);
-  const [savedName, setSavedName] = useState<string | null>(null);
   // Read the active group when step 2 is first entered, after friend loading.
   // An explicit solo selection stays solo even if the global group changes.
   useEffect(() => {
@@ -70,8 +71,6 @@ export default function AutomaticTourScreen() {
     Number.isFinite(Number(maxKm.replace(',', '.'))) &&
     Number(maxKm.replace(',', '.')) > 0 &&
     Number(maxKm.replace(',', '.')) <= 200;
-  const results = suggestions?.results ?? [];
-  const current = results[index];
   const parking = points
     .filter(
       (point) =>
@@ -132,25 +131,10 @@ export default function AutomaticTourScreen() {
       });
       setIndex(0);
       setStep(3);
-      save.reset();
     } catch {
       /* The error is rendered next to the action; parameters stay intact. */
     }
   };
-  const saveCurrent = async () => {
-    if (!current || !suggestions) return;
-    try {
-      await save.mutateAsync({
-        route: current,
-        name: routeName(current, points, index),
-        sessionId: suggestions.sessionId,
-      });
-      setSavedName(routeName(current, points, index));
-    } catch {
-      /* Inline retry remains available. */
-    }
-  };
-  const savedId = current ? suggestions?.savedTourIds[current.id] : undefined;
   const bodyStyle = { color: colors.secondary };
   const panel = { backgroundColor: colors.surface, borderColor: colors.border };
   if (!isAuthenticated)
@@ -162,8 +146,10 @@ export default function AutomaticTourScreen() {
       />
     );
 
+  if (step === 3 && suggestions?.results.length) return <SuggestionResults suggestions={suggestions} index={index} onSelect={setIndex} onBack={() => setStep(2)} onParameters={() => setStep(1)} />;
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+      {generation.isPending && <BuddyLoading />}
       <KeyboardAvoidingView
         style={styles.safe}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -190,6 +176,7 @@ export default function AutomaticTourScreen() {
               <Feather name="x" size={22} color={colors.text} />
             </Pressable>
           </View>
+          {step === 3 && <View style={{padding:24,gap:16}}><Text style={{color:colors.text}}>Für diese Einstellungen wurde keine passende Runde gefunden. Erhöhe das Zeitbudget oder ändere den Startpunkt.</Text><PlannerButton title="Parameter ändern" onPress={() => setStep(1)} /></View>}
           <PlannerStepper
             step={step}
             onStepPress={generation.isPending ? undefined : setStep}
@@ -207,35 +194,7 @@ export default function AutomaticTourScreen() {
                   Wir finden neue Stempel auf deinem Weg.
                 </Text>
                 <View style={styles.clockWrap}>
-                  <View
-                    accessible
-                    accessibilityLabel={`Zeitbudget: ${minutes} Minuten`}
-                    style={[
-                      styles.clock,
-                      {
-                        borderColor: colors.border,
-                        borderTopColor: colors.accent,
-                        borderRightColor: colors.accent,
-                      },
-                    ]}>
-                    <View
-                      style={[
-                        styles.hiker,
-                        { backgroundColor: colors.button },
-                      ]}>
-                      <MaterialIcons name="hiking" size={28} color="#ffffff" />
-                    </View>
-                    <Text style={[styles.clockValue, { color: colors.text }]}>
-                      {validBudget
-                        ? Number(minutes) % 60 === 0
-                          ? `${Number(minutes) / 60} Std.`
-                          : `${minutes} Min.`
-                        : '– Min.'}
-                    </Text>
-                    <Text style={[styles.clockCaption, bodyStyle]}>
-                      dein Zeitbudget
-                    </Text>
-                  </View>
+                  <TimeDial minutes={minutes} onInteract={() => setCustomTime(true)} onChange={setMinutes} />
                 </View>
                 <View style={styles.timeOptions}>
                   {[60, 120, 180].map((value) => (
@@ -291,29 +250,10 @@ export default function AutomaticTourScreen() {
                     </Text>
                   </Pressable>
                 </View>
-                {customTime ? (
-                  <View>
-                    <Text style={[styles.label, { color: colors.text }]}>
-                      Zeitbudget in Minuten
-                    </Text>
-                    <TextInput
-                      accessibilityLabel="Zeitbudget in Minuten"
-                      keyboardType="number-pad"
-                      value={minutes}
-                      onChangeText={setMinutes}
-                      style={[styles.input, panel, { color: colors.text }]}
-                    />
-                    {!validBudget ? (
-                      <Text style={styles.error}>
-                        Bitte gib 15 bis 720 Minuten ein.
-                      </Text>
-                    ) : null}
-                  </View>
-                ) : null}
                 <Text style={[styles.note, bodyStyle]}>
                   {allowDrive
-                    ? 'Wanderzeit und Fahrten zwischen Parkplätzen, inklusive Rückweg.'
-                    : 'Wanderzeit ab Parkplatz, inklusive Rückweg.'}{' '}
+                    ? 'Zeit ab Startpunkt mit Rückweg und Fahrten zwischen Parkplätzen.'
+                    : 'Wanderzeit ab Startpunkt, inklusive Rückweg.'}{' '}
                   Anreise und Pausen bitte zusätzlich einplanen.
                 </Text>
                 <View style={[styles.panel, panel]}>
@@ -622,67 +562,6 @@ export default function AutomaticTourScreen() {
                 ) : null}
               </View>
             ) : null}
-            {step === 3 ? (
-              <>
-                <View style={styles.content}>
-                  <Text style={[styles.heading, { color: colors.text }]}>
-                    {(current?.groupSize ?? 1) > 1
-                      ? 'Eure nächste Runde'
-                      : 'Deine nächste Runde'}
-                  </Text>
-                  <Text style={[styles.note, bodyStyle]}>
-                    {results.length
-                      ? `${results.length} Vorschläge · Bis ${suggestions ? Math.round(suggestions.parameters.maxDuration / 60) : minutes} Min.`
-                      : 'Für diese Einstellungen wurde keine passende Runde gefunden. Erhöhe das Zeitbudget oder ändere den Startpunkt.'}
-                  </Text>
-                  {suggestions?.searchLimited ? (
-                    <Text style={[styles.note, bodyStyle]}>
-                      Die Suche wurde begrenzt. Diese Routen passen zu deinem
-                      Budget; weitere passende Touren sind möglich.
-                    </Text>
-                  ) : null}
-                </View>
-                {current && suggestions ? (
-                  <TourProposal
-                    route={current}
-                    points={points}
-                    index={index}
-                    total={results.length}
-                    groupMode={suggestions.parameters.groupMode}
-                    onSelect={(value) => {
-                      setIndex(value);
-                      save.reset();
-                      setSavedName(null);
-                    }}
-                    onDetail={() =>
-                      router.push({
-                        pathname: '/tours/proposal',
-                        params: {
-                          session: suggestions.sessionId,
-                          index: String(index),
-                        },
-                      } as never)
-                    }
-                  />
-                ) : null}
-                {savedName ? (
-                  <Text
-                    accessibilityLiveRegion="polite"
-                    style={[styles.saved, { color: colors.accent }]}>
-                    {savedName} wurde in „Meine Touren“ gespeichert. Die anderen
-                    Vorschläge bleiben verfügbar.
-                  </Text>
-                ) : null}
-                {save.error ? (
-                  <Text
-                    accessibilityRole="alert"
-                    style={[styles.error, { marginHorizontal: 24 }]}>
-                    Die Tour konnte nicht gespeichert werden. Bitte versuche es
-                    erneut.
-                  </Text>
-                ) : null}
-              </>
-            ) : null}
           </ScrollView>
           <View style={[styles.footer, { backgroundColor: colors.background }]}>
             {isOffline ? (
@@ -699,6 +578,8 @@ export default function AutomaticTourScreen() {
             ) : null}
             {step === 2 ? (
               <PlannerButton
+                sparkle
+                loading={generation.isPending}
                 title={
                   generation.isPending
                     ? 'Touren werden gesucht …'
@@ -714,38 +595,6 @@ export default function AutomaticTourScreen() {
                 }
                 onPress={() => void generate()}
               />
-            ) : null}
-            {step === 3 ? (
-              <>
-                {current ? (
-                  <PlannerButton
-                    title={
-                      savedId
-                        ? 'Gespeichert · Bearbeiten'
-                        : save.isPending
-                          ? 'Wird gespeichert …'
-                          : 'Als Tour speichern'
-                    }
-                    disabled={save.isPending || (!savedId && !canPerformWrites)}
-                    onPress={() =>
-                      savedId
-                        ? router.push({
-                            pathname: '/tours/[id]',
-                            params: { id: savedId, edit: '1' },
-                          } as never)
-                        : void saveCurrent()
-                    }
-                  />
-                ) : null}
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => setStep(1)}
-                  style={styles.optionsToggle}>
-                  <Text style={[styles.body, { color: colors.accent }]}>
-                    Parameter ändern
-                  </Text>
-                </Pressable>
-              </>
             ) : null}
           </View>
         </View>

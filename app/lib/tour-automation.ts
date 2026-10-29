@@ -1,23 +1,10 @@
+import { parseRoutePositionString } from '@/lib/tour-route';
 import type { HikingRouteResult, PointOfInterest } from '@/lib/api';
 
 export type RouteCoordinate = { latitude: number; longitude: number };
 
 export function parseRouteCoordinates(value?: string): RouteCoordinate[] {
-  const values = (value || '').split(';');
-  const result: RouteCoordinate[] = [];
-  for (let index = 0; index + 1 < values.length; index += 3) {
-    if (!values[index].trim() || !values[index + 1].trim()) continue;
-    const longitude = Number(values[index]),
-      latitude = Number(values[index + 1]);
-    if (
-      Number.isFinite(latitude) &&
-      Number.isFinite(longitude) &&
-      Math.abs(latitude) <= 90 &&
-      Math.abs(longitude) <= 180
-    )
-      result.push({ latitude, longitude });
-  }
-  return result;
+  return parseRoutePositionString(value);
 }
 
 export function routeStops(
