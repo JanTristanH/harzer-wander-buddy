@@ -2610,6 +2610,7 @@ function ClassicTourEditor() {
 
         {markerRenderStates.map((state) => (
           <Marker
+            accessibilityState={{ selected: normalizedSelectedMapItemId === state.id.toLowerCase() }}
             anchor={{ x: 0.5, y: 1 }}
             coordinate={state.coordinate}
             image={state.baseImage}
@@ -2635,6 +2636,8 @@ function ClassicTourEditor() {
               anchor={{ x: 0.5, y: 1 }}
               coordinate={state.coordinate}
               key={`${state.overlayKey}:halo`}
+              accessibilityState={{ selected: true }}
+              selectionOverlay
               tracksViewChanges={tracksOverlayViewChanges}
               zIndex={markerHaloZIndex(state.kind)}>
               <View collapsable={false} pointerEvents="none" style={styles.markerOverlayWrap}>
@@ -2661,6 +2664,8 @@ function ClassicTourEditor() {
               key={`${state.overlayKey}:badge:${state.routeOrderLabel ?? '--'}`}
               onPress={() => focusMapItemOnMap(state.item)}
               tracksViewChanges={tracksOverlayViewChanges}
+              accessibilityState={{ selected: isSelected }}
+              selectionOverlay
               zIndex={markerBadgeZIndex(state.kind, isSelected)}>
               <View collapsable={false} pointerEvents="none" style={styles.markerOverlayWrap}>
                 <View style={styles.poiInTourMarkerBadge}>
