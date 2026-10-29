@@ -32,6 +32,7 @@ import { useAuth } from '@/lib/auth';
 import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
+import { isStaticWebsite, openStaticStampArticle } from '@/lib/static-website';
 
 type FilterKey = 'all' | 'visited' | 'open' | 'near' | 'relocated';
 type LocationState = 'idle' | 'loading' | 'granted' | 'denied';
@@ -704,6 +705,7 @@ export default function StampsScreen() {
         });
         return;
       }
+      if (isStaticWebsite) { void openStaticStampArticle(stampId); return; }
       router.push(`/stamps/${stampId}` as never);
     },
     [router, selectionMode, selectedIds, cancelSelection]

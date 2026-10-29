@@ -2,6 +2,9 @@ import { Feather } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SectionCard } from '@/components/section-card';
+import { AppColors } from '@/constants/theme';
+
 type TimelineMetricCardProps = {
   icon: 'clock' | 'calendar';
   label: string;
@@ -18,7 +21,7 @@ function TimelineMetricCard({ icon, label, value, onPress }: TimelineMetricCardP
       onPress={onPress}
       style={({ pressed }) => [styles.metricCard, pressed && onPress && styles.pressed]}>
       <View style={styles.metricIconWrap}>
-        <Feather color="#2e6b4b" name={icon} size={16} />
+        <Feather color={AppColors.primary} name={icon} size={16} />
       </View>
       <View style={styles.metricBody}>
         <Text style={styles.metricLabel}>{label}</Text>
@@ -43,8 +46,7 @@ export function ProfileTimelineSummarySection({
   sectionTitle = 'Timeline',
 }: ProfileTimelineSummarySectionProps) {
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{sectionTitle}</Text>
+    <SectionCard title={sectionTitle} style={styles.section}>
       <View style={styles.metricRow}>
         <TimelineMetricCard icon="clock" label="Diese Woche" onPress={onOpenAll} value={thisWeekCount} />
         <TimelineMetricCard
@@ -57,33 +59,18 @@ export function ProfileTimelineSummarySection({
       {onOpenAll ? (
         <Pressable onPress={onOpenAll} style={({ pressed }) => [styles.openAllButton, pressed && styles.pressed]}>
           <View style={styles.openAllContent}>
-            <Feather color="#2e6b4b" name="list" size={15} />
+            <Feather color={AppColors.primary} name="list" size={15} />
             <Text style={styles.openAllLabel}>Vollständige Timeline</Text>
           </View>
         </Pressable>
       ) : null}
-    </View>
+    </SectionCard>
   );
 }
 
 const styles = StyleSheet.create({
   section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 8,
-    shadowColor: '#141e14',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
     elevation: 2,
-  },
-  sectionTitle: {
-    color: '#1e2a1e',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '600',
   },
   metricRow: {
     flexDirection: 'row',
@@ -115,13 +102,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   metricValue: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 24,
     lineHeight: 28,
     fontWeight: '700',
   },
   metricHint: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -140,7 +127,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   openAllLabel: {
-    color: '#2e6b4b',
+    color: AppColors.primary,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',

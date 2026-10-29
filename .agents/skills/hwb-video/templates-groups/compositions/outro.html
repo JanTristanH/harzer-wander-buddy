@@ -1,0 +1,28 @@
+<template><style>#root{position:absolute;inset:0;background:#f4efe4;color:#183d2b;font-family:Inter,Arial,sans-serif}
+.copy{position:absolute;left:108px;top:150px;width:864px;text-align:center}
+h1{font-size:88px;line-height:1.06;letter-spacing:-2.7px;margin:0;font-weight:700}
+.kicker{position:absolute;left:108px;top:80px;width:864px;font-size:28px;font-weight:700;letter-spacing:1px;text-align:center}
+.sub{position:absolute;left:108px;top:355px;width:864px;font-size:30px;line-height:1.2;text-align:center;font-weight:400;margin:0}
+.phone{position:absolute;left:200px;top:400px;width:620px;height:1360px;border:18px solid #1a2820;border-radius:87px;box-shadow:0 26px 52px #183d2b28;background:#1a2820;overflow:hidden}
+.screen{position:absolute;left:0;top:30px;width:584px;height:1264px;overflow:hidden;border-radius:47px;background:#f4efe4}
+.screen img{position:absolute;inset:0;width:584px;height:1264px;object-fit:contain}
+.buddy{position:absolute;width:170px;height:170px;object-fit:contain;left:850px;top:1540px}
+.bubble{position:absolute;z-index:3;background:#fffdf8;border:2px solid #d4dfce;border-radius:24px;padding:15px 20px;box-shadow:0 8px 20px #183d2b12}
+.bubble .speaker{display:block;color:#2e6b4b;font-size:28px;font-weight:700;line-height:34px;margin-bottom:5px}
+.bubble .words{display:block;font-size:32px;font-weight:700;line-height:39px;white-space:nowrap}
+.lena{left:24px;top:142px;width:310px}.tom{right:22px;top:288px;width:272px}
+.cheer{left:166px;top:180px;width:340px}.cheer .words{font-size:44px;line-height:52px}
+.self-name{position:absolute;left:66px;top:823px;z-index:3;font-size:28px;font-weight:700;line-height:34px;background:#f4efe4;border-radius:12px;padding:4px 13px}
+</style><div id="root" data-composition-id="outro" data-width="1080" data-height="1920"><div class="copy" id="outro-copy"><h1>Harzer<br>Wander Buddy</h1></div><p class="sub">Zusammen losziehen.</p><div id="outro-phone" class="phone"><div class="screen"><img id="outro-img-0" src="assets/cast-success.png" alt="Illustrative Wanderfreunde"/><div id="outro-cheer" class="bubble cheer"><span class="speaker">Tom</span><span class="words">Geschafft!</span></div></div></div><img class="buddy" src="assets/buddy.png" alt="Buddy" /></div><script>const tl=gsap.timeline({paused:true});
+tl.fromTo("#outro-copy",{opacity:.1},{opacity:1,duration:.35,ease:"power2.out"},0);
+tl.fromTo("#outro-cheer",{opacity:0,y:9},{opacity:1,y:0,duration:.28,ease:"power4.out"},.15);
+tl.fromTo("#outro-img-0",{opacity:.35,y:14},{opacity:1,y:0,duration:.45,ease:"expo.out"},0);
+tl.to("#outro-phone",{boxShadow:"0 26px 52px rgba(24,61,43,0.128)",duration:0.4,ease:"none"},0.0);
+tl.to("#outro-phone",{boxShadow:"0 26px 52px rgba(24,61,43,0.127)",duration:0.4,ease:"none"},0.4);
+tl.to("#outro-phone",{boxShadow:"0 26px 52px rgba(24,61,43,0.12)",duration:0.4,ease:"none"},0.8);
+tl.to("#outro-phone",{boxShadow:"0 26px 52px rgba(24,61,43,0.126)",duration:0.4,ease:"none"},1.2);
+tl.to("#outro-phone",{boxShadow:"0 26px 52px rgba(24,61,43,0.123)",duration:0.4,ease:"none"},1.6);
+tl.to("#outro-phone",{boxShadow:"0 26px 52px rgba(24,61,43,0.121)",duration:0.4,ease:"none"},2.0);
+tl.to("#outro-phone",{boxShadow:"0 26px 52px rgba(24,61,43,0.127)",duration:0.4,ease:"none"},2.4);
+tl.to("#outro-phone",{boxShadow:"0 26px 52px rgba(24,61,43,0.127)",duration:0.20000000000000018,ease:"none"},2.8);
+window.__timelines["outro"]=tl;</script></template>
