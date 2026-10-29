@@ -229,6 +229,11 @@ service api @(requires: 'authenticated-user') {
 
     function getVersion()                                              returns String;
 
+    function getServerInfo() returns {
+        version: String;
+        serverTime: Timestamp;
+    };
+
     @restrict: [
         {
             grant: 'READ',

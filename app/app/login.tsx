@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, Redirect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -19,6 +19,7 @@ import { LegalLinks } from '@/components/legal-links';
 import { Fonts } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { appConfig } from '@/lib/config';
+import { isStaticWebsite, openLiveAppLogin } from '@/lib/static-website';
 
 const bearIllustration = require('@/assets/images/onboarding-bear.png');
 
@@ -61,6 +62,15 @@ function ActionButton({
 }
 
 export default function LoginScreen() {
+  return isStaticWebsite ? <StaticLoginRedirect /> : <LiveLoginScreen />;
+}
+
+function StaticLoginRedirect() {
+  useEffect(() => { openLiveAppLogin(); }, []);
+  return <View><Text>Weiter zur Anmeldung …</Text></View>;
+}
+
+function LiveLoginScreen() {
   const { authError, configError, hasCompletedOnboarding, isAuthenticated, isLoading, login, signup } =
     useAuth();
 

@@ -290,6 +290,13 @@ function skipOidcAuth(req, res, next) {
 }
 
 cds.on("bootstrap", (app) => {
+  // Apply before static files, authentication redirects and CAP routes.
+  app.use((req, res, next) => {
+    res.setHeader("Content-Security-Policy", "frame-ancestors 'self'");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    next();
+  });
+
   require('./legal-content').registerLegalRoutes(app, mobileCors);
   // ✅ Serve manifest.json publicly before authentication middleware
   app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));

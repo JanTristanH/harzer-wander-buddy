@@ -1,6 +1,7 @@
 const cds = require('@sap/cds');
 const { createHash } = require('node:crypto');
 const fetch = require('node-fetch');
+const { buffer } = require('node:stream/consumers');
 const subjectHash = id => createHash('sha256').update(id).digest('hex');
 
 async function isAccountDeleted(id) {
@@ -28,7 +29,14 @@ async function collectMyData(tx, id) {
     .where({ tour_ID: { in: tours } })) : [];
   // Preserve uploaded image bytes in a portable JSON encoding.
   for (const attachment of result.Attachments_local) {
-    if (Buffer.isBuffer(attachment.content)) attachment.content = attachment.content.toString('base64');
+    // CAP excludes media fields from SELECT *. Read each blob explicitly and
+    // consume driver streams before JSON serialization / transaction completion.
+    const image = await tx.run(SELECT.one.from('hwb.db.Attachments_local')
+      .columns('content').where({ ID: attachment.ID, createdBy: id }));
+    if (image?.content != null) {
+      const bytes = Buffer.isBuffer(image.content) ? image.content : await buffer(image.content);
+      attachment.content = bytes.toString('base64');
+    } else attachment.content = null;
   }
   return result;
 }
@@ -92,10 +100,16 @@ async function processAccountDeletions(deleteIdentity = deleteAuth0Identity) {
   try {
     const db = await cds.connect.to('db');
     const { SELECT, UPDATE, DELETE } = cds.ql;
-    const pending = await db.run(SELECT.from('hwb.db.AccountDeletions').where('pendingSubject is not null').limit(20));
+    // Retry the least recently attempted entries first. Persistent failures must
+    // not monopolize every batch. Existing rows need no timestamp backfill.
+    const pending = await db.run(SELECT.from('hwb.db.AccountDeletions')
+      .where('pendingSubject is not null')
+      .orderBy`coalesce(lastAttemptAt, requestedAt) asc, subjectHash asc`.limit(20));
     let failed = 0;
     for (const entry of pending) {
       try {
+        await db.run(UPDATE('hwb.db.AccountDeletions')
+          .set({ lastAttemptAt: new Date().toISOString() }).where({ subjectHash: entry.subjectHash }));
         await deleteIdentity(entry.pendingSubject);
         await db.run(UPDATE('hwb.db.AccountDeletions').set({ pendingSubject: null,
           completedAt: new Date().toISOString() }).where({ subjectHash: entry.subjectHash }));
@@ -128,6 +142,7 @@ function registerAccountPrivacy(service) {
     if (externalIdentity && !deletionConfigured()) return req.reject(503,
       'Die Kontolöschung ist vorübergehend nicht verfügbar. Bitte versuche es später erneut.');
     await eraseMyData(cds.tx(req), req.user.id, externalIdentity);
+    require('./image-cache').invalidateImageCachesAfterCommit(req);
     const { clearExternalUserCaches } = require('./auth-utils');
     clearExternalUserCaches(req.user.id);
     req.on('succeeded', () => { void processAccountDeletions().catch(() => {

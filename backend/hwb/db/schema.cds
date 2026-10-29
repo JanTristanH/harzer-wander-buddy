@@ -190,6 +190,7 @@ entity AccountDeletions {
     key subjectHash : String(64);
     pendingSubject  : String(255);
     requestedAt     : Timestamp;
+    lastAttemptAt   : Timestamp;
     completedAt     : Timestamp;
 }
 

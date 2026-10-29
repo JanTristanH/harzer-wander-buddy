@@ -31,6 +31,7 @@ import {
   View,
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
+import { GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LockedGuestRows } from '@/components/auth-locked-state';
@@ -45,6 +46,7 @@ import { StampPressStage } from '@/components/stamp-press-stage';
 import { StampNoteSection } from '@/components/stamp-note-section';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
 import { useStretchyHeader } from '@/hooks/use-stretchy-header';
+import { getStampHeroHeight } from '@/lib/stamp-hero';
 import {
   createStamping,
   deleteStamping,
@@ -337,6 +339,10 @@ function StampDetailLoadingState({ onBack }: { onBack: () => void }) {
   );
 }
 
+function AndroidHeaderGesture({ children, gesture }: React.ComponentProps<typeof GestureDetector>) {
+  return Platform.OS === 'android' ? <GestureDetector gesture={gesture}>{children}</GestureDetector> : children;
+}
+
 function StampDetailContent() {
   const router = useRouter();
   const navigation = useNavigation();
@@ -405,7 +411,11 @@ function StampDetailContent() {
     }
     void refetch();
   }, [isOffline, refetch]);
-  const stretchyHeader = useStretchyHeader(240, handleRefresh, isFetching && !isPending);
+  const heroImageUri = detail?.stamp.heroImageUrl?.trim() || detail?.stamp.image?.trim() || '';
+  const [heroImageSize, setHeroImageSize] = useState<{ uri: string; width: number; height: number } | null>(null);
+  const heroHeight = getStampHeroHeight(windowWidth, windowHeight,
+    heroImageSize?.uri === heroImageUri ? heroImageSize : undefined);
+  const stretchyHeader = useStretchyHeader(heroHeight, handleRefresh, isFetching && !isPending);
   const promptSignIn = useCallback(
     (message?: string) => {
       requireSignIn(message);
@@ -1326,7 +1336,6 @@ function StampDetailContent() {
   const isNoteTooLong = normalizedNoteDraft.length > STAMP_NOTE_MAX_LENGTH;
   const isNoteDirty = normalizedNoteDraft !== persistedNote.trim();
   const hasUnsavedChanges = isNoteDirty;
-  const heroImageUri = selectedStamp?.heroImageUrl?.trim() || selectedStamp?.image?.trim() || '';
   const selectedStampLatitude =
     typeof selectedStamp?.latitude === 'number' && Number.isFinite(selectedStamp.latitude)
       ? selectedStamp.latitude
@@ -1822,6 +1831,7 @@ function StampDetailContent() {
         visible={isStampSuccessToastVisible}
       />
       <View style={styles.scrollViewport} {...stretchyHeader.panHandlers}>
+        <AndroidHeaderGesture gesture={stretchyHeader.androidGesture}>
         <Animated.ScrollView
           ref={stretchyHeader.scrollRef}
           alwaysBounceVertical
@@ -1841,7 +1851,7 @@ function StampDetailContent() {
           }
           showsVerticalScrollIndicator={false}>
           <Animated.View style={stretchyHeader.contentStyle}>
-            <View style={styles.hero}>
+            <View style={[styles.hero, { height: heroHeight }]}>
               <Animated.View pointerEvents="none" style={[styles.heroBackground, stretchyHeader.backgroundStyle]}>
                 <LinearGradient colors={heroGradient(visited)} style={StyleSheet.absoluteFill}>
                   {heroImageUri ? (
@@ -1849,6 +1859,10 @@ function StampDetailContent() {
                       <Image
                         cachePolicy="disk"
                         contentFit="cover"
+                        onLoad={({ source }) => setHeroImageSize((current) =>
+                          current?.uri === heroImageUri && current.width === source.width && current.height === source.height
+                            ? current
+                            : { uri: heroImageUri, width: source.width, height: source.height })}
                         source={buildAuthenticatedImageSource(heroImageUri, accessToken)}
                         style={styles.heroImage}
                       />
@@ -2314,6 +2328,7 @@ function StampDetailContent() {
             </View>
           </Animated.View>
         </Animated.ScrollView>
+        </AndroidHeaderGesture>
         {!stretchyHeader.usesNativeBounce && isPullRefreshing ? (
           <ActivityIndicator color="#2e6b4b" style={styles.refreshIndicator} />
         ) : null}

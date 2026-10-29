@@ -27,6 +27,7 @@ function registerCommunitySafety(service) {
       contentRestricted: true }).where({ ID: report.targetUser }));
     await tx.run(UPDATE('hwb.db.Tours').set({ name: 'Tour moderiert' }).where({ createdBy: report.targetUser }));
     await tx.run(DELETE.from('hwb.db.Attachments_local').where({ createdBy: report.targetUser }));
+    require('./image-cache').invalidateImageCachesAfterCommit(req);
     await tx.run(UPDATE('hwb.db.ContentReports').set({ status: 'resolved' }).where({ ID: report.ID }));
     require('./auth-utils').clearExternalUserCaches(report.targetUser);
     return 'Profilbild und Namen entfernt; weitere Veröffentlichungen dieses Kontos sind gesperrt.';

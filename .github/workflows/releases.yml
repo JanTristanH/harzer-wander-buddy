@@ -24,9 +24,6 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    outputs:
-      app_released: ${{ steps.release.outputs.app_released }}
-      app_sha: ${{ steps.release.outputs.app_sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,31 +38,6 @@ jobs:
           script: |
             const { loadPlan, publish } = require('./scripts/publish-prepared-releases.cjs');
             await publish(loadPlan(), { github, context, core });
-
-  production-app:
-    needs: release
-    if: needs.release.outputs.app_released == 'true'
-    runs-on: ubuntu-latest
-    environment: production
-    defaults:
-      run:
-        working-directory: app
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.release.outputs.app_sha }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: app/package-lock.json
-      - run: npm ci
-      - uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-      - name: Queue production binaries
-        run: eas build --platform all --profile production --non-interactive --no-wait
 
   backmerge-pr:
     needs: release

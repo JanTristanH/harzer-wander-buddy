@@ -32,6 +32,7 @@ import { useAuth } from '@/lib/auth';
 import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
+import { isStaticWebsite, openStaticStampArticle } from '@/lib/static-website';
 
 type FilterKey = 'all' | 'visited' | 'open' | 'near' | 'relocated';
 type LocationState = 'idle' | 'loading' | 'granted' | 'denied';
@@ -56,6 +57,7 @@ const STAMP_LIST_START_INDEX = 2;
 const GROUP_STAMP_ROW_HEIGHT = 176;
 const FAST_SCROLLER_HIDE_DELAY_MS = 850;
 const FAST_SCROLLER_THUMB_HEIGHT = 44;
+const FAST_SCROLLER_PREVIEW_HEIGHT = 48;
 const FAST_SCROLLER_TRACK_HEIGHT = 580;
 const PROGRESS_FILL_DURATION_MS = 3900;
 const VISITED_COUNT_ROLL_OVER_DURATION_MS = 3900;
@@ -464,7 +466,13 @@ export default function StampsScreen() {
   const effectiveThumbRatio =
     thumbRatioOverride !== null ? Math.max(0, Math.min(1, thumbRatioOverride)) : previewRatio;
   const thumbTop = effectiveThumbRatio * thumbTravel;
-  const previewTop = Math.max(0, Math.min(Math.max(0, trackHeight - 42), thumbTop + thumbHeight / 2 - 21));
+  const previewTop = Math.max(
+    0,
+    Math.min(
+      Math.max(0, trackHeight - FAST_SCROLLER_PREVIEW_HEIGHT),
+      thumbTop + thumbHeight / 2 - FAST_SCROLLER_PREVIEW_HEIGHT / 2
+    )
+  );
   const scrollerOpacity = isFastScrollerVisible || isThumbDragging ? 1 : 0;
 
   const clearFastScrollerHideTimeout = React.useCallback(() => {
@@ -549,6 +557,8 @@ export default function StampsScreen() {
     ]
   );
 
+  const fastScrollerDragStart = React.useRef({ touchY: 0, dy: 0 });
+
   const fastScrollerPanResponder = React.useMemo(
     () =>
       PanResponder.create({
@@ -557,17 +567,23 @@ export default function StampsScreen() {
           (Platform.OS === 'android'
             ? Math.abs(gestureState.dy) > 6 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx)
             : Math.abs(gestureState.dy) > 1),
-        onPanResponderGrant: (event) => {
+        onPanResponderGrant: (event, gestureState) => {
           if (!hasScrollableList) {
             return;
           }
 
+          fastScrollerDragStart.current = {
+            touchY: event.nativeEvent.locationY,
+            dy: gestureState.dy,
+          };
           showFastScroller();
           setIsThumbDragging(true);
-          updateScrollFromTouch(event.nativeEvent.locationY);
+          updateScrollFromTouch(fastScrollerDragStart.current.touchY);
         },
-        onPanResponderMove: (event) => {
-          updateScrollFromTouch(event.nativeEvent.locationY);
+        onPanResponderMove: (_, gestureState) => {
+          // Native locationY can change its origin outside the touch area.
+          const start = fastScrollerDragStart.current;
+          updateScrollFromTouch(start.touchY + gestureState.dy - start.dy);
         },
         onPanResponderRelease: () => {
           setIsThumbDragging(false);
@@ -689,6 +705,7 @@ export default function StampsScreen() {
         });
         return;
       }
+      if (isStaticWebsite) { void openStaticStampArticle(stampId); return; }
       router.push(`/stamps/${stampId}` as never);
     },
     [router, selectionMode, selectedIds, cancelSelection]
@@ -1446,8 +1463,7 @@ const styles = StyleSheet.create({
   fastScrollerOverlay: {
     position: 'absolute',
     top: 0,
-    // Leave the Android system back-gesture edge outside the scroller's touch area.
-    right: Platform.OS === 'android' ? 24 : 0,
+    right: 0,
     bottom: 176,
     width: 74,
     alignItems: 'flex-end',
@@ -1476,17 +1492,19 @@ const styles = StyleSheet.create({
   fastScrollerTouchArea: {
     position: 'absolute',
     top: 0,
-    right: 0,
+    // Keep the outermost 4 px free for edge gestures.
+    right: 4,
     bottom: 0,
     // On web, keep the mouse target in the list's outer gutter so it cannot
     // cover the search clear button or the stamp rows underneath the overlay.
-    width: Platform.OS === 'web' ? 20 : 40,
+    width: Platform.OS === 'web' ? 16 : 36,
   },
   fastScrollerPreview: {
     position: 'absolute',
     right: 30,
-    width: 42,
-    height: 42,
+    minWidth: 58,
+    height: FAST_SCROLLER_PREVIEW_HEIGHT,
+    paddingHorizontal: 10,
     borderRadius: 12,
     backgroundColor: 'rgba(30, 42, 30, 0.92)',
     alignItems: 'center',
@@ -1494,8 +1512,8 @@ const styles = StyleSheet.create({
   },
   fastScrollerPreviewText: {
     color: '#f5f3ee',
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 21,
+    lineHeight: 27,
     fontWeight: '700',
   },
 });
