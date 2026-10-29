@@ -1027,11 +1027,11 @@ export default function MapScreen() {
   }, [handleMarkerPress, viewportParkingItems]);
 
   const selectedStampMarkerElements = useMemo(
-    () => Platform.OS === 'web' ? selectMapMarker(stampMarkerElements, selectedItemId) : stampMarkerElements,
+    () => selectMapMarker(stampMarkerElements, selectedItemId),
     [stampMarkerElements, selectedItemId]
   );
   const selectedParkingMarkerElements = useMemo(
-    () => Platform.OS === 'web' ? selectMapMarker(parkingMarkerElements, selectedItemId) : parkingMarkerElements,
+    () => selectMapMarker(parkingMarkerElements, selectedItemId),
     [parkingMarkerElements, selectedItemId]
   );
 
