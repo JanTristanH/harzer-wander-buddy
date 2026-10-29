@@ -143,7 +143,7 @@ const catalog = [
     threshold: 11,
     frame: 'prince',
     icon: 'star',
-    note: 'Dieses digitale Abzeichen ist für jedes Alter. Die offizielle Auszeichnung gilt für Kinder bis 11 Jahre.',
+    note: 'Dieses digitale Abzeichen ist für jedes Alter. Auch die aktuelle offizielle Auszeichnung wird für Jung und Alt angeboten.',
   },
 ];
 

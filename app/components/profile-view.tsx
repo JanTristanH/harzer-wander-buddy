@@ -1584,8 +1584,8 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   hapticChipActive: {
-    backgroundColor: '#2e6b4b',
-    borderColor: '#2e6b4b',
+    backgroundColor: '#e3e6df',
+    borderColor: '#596252',
   },
   hapticChipLabel: {
     color: '#3d4a3d',
@@ -1593,18 +1593,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   hapticChipLabelActive: {
-    color: '#f5f3ee',
+    color: '#20291f',
   },
   hapticTestButton: {
+    borderWidth: 1,
+    borderColor: '#c3cfc3',
     marginTop: 10,
     alignSelf: 'flex-start',
     borderRadius: 12,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: '#fff',
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   hapticTestButtonLabel: {
-    color: '#f5f3ee',
+    color: '#2e6b4b',
     fontSize: 13,
     fontWeight: '700',
   },

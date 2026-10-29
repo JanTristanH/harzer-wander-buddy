@@ -5,8 +5,9 @@ wählbaren Profilabzeichen, Titeln sowie Metall- und thematischen Materialrahmen
 
 ## Auswahl und Freischaltung
 
-Bis zu drei freigeschaltete Abzeichen können im Profil hervorgehoben und über
-die Pfeiltasten angeordnet werden. Titel und Avatarrahmen sind unabhängig davon
+Bis zu drei freigeschaltete Abzeichen können im Profil über drei Plus-/Stiftplätze hervorgehoben werden. Ein belegter Platz
+öffnet die Auswahl zum Ersetzen oder Entfernen; bereits verwendete Abzeichen
+wechseln beim Auswählen ihren Platz. Separate Sortierpfeile entfallen. Titel und Avatarrahmen sind unabhängig davon
 wählbar. Eine leere Auswahl und „Kein Titel“ sind erlaubt; es wird nichts
 automatisch durch den höchsten Rang ersetzt. „Wanderer“ ist ein frei wählbarer
 Basistitel. Fremde Profile zeigen ausschließlich die aktive Auswahl ihres Besitzers.
@@ -25,8 +26,8 @@ Basistitel. Fremde Profile zeigen ausschließlich die aktive Auswahl ihres Besit
 | Wanderprinzessin / Wanderprinz | 11 reguläre Nummern, digital für jedes Alter | Mattes Terrakotta/Türkis mit Sternen und kleiner Krone | Wanderprinzessin / Wanderprinz |
 
 Die digitalen Erfolge basieren auf den persönlichen Besuchen. Sie bestätigen
-keine offizielle Ausgabe eines physischen Abzeichens. Beim Prinzenabzeichen
-steht der Hinweis, dass die offizielle Auszeichnung für Kinder bis 11 Jahre gilt.
+keine offizielle Ausgabe eines physischen Abzeichens. Der Hinweis beim Prinzenabzeichen folgt der am 29.10.2026 geprüften offiziellen
+Angabe „für Jung und Alt“.
 
 Die Grenzweg-Regel wurde ausdrücklich auf **20 + 3** festgelegt. Die offiziellen
 [Themenhefte](https://www.harzer-wandernadel.de/die-wandernadel/themenhefte/)
@@ -90,13 +91,40 @@ Verwendeter Prompt:
 
 ## Profilansicht und Anpassung
 
-Eigene und fremde Profile zeigen dieselbe Präsentation von Avatar, Titel-Badge
-und ausgewählten Abzeichen. Das eigene Profil hat genau einen Einstieg
-**Profil anpassen**. Dort führen zwei Bereiche zur bestehenden Bearbeitung von
-Name/Bild und zur Auswahl von Abzeichen, Titel und Rahmen sowie ins Album.
-Der eigene Footer mit Einstellungen, technischen Details und Abmeldung bleibt
-bestehen. Im Abzeichenbereich des Profils stehen keine zusätzlichen
-Bearbeitungsbuttons. Titel-Badges werden auch in der Auswahlvorschau verwendet.
+Der Einstieg **Profil anpassen** öffnet die Bearbeitung mit der Vorschau oben.
+Name und drei Abzeichenplätze werden direkt dort bearbeitet. Avatarrahmen stehen
+als erster Auswahlbereich darunter und sind zunächst eingeklappt. Titel bleiben
+unabhängig wählbar. Auswahlzustände sind neutral; Speichern ist die Primäraktion.
+Das eigene Profil zeigt die drei Plätze mit Stift oder Plus, fremde Profile zeigen
+weiterhin nur die ausgewählten Abzeichen. Die vorhandenen übrigen Profilbereiche
+und der Footer bleiben erhalten.
+
+Der bisherige Editor [`app/app/profile/edit.tsx`](../app/app/profile/edit.tsx)
+wird nicht ersetzt oder entfernt. Sowohl der Avatar als auch **Name und Profilbild
+bearbeiten** öffnen ihn unter `/profile/edit`, mit den bestehenden Bildrechten,
+der 1:1-Auswahl, dem echten Upload, Fehlerbehandlung und Schutz ungespeicherter
+Änderungen. `/profile/customize` bleibt als alternativer Einstieg vorhanden.
+Inline-Namen verwenden `updateCurrentUserProfile`, die Abzeichenauswahl verwendet
+`saveBadgeProfile`. Falls nach dem Namen die zweite Anfrage scheitert, weist die
+Oberfläche ausdrücklich auf diesen Teilstand hin und bleibt zur Wiederholung offen.
+
+„Dein nächstes Ziel“ zeigt alle Fortschrittsbedingungen. Allgemeine
+Leistungsabzeichen verlinken zur Stempelstellenliste, statt alle 222 Stellen zu
+laden. Pflichtstellen nutzen `StampListItem`; ihre Bild-/Beschreibungsmaterialien
+werden nur für die benötigten IDs nachgeladen. Fehlende Metadaten verbergen die
+Pflichtstellen und Navigationsmöglichkeiten nicht.
+
+„Deine Belohnung“ zeigt auch für offene Abzeichen ein Beispielprofil mit Rahmen
+und gegebenenfalls Titel. Hinweise zu physischen Wandernadeln nennen offiziellen
+Nachweis, Schutzgebühr, Begleithefte und Vertriebsstellen. Sie bestätigen keine
+Ausgabeberechtigung allein aus digitalen Besuchen. Die widersprüchlichen offiziellen
+Grenzweg-Angaben 20 + 3 / 22 + 3 werden vor einem Erwerb ausdrücklich zur Klärung
+mit dem Servicebüro verwiesen.
+
+Die veröffentlichten Sites sind getrennte Mock-Demos, keine vollständige
+Installation dieser App. Der [Abgleich](abzeichen-demo-abgleich.md) hält die
+Unterschiede und den Prüfumfang fest.
+
 
 ## Screenshots und Prüfung
 
@@ -111,3 +139,20 @@ und Entzug bei Besuchskorrekturen ab. Listen-Tests prüfen Zielauswahl und Reset
 Der Browser-Smoke-Test prüft die echte Anmeldung, Auswahl, Speicherung und
 erneute Anmeldung. Physische native Geräte sind zusätzlich vor einer Veröffentlichung
 zu prüfen; der Web-Smoke-Test ersetzt keinen iOS-/Android-Gerätetest.
+
+## Prüfung der PR-Aktualisierung
+
+- 24 fokussierte App-Tests: Inline-Name, Plus-Auswahl, alter Editor-Einstieg,
+  Erhalt ungespeicherter Namen bei Hintergrundänderungen, Teilfehler beim Speichern,
+  Offline-Sperre, begrenzte Pflichtstellenabfrage und vorhandene Profil-/Listenverträge.
+- 8 bestehende Katalogtests: Freischaltung, Pflichtstellen, unabhängige Auswahl,
+  Entzug und digitale Prinzenregel.
+- TypeScript ohne Fehler. Vollständiger Basic-Webexport einschließlich
+  `/profile/edit`, `/profile/customize` und Abzeichenrouten erfolgreich.
+- Die bestehenden lokalen Abhängigkeiten waren älter als der PR-Lockfilestand;
+  `react-native-svg` 15.12.1 wurde nur in einem isolierten Prüfverzeichnis ergänzt.
+  Der Export nutzte dafür eine lokale, nicht übernommene Resolver-Konfiguration.
+  Originale Quelländerungen, Android-Caches und Abhängigkeiten blieben unangetastet.
+- Kein Produktionslogin oder Live-Upload und keine neue native Geräteprüfung.
+  Frühere Screenshots weiter unten bzw. im Screenshotverzeichnis dokumentieren den
+  vorherigen UI-Stand, nicht die neue Inline-Bearbeitung.

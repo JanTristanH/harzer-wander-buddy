@@ -2077,6 +2077,18 @@ export async function fetchStampboxes(
   return sortStampboxes(rows);
 }
 
+/** Load only the fixed requirement locations for a badge, never the entire catalog. */
+export async function fetchBadgeStampboxes(accessToken: string, stampIds: readonly string[]): Promise<Stampbox[]> {
+  const ids = [...new Set(stampIds.map(id => id.trim()).filter(Boolean))];
+  if (!ids.length) return [];
+  return sortStampboxes(await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
+    select: ['ID', 'number', 'name', 'description', 'heroImageUrl', 'image', 'imageCaption', 'hasVisited'],
+    filter: ids.map(id => buildStringEqualsFilter('ID', id)).join(' or '),
+    orderBy: 'orderBy asc',
+    top: ids.length,
+  }));
+}
+
 export async function fetchMapData(
   accessToken: string,
   currentUserId?: string,

@@ -1,3 +1,4 @@
+import {NextBadgeGoal} from '@/components/next-badge-goal';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
@@ -27,6 +28,7 @@ function Album() {
             {data.entries.filter((e) => e.unlocked).length} von{' '}
             {data.entries.length} freigeschaltet
           </Text>
+          <NextBadgeGoal album={data}/>
           {error ? (
             <Text style={[s.text, s.notice]}>
               Aktualisierung fehlgeschlagen. Du siehst den zuletzt gespeicherten
@@ -46,7 +48,7 @@ function Album() {
                 Sammle 8 unterschiedliche Stempel für deinen Bronzerahmen. Alle
                 Ziele kannst du schon jetzt entdecken.
               </Text>
-              <BadgeButton onPress={() => router.push('/(tabs)')}>
+              <BadgeButton secondary onPress={() => router.push('/(tabs)')}>
                 Stempel entdecken
               </BadgeButton>
             </View>
@@ -60,7 +62,7 @@ function Album() {
                 onPress={() => setFilter(label)}
                 style={[s.chip, filter === label && s.selected]}
               >
-                <Text style={[s.text, filter === label && { color: '#fff' }]}>
+                <Text style={[s.text, filter === label && { color: '#20291f' }]}>
                   {label}
                 </Text>
               </Pressable>

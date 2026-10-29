@@ -19,7 +19,7 @@ export default function CustomizeProfileScreen() {
         <View style={s.card}>
           <Text style={s.heading}>Deine Auszeichnungen</Text>
           <Text style={s.text}>Wähle deinen Titel, Avatarrahmen und bis zu drei Abzeichen.</Text>
-          <BadgeButton onPress={() => router.push('/profile/badges/customize')}>
+          <BadgeButton secondary onPress={() => router.push('/profile/badges/customize')}>
             Abzeichen, Titel & Rahmen auswählen
           </BadgeButton>
           <BadgeButton secondary onPress={() => router.push('/profile/badges')}>
