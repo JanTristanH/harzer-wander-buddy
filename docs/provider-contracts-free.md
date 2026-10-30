@@ -1,6 +1,6 @@
 # Öffentliche Anbieterbedingungen für die Free-Nutzung
 
-Recherchestand: **30. Oktober 2026**. Projektstand: PR 63, `06e3ff7`. Der Betreiber hat am 30. Oktober die Nutzung der Free-Tarife bestätigt. Die zuvor bestätigten Betriebsorte bleiben Grundlage: Auth0 US-4, Supabase eu-west-2/London, Cloud Run europe-west1/Belgien. Kontodashboards, individuell angenommene Vertragsversionen und Rechnungs-/Billing-Einstellungen wurden nicht eingesehen.
+Recherchestand: **30. Oktober 2026**. Grundrecherche: PR 63, `06e3ff7`; vertiefter Codeabgleich: `e8c4149`. Der Betreiber hat am 30. Oktober die Nutzung der Free-Tarife bestätigt. Die zuvor bestätigten Betriebsorte bleiben Grundlage: Auth0 US-4, Supabase eu-west-2/London, Cloud Run europe-west1/Belgien. Kontodashboards, individuell angenommene Vertragsversionen und Rechnungs-/Billing-Einstellungen wurden nicht eingesehen.
 
 Die öffentliche Recherche und der Abgleich mit dem Quellcode sind erledigt. Diese Dokumentation ersetzt die bisherige pauschale Aufgabe „Anbieterverträge suchen“. Sie unterscheidet **veröffentlichte Standardbedingungen**, **deren Anwendung auf die Nutzung im Projekt** und **verbleibende individuelle Nachweise**. Es wurden keine Verträge angenommen oder unterzeichnet und keine Anbieter kontaktiert.
 
@@ -65,7 +65,7 @@ Der kostenlose Umfang ändert die Nutzungsbeschränkungen nicht. Folgende Codepf
 
 | Konkreter Projektbefund | Einschlägige öffentliche Regel | Konsequenz |
 | --- | --- | --- |
-| `fetchPlacesFromGoogle` lädt ID, Namen, Adresse und Koordinaten; `PlaceSearchCache` speichert die ganze Antwort sieben Tage. Namen/Adressen werden u. a. in `app/app/(tabs)/map.tsx` und `app/app/tours/[id]/index.tsx` im Kartenkontext angezeigt. | EEA Service Terms § 15.1 untersagen Places-Inhalte „With any Map“ mit Ausnahme von latitude, longitude und place_id. § 15.4 erlaubt temporäres Caching von Koordinaten bis zu 30 Tage; die allgemeine Regel EEA Terms § 3.3.2(b) verbietet anderes Caching ohne ausdrückliche Ausnahme. | Sieben Tage sind keine pauschale Speichererlaubnis für Namen/Adressen. Anwendbares Vertragsregime und zulässige Anzeige/Cachefelder prüfen, danach ggf. API-/UI-/Cachekonzept ändern. |
+| `fetchPlacesFromGoogle` lädt ID, Namen, Adresse und Koordinaten; `PlaceSearchCache` speichert die ganze Antwort mit sieben Tagen Lesegültigkeit; ein regelmäßiger physischer Löschlauf fehlt (siehe Vertiefung). Namen/Adressen werden u. a. in `app/app/(tabs)/map.tsx` und `app/app/tours/[id]/index.tsx` im Kartenkontext angezeigt. | EEA Service Terms § 15.1 untersagen Places-Inhalte „With any Map“ mit Ausnahme von latitude, longitude und place_id. § 15.4 erlaubt temporäres Caching von Koordinaten bis zu 30 Tage; die allgemeine Regel EEA Terms § 3.3.2(b) verbietet anderes Caching ohne ausdrückliche Ausnahme. | Sieben Tage sind keine pauschale Speichererlaubnis für Namen/Adressen. Anwendbares Vertragsregime und zulässige Anzeige/Cachefelder prüfen, danach ggf. API-/UI-/Cachekonzept ändern. |
 | `computeRoutes` liefert Google-Polylinien; `TravelTimes.positionString` wird in PostgreSQL dauerhaft gehalten. Das Schema enthält dafür keine Ablaufzeit. | EEA Service Terms § 20.2 erlaubt temporäres Caching von Routes-Koordinaten bis zu 30 Tage; darüber hinaus gilt das allgemeine Speicherverbot ohne einschlägige Erlaubnis. | Dauerhafte Speicherung nicht als durch Free-Quota oder allgemeinen CDPA erlaubt behandeln. Herkunft, Erlaubnis und Lösch-/Erneuerungsfrist technisch nachweisbar machen oder passenden alternativen Datenanbieter verwenden. |
 | `addElevationProfileToTravelTime` verwendet die Elevation API und speichert Höhenprofil/-summen. | Maps-Hauptbedingungen und die für dieses Konto geltenden servicebezogenen Regeln; keine automatische Inhaltslizenz aus einer Backend-DPA. | Auch Höhenwerte/abgeleitete Werte in den Speicher-/Lizenzabgleich aufnehmen; keine generelle Langzeitlizenz behaupten. |
 
@@ -84,6 +84,63 @@ Die [Update-Erläuterung](https://expo.dev/privacy-explained) nennt bei Updatean
 **GitHub Free/Pages:** Quellcode/Actions und die separate Informationswebsite sind von der App-Datenbank zu trennen. [GitHub Terms](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service), [Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) und [Pages-Dokumentation](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages) sind öffentlich dokumentiert. Der [veröffentlichte GitHub-DPA](https://github.com/customer-terms/github-data-protection-agreement) bezieht sich auf das GitHub Customer Agreement und Online Services unter einem schriftlichen/ausgeführten Vertrag; seine bloße Existenz belegt keinen individuellen DPA-Abschluss für ein persönliches Free-Konto. Kein zusätzlicher App-Hosting-Auftragsverarbeiter allein wegen eines öffentlichen Git-Repositorys behaupten; Website-Besucherdaten separat in Website-PR 3 abbilden.
 
 **STRATO:** Bestätigt sind Domain und E-Mail, kein App-Backendhosting. Die [STRATO-Datenschutzhinweise](https://www.strato.de/datenschutz/) erläutern auch die Rolle als Auftragsverarbeiter und verweisen auf die AVV. Aus „Free-Tarife“ bei den Cloud-Diensten folgt keine kostenlose Domain-/Mailvertragsart. Individuelles Domain-/Mailpaket und dessen AVV bleiben gesondert zuzuordnen; Website-/Mailverträge nicht fälschlich in den Supabase- oder Google-Vertrag hineinlesen.
+
+## Vertiefung: bereits selbst klärbare technische und vertragliche Punkte
+
+Weitere Nachprüfung am 30. Oktober 2026, Projektstand `e8c4149`. Die folgenden Ergebnisse grenzen die offenen Aufgaben enger ein; die genannten Codepfade wurden erneut direkt geprüft.
+
+### Auth0: Management-Löschung ist nicht auf 1.000 M2M-Tokens pro Monat begrenzt
+
+Die [offizielle Token-Dokumentation](https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens) und ihre [Markdown-Fassung](https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens.md), Abschnitt „Quota“, nehmen Tokens für **interne Auth0-Audiences** von der Tokenquote aus. Der Löschworker fordert genau diese Management-Audience an: `https://<Auth0-Tenant>/api/v2/` mit `delete:users` in [account-privacy.js](../backend/hwb/srv/account-privacy.js). Das ist eine andere Audience als die Custom-API-Kennung der App.
+
+**Damit ist keine pauschale Upgrade-Aufgabe wegen einer 1.000er-M2M-Quote für diesen Löschworker begründet.** Die Ausnahme betrifft die Tokenquote, nicht beliebig viele HTTP-Aufrufe: Tenant-/Endpoint-Rate-Limits gelten weiter. Der Code fordert derzeit bei jedem Löschversuch ein neues Management-Token an. Eine Wiederverwendung bis kurz vor `expires_in` sowie ein angemessener Umgang mit 429/Retry-After sind technische Optimierungspunkte; sie sind kein Nachweis eines erforderlichen Bezahltarifs. Der dauerhafte Queue-/Scheduler-Betrieb bleibt nötig.
+
+Die DPA-Frage wird hierdurch **nicht** beantwortet. Auch `https://auth0.com/terms` hilft nicht als vermeintlich ältere SaaS-Vertragsfassung: Beim erneuten Abruf leitete die URL auf [Oktas Website Terms of Service](https://www.okta.com/legal/terms-of-service/) weiter, Stand Juli 2026. Diese regeln ausdrücklich die Website und verweisen Produkte/Dienste/Free Trials auf separate Vereinbarungen. Die recherchierte PSS-/MSA-Free-Ausnahme ist damit nicht aufgehoben. Auch das [offizielle Archiv älterer Vereinbarungen](https://www.okta.com/legal/agreements/prior-agreement-versions/) liefert ohne Konto-/Versionszuordnung keine Annahmeerklärung für dieses Konto.
+
+### Auth0: DPF-Behauptung, Registerstatus und DPA sind verschiedene Nachweise
+
+Die [aktuelle Okta Privacy Policy](https://www.okta.com/legal/privacy-policy/) beschreibt Auth0 als Okta-Tochter und erklärt die Teilnahme an EU-U.S. DPF, UK Extension und Swiss-U.S. DPF. Für die Verarbeitung im Auftrag der App verweist sie ausdrücklich auf die Verantwortung des jeweiligen Kunden. Die Policy ist damit kein Ersatz für den Nachweis eines passenden Art.-28-Vertrags.
+
+Ein Link auf das [offizielle öffentliche Okta-Registerprofil](https://www.dataprivacyframework.gov/participant/9734) wurde zusätzlich ermittelt. Der direkte Abruf lieferte allerdings nur die JavaScript-Anwendung, keinen auslesbaren unternehmensbezogenen Zertifizierungsstatus. Deshalb wird hier weiterhin **keine unabhängige Bestätigung von aktivem Status, Gültigkeitsdatum oder abgedeckten Gesellschaften** behauptet. Herstellerbehauptung und behördlicher Registerbeleg werden getrennt geführt. Selbst ein bestätigter Transfermechanismus ersetzt den Auftragsverarbeitungsvertrag nicht; siehe Abschnitt 3.3 der [EDPB-FAQ für europäische Unternehmen](https://www.edpb.europa.eu/system/files/documents/2024-07/edpb_dpf_faq-for-businesses_en.pdf).
+
+### Maps: die Bestandsausnahme lässt sich mit der Projekthistorie eingrenzen
+
+Google erläutert in der [EEA-Migrationsanleitung](https://developers.google.com/maps/comms/eea/faq), dass Integrationen mit neu verwendeter Funktionalität, neuen Methoden/Antwortfeldern oder geändertem Zusammenspiel mit Drittanbieterdiensten aus dem unveränderten Zustand wechseln können. Laut dieser Anleitung behandelt Google die Integrationen eines Google-Projekts gemeinsam; bei materieller Änderung wird die Annahme der EEA-Bedingungen durch eine berechtigte Person in der Console relevant. Reine Fehler-/Kompatibilitätskorrekturen ohne neue Funktionalität sind davon zu unterscheiden. Die aktuellen Vertragsbedingungen bleiben gegenüber erläuternden/historischen FAQ maßgeblich.
+
+Die Repository-Historie liefert dazu konkrete Belege:
+
+| Funktion | Einführung im Repository | Schluss für dieses Projekt |
+| --- | --- | --- |
+| `routes.googleapis.com/directions/v2:computeRoutes` | [e6e8ba0, 10. April 2024](https://github.com/JanTristanH/harzer-wander-buddy/commit/e6e8ba0) | Die Routingintegration ist älter als der EEA-Stichtag. Das allein beweist ihren heutigen Vertragsstatus nicht. |
+| `places.googleapis.com/v1/places:searchText` | [b323f493, 5. April 2026](https://github.com/JanTristanH/harzer-wander-buddy/commit/b323f493096fc317215a18781568b12c831dfc2d) | Neue Places-Funktionalität nach dem 8. Juli 2025. Sie kann nicht ohne Weiteres als unverändert vor dem Stichtag bestehende Places-Integration behandelt werden. |
+
+**Verbleibende Kontofrage ist damit präzise:** Welches Google-Projekt/Billing-Konto bedient diese tatsächlich deployte Integration, und wann wurden dafür die EEA-Bedingungen angenommen? Der Code und Git-Zeitstempel belegen weder Deployment noch Console-Annahme. Eine pauschale Bestandsausnahme nur wegen eines alten API-Keys oder Projekt-Erstellungsdatums ist kein geeigneter Nachweis.
+
+### Maps: Routendarstellung muss nicht pauschal auf Google-Karten wechseln
+
+Die [Routes-EEA-Anleitung](https://developers.google.com/maps/comms/eea/routes) und aktuelle EEA Service Terms § 20.1 betreffen die Verwendung von **description/steps** im Kartenkontext. Der konkrete Fieldmask in [hwb-service.js](../backend/hwb/srv/hwb-service.js) fordert dagegen ausschließlich `routes.duration,routes.distanceMeters,routes.polyline` an.
+
+Daraus folgt für den dokumentierten EEA-Fall: Die genannte description/steps-Beschränkung trifft diesen Antwortumfang nicht. Aus ihr folgt weder eine pauschale Pflicht, die OSM-/Apple-Karte auszutauschen, noch das Verbot jeder gezeichneten Routenlinie. **Davon unabhängig** bleiben die Speichergrenzen für Koordinaten (§ 20.2, bis zu 30 Tage), korrekte Attribution und die übrigen geltenden Bedingungen einzuhalten. Eine darstellbare Linie ist keine Erlaubnis zur zeitlich unbegrenzten Datenbankkopie.
+
+### Maps: konkrete Optionen für die Places-Suche
+
+Die [Places-EEA-Anleitung](https://developers.google.com/maps/comms/eea/places) bestätigt, dass auch Text Search und sowohl neue als auch alte Places-APIs betroffen sind. Ihr Kartenbegriff umfasst nicht nur Marker direkt auf einer Karte, sondern auch zugeordnete Anzeigen und Verlinkungen. Ein Wechsel von OpenStreetMap auf eine Google-Karte würde die Einschränkung für Places-Namen/-Adressen unter diesen EEA-Regeln deshalb allein nicht lösen.
+
+- **Koordinaten-/ID-Pfad:** Latitude, Longitude und Place ID dürfen nach der EEA-Ausnahme im Kartenkontext verwendet werden. Namen/Adressen und andere Places-Inhalte dürfen dabei nicht über eine gekoppelte Suchliste oder Detailkarte wieder in die Kartenansicht gelangen. Der übrige Einsatzzweck muss außerdem den [EEA Permitted Uses](https://cloud.google.com/terms/maps-platform/eea-places-api-permitted-uses), Stand 4. Juni 2025, entsprechen. Eine beliebige touristische POI-Suche fällt nicht allein wegen des Namens „Suche“ automatisch unter jede dort aufgezählte Verwendung.
+- **Places UI Kit:** Die aktuelle EEA-Regel nimmt das offizielle UI Kit von den genannten Places-Anzeigebeschränkungen aus. Google beschreibt Varianten für JavaScript, Android und iOS; die [JavaScript-Dokumentation](https://developers.google.com/maps/documentation/javascript/places-ui-kit/overview) ist verlinkt. Das ist ein konkreter Integrationsweg auch für Drittanbieterkarten, kein allgemeiner Freibrief für die bestehende eigene Text-Search-/JSON-UI oder deren Datenbankcache. Im React-Native-Projekt ist diese Integration noch nicht implementiert; Preis-/SKU-Grenzen separat abgleichen.
+- **Eigene/anders lizenzierte Ortssuche:** Ein alternativer Anbieter oder eigener OSM-basierter Dienst kann ebenfalls ein Lösungspfad sein, erfordert aber dessen konkrete Betriebs-/Lizenzbedingungen. Es wird hier kein ungeprüfter kostenloser Ersatzdienst als bereits geeignet erklärt.
+
+### Maps: Lesegültigkeit ist noch keine Datenlöschung
+
+Der erneute vollständige Codeabgleich für `PlaceSearchCache` ergibt: `expiresAt` entscheidet in `searchPlacesByName` nur, ob ein gespeicherter Treffer noch gelesen wird. Nach Ablauf wird bei erneuter Suche ein Provideraufruf ausgeführt und derselbe Schlüssel überschrieben. Ein nie wieder angefragter abgelaufener Eintrag wird dadurch **nicht physisch gelöscht**. Der regelmäßige Worker bereinigt `RouteCalculationRequest` und abgeschlossene Kontolöschmarker, aber nicht abgelaufene `PlaceSearchCache`-Zeilen. Die vorhandene Löschung des Caches bei Kontolöschung ist kein allgemeiner Ablauf-Löschlauf.
+
+Daher ist die bisherige Angabe „sieben Tage Cache“ als **sieben Tage Lesegültigkeit**, nicht als nachgewiesene maximale Datenbankaufbewahrung zu verstehen. Ein belastbarer technischer Abnahmepunkt lautet:
+
+1. Nur tatsächlich erlaubte Providerfelder persistieren; sieben Tage TTL machen unzulässige Namen-/Adresskopien nicht zulässig.
+2. Abgelaufene Datensätze in einem verlässlich ausgeführten Bereinigungslauf physisch löschen und den Zustand mit nie erneut angefragten alten Testeinträgen prüfen.
+3. Für `TravelTimes` Herkunft und Erfassungszeit ergänzen, damit gespeicherte Google-Koordinaten rechtzeitig erneuert/gelöscht werden können. Eigene und fremde Datenquellen dabei nachvollziehbar unterscheiden.
+
+Diese Nachprüfung ändert keinen produktiven Datenbestand und stellt noch keine Umsetzung dieser zusätzlichen technischen Punkte dar.
 
 ## Was noch zu tun bleibt, ohne erneut öffentliche Verträge suchen zu müssen
 

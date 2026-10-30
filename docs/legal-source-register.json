@@ -7,7 +7,8 @@
     "Public-source research only; no signature or acceptance performed.",
     "SHA-256 identifies fetched response bytes, not account acceptance. HTML may contain dynamic/navigation content.",
     "Failed probes, soft 404 pages and redirects to generic search/index pages are not treated as contract evidence.",
-    "Document versions are transcribed from the source or identified as retrieval-only."
+    "Document versions are transcribed from the source or identified as retrieval-only.",
+    "Follow-up: government DPF public profile returned only an application shell. No active-status, expiry-date or covered-entity certification is asserted from that response. Private API 401 responses were not used as evidence."
   ],
   "sources": [
     {
@@ -459,6 +460,149 @@
       "sha256": "a19574f7229b71a9bf1c2d02266d2aafc45075d7ce33e4b5c64e07bcb350d73f",
       "bytes": 185507,
       "document_version": "STRATO Datenschutz, Abruf 2026-10-30"
+    },
+    {
+      "id": "auth0-management-quota-md",
+      "url": "https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens.md",
+      "final_url": "https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens.md",
+      "retrieved_at": "2026-10-30T20:05:24.804485+00:00",
+      "status": 200,
+      "content_type": "text/markdown; charset=utf-8",
+      "sha256": "b9f1dede7f23753a756f01f8e302fea1817a92313718a07a20ee9d52f12bb2b8",
+      "bytes": 3754,
+      "document_version": "Management API Access Tokens, Abschnitt Quota; Abruf 2026-10-30",
+      "evidence": [
+        {
+          "section": "Quota",
+          "quote": "do not count toward your quota."
+        }
+      ]
+    },
+    {
+      "id": "auth0-old-selfservice-terms",
+      "url": "https://auth0.com/terms",
+      "final_url": "https://www.okta.com/legal/terms-of-service/",
+      "retrieved_at": "2026-10-30T20:05:24.804097+00:00",
+      "status": 200,
+      "content_type": "text/html;charset=utf-8",
+      "sha256": "600f8125e75be59256a7e06365401264649d409106ed1d8f942fbec4db88554a",
+      "bytes": 270493,
+      "document_version": "Redirect von auth0.com/terms zu Okta Website Terms of Service; Last Updated July 2026"
+    },
+    {
+      "id": "okta-prior-contracts",
+      "url": "https://www.okta.com/legal/agreements/prior-agreement-versions/",
+      "final_url": "https://www.okta.com/legal/agreements/prior-agreement-versions/",
+      "retrieved_at": "2026-10-30T20:03:53.383673+00:00",
+      "status": 200,
+      "content_type": "text/html;charset=utf-8",
+      "sha256": "397b568bc83c2e3d43b0541581a1e5fb5a90fed6ecc4fce65109e482de7b3780",
+      "bytes": 257660,
+      "document_version": "Offizielles Archiv älterer Vertragsfassungen, Abruf 2026-10-30"
+    },
+    {
+      "id": "okta-privacy-current",
+      "url": "https://www.okta.com/legal/privacy-policy/",
+      "final_url": "https://www.okta.com/legal/privacy-policy/",
+      "retrieved_at": "2026-10-30T20:03:53.382715+00:00",
+      "status": 200,
+      "content_type": "text/html;charset=utf-8",
+      "sha256": "1fbc0bc44e18b5929452068ab4fe43dc234f011b036f903fb77ea36eb972c115",
+      "bytes": 420217,
+      "document_version": "Privacy Policy; Last updated June 2026"
+    },
+    {
+      "id": "maps-eea-places-detail",
+      "url": "https://developers.google.com/maps/comms/eea/places",
+      "final_url": "https://developers.google.com/maps/comms/eea/places",
+      "retrieved_at": "2026-10-30T20:03:53.384154+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "84590da7cd6054743b29bac1e5323ad5ba7b44c2e8ed667163c8c6b0a618bc46",
+      "bytes": 192457,
+      "document_version": "Places-EEA-Integrationsanleitung; aktuelle Service Terms gehen vor"
+    },
+    {
+      "id": "maps-eea-routes-detail",
+      "url": "https://developers.google.com/maps/comms/eea/routes",
+      "final_url": "https://developers.google.com/maps/comms/eea/routes",
+      "retrieved_at": "2026-10-30T20:03:53.384615+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "7bb228a2f6037617ae7672a8807dd58754ba1c895d47b3b18c17646951aca679",
+      "bytes": 186657,
+      "document_version": "Routes-EEA-Integrationsanleitung; aktuelle Service Terms gehen vor"
+    },
+    {
+      "id": "maps-places-permitted-current",
+      "url": "https://cloud.google.com/terms/maps-platform/eea-places-api-permitted-uses",
+      "final_url": "https://cloud.google.com/terms/maps-platform/eea-places-api-permitted-uses",
+      "retrieved_at": "2026-10-30T20:04:28.013792+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "a2bb33275c915535260560bd56d3785487c6d692ed7399b7c69367335b49ceb8",
+      "bytes": 2224541,
+      "document_version": "Places API EEA Permitted Uses; Last modified June 4, 2025"
+    },
+    {
+      "id": "maps-places-ui-kit-web",
+      "url": "https://developers.google.com/maps/documentation/javascript/places-ui-kit/overview",
+      "final_url": "https://developers.google.com/maps/documentation/javascript/places-ui-kit/overview",
+      "retrieved_at": "2026-10-30T20:08:21.939574+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "22b17867931fe53072e03b6f204a1ffccf4c2d4cf6f056bacf75b3d54c9a8c91",
+      "bytes": 256714,
+      "document_version": "Places UI Kit for JavaScript overview; Last updated 2026-10-28 UTC"
+    },
+    {
+      "id": "edpb-dpf-business-faq-pdf",
+      "url": "https://www.edpb.europa.eu/system/files/documents/2024-07/edpb_dpf_faq-for-businesses_en.pdf",
+      "final_url": "https://www.edpb.europa.eu/system/files/documents/2024-07/edpb_dpf_faq-for-businesses_en.pdf",
+      "retrieved_at": "2026-10-30T20:09:05.610205+00:00",
+      "status": 200,
+      "content_type": "application/pdf",
+      "sha256": "722b99fb4a1020dbaaf6dad5fd1132530957732091cd37f9682ba1eddebc9944",
+      "bytes": 281378,
+      "document_version": "EDPB FAQ for European Businesses; adopted 16 July 2024, Abschnitt 3.3",
+      "evidence": [
+        {
+          "section": "3.3, Transfers to a company in the U.S. acting as a processor",
+          "summary": "Article-28 data-processing agreement required regardless of DPF self-certification."
+        }
+      ]
+    },
+    {
+      "id": "dpf-okta-public-profile",
+      "url": "https://www.dataprivacyframework.gov/participant/9734",
+      "final_url": "https://www.dataprivacyframework.gov/participant/9734",
+      "retrieved_at": "2026-10-30T20:06:15.553834+00:00",
+      "status": 200,
+      "content_type": "text/html",
+      "sha256": "a1d10aec3d5da8cd09194dea5356d1922c05bcccb0fc377c94c92ad8a09bca42",
+      "bytes": 2116,
+      "document_version": "Öffentliches Registerprofil /participant/9734; nur JavaScript-Shell abrufbar",
+      "evidence_status": "link_target_only_no_certification_status_observed"
+    }
+  ],
+  "follow_up_project_commit": "e8c41498d0c9d38a30ff89c7ae1cf92e58f7b456",
+  "follow_up_code_findings": [
+    {
+      "file": "backend/hwb/srv/account-privacy.js",
+      "finding": "Management token audience is the internal Auth0 tenant /api/v2/ endpoint; quota exception applies to that audience, separate from API rate limits."
+    },
+    {
+      "file": "backend/hwb/srv/hwb-service.js",
+      "finding": "Routes fieldmask requests only routes.duration,routes.distanceMeters,routes.polyline, not description or steps."
+    },
+    {
+      "file": "backend/hwb/srv/hwb-service.js",
+      "finding": "Places expiresAt gates cache reads; no general scheduled purge of expired PlaceSearchCache found in the referenced project commit."
+    },
+    {
+      "commit": "b323f493096fc317215a18781568b12c831dfc2d",
+      "commit_date": "2026-04-05",
+      "finding": "Introduces places.googleapis.com/v1/places:searchText; repository evidence, not proof of deployment or Google Console acceptance."
     }
   ]
 }

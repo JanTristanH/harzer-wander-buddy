@@ -121,3 +121,15 @@ Lokale Verifikation nach Zusammenführung mit `develop`: 234 App-Tests in 44 Sui
 Auch der Produktions-Web-Export mit SSO und dem konfigurierten Produktions-Backendziel war erfolgreich. Es wurde dabei kein Deployment ausgelöst.
 
 Der anschließend auf `develop` hinzugekommene Iframe-Schutz (#105) ist ebenfalls übernommen. Die Sicherheitsheader werden vor den öffentlichen Rechtstexten gesetzt; die Frame-Protection-Tests prüfen nun ausdrücklich auch diese Routen.
+
+## Vertiefung am 30. Oktober 2026
+
+Der [vertiefte Abgleich](provider-contracts-free.md#vertiefung-bereits-selbst-klärbare-technische-und-vertragliche-punkte) grenzt weitere Aufgaben ein:
+
+- Auth0s interne Management-Audience zählt laut offizieller Token-Dokumentation nicht zur monatlichen M2M-Tokenquote. Für den implementierten Löschworker ist ein pauschales Upgrade wegen einer 1.000er-M2M-Quote nicht begründet; API-Rate-Limits gelten unabhängig davon.
+- Die Routes-EEA-Anzeigebeschränkung betrifft description/steps. Diese Felder werden im Projekt nicht angefordert; daraus folgt kein pauschaler Bedarf, OSM-/Apple-Karten auszutauschen. Die Koordinaten-Speichergrenze bleibt zu beachten.
+- Die Git-Historie belegt neue Places-Textsuche am 5. April 2026. Das Alter des Google-Projekts allein belegt daher keinen unveränderten Bestand für alle heutigen Funktionen. Deployment, Billing-Land und Console-Annahme bleiben zuzuordnen.
+- `PlaceSearchCache.expiresAt` steuert nur die Lesegültigkeit. Es fehlt ein allgemeiner physischer Löschlauf für abgelaufene, nie erneut angefragte Cachezeilen. Die bisher genannten sieben Tage sind deshalb keine bewiesene maximale Datenbankaufbewahrung.
+- Die EDPB-FAQ, Abschnitt 3.3, bestätigt: Auch bei DPF-zertifizierten US-Auftragsverarbeitern ist ein Art.-28-Vertrag erforderlich. Hersteller-DPF-Aussage und auffindbares Registerprofil lösen die Auth0-Free-DPA-Frage nicht. Aus der hier nur als JavaScript-Shell abrufbaren Registerseite wird kein aktiver Zertifizierungsstatus abgeleitet.
+
+Öffentliche Quellen und diese Codebefunde sind im Quellenregister ergänzt. Diese Runde ändert ausschließlich die Dokumentation; zusätzliche Cache-/UI-/Speicheranpassungen sind damit noch nicht implementiert und keine Anbietervereinbarung wurde abgeschlossen.
