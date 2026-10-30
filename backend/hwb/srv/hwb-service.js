@@ -126,6 +126,9 @@ module.exports = class api extends cds.ApplicationService {
     this.before("UPDATE", "StampNotes", validateAndNormalizeStampNoteUpdate.bind(this))
     this.on("CREATE", "StampNotes", upsertStampNote.bind(this))
 
+    require('./account-privacy').registerAccountPrivacy(this);
+    require('./community-safety').registerCommunitySafety(this);
+
     return super.init()
   }
 }
@@ -262,7 +265,7 @@ async function onTourRead(req, next) {
 
   const groupUserIds =
     groupFilterStampings && groupFilterStampings.trim().length > 0
-      ? groupFilterStampings.split(',').map(u => u.trim())
+      ? await require('./community-safety').visibleUserIds(req, groupFilterStampings.split(',').map(u => u.trim()))
       : [req.user.id];
 
   const result = await addGroupDetailsToTours(db, tours, groupUserIds, req.user.id);
@@ -386,7 +389,7 @@ async function onStampboxesRead(req, next) {
 
   const groupUserIds =
     groupFilterStampings && groupFilterStampings.trim().length > 0
-      ? groupFilterStampings.split(',').map(u => u.trim())
+      ? await require('./community-safety').visibleUserIds(req, groupFilterStampings.split(',').map(u => u.trim()))
       : [req.user.id];
 
   const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
@@ -995,7 +998,7 @@ async function calculateHikingRoute(req) {
     const groupFilterStampings = req.data.groupFilterStampings;
     const groupUserIds =
       groupFilterStampings && groupFilterStampings.trim().length > 0
-        ? groupFilterStampings.split(',').map(u => u.trim())
+        ? await require('./community-safety').visibleUserIds(req, groupFilterStampings.split(',').map(u => u.trim()))
         : [req.user.id];
 
     results = await addGroupDetailsToTours(db, results, groupUserIds, req.user.id);
@@ -1154,26 +1157,22 @@ function estimateWalkingDurationSeconds(distanceMeters) {
 }
 
 async function determineStartingParking(params) {
-  return new Promise(async (resolve, reject) => {
-
-    const { RouteCalculationRequest } = this.entities('hwb.db');
-    let calculationRequest = {
-      ID: uuidv4(),
-      latitude: params.latitudeStart,
-      longitude: params.longitudeStart
-    }
-    await INSERT(calculationRequest).into(RouteCalculationRequest);
-
-    const { NeighborsCalculationRequestParking } = getApiEntities(this) || {};
-    if (!NeighborsCalculationRequestParking) {
-      reject(new Error("Unable to resolve NeighborsCalculationRequestParking view."));
-      return;
-    }
-    let parking = await SELECT.from(NeighborsCalculationRequestParking)
-      .where({ ID: calculationRequest.ID })
-      .limit(2);
-    resolve(parking);
-  });
+  const { RouteCalculationRequest } = this.entities('hwb.db');
+  const { NeighborsCalculationRequestParking } = getApiEntities(this) || {};
+  if (!NeighborsCalculationRequestParking) {
+    throw new Error("Unable to resolve NeighborsCalculationRequestParking view.");
+  }
+  const calculationRequest = {
+    ID: uuidv4(), latitude: params.latitudeStart, longitude: params.longitudeStart
+  };
+  await INSERT(calculationRequest).into(RouteCalculationRequest);
+  try {
+    return await SELECT.from(NeighborsCalculationRequestParking)
+      .where({ ID: calculationRequest.ID }).limit(2);
+  } finally {
+    // The position is only needed for this calculation, not a location history.
+    await DELETE.from(RouteCalculationRequest).where({ ID: calculationRequest.ID });
+  }
 }
 
 /** Check if all expected routes are present */

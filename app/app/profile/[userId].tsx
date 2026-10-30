@@ -135,6 +135,7 @@ export default function FriendProfileScreen() {
 
     return {
       mode: 'user',
+      footerButtons: [{ key: 'report-block', label: 'Melden oder blockieren', onPress: () => router.push(`/community-safety?userId=${encodeURIComponent(userId)}` as never) }],
       name: data.name,
       subtitle: `${subtitleBase} • ${subtitleSuffix}`,
       headerAction: {
@@ -377,7 +378,7 @@ export default function FriendProfileScreen() {
         isFetching && !isPending ? 'Aktualisiere Profildaten im Hintergrund...' : undefined,
       showDeferredSkeletons: isPlaceholderData,
     };
-  }, [accessToken, activeFilter, addFriend, canPerformWrites, data, handleMutationError, invalidateRelationshipQueries, isFetching, isMutating, isOffline, isPending, isPlaceholderData, isPullRefreshing, refetch, removeFriend, router, selectedFriendIds]);
+  }, [accessToken, activeFilter, addFriend, canPerformWrites, data, handleMutationError, invalidateRelationshipQueries, isFetching, isMutating, isOffline, isPending, isPlaceholderData, isPullRefreshing, refetch, removeFriend, router, selectedFriendIds, userId]);
 
   if (!userId) {
     return <ProfileErrorState body="Keine Benutzer-ID uebergeben." title="Profil konnte nicht geladen werden" />;

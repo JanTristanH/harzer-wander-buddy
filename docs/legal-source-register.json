@@ -1,0 +1,608 @@
+{
+  "schema_version": 1,
+  "research_date": "2026-10-30",
+  "project_commit": "06e3ff7b37c22a2cda19769fc8eb4dfe1a05d5a2",
+  "account_acceptance_verified": false,
+  "notes": [
+    "Public-source research only; no signature or acceptance performed.",
+    "SHA-256 identifies fetched response bytes, not account acceptance. HTML may contain dynamic/navigation content.",
+    "Failed probes, soft 404 pages and redirects to generic search/index pages are not treated as contract evidence.",
+    "Document versions are transcribed from the source or identified as retrieval-only.",
+    "Follow-up: government DPF public profile returned only an application shell. No active-status, expiry-date or covered-entity certification is asserted from that response. Private API 401 responses were not used as evidence."
+  ],
+  "sources": [
+    {
+      "id": "supabase-terms",
+      "url": "https://supabase.com/terms",
+      "final_url": "https://supabase.com/terms",
+      "retrieved_at": "2026-10-30T18:09:12.841205+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "db06a1a48c5568c0b3bd514aabb5fab740f5699e4a3634393f090c51cfa600cc",
+      "bytes": 130520,
+      "document_version": "Kein verlässlich gerendertes Versionsdatum im abgerufenen Standardtext; Stand des Abrufs maßgeblich.",
+      "evidence": [
+        {
+          "section": "§ 7(b), Customer Data",
+          "quote": "The Parties agree to comply with the Data Processing Addendum, which is incorporated into this Agreement."
+        }
+      ]
+    },
+    {
+      "id": "supabase-dpa",
+      "url": "https://supabase.com/legal/customer-resources/data-processing-addendum",
+      "final_url": "https://supabase.com/legal/customer-resources/data-processing-addendum",
+      "retrieved_at": "2026-10-30T18:09:12.841782+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "6e1efb806add14458ea9cd11c8b8f6e3426273dfdb6b959b8ecdee1dd84d4fbb",
+      "bytes": 104944,
+      "document_version": "Version 1 — August 1, 2026",
+      "evidence": [
+        {
+          "section": "Einleitung",
+          "quote": "This DPA is effective as of the Effective Date of the Agreement."
+        },
+        {
+          "section": "§ 12.2",
+          "quote": "The Parties agree that acceptance of the Agreement shall have the same effect as signing the SCCs."
+        }
+      ]
+    },
+    {
+      "id": "supabase-transfers",
+      "url": "https://supabase.com/legal/privacy-resources/data-residency-and-transfers-faq",
+      "final_url": "https://supabase.com/legal/privacy-resources/data-residency-and-transfers-faq",
+      "retrieved_at": "2026-10-30T18:09:12.842197+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "04868de392490c6dac8a0eba90ae85d49d7f91bbcf55981df8feef9a443e6a68",
+      "bytes": 79447,
+      "document_version": "Öffentliches FAQ, Abruf 2026-10-30"
+    },
+    {
+      "id": "auth0-legal",
+      "url": "https://auth0.com/legal",
+      "final_url": "https://auth0.com/legal",
+      "retrieved_at": "2026-10-30T18:09:12.842626+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "6d9bb1e1e7415eeba65db03491280a15ce63deea5796846d4c1e18fdd5d5372e",
+      "bytes": 230972,
+      "document_version": "Aktueller Verweis auf Okta Legal / Trust & Compliance"
+    },
+    {
+      "id": "auth0-selfservice",
+      "url": "https://www.okta.com/legal/auth0-pss-self-service/",
+      "final_url": "https://www.okta.com/legal/auth0-pss-self-service/",
+      "retrieved_at": "2026-10-30T18:09:54.120706+00:00",
+      "status": 200,
+      "content_type": "text/html;charset=utf-8",
+      "sha256": "6c8e902651dcefdb19fd32058a848f45986de2ad20847c18360a5b28a965a444",
+      "bytes": 255088,
+      "document_version": "Landingpage 2025-06-02; maßgeblich ist das aktuell verlinkte PDF"
+    },
+    {
+      "id": "auth0-pss-pdf",
+      "url": "https://www.okta.com/content/dam/okta---digital/en_us/legal/okta-auth0-self-service-PSS.pdf",
+      "final_url": "https://www.okta.com/content/dam/okta---digital/en_us/legal/okta-auth0-self-service-PSS.pdf",
+      "retrieved_at": "2026-10-30T18:10:18.931565+00:00",
+      "status": 200,
+      "content_type": "application/pdf",
+      "sha256": "486b241dcbdab94e1e792aba8eb75b9b1a5ca9b4f983439ad1a623bba45e803f",
+      "bytes": 230430,
+      "document_version": "Rev 02112026",
+      "evidence": [
+        {
+          "section": "§ 1, Self Service Plans",
+          "quote": "(b) the Auth0 Free Plan."
+        },
+        {
+          "section": "§ 1, Self Service Plans",
+          "quote": "The Auth0 Platform Free Trial shall be considered a Free Trial"
+        }
+      ]
+    },
+    {
+      "id": "okta-msa-pdf",
+      "url": "https://www.okta.com/content/dam/okta---digital/en_us/legal/msa-q1fy26-online-terms-2025-02.pdf",
+      "final_url": "https://www.okta.com/content/dam/okta---digital/en_us/legal/msa-q1fy26-online-terms-2025-02.pdf",
+      "retrieved_at": "2026-10-30T18:10:18.932225+00:00",
+      "status": 200,
+      "content_type": "application/pdf",
+      "sha256": "7538ba90695f1691e7fb6a2022ebff810872b46c17a45e7acc9faf012e540517",
+      "bytes": 158101,
+      "document_version": "MSAQ1FY26; Dateiname msa-q1fy26-online-terms-2025-02.pdf",
+      "evidence": [
+        {
+          "section": "§ 3, Security",
+          "quote": "Except with respect to a Free Trial Service, to the extent that"
+        },
+        {
+          "section": "§ 3, Security",
+          "quote": "the DPA is hereby incorporated"
+        }
+      ]
+    },
+    {
+      "id": "okta-dpa-pdf",
+      "url": "https://www.okta.com/content/dam/okta-www/en_us/legal/trustandcompliance/Okta-customer-data-processing-addendeum.pdf",
+      "final_url": "https://www.okta.com/content/dam/okta-www/en_us/legal/trustandcompliance/Okta-customer-data-processing-addendeum.pdf",
+      "retrieved_at": "2026-10-30T18:10:18.932582+00:00",
+      "status": 200,
+      "content_type": "application/pdf",
+      "sha256": "6b33f46734fb00628c6e4734aded6b5c3657686b45b82f62c321777a2deb1668",
+      "bytes": 332411,
+      "document_version": "Rev 082726",
+      "evidence": [
+        {
+          "section": "Seite 1, Abschlussanleitung",
+          "quote": "Customer must complete the information in the signature box and sign on the signature page."
+        }
+      ]
+    },
+    {
+      "id": "okta-scc-pdf",
+      "url": "https://www.okta.com/content/dam/okta---digital/en_us/legal/okta-c2p-sccs-011426.pdf",
+      "final_url": "https://www.okta.com/content/dam/okta---digital/en_us/legal/okta-c2p-sccs-011426.pdf",
+      "retrieved_at": "2026-10-30T18:10:18.932977+00:00",
+      "status": 200,
+      "content_type": "application/pdf",
+      "sha256": "ac075fbeb92c6873423eb04d98ce20932ea31f7a1477250240bd812f5770b77c",
+      "bytes": 331801,
+      "document_version": "Dateiname okta-c2p-sccs-011426.pdf"
+    },
+    {
+      "id": "okta-free-terms-pdf",
+      "url": "https://www.okta.com/content/dam/okta---digital/en_us/legal/okta-free-trial-service-specific-terms-rev-04-20-2026.pdf",
+      "final_url": "https://www.okta.com/content/dam/okta---digital/en_us/legal/okta-free-trial-service-specific-terms-rev-04-20-2026.pdf",
+      "retrieved_at": "2026-10-30T18:10:44.704236+00:00",
+      "status": 200,
+      "content_type": "application/pdf",
+      "sha256": "c85333f9d9eca404811593c9c27af92f2ae6f0b139958fbf8c146b1823f486c6",
+      "bytes": 110369,
+      "document_version": "Rev 04202026"
+    },
+    {
+      "id": "gcp-terms",
+      "url": "https://cloud.google.com/terms",
+      "final_url": "https://cloud.google.com/terms",
+      "retrieved_at": "2026-10-30T18:09:12.844066+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "b1521254f227a085cb7d311a41536658f84bd2f50d9f184319ba0d8ab33d060f",
+      "bytes": 845523,
+      "document_version": "Last modified October 12, 2026",
+      "evidence": [
+        {
+          "section": "§ 5.2, Protection of Customer Data",
+          "quote": "in accordance with the Cloud Data Processing Addendum"
+        }
+      ]
+    },
+    {
+      "id": "gcp-cdpa",
+      "url": "https://cloud.google.com/terms/data-processing-addendum",
+      "final_url": "https://cloud.google.com/terms/data-processing-addendum",
+      "retrieved_at": "2026-10-30T18:09:13.068244+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "1b979c4e2eec9ab904e602b14fca6b0afc8ba50825ebd7f79861fe6cf712b9b2",
+      "bytes": 913741,
+      "document_version": "Last modified October 30, 2026",
+      "evidence": [
+        {
+          "section": "§ 4.1, Roles of Parties",
+          "quote": "Google is a processor"
+        }
+      ]
+    },
+    {
+      "id": "gcp-entity",
+      "url": "https://cloud.google.com/terms/google-entity",
+      "final_url": "https://cloud.google.com/terms/google-entity",
+      "retrieved_at": "2026-10-30T18:09:13.155853+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "0ea885fb5c7ca775f4c27d9efc9e2737b6a82d785ccc20f6336476c706a195bf",
+      "bytes": 2306534,
+      "document_version": "Aktuelle Vertragsparteienliste, Abruf 2026-10-30"
+    },
+    {
+      "id": "gcp-free",
+      "url": "https://cloud.google.com/free/docs/free-cloud-features",
+      "final_url": "https://docs.cloud.google.com/free/docs/free-cloud-features",
+      "retrieved_at": "2026-10-30T18:09:13.097576+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "e4b5741ad2b2453f95b590c948bab23a00a2bcc9e3a808b79e1b6d2ddbc4096d",
+      "bytes": 181604,
+      "document_version": "Aktuelle Free-Tier-/Free-Trial-Dokumentation, Abruf 2026-10-30"
+    },
+    {
+      "id": "gcp-trial-terms",
+      "url": "https://cloud.google.com/terms/free-trial",
+      "final_url": "https://cloud.google.com/terms/free-trial",
+      "retrieved_at": "2026-10-30T18:10:44.705541+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "69976e03789fb032c2a0a0d8d15285d42b58f2e6b5e6271f323985c0548d5f03",
+      "bytes": 716694,
+      "document_version": "Supplemental Terms and Conditions for Google Cloud Platform Free Trial"
+    },
+    {
+      "id": "gcp-cdpa-accept",
+      "url": "https://support.google.com/cloud/answer/6329727?hl=en",
+      "final_url": "https://support.google.com/cloud/answer/6329727?hl=en",
+      "retrieved_at": "2026-10-30T18:09:54.124157+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "sha256": "f33756f1c2b218078b210ae745a8d0ebce6be41dd1d0aeba3fabf59ba44b6ac1",
+      "bytes": 1608084,
+      "document_version": "Offizielle Anleitung: Opt-in nur bei fehlender Einbeziehung"
+    },
+    {
+      "id": "maps-terms",
+      "url": "https://cloud.google.com/maps-platform/terms",
+      "final_url": "https://cloud.google.com/maps-platform/terms",
+      "retrieved_at": "2026-10-30T18:09:54.122436+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "1dd2767bff8e0237a1a18a3efbb687aa16e42f2f246a30ad13df1e179cd84f58",
+      "bytes": 2433021,
+      "document_version": "Allgemeine Maps-Bedingungen, Abruf 2026-10-30"
+    },
+    {
+      "id": "maps-eea-current",
+      "url": "https://cloud.google.com/terms/maps-platform/eea",
+      "final_url": "https://cloud.google.com/terms/maps-platform/eea",
+      "retrieved_at": "2026-10-30T18:10:18.933404+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "8c8d71f8f88a7b8df35e6b9063e966f6260877159425eeeaad2eff039e845cba",
+      "bytes": 2352433,
+      "document_version": "Last modified August 26, 2026",
+      "evidence": [
+        {
+          "section": "§ 4.5, Data Protection Terms",
+          "quote": "Google and Customer agree to the then-current Google Controller-Controller Data Protection Terms"
+        }
+      ]
+    },
+    {
+      "id": "maps-eea-specific",
+      "url": "https://cloud.google.com/terms/maps-platform/eea/maps-service-terms",
+      "final_url": "https://cloud.google.com/terms/maps-platform/eea/maps-service-terms",
+      "retrieved_at": "2026-10-30T18:10:44.705140+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "8d02c6dff7b58fe9a19d084d33a25b641cda9a5e78734642de8f9a8458e1e90d",
+      "bytes": 2318835,
+      "document_version": "Last modified October 28, 2026",
+      "evidence": [
+        {
+          "section": "§ 15.1, Places",
+          "quote": "Other than latitude, longitude, and place_id, Customer must not use Google Maps Content from the Places API With any Map."
+        },
+        {
+          "section": "§ 20.2, Routes",
+          "quote": "Customer may temporarily cache latitude and longitude values from the Routes API for up to 30 consecutive calendar days"
+        }
+      ]
+    },
+    {
+      "id": "maps-controller",
+      "url": "https://cloud.google.com/maps-platform/terms/maps-controller-terms",
+      "final_url": "https://business.safety.google/controllerterms/",
+      "retrieved_at": "2026-10-30T18:09:13.291782+00:00",
+      "status": 200,
+      "content_type": "text/html",
+      "sha256": "aab8c192b4a043c215301d8d0fe349fbdd08531c1cbb96c0b28c02a3807a8b8e",
+      "bytes": 118987,
+      "document_version": "Google Controller-Controller Data Protection Terms, Abruf 2026-10-30"
+    },
+    {
+      "id": "maps-eea-faq",
+      "url": "https://developers.google.com/maps/comms/eea/faq",
+      "final_url": "https://developers.google.com/maps/comms/eea/faq",
+      "retrieved_at": "2026-10-30T18:10:18.939594+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "ba6fe1823c5c8a7a09541b8bdf119da05c5ea4a3426fc68c83802f73f08996e7",
+      "bytes": 213997,
+      "document_version": "Historisches FAQ; enthält eigenen Hinweis auf mögliche Überholung"
+    },
+    {
+      "id": "expo-terms",
+      "url": "https://expo.dev/terms",
+      "final_url": "https://expo.dev/terms",
+      "retrieved_at": "2026-10-30T18:09:13.292296+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "6c35b65dc4e20725021fe5d628d8ae5563ebb93b0287d1602037536081eb447b",
+      "bytes": 392114,
+      "document_version": "Last updated May 29, 2025; effective June 30, 2025",
+      "evidence": [
+        {
+          "section": "§ 3.2, GDPR",
+          "quote": "module two of the standard contractual clauses"
+        }
+      ]
+    },
+    {
+      "id": "expo-privacy",
+      "url": "https://expo.dev/privacy",
+      "final_url": "https://expo.dev/privacy",
+      "retrieved_at": "2026-10-30T18:09:54.124747+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "a655cc96ffa1e1d7cc90d36583b3e0dad60b3c7206a2718e1cf97bb77d9e0ac1",
+      "bytes": 207003,
+      "document_version": "Last updated October 21st 2025"
+    },
+    {
+      "id": "expo-privacy-explained",
+      "url": "https://expo.dev/privacy-explained",
+      "final_url": "https://expo.dev/privacy-explained",
+      "retrieved_at": "2026-10-30T18:09:54.127873+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "e7f316583611c94a8114611ff2f19c61581daf49132a04066afd4ffd5ebc8141",
+      "bytes": 121629,
+      "document_version": "Technische Erläuterung zu EAS Update, Abruf 2026-10-30"
+    },
+    {
+      "id": "openfreemap-tos-current",
+      "url": "https://openfreemap.org/tos/",
+      "final_url": "https://openfreemap.org/tos/",
+      "retrieved_at": "2026-10-30T18:11:27.138497+00:00",
+      "status": 200,
+      "content_type": "text/html",
+      "sha256": "37b230074596ec6fe967a0cb831a3d1918c8c9435c0fb3576fa5135677b3c1dc",
+      "bytes": 5799,
+      "document_version": "Last Updated: October 14, 2026"
+    },
+    {
+      "id": "openfreemap",
+      "url": "https://openfreemap.org/privacy/",
+      "final_url": "https://openfreemap.org/privacy/",
+      "retrieved_at": "2026-10-30T18:09:13.474383+00:00",
+      "status": 200,
+      "content_type": "text/html",
+      "sha256": "e0f2679385ef59c96a60384c0b6a7618017e11245ae180a06c34bf452143103a",
+      "bytes": 7836,
+      "document_version": "Last Updated: October 8, 2026"
+    },
+    {
+      "id": "osm-tiles",
+      "url": "https://operations.osmfoundation.org/policies/tiles/",
+      "final_url": "https://operations.osmfoundation.org/policies/tiles/",
+      "retrieved_at": "2026-10-30T18:09:13.498041+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "04908a9e2faf70ad3090b3b2db43de100f3ad61243c578413b67fb57ba6b6912",
+      "bytes": 18698,
+      "document_version": "Tile Usage Policy, Abruf 2026-10-30"
+    },
+    {
+      "id": "osm-privacy",
+      "url": "https://osmfoundation.org/wiki/Privacy_Policy",
+      "final_url": "https://osmfoundation.org/wiki/Privacy_Policy",
+      "retrieved_at": "2026-10-30T18:09:13.618956+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "sha256": "78773fac4b210aed1423a775cfe0a4fa1864b99902bdf91167617f9f98225206",
+      "bytes": 76173,
+      "document_version": "OSMF Privacy Policy, Abruf 2026-10-30"
+    },
+    {
+      "id": "apple-maps-terms",
+      "url": "https://www.apple.com/legal/internet-services/maps/terms-en.html",
+      "final_url": "https://www.apple.com/legal/internet-services/maps/terms-en.html",
+      "retrieved_at": "2026-10-30T18:10:19.596740+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "997a5da644f188fce588d5a921ca34b91c26c5117d4c35ebbebd72b009551769",
+      "bytes": 128745,
+      "document_version": "Apple Maps Terms of Use, Abruf 2026-10-30"
+    },
+    {
+      "id": "github-terms",
+      "url": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+      "final_url": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+      "retrieved_at": "2026-10-30T18:10:44.707071+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "21dfbfc240d4bdff4917738dde63853b1714fbe78fe611380e9f0f4f0e9a3b42",
+      "bytes": 366895,
+      "document_version": "GitHub Terms of Service, Abruf 2026-10-30"
+    },
+    {
+      "id": "github-privacy",
+      "url": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+      "final_url": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+      "retrieved_at": "2026-10-30T18:10:18.941855+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "c549e4bc5ae6fa71b69af8b44260979b884c45309f57ff1b9cc3595d0a3260fb",
+      "bytes": 305043,
+      "document_version": "GitHub General Privacy Statement, Abruf 2026-10-30"
+    },
+    {
+      "id": "github-dpa-corporate",
+      "url": "https://github.com/customer-terms/github-data-protection-agreement",
+      "final_url": "https://github.com/customer-terms/github-data-protection-agreement",
+      "retrieved_at": "2026-10-30T18:10:19.117091+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "f2241d44dde82cb31970af9fe8db63c2671bd6f3881ec0ff616c69008efc08a8",
+      "bytes": 337509,
+      "document_version": "GitHub Customer Agreement DPA, Abruf 2026-10-30"
+    },
+    {
+      "id": "github-pages-privacy",
+      "url": "https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages",
+      "final_url": "https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages",
+      "retrieved_at": "2026-10-30T18:11:27.141410+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "d4e85c8168f68785fa6cfa4ac6c5f627362f63f97d142c48fd15cf5dbddb7385",
+      "bytes": 94264,
+      "document_version": "What is GitHub Pages, Abruf 2026-10-30"
+    },
+    {
+      "id": "strato-data",
+      "url": "https://www.strato.de/datenschutz/",
+      "final_url": "https://www.strato.de/datenschutz/",
+      "retrieved_at": "2026-10-30T18:11:27.139281+00:00",
+      "status": 200,
+      "content_type": "text/html",
+      "sha256": "a19574f7229b71a9bf1c2d02266d2aafc45075d7ce33e4b5c64e07bcb350d73f",
+      "bytes": 185507,
+      "document_version": "STRATO Datenschutz, Abruf 2026-10-30"
+    },
+    {
+      "id": "auth0-management-quota-md",
+      "url": "https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens.md",
+      "final_url": "https://auth0.com/docs/secure/tokens/access-tokens/management-api-access-tokens.md",
+      "retrieved_at": "2026-10-30T20:05:24.804485+00:00",
+      "status": 200,
+      "content_type": "text/markdown; charset=utf-8",
+      "sha256": "b9f1dede7f23753a756f01f8e302fea1817a92313718a07a20ee9d52f12bb2b8",
+      "bytes": 3754,
+      "document_version": "Management API Access Tokens, Abschnitt Quota; Abruf 2026-10-30",
+      "evidence": [
+        {
+          "section": "Quota",
+          "quote": "do not count toward your quota."
+        }
+      ]
+    },
+    {
+      "id": "auth0-old-selfservice-terms",
+      "url": "https://auth0.com/terms",
+      "final_url": "https://www.okta.com/legal/terms-of-service/",
+      "retrieved_at": "2026-10-30T20:05:24.804097+00:00",
+      "status": 200,
+      "content_type": "text/html;charset=utf-8",
+      "sha256": "600f8125e75be59256a7e06365401264649d409106ed1d8f942fbec4db88554a",
+      "bytes": 270493,
+      "document_version": "Redirect von auth0.com/terms zu Okta Website Terms of Service; Last Updated July 2026"
+    },
+    {
+      "id": "okta-prior-contracts",
+      "url": "https://www.okta.com/legal/agreements/prior-agreement-versions/",
+      "final_url": "https://www.okta.com/legal/agreements/prior-agreement-versions/",
+      "retrieved_at": "2026-10-30T20:03:53.383673+00:00",
+      "status": 200,
+      "content_type": "text/html;charset=utf-8",
+      "sha256": "397b568bc83c2e3d43b0541581a1e5fb5a90fed6ecc4fce65109e482de7b3780",
+      "bytes": 257660,
+      "document_version": "Offizielles Archiv älterer Vertragsfassungen, Abruf 2026-10-30"
+    },
+    {
+      "id": "okta-privacy-current",
+      "url": "https://www.okta.com/legal/privacy-policy/",
+      "final_url": "https://www.okta.com/legal/privacy-policy/",
+      "retrieved_at": "2026-10-30T20:03:53.382715+00:00",
+      "status": 200,
+      "content_type": "text/html;charset=utf-8",
+      "sha256": "1fbc0bc44e18b5929452068ab4fe43dc234f011b036f903fb77ea36eb972c115",
+      "bytes": 420217,
+      "document_version": "Privacy Policy; Last updated June 2026"
+    },
+    {
+      "id": "maps-eea-places-detail",
+      "url": "https://developers.google.com/maps/comms/eea/places",
+      "final_url": "https://developers.google.com/maps/comms/eea/places",
+      "retrieved_at": "2026-10-30T20:03:53.384154+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "84590da7cd6054743b29bac1e5323ad5ba7b44c2e8ed667163c8c6b0a618bc46",
+      "bytes": 192457,
+      "document_version": "Places-EEA-Integrationsanleitung; aktuelle Service Terms gehen vor"
+    },
+    {
+      "id": "maps-eea-routes-detail",
+      "url": "https://developers.google.com/maps/comms/eea/routes",
+      "final_url": "https://developers.google.com/maps/comms/eea/routes",
+      "retrieved_at": "2026-10-30T20:03:53.384615+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "7bb228a2f6037617ae7672a8807dd58754ba1c895d47b3b18c17646951aca679",
+      "bytes": 186657,
+      "document_version": "Routes-EEA-Integrationsanleitung; aktuelle Service Terms gehen vor"
+    },
+    {
+      "id": "maps-places-permitted-current",
+      "url": "https://cloud.google.com/terms/maps-platform/eea-places-api-permitted-uses",
+      "final_url": "https://cloud.google.com/terms/maps-platform/eea-places-api-permitted-uses",
+      "retrieved_at": "2026-10-30T20:04:28.013792+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "a2bb33275c915535260560bd56d3785487c6d692ed7399b7c69367335b49ceb8",
+      "bytes": 2224541,
+      "document_version": "Places API EEA Permitted Uses; Last modified June 4, 2025"
+    },
+    {
+      "id": "maps-places-ui-kit-web",
+      "url": "https://developers.google.com/maps/documentation/javascript/places-ui-kit/overview",
+      "final_url": "https://developers.google.com/maps/documentation/javascript/places-ui-kit/overview",
+      "retrieved_at": "2026-10-30T20:08:21.939574+00:00",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "sha256": "22b17867931fe53072e03b6f204a1ffccf4c2d4cf6f056bacf75b3d54c9a8c91",
+      "bytes": 256714,
+      "document_version": "Places UI Kit for JavaScript overview; Last updated 2026-10-28 UTC"
+    },
+    {
+      "id": "edpb-dpf-business-faq-pdf",
+      "url": "https://www.edpb.europa.eu/system/files/documents/2024-07/edpb_dpf_faq-for-businesses_en.pdf",
+      "final_url": "https://www.edpb.europa.eu/system/files/documents/2024-07/edpb_dpf_faq-for-businesses_en.pdf",
+      "retrieved_at": "2026-10-30T20:09:05.610205+00:00",
+      "status": 200,
+      "content_type": "application/pdf",
+      "sha256": "722b99fb4a1020dbaaf6dad5fd1132530957732091cd37f9682ba1eddebc9944",
+      "bytes": 281378,
+      "document_version": "EDPB FAQ for European Businesses; adopted 16 July 2024, Abschnitt 3.3",
+      "evidence": [
+        {
+          "section": "3.3, Transfers to a company in the U.S. acting as a processor",
+          "summary": "Article-28 data-processing agreement required regardless of DPF self-certification."
+        }
+      ]
+    },
+    {
+      "id": "dpf-okta-public-profile",
+      "url": "https://www.dataprivacyframework.gov/participant/9734",
+      "final_url": "https://www.dataprivacyframework.gov/participant/9734",
+      "retrieved_at": "2026-10-30T20:06:15.553834+00:00",
+      "status": 200,
+      "content_type": "text/html",
+      "sha256": "a1d10aec3d5da8cd09194dea5356d1922c05bcccb0fc377c94c92ad8a09bca42",
+      "bytes": 2116,
+      "document_version": "Öffentliches Registerprofil /participant/9734; nur JavaScript-Shell abrufbar",
+      "evidence_status": "link_target_only_no_certification_status_observed"
+    }
+  ],
+  "follow_up_project_commit": "e8c41498d0c9d38a30ff89c7ae1cf92e58f7b456",
+  "follow_up_code_findings": [
+    {
+      "file": "backend/hwb/srv/account-privacy.js",
+      "finding": "Management token audience is the internal Auth0 tenant /api/v2/ endpoint; quota exception applies to that audience, separate from API rate limits."
+    },
+    {
+      "file": "backend/hwb/srv/hwb-service.js",
+      "finding": "Routes fieldmask requests only routes.duration,routes.distanceMeters,routes.polyline, not description or steps."
+    },
+    {
+      "file": "backend/hwb/srv/hwb-service.js",
+      "finding": "Places expiresAt gates cache reads; no general scheduled purge of expired PlaceSearchCache found in the referenced project commit."
+    },
+    {
+      "commit": "b323f493096fc317215a18781568b12c831dfc2d",
+      "commit_date": "2026-04-05",
+      "finding": "Introduces places.googleapis.com/v1/places:searchText; repository evidence, not proof of deployment or Google Console acceptance."
+    }
+  ]
+}

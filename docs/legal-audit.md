@@ -1,0 +1,143 @@
+# EU Anforderungen und App Store Prüfung
+
+Stand: 30. Oktober 2026. Die abhakbare Betreiber-Anleitung mit konkreten Einrichtungsschritten und Abnahmetests steht in [app-release-checklist.md](app-release-checklist.md). Anbieter, Regionen und aktuelle Aufbewahrungsfristen sind bestätigt und ergänzt. Die technischen Lücken bei Kontolöschung, Datenexport, Rechtstextzugang, Berechtigungen und Nutzerinhalten sind im Quellcode bearbeitet. Eine Veröffentlichung benötigt zusätzlich die unten genannten Betriebsangaben, Auth0-Konfiguration und Store-Einstellungen. Die Datenschutztexte bleiben ausdrücklich ein Entwurf, solange diese Angaben fehlen. Diese Prüfung ersetzt keine verbindliche rechtliche Bewertung des konkreten Betriebs.
+
+## Anforderungen und Ergebnis
+
+| Thema | Vorher | Änderung oder verbleibende Voraussetzung |
+| --- | --- | --- |
+| Anbieterkennzeichnung | Kein erreichbares Impressum in der Expo-App; Website mit Schreibfehler, TMG- und OS-Verweis | App-Impressum mit bestätigtem Einzelunternehmen Nordfpad Solutions – Tristan Heisecke, Anschrift und E-Mail; § 5 DDG; Website separat aktualisieren |
+| Datenschutzinformation | Website-Generatortext; keine App-spezifischen Hinweise im Login/Profil | Öffentliche App-Texte mit Kontodaten, Standort, Fotos, Freundes-/Profilansichten, Karten, Empfängern, Zwecken, Rechtsgrundlagen, Rechten und Löschung; Anbieter, Regionen, Free-Tarife und Fristen bestätigt; vereinbarte Transfergarantien noch zu belegen |
+| Vollständige Kontolöschung | Keine Funktion | Bestätigung in der App, transaktionale Löschung persönlicher App-Daten und dauerhafte Auth0-Löschwarteschlange; kein Supportkontakt erforderlich; produktive Auth0-M2M-Konfiguration noch erforderlich |
+| Eigene Daten erhalten | Kein eigener Export; ganze Tabellen über CSV für angemeldete Nutzer erreichbar | JSON-Export des eigenen Kontos; Tabellenexport auf Administratoren beschränkt |
+| Datenminimierung | Startpositionen blieben in RouteCalculationRequest; unnötige Mikrofonberechtigung | Startpositionen nach Berechnung entfernt; alte Einträge nach spätestens 24 Stunden bereinigt; Mikrofon/Kamera/breiter Fotozugriff im Android-Build blockiert; System-Fotowähler; ungenutzte Face-ID-/Dauerstandort-/Hintergrundfunktionen entfernt |
+| Melden und Blockieren | Keine erkennbaren Melde-/Blockierfunktionen | Meldungen gespeichert, beidseitiger Verbindungsschutz, Ausblendung von Profilen/Touren, Blockierungen verwaltbar; Admin-Meldeliste mit Inhaltsentfernung und Veröffentlichungssperre |
+| Missbrauch von API-Funktionen | Freundschaftsstatus/Absender und teilweise Urheberschaft durch Client beeinflussbar; direkte Profillöschung möglich | Absender/Urheber serverseitig gesetzt, Freundschaften beginnen als unbestätigte Anfragen, Urheberschaft/Verbindungsschlüssel unveränderbar; Freundschafts-/Anfragedaten nur für Beteiligte lesbar; Kontolöschung ausschließlich über Löschaktion |
+| AGB | Keine gesonderten AGB | Keine pauschale EU-Pflicht zu gesonderten AGB. Nutzungshinweise und Inhaltsregeln ergänzt, ohne einen Haftungsausschluss oder eine unbelegte Vertragsannahme zu behaupten. Bei gewünschten Vertrags-AGB: anwaltlich prüfen, vor Vertragsschluss wirksam einbeziehen und Version/Annahme dokumentieren |
+| Einwilligung und Tracking | Freiwillige Standortfreigabe; im App-Code keine Analytics-Initialisierung gefunden | Kein unnötiger pauschaler Cookie-Consent für erforderliche Anmeldung/Offline-Funktionen. OS-Freigabe ersetzt nicht automatisch alle DSGVO-Informations-/Einwilligungspflichten. Website-Analytics und externe Schriften separat prüfen |
+| Verbraucherrecht | Im Code keine Zahlungen/Abonnements gefunden | Keine erfundenen Preis-/Widerrufs-/Abo-Klauseln ergänzt. Digitale Dienste gegen personenbezogene Daten können trotzdem dem Verbraucherrecht unterliegen; Vertragsmodell und Informationspflichten individuell bewerten |
+| Barrierefreiheit | Kein Nachweis einer vollständigen Prüfung | Neue Seiten besitzen beschriftete Bedienelemente und skalierende Texte. Anwendbarkeit von BFSG/EAA hängt u. a. vom Dienst/Vertragsmodell und möglichen Kleinstunternehmensausnahmen ab; kein pauschales Urteil, dass jede Wander-App erfasst ist |
+| DSA | Nutzerprofile, Bilder und Tourennamen sichtbar | Händlerstatus in Store-Konsolen verifizieren; Hosting-/Plattformrolle, Meldeprozess, Moderationsbegründung, Beschwerdeweg und mögliche Kleinunternehmensausnahmen rechtlich einordnen. Melden/Blockieren allein ist kein Nachweis vollständiger DSA-Konformität |
+
+Grundlagen: [§ 5 DDG](https://www.gesetze-im-internet.de/ddg/__5.html), [DSGVO und Betroffenenrechte](https://commission.europa.eu/law/law-topic/data-protection/information-individuals_en), [§ 25 TDDDG](https://www.gesetze-im-internet.de/ttdsg/__25.html), [European Accessibility Act](https://commission.europa.eu/strategy-and-policy/policies/justice-and-fundamental-rights/disability/european-accessibility-act-eaa_en).
+
+## Separate Website
+
+Die Website-Änderungen liegen im separaten [Website-PR #3](https://github.com/JanTristanH/harzer-wander-buddy-website/pull/3). Dort wurden Impressum/Datenschutz überarbeitet, die bestätigte USt-ID ergänzt und Tally/Formspree entfernt. Die STRATO-AVV hat der Betreiber als automatisch einbezogen bestätigt. Dieser App-PR verändert die Website nicht.
+
+## Wahrscheinliche Beanstandungen bei Apple und Google Play
+
+| Prüfpunkt | Stand im Quellcode | Noch vor Einreichung |
+| --- | --- | --- |
+| Kontolöschung innerhalb der App | Umgesetzt unter Profil → Konto und Datenschutz | Mit produktivem Auth0-Testkonto im Release-Build prüfen; Providerkonto wirklich entfernen, Wartezeit/Fehler sichtbar und organisatorisch überwacht |
+| Öffentliche Lösch-URL für Google Play | Backendseite `/legal/konto-loeschen` mit direktem Web-App-Zugang und Kontaktweg | Öffentlich unter HTTPS deployen, URL im Play-Formular hinterlegen und ohne installierte App testen |
+| Öffentliche Datenschutz-URL und Zugang in der App | `/legal/datenschutz`, Links im Login/Gastprofil/Konto | Entwurfsangaben vervollständigen; URL in beiden Konsolen hinterlegen |
+| Privacy Labels / Data Safety | Keine Store-Konsolendaten in diesem Projekt | Nutzerdaten, Standort, Inhalte, Fotos, Kennungen, Dienstleister und SDK-Daten wahrheitsgemäß deklarieren; Datensicherheit/Transportverschlüsselung mit Release verifizieren |
+| Benutzerinhalte | Melden, Blockieren und Administrationsfunktionen ergänzt | Zeitnahe Moderation betreiben, Kontakt erreichbar halten, Filterung problematischer Inhalte und öffentliche Inhaltsregeln prüfen; keine Garantie einer Store-Freigabe |
+| Login-Anbieter | Auth0-Tenant-Einstellungen außerhalb des Projekts | Bei relevantem Drittanbieter-Login Apples Vorgaben 4.8 prüfen. Wenn Sign in with Apple angeboten wird, Apple-Tokens bei Löschung widerrufen; hierfür fehlt im Projekt die Provider-Token-Verwaltung |
+| Unnötige Berechtigungen | Mikrofon/Kamera/breiter Fotozugriff entfernt bzw. blockiert | Neuen nativen Build erstellen und finales Manifest/Info.plist prüfen; Expo Go zeigt nicht die endgültigen Berechtigungen |
+| Native SDK-Privacy-Manifest/Required Reason APIs | Expo/SDK-Abhängigkeiten vorhanden | Release-Archive prüfen; notwendige Privacy Manifests, SDK-Signaturen und API-Gründe bestätigen. Aus dem Web-Build nicht ableitbar |
+| EU-Händlerstatus | Betreiber bekannt | Als gewerblicher Anbieter Status und Kontaktdaten in App Store Connect/Play Console angeben und verifizieren |
+| Review-Zugang und Vollständigkeit | Lokaler Testzugang vorhanden | Separates funktionsfähiges produktives Review-Konto bereitstellen, Backend verfügbar halten; lokale Basic-Testdaten aus AGENTS.md sind kein produktiver Store-Zugang |
+| URLs, HTTP, native Auth-Redirects, Tablets | Nur lokale Web-/API-Tests durchgeführt | Native Release-Builds auf iOS/Android inkl. verweigerter Standortfreigabe, Offline-Zustand, Deep Links, Tablet-Layout und HTTPS-Ziel testen; localhost darf nicht im ausgelieferten Backend-Ziel verbleiben |
+| Sicherheit bei Wanderrouten und Kartenrechte | Sicherheitshinweise ergänzt; Webkarten-Attribution vorhanden | Native Google-/Apple-Attribution, Bildrechte und verwendete Kartendatenlizenzen im Release prüfen |
+
+Maßgebliche Store-Quellen: [Apple Review Guidelines 1.2, 2.1, 4.8 und 5.1](https://developer.apple.com/app-store/review/guidelines/), [Apple Kontolöschung](https://developer.apple.com/support/offering-account-deletion-in-your-app/), [Google Play Kontolöschung](https://support.google.com/googleplay/android-developer/answer/13327111), [Apple Privacy Labels](https://developer.apple.com/app-store/app-privacy-details/), [Apple EU-Händlerstatus](https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-trader-requirements).
+
+## Einrichtung und Betrieb
+
+1. Datenbankschema regulär migrieren: neue Tabellen `AccountDeletions` einschließlich `lastAttemptAt`, `UserBlocks`, `ContentReports` und Feld `ExternalUsers.contentRestricted`. Vorher Backup nach dem bestehenden Betriebsverfahren erstellen. Die vorhandene lokale `db.sqlite` wurde für diese Arbeiten nicht migriert; Tests verwenden flüchtige Datenbanken.
+2. Anbieter, Primärregionen, Free-Tarife und Standardeinstellungen sind vom Betreiber bestätigt und in `srv/legal-content.js` hinterlegt. `LEGAL_HOSTING_DETAILS`, `LEGAL_BACKUP_RETENTION`, `LEGAL_AUTH0_RETENTION` und `LEGAL_LOG_RETENTION` sind optionale Overrides für Änderungen. `LEGAL_TRANSFER_DETAILS` benötigt noch die tatsächlich vereinbarten Vertragsparteien, DPA/AV-Verträge und Transfergarantien. Ein US-Tenant kann nicht durch eine pauschale EU-Hosting-Aussage abgedeckt werden.
+3. Dedizierte Auth0-Machine-to-Machine-Anwendung für die Management API mit `delete:users` konfigurieren. Servervariablen `AUTH0_MANAGEMENT_CLIENT_ID` und `AUTH0_MANAGEMENT_CLIENT_SECRET` setzen; niemals im Frontend. `AUTH0_ACCOUNT_DELETION_MODE=dedicated-tenant` erst setzen, nachdem bestätigt wurde, dass das Löschen des Auth0-Nutzers keine Konten anderer Anwendungen mitlöscht. Bei gemeinsamem Tenant muss eine app-spezifische Entkopplung statt der hier implementierten vollständigen Providerlöschung entwickelt werden.
+4. Der Löschworker im Webprozess läuft beim Serverstart und jede Minute, maximal 20 Vorgänge pro Durchlauf. Bei Cloud Run mit anfragebasierter CPU-Zuteilung/Skalierung auf null garantiert dieser Timer keinen weiteren Durchlauf. Für den bestätigten Cloud-Run-Betrieb ist deshalb zusätzlich der unten beschriebene Cloud Run Job mit Cloud Scheduler einzurichten. Offene `AccountDeletions.pendingSubject` überwachen und bei überfälligen Jobs alarmieren; Betreiber muss Ausfälle beheben und gesetzliche Antwortfristen einhalten. Nach Erfolg verbleibt nur der Hash mit Zeitangaben für 30 Tage. API-Tokens und Backend-OIDC-Sitzungen werden maximal 24 Stunden akzeptiert. Eine Löschung räumt keine offline gespeicherten Daten auf anderen Geräten aus der Ferne auf.
+5. Backups nicht als unbegrenztes Archiv verwenden. Gelöschte Daten im vereinbarten Backup-Zyklus entfernen; bei Wiederherstellung Löschaufträge erneut anwenden. Dazu das betriebliche Wiederherstellungsverfahren ergänzen. Auth0-Protokolle und Provider-Backups separat berücksichtigen.
+6. `MOBILE_CORS_ORIGINS` auf produktive Web-Ursprünge begrenzen. Die bisherige unbedingte Freigabe wurde entfernt; lokale Ursprünge werden nur außerhalb des Produktionsprofils erlaubt.
+7. Administratoren sehen unter `/admin/moderation` Meldungen und können nach Prüfung Profilbild/Profilnamen/Tourennamen entfernen und weitere Veröffentlichungen einschränken. Kontakt-, Reaktions-, Begründungs- und Beschwerdeprozess festlegen. Die technisch gespeicherte Meldung ersetzt diesen Betrieb nicht.
+8. `ACCOUNT_DELETION_SCHEDULER_CONFIRMED=true` erst nach Einrichtung und Test des geplanten Cloud Run Jobs setzen. Konfigurationsprüfung: `npm run check:legal-release --prefix backend/hwb`. Sie schlägt bei fehlenden Transferangaben/Löschkonfiguration/Scheduler-Bestätigung/CORS-Allowlist fehl und ist in die Release-Pipeline aufzunehmen. Sie bestätigt keine rechtliche Prüfung oder Store-Freigabe.
+
+## Technische Prüfung
+
+Backend-Integrationstests prüfen öffentliche Rechtstexte, Zugangsschutz, eigenen Export, vollständige Löschung einschließlich Bilder/Verknüpfungen, unveränderte Fremddaten, Wiederanmelde-/Synchronisationsschutz, Wiederholung fehlgeschlagener Providerlöschungen und Melden/Blockieren. App-Tests prüfen ausdrücklich bestätigte Löschung, Sitzungsbeibehaltung bei Fehlern und Gastzugang zu Rechtstexten. Auth0-Löschungen werden in Tests simuliert; es wurden keine produktiven Konten gelöscht.
+
+Prüfergebnis nach Ergänzung der Anbieterangaben: 8 Backend-Tests und 96 App-Tests erfolgreich; TypeScript ohne Fehler; Lint ohne Fehler mit zwei bereits bestehenden Warnungen in `map-primitives.ts`. Web-Export erfolgreich. Gast-Impressum, Gast-Kontoseite, Anmeldung, Nutzung ohne Standortfreigabe und erreichbare Kontoverwaltung wurden im Browser gegen einen isolierten Testserver geprüft. Expo-Introspektion bestätigt nur noch Standort bei Nutzung und Fotoauswahl als iOS-Zugriffshinweise sowie die Entfernung ungenutzter Hintergrund-/Face-ID-Funktionen. Ein natives Store-Release-Archive und reale Auth0-Kontolöschungen sind noch zu verifizieren.
+
+## Bestätigte Anbieter und Aufbewahrung
+
+Der Betreiber hat am 13. Oktober 2026 Auth0 Free (US-4), Supabase Free (eu-west-2) ohne aktivierte Backups/PITR und ohne zusätzliche Datenbank-Backups sowie Google Cloud Logging mit Standardeinstellungen bestätigt. Auth0 Log Streams und eigene Google-Cloud-Log-Exporte sind nicht eingerichtet.
+
+| Dienst | Zweck und primäre Region | Aufbewahrung |
+| --- | --- | --- |
+| Auth0/Okta Free | Anmeldung; US-4 ist eine US-Unterregion, keine EU-Region | Free-Anmelde-/Ereignislogs: 1 Tag. Nutzerprofil wird über Management API gelöscht. Auth0 nennt zusätzlich 14 Monate für verschlüsselte Offline-Sicherungen |
+| Supabase Free | PostgreSQL-Datenbank; eu-west-2 ist London, Vereinigtes Königreich | API-/Datenbanklogs: 1 Tag. Projekt-Backups/PITR sind nicht aktiviert; kein pauschaler 7-Tage-Backup-Zyklus für diesen Free-Tarif behauptet |
+| Google Cloud Run | App-Backend; europe-west1 ist Belgien | Anwendungs-/Dienstlogs im Logging-Standardbucket: 30 Tage; bestimmte administrative Audit-/Systemereignisse im Pflichtbucket: 400 Tage |
+| GitHub Pages | Separate Informationswebsite | Website-Datenschutzerklärung separat an GitHubs Verarbeitung ausrichten |
+| STRATO | Domain und E-Mail, kein Hosting des App-Backends | E-Mail-Kommunikation separat von App-Datenbank und Cloud-Run-Protokollen behandeln |
+
+Quellen: [Auth0 Regionen](https://auth0.com/docs/get-started/auth0-overview/create-tenants), [Auth0 Free-Logfrist](https://auth0.com/pricing), [Auth0 Löschung und Offline-Sicherungen](https://support.auth0.com/center/s/article/When-a-user-is-deleted-is-their-data-removed), [Supabase Regionen](https://supabase.com/docs/guides/platform/regions), [Supabase Free-Logfrist](https://supabase.com/pricing), [Supabase Backups](https://supabase.com/docs/guides/platform/backups), [Cloud Run Regionen](https://cloud.google.com/run/docs/locations), [Cloud Logging Fristen](https://docs.cloud.google.com/logging/quotas).
+
+Der aktuelle [Angemessenheitsbeschluss der EU-Kommission](https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/adequacy-decisions_en) erfasst das Vereinigte Königreich. London ist trotzdem kein EU-Standort. Die Region der Primärdaten allein belegt keine ausschließlich regionale Verarbeitung: Supabase beschreibt zusätzliche Support-/Betriebsverarbeitung und Standardvertragsklauseln im [Datenübermittlungs-FAQ](https://supabase.com/legal/privacy-resources/data-residency-and-transfers-faq). Tatsächlich einbezogene Vertragsparteien, AV-Verträge, US-Transfergarantien und gegebenenfalls zertifizierte Unternehmen müssen im Betreibervertrag geprüft werden; die App-Texte bleiben bis dahin als Entwurf gekennzeichnet.
+
+## Löschjob für Cloud Run
+
+Bei [anfragebasierter Cloud-Run-Abrechnung](https://docs.cloud.google.com/run/docs/configuring/billing-settings) reicht ein JavaScript-Timer nach Ende einer Anfrage nicht als verlässlicher Wiederholungsmechanismus. Der zusätzliche Einstieg `util/runAccountDeletionJob.js` verarbeitet die dauerhafte Warteschlange als eigenständiger Prozess ohne HTTP-Listener. Er protokolliert ausschließlich Zähler und beendet sich mit Fehlerstatus bei fehlender Konfiguration, Providerfehlern oder verbleibenden Löschaufträgen. Die Jobs können nach Fehlern erneut ausgeführt werden; Providerlöschungen behandeln ein bereits entferntes Konto als Erfolg.
+
+Für den produktiven Betrieb dasselbe Backend-Image als Cloud Run **Job** in `europe-west1` konfigurieren. Startbefehl: `node util/runAccountDeletionJob.js`; Arbeitsverzeichnis wie im Image `/usr/src/app`. Den HTTP-Startbefehl `start.sh` überschreiben. `CDS_ENV=production` setzen und dieselbe bereits migrierte PostgreSQL-Datenbank sowie die Auth0-M2M-Variablen über Secret Manager verbinden. Das Script führt keine Schema-Migration durch und verwendet keine lokale SQLite-Datei als Ersatz. Eine Aufgabe pro Ausführung; Zeitlimit für die maximal 20 Provideroperationen ausreichend wählen, zum Beispiel 20 Minuten.
+
+Den Job beispielsweise alle fünf Minuten über Cloud Scheduler auslösen. Googles [Anleitung für geplante Cloud Run Jobs](https://docs.cloud.google.com/run/docs/execute/jobs-on-schedule) beschreibt die Einrichtung im Triggers-Tab und den IAM-geschützten Aufruf der Run API. Einen dedizierten Service Account verwenden, der nur den Löschjob ausführen darf; keine öffentliche Löschjob-URL bereitstellen. Scheduler-Dispatch-Erfolg ist nicht gleich Job-Erfolg: Job-Ausführungen und verbleibende Warteschlangeneinträge überwachen, fehlgeschlagene/überfällige Löschungen alarmieren. Erst einen isolierten Auth0-Testnutzer löschen, Providerausfall/Wiederholung prüfen und dann `ACCOUNT_DELETION_SCHEDULER_CONFIRMED=true` setzen. In diesem Projekt wurde der Job vorbereitet; Cloud-Ressourcen wurden nicht angelegt und produktive Konten nicht gelöscht.
+
+## Öffentliche Free-Verträge recherchiert; individuelle Nachweise offen
+
+Der Betreiber hat am 30. Oktober 2026 die Free-Tarife bestätigt. Das [Vertragsregister](provider-contracts-free.md) dokumentiert die öffentlichen Volltexte, Revisionen, Verarbeitung im Projekt und verbleibenden Kontonachweise. Das [Quellenregister](legal-source-register.json) hält Abrufzeitpunkte, Ziel-URLs und Antwort-Hashes fest. Die öffentliche Recherche ist damit erledigt; pauschal alle Verträge erneut suchen oder einen kostenpflichtigen Tarif abschließen ist nicht die Aufgabe.
+
+- **Supabase:** Standard-Terms § 7(b) beziehen den DPA ausdrücklich ein; DPA Version 1 vom 1. August 2026 § 12.2 behandelt Vertragsannahme wie SCC-Unterschrift. Regulärer direkter Vertragspartner ist Supabase Pte. Ltd.; US-Support/Betrieb erfolgt laut Transfer-FAQ durch Supabase, Inc. Direkte Registrierung/abweichenden Vertrag und Kontoversion noch intern zuordnen.
+- **Auth0:** Neuer konkreter Free-Befund: Self-Service PSS Rev 02112026 § 1 behandelt den Free Plan als Free Trial. MSA § 3 nimmt Free Trial von der automatischen DPA-Einbeziehung aus. Deshalb ist gerade die Free-Abdeckung der tatsächlich geltenden Kontoversion oder einer gesonderten Vereinbarung nachzuweisen. Öffentlicher DPA Rev 082726, SCC, Abschlussanleitung und konkrete Rückfrage stehen im Register; weder pauschal eine bestehende Abdeckung noch deren Unmöglichkeit behaupten.
+- **Google Cloud:** Standardvertrag § 5.2 bezieht CDPA ein; zusätzlicher Opt-in nur bei abweichendem Vertrag ohne Einbeziehung. Free Tier ist vom zeitlich begrenzten Trial und gegebenenfalls separat geregelten Starter-Ressourcen zu unterscheiden. Billing-Land und Vertragsmodell bleiben Konto-Fakten.
+- **Maps/Expo:** Maps Core unterliegt eigenständigen Maps-/Controller-Controller-Regeln; Expo Terms § 3.2 enthält Rollen und SCC. Beides nicht durch einen Cloud-Run-CDPA ersetzen. Der Codeabgleich benennt konkrete Maps-Cache-/Anzeige-/Langzeitspeicherpunkte, die vor Freigabe geklärt bzw. angepasst werden müssen.
+
+`LEGAL_TRANSFER_DETAILS` bleibt bis zur Kontozuordnung und Auflösung der Auth0-Free-Frage bewusst offen. Keine Verträge wurden angenommen, unterzeichnet oder an Anbieter übermittelt. Alle übrigen technischen Einrichtungs- und Stagingpflichten bleiben in der [Release-Checkliste](app-release-checklist.md) bestehen.
+
+Zusätzliche technische Prüfung: Der eigenständige Löschjob wurde gegen eine frisch angelegte, isolierte SQLite-Testdatenbank mit leerer Warteschlange ausgeführt und beendet sich korrekt mit Status 0. Ohne Löschprovider-Konfiguration beendet er sich mit Status 1. Die Integrationstests verifizieren erfolgreiche und fehlgeschlagene Providerlöschungen anhand eines simulierten Providers. Produktive Auth0-Zugriffe und ein tatsächlicher Cloud-Scheduler-Aufruf stehen weiter aus.
+
+## Draft-PR auf aktuellem develop
+
+Am 14. Oktober 2026 wurden die Änderungen auf den aktuellen develop-Stand übertragen. 170 App-Tests in 35 Suites und 15 Backend-Tests erfolgreich; TypeScript ohne Fehler; Lint ohne Fehler mit zwei bestehenden require-Warnungen. Produktions-Web-Export erfolgreich. Die Gastansicht „Konto und Datenschutz“ wurde aus diesem Build lokal im Browser geprüft und unter docs/screenshots/account-privacy-guest.png dokumentiert. Die produktiven Einrichtungs- und manuellen SSO-/Native-/Store-Tests bleiben in [app-release-checklist.md](app-release-checklist.md) offen.
+
+## Nachprüfung und Korrekturen vom 29. Oktober 2026
+
+Die Backend-Regressionen wurden zunächst am PR-Stand `a2c87bd` mit isolierter In-Memory-Datenbank reproduziert:
+
+- **Unvollständiger Bildexport:** CAP lässt Medienfelder bei `SELECT *` aus. Der Export lädt `Attachments_local.content` nun ausdrücklich pro eigenem Bild, konsumiert Datenbankstreams innerhalb der Transaktion und schreibt Base64 statt Streamobjekten. Leere Bilder und fehlender Inhalt werden unterschieden; fremde Bilder bleiben ausgeschlossen.
+- **Verdrängte Löschaufträge:** Ein ungeordnetes `limit(20)` konnte ständig dieselben fehlerhaften Aufträge auswählen. Der Worker sortiert jetzt nach dem letzten Versuch, ersatzweise dem ursprünglichen Anfragedatum, und setzt `AccountDeletions.lastAttemptAt` vor dem Provideraufruf. Ein Test mit 20 dauerhaft fehlerhaften und einem weiteren erfolgreichen Auftrag prüft, dass der erfolgreiche Auftrag spätestens im nächsten Durchlauf berücksichtigt wird. Das neue nullable Feld muss vor Start des neuen Workers migriert werden; keine Löschaufträge dafür entfernen oder neu anlegen.
+- **Veraltete Bilder nach Moderation/Löschung:** Direkte DB-Löschungen umgingen die Cache-Hooks der Attachment-API. Moderation und Kontolöschung leeren die lokalen Bild-Caches nach erfolgreichem Commit. Ein Cache-Treffer prüft zusätzlich mit der autorisierten Datenbankabfrage, ob das Bild noch existiert; so wird auch eine auf einer anderen Cloud-Run-Instanz ausgeführte Löschung berücksichtigt. Tests prüfen HTTP 404 nach Moderation, Kontolöschung und einer die lokalen Hooks umgehenden DB-Löschung.
+
+Die Konflikte in App-Paketmanifest und Lockdatei mit `develop` wurden unter Beibehaltung der aktuellen develop-Abhängigkeiten und Entfernung der drei ungenutzten Expo-Hintergrund-/Benachrichtigungspakete aufgelöst. Der bestehende Checkout mit lokalen Android-Änderungen und seine Build-Caches bleiben unverändert; Tests verwenden einen separaten Quellstand ohne Kopie der vorhandenen `db.sqlite`.
+
+Die öffentlichen URLs `/legal/content`, `/legal/datenschutz` und `/legal/konto-loeschen` lieferten bei der anonymen Abfrage am 29. Oktober 2026 HTTP 404. Die Quellcode-Korrekturen veröffentlichen kein Backend. Konkrete Betreiberaufgaben einschließlich Vertragsnachweisen, Auth0-M2M, Staging/DB-Zugriffsprüfung, Job/Scheduler/IAM, Produktionskonfiguration, Store-Einrichtung und laufendem Betrieb stehen am Anfang der [Release-Checkliste](app-release-checklist.md#was-der-betreiber-außer-testen-erledigen-muss).
+
+Insbesondere sind im verfügbaren Arbeitsumgebungszugang keine Auth0-Management- oder Google-Cloud-Betreiberzugänge eingerichtet. Anbietervereinbarungen, geteilte Tenant-Nutzung, Supabase-Data-API-Freigaben und reale Job-/Store-Konfiguration sind deshalb weiterhin nicht bestätigt. Es wurden keine produktiven Daten geändert, Verträge angenommen, Konten gelöscht oder Store-Veröffentlichungen vorgenommen.
+
+Lokale Verifikation nach Zusammenführung mit `develop`: 234 App-Tests in 44 Suites, 40 Backend-Tests und 31 Release-Automationstests erfolgreich. TypeScript ohne Fehler; Lint ohne Fehler mit den zwei bestehenden `require()`-Warnungen in `map-primitives.ts`. Das Schema wurde zusätzlich erfolgreich für den PostgreSQL-Dialekt kompiliert, einschließlich `lastAttemptAt`; dies ist kein Nachweis einer echten PostgreSQL-Migration oder produktiven Auth0-Löschung.
+
+Auch der Produktions-Web-Export mit SSO und dem konfigurierten Produktions-Backendziel war erfolgreich. Es wurde dabei kein Deployment ausgelöst.
+
+Der anschließend auf `develop` hinzugekommene Iframe-Schutz (#105) ist ebenfalls übernommen. Die Sicherheitsheader werden vor den öffentlichen Rechtstexten gesetzt; die Frame-Protection-Tests prüfen nun ausdrücklich auch diese Routen.
+
+## Vertiefung am 30. Oktober 2026
+
+Der [vertiefte Abgleich](provider-contracts-free.md#vertiefung-bereits-selbst-klärbare-technische-und-vertragliche-punkte) grenzt weitere Aufgaben ein:
+
+- Auth0s interne Management-Audience zählt laut offizieller Token-Dokumentation nicht zur monatlichen M2M-Tokenquote. Für den implementierten Löschworker ist ein pauschales Upgrade wegen einer 1.000er-M2M-Quote nicht begründet; API-Rate-Limits gelten unabhängig davon.
+- Die Routes-EEA-Anzeigebeschränkung betrifft description/steps. Diese Felder werden im Projekt nicht angefordert; daraus folgt kein pauschaler Bedarf, OSM-/Apple-Karten auszutauschen. Die Koordinaten-Speichergrenze bleibt zu beachten.
+- Die Git-Historie belegt neue Places-Textsuche am 5. April 2026. Das Alter des Google-Projekts allein belegt daher keinen unveränderten Bestand für alle heutigen Funktionen. Deployment, Billing-Land und Console-Annahme bleiben zuzuordnen.
+- `PlaceSearchCache.expiresAt` steuert nur die Lesegültigkeit. Es fehlt ein allgemeiner physischer Löschlauf für abgelaufene, nie erneut angefragte Cachezeilen. Die bisher genannten sieben Tage sind deshalb keine bewiesene maximale Datenbankaufbewahrung.
+- Die EDPB-FAQ, Abschnitt 3.3, bestätigt: Auch bei DPF-zertifizierten US-Auftragsverarbeitern ist ein Art.-28-Vertrag erforderlich. Hersteller-DPF-Aussage und auffindbares Registerprofil lösen die Auth0-Free-DPA-Frage nicht. Aus der hier nur als JavaScript-Shell abrufbaren Registerseite wird kein aktiver Zertifizierungsstatus abgeleitet.
+
+Öffentliche Quellen und diese Codebefunde sind im Quellenregister ergänzt. Diese Runde ändert ausschließlich die Dokumentation; zusätzliche Cache-/UI-/Speicheranpassungen sind damit noch nicht implementiert und keine Anbietervereinbarung wurde abgeschlossen.
+
+## Cache-Fix vom 30. Oktober 2026
+
+Der zuvor bei `e8c4149` festgestellte fehlende physische Ablauf-Löschlauf ist nun implementiert. `processAccountDeletions` löscht `PlaceSearchCache`-Zeilen mit abgelaufenem `expiresAt` oder ohne gültig gesetzte Ablaufzeit, bevor Auth0-Aufträge verarbeitet werden. Der vorhandene Webworker und der eigenständige Cloud Run Job verwenden beide diese Funktion; eine leere Löschwarteschlange verhindert die Cachebereinigung nicht. Gültige Cachezeilen bleiben unverändert, und ein anschließender Providerfehler blockiert die bereits ausgeführte Bereinigung nicht.
+
+Die zwei neuen Regressionstests reproduzierten die fehlende Löschung vor der Änderung und bestehen mit dem Fix. Insgesamt 42 Backend-Tests erfolgreich. Die Tests verwenden isolierte In-Memory-Datenbanken; reale Cloud-Run-/Scheduler-/PostgreSQL-Abnahme und produktives Deployment bleiben offen. Für diesen Ablauf-Fix ist keine zusätzliche Schema-Migration erforderlich.
+
+Die historische Nachprüfung oben beschreibt den damaligen Stand. Aktuell offen bleiben die unabhängig davon dokumentierten Places-Feld-/Anzeige-Lizenzen und die langfristige Aufbewahrung von Google-Routenkoordinaten in `TravelTimes`.
