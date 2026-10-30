@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   type ImageStyle,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -17,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList } from '@/components/friends-list';
+import { AdvancedSettings } from '@/components/profile/advanced-settings';
 import { InstallAppBanner } from '@/components/profile/install-app-banner';
 import { TechnicalDetails } from '@/components/profile/technical-details';
 import { ProfileTimelineSummarySection } from '@/components/profile-timeline-summary-section';
@@ -1023,6 +1025,8 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             ) : null}
           </ProfileSection>
         ) : null}
+
+        {data.mode === 'self' && Platform.OS === 'web' ? <AdvancedSettings /> : null}
 
         {data.mode === 'self' ? <TechnicalDetails /> : null}
 

@@ -12,9 +12,10 @@ import {
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { SELECTED_MARKER_Z_INDEX, createSelectedMapPinHtml } from '@/lib/map-marker-selection';
+import { useMapStylePreference } from '@/lib/map-style-preferences';
 import { areMapCoordinatesEqual } from '@/lib/map-viewport';
 import { CanvasMapMarkers, type CanvasMapMarker } from '@/lib/canvas-map-markers';
-import { defaultWebMapStyle, reduceWalkingStyle, WEB_MAP_STYLES, type WebMapStyleId } from '@/lib/web-map-style';
+import { reduceWalkingStyle, WEB_MAP_STYLES, type WebMapStyleId } from '@/lib/web-map-style';
 import { createCssMapMarkerHtml, normalizeWebMarkerLabel, WEB_MAP_MARKER_CSS } from '@/lib/web-map-marker';
 
 export type LatLng = {
@@ -659,43 +660,6 @@ function OpenFreeMapLayer({ styleId = 'standard' }: { styleId?: WebMapStyleId })
   return null;
 }
 
-function WebMapStyleControl({ onChange, styleId }: { onChange: (style: WebMapStyleId) => void; styleId: WebMapStyleId }) {
-  const map = useMap();
-  const selectRef = useRef<HTMLSelectElement | null>(null);
-  const styleRef = useRef(styleId);
-  styleRef.current = styleId;
-  useEffect(() => {
-    const control = new L.Control({ position: 'bottomleft' });
-    control.onAdd = () => {
-      const container = L.DomUtil.create('div', 'leaflet-control hwb-map-style-control');
-      container.style.cssText = 'margin:0 0 160px 10px;padding:8px 10px;background:#fff;border-radius:12px;color:#24352a;font:14px Arial,sans-serif;box-shadow:0 1px 5px #0002;';
-      const label = L.DomUtil.create('label', '', container);
-      label.textContent = 'Kartenstil ';
-      const select = L.DomUtil.create('select', '', label);
-      select.setAttribute('aria-label', 'Kartenstil');
-      select.style.cssText = 'font:inherit;max-width:165px;padding:5px;border:1px solid #cad4cc;border-radius:6px;background:white;color:#24352a;';
-      for (const [value, style] of Object.entries(WEB_MAP_STYLES)) {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = style.label;
-        select.appendChild(option);
-      }
-      select.value = styleRef.current;
-      selectRef.current = select;
-      L.DomEvent.disableClickPropagation(container);
-      L.DomEvent.disableScrollPropagation(container);
-      L.DomEvent.on(select, 'change', () => onChange(select.value as WebMapStyleId));
-      return container;
-    };
-    control.addTo(map);
-    return () => { control.remove(); selectRef.current = null; };
-  }, [map, onChange]);
-  useEffect(() => {
-    if (selectRef.current) selectRef.current.value = styleId;
-  }, [styleId]);
-  return null;
-}
-
 function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewProps, 'attributionPlacement'> & { styleId: WebMapStyleId }) {
   const map = useMap();
 
@@ -756,7 +720,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
     style,
   } = props;
   const [map, setMap] = useState<LeafletMap | null>(null);
-  const [mapStyle, setMapStyle] = useState<WebMapStyleId>(defaultWebMapStyle);
+  const mapStyle = useMapStylePreference();
   const [isClient, setIsClient] = useState(false);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
   const lastUserLocationRef = useRef<LatLng | null>(null);
@@ -967,7 +931,6 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           }}
         />
         <OpenFreeMapLayer styleId={mapStyle} />
-        <WebMapStyleControl onChange={setMapStyle} styleId={mapStyle} />
         <OpenFreeMapAttribution attributionPlacement={attributionPlacement} styleId={mapStyle} />
         <MapEventBridge
           onPress={onPress}
