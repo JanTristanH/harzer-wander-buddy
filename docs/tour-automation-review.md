@@ -1,6 +1,6 @@
 # Tourenautomatik: Review und Rollout
 
-Stand: 2026-10-29, PR #91, `develop` 7b7b9314db3567d229038198291b521c20a51c9f integriert. Die Konflikte in Tourenliste, API-Typen und Berechnung sind aufgelöst. Der während der CI hinzugekommene Auswahlmarker-Fixes #106 und #107 ist im bestehenden Editor enthalten.
+Stand: 2026-10-30, PR #91, `develop` e1aea82d6c1f9601ae021eef8f8f0e6fbdf35b45 integriert. Die Konflikte in Tourenliste, API-Typen und Berechnung sind aufgelöst. Die Auswahlmarker-Fixes #106 und #107 sind im bestehenden Editor enthalten. Die Kartenstil-Auswahl aus #108 liegt jetzt in den erweiterten Profileinstellungen; die gespeicherte Einstellung gilt auch für die Tourenkarten. Der Merge-Konflikt im Web-Kartenrenderer wurde entsprechend gelöst, die Quellenangabe bleibt über dem Bottom Sheet unterhalb der Routenlegende sichtbar.
 
 ## Verhalten
 
@@ -18,11 +18,11 @@ Keine Demo-API, kein Demo-Login, keine Offline-Kartenfixtures, kein Demo-Reset, 
 
 ## Prüfungen auf diesem Stand
 
-- App: 52 Jest-Suiten, 256 Tests erfolgreich; darunter Gruppen-/Solo-Planung, Speichern mehrerer Vorschläge, expliziter Editorwechsel, Drehradgrenzen, leere Ergebnisse, Session-Persistenz, Rechte, Offline-Sperren und Löschbestätigung.
+- App: 53 Jest-Suiten, 265 Tests erfolgreich; darunter Gruppen-/Solo-Planung, Speichern mehrerer Vorschläge, expliziter Editorwechsel, Drehradgrenzen, leere Ergebnisse, Session-Persistenz, Rechte, Offline-Sperren und Löschbestätigung.
 - Backend: 48 Tests erfolgreich, einschließlich HTTP-Vertrag, Gruppenrechten, Budgetgrenzen, Rückweg, neuen/gelöschten/geänderten Wegedaten und Tour-Vorschaubildern. Der neue Freshness-Test aus `develop` prüft jetzt `path[].travelTime_ID` entsprechend dem neuen Vertrag.
 - TypeScript ohne Fehler; ESLint der geänderten Laufzeitkomponenten ohne Befund; `git diff --check` erfolgreich.
 - Release-Automation: 31 Tests erfolgreich; Expo-Fingerprint-Test erfolgreich.
-- Expo-Webexport sowie nativer Android-/Hermes-Export erfolgreich. Keine neuen nativen Bibliotheken nötig.
+- Aktueller Expo-Webexport erfolgreich. Der native Android-/Hermes-Export wurde am vorherigen PR-Stand erfolgreich geprüft; dieser Web-Merge führt keinen neuen nativen Gerätetest ein. Keine neuen nativen Bibliotheken nötig.
 - Browser: separate lokale CAP-/SQLite-Datenbank, echtes Basic-Testprofil und bestehende Stempel-/Parkplatz-/Wegedaten. Fünf echte Vorschläge; zwei einzeln gespeichert, ohne den Screen zu verlassen; zweiter Vorschlag explizit im vorhandenen Editor geöffnet, umbenannt und mit einem Tipp auf „Fertig“ in die gemeinsame Ansicht zurückgekehrt. Bottom Sheet per Tastatur, Löschdialog/Abbrechen sowie 320/390/1440 Pixel und dunkles Systemdesign geprüft. Keine JavaScript-Laufzeitfehler. Kein Auth0-End-to-End-Test.
 
 ## Offene native Prüfung
