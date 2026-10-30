@@ -40,7 +40,7 @@ import {
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import { triggerHaptic } from '@/lib/haptics-preferences';
-import { buildRouteDirectionArrows, buildTourRouteSegments, TOUR_ROUTE_STYLES } from '@/lib/tour-route';
+import { buildRouteDirectionArrows, buildTourRouteSegments, findSharedRouteSections, TOUR_ROUTE_STYLES } from '@/lib/tour-route';
 import { useHikingGroup } from '@/lib/hiking-group';
 import {
   getPreGeneratedMapMarkerFallbackImageSource,
@@ -1327,12 +1327,14 @@ export default function TourDetailScreen() {
     [livePathEntries, draftPoiIds]
   );
   const routeCoordinates = useMemo(() => routeSegments.flatMap((segment) => segment.coordinates), [routeSegments]);
+  const sharedRouteSections = useMemo(() => findSharedRouteSections(routeSegments), [routeSegments]);
   const routeDirections = useMemo(
-    () => routeSegments.map((segment) => ({
+    () => routeSegments.map((segment, segmentIndex) => ({
       color: TOUR_ROUTE_STYLES[segment.mode].color,
-      arrows: buildRouteDirectionArrows(segment.coordinates, routeRegion.latitudeDelta, routeMapHeight),
+      arrows: buildRouteDirectionArrows(segment.coordinates, routeRegion.latitudeDelta, routeMapHeight,
+        sharedRouteSections.filter((section) => section.segmentIndex === segmentIndex)),
     })),
-    [routeSegments, routeRegion.latitudeDelta, routeMapHeight]
+    [routeSegments, sharedRouteSections, routeRegion.latitudeDelta, routeMapHeight]
   );
   const stopCoordinates = useMemo(
     () =>
@@ -2807,6 +2809,12 @@ export default function TourDetailScreen() {
               <Text style={styles.routeLegendLabel}>{TOUR_ROUTE_STYLES[mode].label}</Text>
             </View>
           ))}
+          {sharedRouteSections.length > 0 ? (
+            <View style={styles.routeLegendItem}>
+              <Feather name="repeat" color="#4d5b4d" size={16} />
+              <Text style={styles.routeLegendLabel}>Hin- und Rückweg auf gleicher Strecke</Text>
+            </View>
+          ) : null}
         </View>
       ) : null}
 

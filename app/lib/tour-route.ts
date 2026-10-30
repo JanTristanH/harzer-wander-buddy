@@ -52,13 +52,74 @@ export const TOUR_ROUTE_STYLES = {
   drive: { color: '#2563eb', label: 'Autofahren' },
 } as const;
 
+export type SharedRouteSection = {
+  segmentIndex: number;
+  edgeIndex: number;
+  startFraction: number;
+  endFraction: number;
+};
+
+/** Compare opposite edges in metres, independently of zoom and vertex sampling.
+ * A minimum overlap and nearly parallel headings avoid treating crossings as returns.
+ */
+export function findSharedRouteSections(segments: TourRouteSegment[]): SharedRouteSection[] {
+  const origin = segments.find((segment) => segment.coordinates.length)?.coordinates[0];
+  if (!origin) return [];
+  const latitudeScale = 111_320;
+  const longitudeScale = latitudeScale * Math.cos(origin.latitude * Math.PI / 180);
+  if (longitudeScale < 1) return [];
+  const tolerance = 3;
+  const edges = segments.flatMap((segment, segmentIndex) =>
+    segment.coordinates.slice(1).map((end, edgeIndex) => {
+      const start = segment.coordinates[edgeIndex];
+      const x = (start.longitude - origin.longitude) * longitudeScale;
+      const y = (start.latitude - origin.latitude) * latitudeScale;
+      const dx = (end.longitude - start.longitude) * longitudeScale;
+      const dy = (end.latitude - start.latitude) * latitudeScale;
+      return { segmentIndex, edgeIndex, x, y, dx, dy, length: Math.hypot(dx, dy),
+        minX: Math.min(x, x + dx), maxX: Math.max(x, x + dx),
+        minY: Math.min(y, y + dy), maxY: Math.max(y, y + dy) };
+    })
+  ).filter((edge) => edge.length > 0).sort((a, b) => a.minX - b.minX);
+  const sections: SharedRouteSection[] = [];
+  for (let index = 0; index < edges.length; index += 1) {
+    const a = edges[index];
+    for (let next = index + 1; next < edges.length; next += 1) {
+      const b = edges[next];
+      // Sweep bounding boxes to skip geometrically unrelated edges.
+      if (b.minX > a.maxX + tolerance) break;
+      if (b.minY > a.maxY + tolerance || b.maxY < a.minY - tolerance) continue;
+      if ((a.dx * b.dx + a.dy * b.dy) / (a.length * b.length) > -0.995) continue;
+      const ux = a.dx / a.length;
+      const uy = a.dy / a.length;
+      const start = (b.x - a.x) * ux + (b.y - a.y) * uy;
+      const end = start + b.dx * ux + b.dy * uy;
+      const low = Math.max(0, end);
+      const high = Math.min(a.length, start);
+      // Allow short sampled edges, but require a meaningful fraction of each edge.
+      if (high - low < Math.min(10, a.length * 0.5, b.length * 0.5)) continue;
+      const offset = (b.x - a.x) * -uy + (b.y - a.y) * ux;
+      const drift = b.dx * -uy + b.dy * ux;
+      const bLow = (low - start) / (end - start);
+      const bHigh = (high - start) / (end - start);
+      if (Math.max(Math.abs(offset + drift * bLow), Math.abs(offset + drift * bHigh)) > tolerance) continue;
+      sections.push({ segmentIndex: a.segmentIndex, edgeIndex: a.edgeIndex,
+        startFraction: low / a.length, endFraction: high / a.length });
+      sections.push({ segmentIndex: b.segmentIndex, edgeIndex: b.edgeIndex,
+        startFraction: Math.max(0, bHigh), endFraction: Math.min(1, bLow) });
+    }
+  }
+  return sections;
+}
+
 /** Chevron polylines work on both native maps and Leaflet, without marker rotation.
  * Size and spacing follow the viewport so arrows stay legible when zooming.
  */
 export function buildRouteDirectionArrows(
   coordinates: RouteCoordinate[],
   latitudeDelta: number,
-  mapHeight: number
+  mapHeight: number,
+  sharedSections: SharedRouteSection[] = []
 ): RouteCoordinate[][] {
   if (coordinates.length < 2 || latitudeDelta <= 0 || mapHeight <= 0) return [];
   const longitudeScale = Math.cos(coordinates[0].latitude * Math.PI / 180);
@@ -87,6 +148,10 @@ export function buildRouteDirectionArrows(
     const edge = edges[edgeIndex];
     if (!edge.length) continue;
     const fraction = (distance - edgeStart) / edge.length;
+    // Leave room for the whole chevron at the boundary of a shared section.
+    if (sharedSections.some((section) => section.edgeIndex === edgeIndex &&
+      fraction >= section.startFraction - arm / edge.length &&
+      fraction <= section.endFraction + arm / edge.length)) continue;
     const tip = {
       latitude: edge.start.latitude + edge.dy * fraction,
       longitude: edge.start.longitude + edge.dx * fraction / longitudeScale,
