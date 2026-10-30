@@ -1,6 +1,7 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 
+import { setMapStylePreference } from '@/lib/map-style-preferences';
 import MapView, { Marker } from '@/components/maps/map-primitives.web';
 
 const mockDivIcon = jest.fn((options: unknown) => ({ options, type: 'div-icon' }));
@@ -252,4 +253,18 @@ describe('web map primitives', () => {
       })
     );
   });
+  it('uses the profile preference for the basemap and attribution without an inline selector', async () => {
+    await setMapStylePreference('standard');
+    render(<MapView />);
+    await act(async () => { await setMapStylePreference('walking'); });
+    const props = mockMapContainer.mock.calls[mockMapContainer.mock.calls.length - 1][0] as { children: React.ReactNode };
+    const children = React.Children.toArray(props.children).filter(React.isValidElement);
+    const basemap = children.find((child) => typeof child.type === 'function' && child.type.name === 'OpenFreeMapLayer');
+    const attribution = children.find((child) => typeof child.type === 'function' && child.type.name === 'OpenFreeMapAttribution');
+    expect(basemap?.props).toEqual({ styleId: 'walking' });
+    expect(attribution?.props).toEqual(expect.objectContaining({ styleId: 'walking' }));
+    expect(children.some((child) => typeof child.type === 'function' && child.type.name === 'WebMapStyleControl')).toBe(false);
+    await act(async () => { await setMapStylePreference('standard'); });
+  });
+
 });
