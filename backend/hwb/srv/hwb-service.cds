@@ -387,6 +387,21 @@ service api @(requires: 'authenticated-user') {
         }
     ])                                        as projection on db.StampNotes;
 
+    type NoteSyncResult {
+        conflict : Boolean;
+        current  : {
+            ID : UUID;
+            stamp_ID : UUID;
+            note : String(500);
+            createdBy : String;
+            createdAt : Timestamp;
+            modifiedAt : Timestamp;
+        };
+    }
+    @requires: 'authenticated-user'
+    action syncStampNote(stampId : UUID, note : String(500), expectedId : UUID,
+                         expectedModifiedAt : Timestamp, expectedNote : String(500)) returns NoteSyncResult;
+
     action   stampForGroup(sStampId : UUID, bStampForUser : Boolean, sGroupUserIds : String) returns String;
     action   getStampFriendVisits(sStampId : UUID, sGroupUserIds : String) returns String;
     action   getUsersProgress(sGroupUserIds : String) returns String;

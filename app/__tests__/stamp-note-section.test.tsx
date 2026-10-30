@@ -68,3 +68,25 @@ describe('StampNoteSection user interaction', () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 });
+
+it('explains pending sync and offers a retry after an upload error', () => {
+  const onRetry = jest.fn();
+  setup({ syncStatus: 'Auf Gerät gespeichert · Synchronisierung ausstehend', onRetry });
+  expect(screen.getByText(/Auf Gerät gespeichert/)).toBeTruthy();
+  fireEvent.press(screen.getByText('Synchronisierung erneut versuchen'));
+  expect(onRetry).toHaveBeenCalledTimes(1);
+});
+it('shows the remote version and explicit conflict choices', () => {
+  const onResolve = jest.fn();
+  setup({ syncStatus: 'Konflikt', remoteNote: 'Zweites Gerät', onResolve });
+  expect(screen.getByText('Andere Fassung: Zweites Gerät')).toBeTruthy();
+  fireEvent.press(screen.getByText('Meine gespeicherte Fassung übernehmen'));
+  fireEvent.press(screen.getByText('Andere Fassung übernehmen'));
+  expect(onResolve.mock.calls).toEqual([['local'], ['remote']]);
+});
+it('protects unsaved edits from conflict resolution until saved', () => {
+  const onResolve = jest.fn(); setup({ remoteNote: '', isDirty: true, onResolve });
+  fireEvent.press(screen.getByText('Andere Fassung übernehmen'));
+  expect(onResolve).not.toHaveBeenCalled();
+  expect(screen.getByText('Änderungen vor der Auswahl speichern.')).toBeTruthy();
+});

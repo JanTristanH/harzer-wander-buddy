@@ -147,6 +147,7 @@ export type ParkingSpot = {
 
 type Stamping = {
   ID: string;
+  pendingSync?: boolean;
   visitedAt?: string;
   createdAt?: string;
   createdBy?: string;
@@ -3992,4 +3993,58 @@ export async function fetchOwnStampings(accessToken: string, stampId: string, cu
     stampings.push(...page);
     if (page.length < pageSize) return stampings;
   }
+}
+
+// Stable client IDs make a retried POST safe even if its first response was lost.
+// The existing CAP CREATE validates the stamp and records the authenticated owner.
+export async function syncOfflineStamping(
+  accessToken: string,
+  userId: string,
+  entry: { id: string; stamp: { ID: string }; visitedAt: string },
+) {
+  if (!/^[\da-f]{8}(-[\da-f]{4}){3}-[\da-f]{12}$/i.test(entry.id) || !Number.isFinite(Date.parse(entry.visitedAt))) {
+    throw new HttpStatusError(400, 'Ungueltiger lokaler Besuch.');
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+  try {
+    try {
+      await mutateOData<VisitStamping>(accessToken, buildUrl('Stampings'), {
+        method: 'POST', signal: controller.signal,
+        body: JSON.stringify({ ID: entry.id, stamp: { ID: entry.stamp.ID }, visitedAt: entry.visitedAt }),
+      });
+    } catch (error) {
+      // CAP/SQLite reports duplicate keys as 400; PostgreSQL may report 409.
+      if (!(error instanceof HttpStatusError) || ![400, 409].includes(error.status)) throw error;
+      // A UUID conflict only acknowledges an identical visit owned by this account.
+      const existing = await fetch(buildUrl(`Stampings(${entry.id})`), {
+        signal: controller.signal,
+        headers: { Accept: 'application/json', Authorization: `${appConfig.authMode === 'basic' ? 'Basic' : 'Bearer'} ${accessToken}` },
+      });
+      if (!existing.ok) throw error;
+      const visit = await existing.json() as VisitStamping;
+      if (visit.ID !== entry.id || visit.createdBy !== userId || visit.stamp_ID !== entry.stamp.ID ||
+        Date.parse(visit.visitedAt || '') !== Date.parse(entry.visitedAt)) throw error;
+    }
+  } finally { clearTimeout(timeout); }
+}
+
+// Server-side comparison is atomic; a preceding GET alone would race other devices.
+export async function syncStampNote(accessToken: string, stampId: string, note: string, base: StampNote | null) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const result = await mutateOData<{ conflict: boolean; current: StampNote | null }>(accessToken, buildUrl('syncStampNote'), {
+      method: 'POST', signal: controller.signal,
+      body: JSON.stringify({ stampId, note, expectedId: base?.ID ?? null,
+        expectedModifiedAt: base?.modifiedAt ?? null, expectedNote: base?.note ?? null }),
+    });
+    // Never acknowledge malformed/empty responses, including an older backend.
+    if (!result || typeof result.conflict !== 'boolean' ||
+      (result.current !== null && (typeof result.current?.ID !== 'string' || typeof result.current?.note !== 'string')) ||
+      (!result.conflict && (!result.current || result.current.note !== note.trim()))) {
+      throw new Error('Der Server hat die Notiz nicht bestätigt.');
+    }
+    return result;
+  } finally { clearTimeout(timeout); }
 }
