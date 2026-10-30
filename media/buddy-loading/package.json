@@ -1,0 +1,17 @@
+{
+  "name": "hwb-buddy-loading-loop",
+  "private": true,
+  "scripts": {
+    "render": "node render.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.399",
+    "@remotion/renderer": "4.0.399",
+    "remotion": "4.0.399",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2"
+  }
+}

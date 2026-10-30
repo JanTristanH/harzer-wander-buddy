@@ -1,3 +1,5 @@
+import TourScreen from '@/components/tour-screen';
+import { buildGoogleMapsDirectionsUrl, buildTourShareUrl } from '@/lib/tour-links';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, usePreventRemove } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -90,7 +92,6 @@ const MARKER_Z_INDEX_PARKING_BASE = 10;
 const MARKER_Z_INDEX_PARKING_BADGE = 13;
 const MARKER_Z_INDEX_PARKING_SELECTED_HALO = 12;
 const MARKER_Z_INDEX_PARKING_SELECTED_BADGE = 14;
-const WEBSITE_BASE_URL = 'https://www.harzer-wander-buddy.de';
 const DIGITS_ONLY_PATTERN = /^\d+$/;
 const STAMP_TOKEN_PATTERN = /\b(?:[A-Za-z]{1,3}\d{1,4}|\d{1,4}[A-Za-z]{1,3}|\d{1,4}|[A-Za-z]{1,3})\b/g;
 const STAMP_TOKEN_IGNORED = new Set(['P', 'POI']);
@@ -417,34 +418,6 @@ function getReadableHttpErrorMessage(error: HttpStatusError) {
   return error.message;
 }
 
-function buildGoogleMapsDirectionsUrl(locations: string[]) {
-  if (locations.length === 0) {
-    return null;
-  }
-
-  const formatLocation = (value: string) => {
-    const trimmed = value.trim();
-    if (/^-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?$/.test(trimmed)) {
-      return trimmed;
-    }
-
-    return encodeURIComponent(trimmed);
-  };
-
-  const destination = locations[locations.length - 1];
-  const waypoints = locations.slice(0, -1);
-  const queryParts = [
-    'api=1',
-    `destination=${formatLocation(destination)}`,
-    `travelmode=walking`,
-  ];
-
-  if (waypoints.length > 0) {
-    queryParts.push(`waypoints=${waypoints.map((value) => formatLocation(value)).join('|')}`);
-  }
-
-  return `https://www.google.com/maps/dir/?${queryParts.join('&')}`;
-}
 
 function formatAlphabeticOrder(position: number) {
   if (!Number.isFinite(position) || position <= 0) {
@@ -950,7 +923,7 @@ function resolveMapItemImageSource(
   return buildAuthenticatedImageSource(imageUrl, accessToken);
 }
 
-export default function TourDetailScreen() {
+function ClassicTourEditor() {
   const router = useRouter();
   const navigation = useNavigation();
   const { accessToken, canPerformWrites, isOffline, logout } = useAuth();
@@ -1525,9 +1498,10 @@ export default function TourDetailScreen() {
     hasAppliedAutoStartEditModeRef.current = true;
   }, [canEnterEditMode, handleEnterEditMode, hasInitialized, ownershipResolved, shouldStartInEditMode]);
   const exitEditMode = useCallback(() => {
+    router.setParams({ edit: '0' });
     setTourNameDraft(data?.tour.name ?? '');
     setIsEditMode(false);
-  }, [data?.tour.name]);
+  }, [data?.tour.name, router]);
   useEffect(() => {
     const wasEditMode = wasEditModeRef.current;
     wasEditModeRef.current = isEditMode;
@@ -1595,13 +1569,7 @@ export default function TourDetailScreen() {
     }
 
     const tourName = data.tour.name?.trim() || 'Tour';
-    const shareParams = new URLSearchParams({
-      id: data.tour.ID,
-      title: tourName,
-      description: `${tourName} in der Harzer Wanderbuddy App teilen.`,
-      image: 'assets/images/BuddyWithMap.webp',
-    });
-    const shareUrl = `${WEBSITE_BASE_URL}/share/tour/?${shareParams.toString()}`;
+    const shareUrl = buildTourShareUrl(data.tour.ID, tourName);
 
     try {
       await Share.share({
@@ -2171,6 +2139,15 @@ export default function TourDetailScreen() {
     updateTourMutation.isPending,
     updateTourNameMutation.isPending,
   ]);
+
+  // Blurring the name starts its autosave before the finish press arrives.
+  // Queue this intent rather than swallowing the first tap during that save.
+  const [finishRequested, setFinishRequested] = useState(false);
+  useEffect(() => {
+    if (!finishRequested || updateTourMutation.isPending || updateTourNameMutation.isPending) return;
+    setFinishRequested(false);
+    if (!updateTourNameMutation.isError) handleFinishEditMode();
+  }, [finishRequested, handleFinishEditMode, updateTourMutation.isPending, updateTourNameMutation.isPending, updateTourNameMutation.isError]);
 
   const triggerPoiAddedFeedback = useCallback(() => {
     if (poiAddedFeedbackTimeoutRef.current) {
@@ -2946,6 +2923,7 @@ export default function TourDetailScreen() {
   const footerActionsDisabled =
     updateTourMutation.isPending || updateTourNameMutation.isPending || deleteTourMutation.isPending;
   const footerEditActionsDisabled = footerActionsDisabled || !canPerformWrites;
+  const finishDisabled = !canPerformWrites || updateTourMutation.isPending || deleteTourMutation.isPending || finishRequested;
   const footerBottomInset = Math.max(insets.bottom, 12);
   const footerReservedHeight = 88 + footerBottomInset;
   const showSearchPopover =
@@ -3315,13 +3293,16 @@ export default function TourDetailScreen() {
 
           {isEditMode ? (
             <Pressable
-              disabled={footerEditActionsDisabled}
-              onPress={handleFinishEditMode}
+              accessibilityRole="button"
+              accessibilityLabel="Fertig"
+              accessibilityState={{ disabled: finishDisabled, busy: finishRequested }}
+              disabled={finishDisabled}
+              onPress={() => setFinishRequested(true)}
               style={({ pressed }) => [
                 styles.footerPrimaryButton,
                 styles.footerPrimaryButtonSecondary,
-                footerEditActionsDisabled && styles.footerPrimaryButtonDisabled,
-                pressed && !footerEditActionsDisabled && styles.pressed,
+                finishDisabled && styles.footerPrimaryButtonDisabled,
+                pressed && !finishDisabled && styles.pressed,
               ]}>
               <Text style={[styles.footerPrimaryButtonLabel, styles.footerPrimaryButtonLabelSecondary]}>Fertig</Text>
             </Pressable>
@@ -4277,3 +4258,8 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
 });
+
+
+export default function TourDetailScreen() {
+  return <TourScreen Editor={ClassicTourEditor} />;
+}

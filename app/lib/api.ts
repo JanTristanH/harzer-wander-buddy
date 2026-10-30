@@ -86,6 +86,8 @@ type NeighborParkingRow = {
 type TravelTimeRow = {
   ID: string;
   positionString?: string;
+  name?: string;
+  toPoiType?: string;
   fromPoi?: string;
   toPoi?: string;
   durationSeconds?: number;
@@ -104,6 +106,7 @@ type TourPathRow = {
 
 type TourRow = {
   ID: string;
+  previewSvg?: string;
   name?: string;
   distance?: number | string;
   duration?: number | string;
@@ -442,6 +445,7 @@ export type MapData = {
 
 export type Tour = {
   ID: string;
+  previewSvg?: string;
   name: string;
   distance: number | null;
   duration: number | null;
@@ -464,6 +468,8 @@ export type TourPathEntry = {
   travelTime?: {
     ID: string;
     positionString?: string;
+    name?: string;
+    toPoiType?: string;
     fromPoi?: string;
     toPoi?: string;
     durationSeconds: number | null;
@@ -504,16 +510,29 @@ export type TourUpdateResponse = {
   path: TourPathEntry[];
 };
 
-export type HikingRouteResult = {
-  id: string;
-  stampCount: number | null;
-  distance: number | null;
-  duration: number | null;
-  path: TourPathEntry[];
+export type HikingRouteResult = TourDetailResponse & {
+  previewSvg?: string;
+  idListTravelTimes: string;
+  matchingStampCount: number;
+  totalElevationGain: number | null;
+  totalElevationLoss: number | null;
+};
+
+export type HikingRouteParameters = {
+  maxDepth: number;
+  maxDuration: number;
+  maxDistance: number;
+  minStampCount: number;
+  allowDriveInRoute: boolean;
+  latitudeStart: string;
+  longitudeStart: string;
+  groupFilterStampings?: string;
+  groupMode: 'missing_all' | 'missing_any';
 };
 
 export type HikingRouteCalculationResponse = {
   results: HikingRouteResult[];
+  searchLimited: boolean;
 };
 
 export type PointOfInterest = {
@@ -994,6 +1013,8 @@ function normalizeTravelTime(value?: TravelTimeRow) {
   return {
     ID: value.ID,
     positionString: safeTrim(value.positionString) || undefined,
+    name: safeTrim(value.name) || undefined,
+    toPoiType: safeTrim(value.toPoiType) || undefined,
     fromPoi: safeTrim(value.fromPoi) || undefined,
     toPoi: safeTrim(value.toPoi) || undefined,
     durationSeconds: toRoundedNumberOrNull(value.durationSeconds),
@@ -1063,6 +1084,7 @@ function normalizeTourRow(value: TourRow) {
   return {
     ID: value.ID,
     name: safeTrim(value.name) || 'Unbenannte Tour',
+    previewSvg: safeTrim(value.previewSvg) || undefined,
     distance: toFiniteNumber(value.distance),
     duration: toFiniteNumber(value.duration),
     stampCount: toRoundedNumberOrNull(value.stampCount),
@@ -1074,7 +1096,7 @@ function normalizeTourRow(value: TourRow) {
     createdByName: safeTrim(value.creator?.name) || undefined,
     createdAt: safeTrim(value.createdAt) || undefined,
     groupFilterStampings: safeTrim(value.groupFilterStampings) || undefined,
-    averageGroupStampings: toRoundedNumberOrNull(value.AverageGroupStampings),
+    averageGroupStampings: toFiniteNumber(value.AverageGroupStampings),
   } satisfies Tour;
 }
 
@@ -2245,7 +2267,7 @@ function normalizeTourDetailResponse(rawValue: unknown) {
     duration: aggregatedMetrics.duration ?? toFiniteNumber(value.duration),
     id: safeTrim(value.id),
     groupSize: toRoundedNumberOrNull(value.groupSize),
-    averageGroupStampings: toRoundedNumberOrNull(value.averageGroupStampings ?? value.AverageGroupStampings),
+    averageGroupStampings: toFiniteNumber(value.averageGroupStampings ?? value.AverageGroupStampings),
     path: normalizedPath,
   } satisfies TourDetailResponse;
 }
@@ -2274,27 +2296,19 @@ function normalizeTourUpdateResponse(rawValue: unknown) {
 function normalizeHikingRouteCalculationResponse(rawValue: unknown) {
   const value = (rawValue && typeof rawValue === 'object' ? rawValue : {}) as Record<string, unknown>;
   const rawResults = Array.isArray(value.results) ? value.results : [];
-
   return {
-    results: rawResults
-      .map((rawResult) => {
-        const result =
-          rawResult && typeof rawResult === 'object' ? (rawResult as Record<string, unknown>) : {};
-        const rawPath = Array.isArray(result.path) ? result.path : [];
-        const normalizedPath = rawPath
-          .map((entry) => normalizeTourPathEntry(entry as TourPathRow))
-          .filter((entry) => entry.tour_ID || entry.travelTime_ID);
-        const aggregatedMetrics = aggregateTourMetricsFromPath(normalizedPath);
-
-        return {
-          id: safeTrim(result.id),
-          stampCount: toRoundedNumberOrNull(result.stampCount),
-          distance: aggregatedMetrics.distance ?? toFiniteNumber(result.distance),
-          duration: aggregatedMetrics.duration ?? toFiniteNumber(result.duration),
-          path: normalizedPath,
-        } satisfies HikingRouteResult;
-      })
-      .filter((result) => Boolean(result.id)),
+    searchLimited: value.searchLimited === true,
+    results: rawResults.map((rawResult) => {
+      const result = rawResult as Record<string, unknown>;
+      return {
+        ...normalizeTourDetailResponse(result),
+        previewSvg: safeTrim(result.previewSvg) || undefined,
+        idListTravelTimes: safeTrim(result.idListTravelTimes) || safeTrim(result.id),
+        matchingStampCount: toRoundedNumberOrNull(result.matchingStampCount) ?? 0,
+        totalElevationGain: toFiniteNumber(result.totalElevationGain),
+        totalElevationLoss: toFiniteNumber(result.totalElevationLoss),
+      } satisfies HikingRouteResult;
+    }).filter((result) => Boolean(result.id && result.path.length)),
   } satisfies HikingRouteCalculationResponse;
 }
 
@@ -2309,6 +2323,7 @@ export async function fetchTours(accessToken: string, groupUserIds: string[] = [
       'stampCount',
       'newStampCountForUser',
       'idListTravelTimes',
+      'previewSvg',
       'totalElevationGain',
       'totalElevationLoss',
       'createdBy',
@@ -2353,6 +2368,7 @@ export async function fetchTourById(accessToken: string, tourId: string, groupUs
           'stampCount',
           'newStampCountForUser',
           'idListTravelTimes',
+      'previewSvg',
           'totalElevationGain',
           'totalElevationLoss',
           'createdBy',
@@ -2557,35 +2573,12 @@ export async function fetchAllPointsOfInterest(accessToken: string) {
   return rows.map((row) => normalizePointOfInterestRow(row));
 }
 
-export async function calculateHikingRoute(
-  accessToken: string,
-  payload: {
-    maxDepth: number;
-    maxDuration: number;
-    maxDistance: number;
-    minStampCount: number;
-    allowDriveInRoute: boolean;
-    latitudeStart: string;
-    longitudeStart: string;
-    groupFilterStampings?: string;
-  }
-) {
-  const response = await fetchOData<unknown>(
-    accessToken,
-    buildUrl('calculateHikingRoute', [
-      ['maxDepth', payload.maxDepth],
-      ['maxDuration', payload.maxDuration],
-      ['maxDistance', payload.maxDistance],
-      ['minStampCount', payload.minStampCount],
-      ['allowDriveInRoute', payload.allowDriveInRoute],
-      ['latitudeStart', payload.latitudeStart],
-      ['longitudeStart', payload.longitudeStart],
-      ['groupFilterStampings', payload.groupFilterStampings],
-    ])
-  );
-
-  const parsed = parseODataFunctionResult<unknown>(response, 'calculateHikingRoute');
-  return normalizeHikingRouteCalculationResponse(parsed);
+export async function calculateHikingRoute(accessToken: string, payload: HikingRouteParameters) {
+  const parameters = Object.entries(payload).filter(([, value]) => value !== undefined)
+    .map(([key, value]) => `${key}=${typeof value === 'string'
+      ? `'${escapeODataString(value)}'` : value}`).join(',');
+  const response = await fetchOData<unknown>(accessToken, buildUrl(`calculateHikingRoute(${encodeURIComponent(parameters)})`));
+  return normalizeHikingRouteCalculationResponse(parseODataFunctionResult(response, 'calculateHikingRoute'));
 }
 
 export async function fetchLatestVisitedStamp(accessToken: string, currentUserId?: string) {

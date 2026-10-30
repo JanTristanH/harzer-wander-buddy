@@ -61,6 +61,9 @@ export type MapViewRef = {
 };
 
 type MapViewProps = {
+  userInterfaceStyle?: 'light' | 'dark';
+  controlsAtTop?: boolean;
+  mapPadding?: {top:number;right:number;bottom:number;left:number};
   attributionPlacement?: 'bottom-right' | 'below-zoom';
   children?: React.ReactNode;
   initialRegion?: Region;
@@ -660,12 +663,12 @@ function OpenFreeMapLayer({ styleId = 'standard' }: { styleId?: WebMapStyleId })
   return null;
 }
 
-function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewProps, 'attributionPlacement'> & { styleId: WebMapStyleId }) {
+function OpenFreeMapAttribution({ attributionPlacement, styleId, controlsAtTop }: Pick<MapViewProps, 'attributionPlacement' | 'controlsAtTop'> & { styleId: WebMapStyleId }) {
   const map = useMap();
 
   useEffect(() => {
     const control = new L.Control({
-      position: attributionPlacement === 'below-zoom' ? 'bottomleft' : 'bottomright',
+      position: controlsAtTop ? 'topleft' : attributionPlacement === 'below-zoom' ? 'bottomleft' : 'bottomright',
     });
 
     control.onAdd = () => {
@@ -687,6 +690,9 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
         content.style.cssText = 'max-width:none;opacity:1;padding:0;font-size:11px;';
       }
 
+      // Keep credits below the route legend when a sheet covers the map bottom.
+      if (controlsAtTop) container.style.marginTop = '80px';
+
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.on(toggle, 'click', () => {
         const expanded = container.classList.toggle('is-expanded');
@@ -701,7 +707,7 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
     return () => {
       control.remove();
     };
-  }, [attributionPlacement, map, styleId]);
+  }, [attributionPlacement, map, styleId, controlsAtTop]);
 
   return null;
 }
@@ -709,6 +715,7 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
 const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref) {
   const {
     attributionPlacement = 'bottom-right',
+    controlsAtTop = false,
     children,
     initialRegion,
     onMapReady,
@@ -931,7 +938,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
           }}
         />
         <OpenFreeMapLayer styleId={mapStyle} />
-        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} styleId={mapStyle} />
+        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} styleId={mapStyle} controlsAtTop={controlsAtTop} />
         <MapEventBridge
           onPress={onPress}
           onRegionChange={onRegionChange}
