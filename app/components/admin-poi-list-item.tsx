@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { AppColors } from '@/constants/theme';
 import type { ParkingSpot, Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
@@ -63,11 +64,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: AppColors.surface,
     borderRadius: 18,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    shadowColor: '#141e14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -86,13 +87,13 @@ const styles = StyleSheet.create({
     minWidth: 1,
   },
   cardTitle: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '600',
   },
   cardDescription: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -110,13 +111,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   statePillLabel: {
-    color: '#2e6b4b',
+    color: AppColors.primary,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
   },
   distanceLabel: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },

@@ -1,12 +1,15 @@
 import { act, render } from '@testing-library/react-native';
 import React from 'react';
 
+import { setMapStylePreference } from '@/lib/map-style-preferences';
 import MapView, { Marker } from '@/components/maps/map-primitives.web';
 
 const mockDivIcon = jest.fn((options: unknown) => ({ options, type: 'div-icon' }));
 const mockIcon = jest.fn((options: unknown) => ({ options, type: 'icon' }));
 const mockMaplibreGL = jest.fn((_options: unknown) => ({ addTo: jest.fn(() => ({ remove: jest.fn() })) }));
+const mockTileLayer = jest.fn((_url: string, _options: unknown) => ({ addTo: jest.fn(() => ({ remove: jest.fn() })) }));
 const mockMapContainer = jest.fn((_props: unknown) => null);
+const mockLeafletMarker = jest.fn((_props: unknown) => null);
 
 jest.mock('leaflet', () => ({
   __esModule: true,
@@ -15,6 +18,7 @@ jest.mock('leaflet', () => ({
     icon: (options: unknown) => mockIcon(options),
     latLngBounds: jest.fn(),
     maplibreGL: (options: unknown) => mockMaplibreGL(options),
+    tileLayer: (url: string, options: unknown) => mockTileLayer(url, options),
   },
 }));
 
@@ -23,7 +27,7 @@ jest.mock('@maplibre/maplibre-gl-leaflet', () => ({}));
 jest.mock('react-leaflet', () => {
   return {
     MapContainer: (props: unknown) => mockMapContainer(props),
-    Marker: () => null,
+    Marker: (props: unknown) => mockLeafletMarker(props),
     Polyline: () => null,
     useMap: jest.fn(),
     useMapEvents: jest.fn(),
@@ -149,6 +153,82 @@ describe('web map primitives', () => {
     expect(options.html).not.toMatch(/feDropShadow/i);
   });
 
+  it('highlights selection above other pins and restores the normal icon on close', () => {
+    const props = { coordinate: { latitude: 51.7, longitude: 10.6 }, pinColor: '#123abc', zIndex: 12 };
+    const view = render(<Marker {...props}>SEL</Marker>);
+    const normal = mockLeafletMarker.mock.calls.at(-1)![0] as { icon: unknown; zIndexOffset: number };
+    view.rerender(<Marker {...props} selected>SEL</Marker>);
+    const selected = mockLeafletMarker.mock.calls.at(-1)![0] as typeof normal;
+    expect(selected.zIndexOffset).toBeGreaterThan(10000);
+    expect(selected.icon).not.toBe(normal.icon);
+    const icon = mockDivIcon.mock.calls.at(-1)![0] as { className: string; html: string };
+    expect(icon.className).toContain('hwb-map-marker-selected');
+    expect(icon.html).toContain('fill="#ea4335"');
+    expect(icon.html).toContain('<circle fill="#a50e0e"');
+    expect(icon.html).not.toContain('SEL');
+    view.rerender(<Marker {...props}>SEL</Marker>);
+    expect(mockLeafletMarker.mock.calls.at(-1)![0]).toEqual(expect.objectContaining(normal));
+  });
+
+  it('activates individual keyboard targets once for Enter and Space', () => {
+    const onPress = jest.fn();
+    render(<Marker coordinate={{ latitude: 51.8, longitude: 10.6 }} onPress={onPress}>9</Marker>);
+    const { eventHandlers } = mockLeafletMarker.mock.calls[0][0] as {
+      eventHandlers: { keydown: (event: { originalEvent: Partial<KeyboardEvent> }) => void };
+    };
+    const event = { key: 'Enter', repeat: false, preventDefault: jest.fn(), stopPropagation: jest.fn() };
+    eventHandlers.keydown({ originalEvent: event });
+    eventHandlers.keydown({ originalEvent: { ...event, repeat: true } });
+    eventHandlers.keydown({ originalEvent: { ...event, key: ' ' } });
+    eventHandlers.keydown({ originalEvent: { ...event, key: 'ArrowDown' } });
+    expect(onPress).toHaveBeenCalledTimes(2);
+    expect(event.preventDefault).toHaveBeenCalledTimes(3);
+  });
+
+  it('uses raster tiles without initializing GL and cleans up when changing renderer', () => {
+    render(<MapView />);
+    const container = mockMapContainer.mock.calls[0][0] as { children: React.ReactNode };
+    const basemap = React.Children.toArray(container.children).find(
+      child => React.isValidElement(child) && typeof child.type === 'function' && child.type.name === 'OpenFreeMapLayer'
+    ) as React.ReactElement<{ styleId: 'raster' | 'standard' }>;
+    const layer = render(React.cloneElement(basemap, { styleId: 'raster' }));
+    expect(mockMaplibreGL).not.toHaveBeenCalled();
+    expect(mockTileLayer).toHaveBeenCalledWith('https://tile.openstreetmap.org/{z}/{x}/{y}.png', expect.objectContaining({
+      detectRetina: false, updateWhenIdle: true, updateWhenZooming: false, keepBuffer: 1,
+    }));
+    const raster = mockTileLayer.mock.results[0].value.addTo.mock.results[0].value;
+    layer.rerender(React.cloneElement(basemap, { styleId: 'standard' }));
+    expect(raster.remove).toHaveBeenCalledTimes(1);
+    expect(mockMaplibreGL).toHaveBeenCalledTimes(1);
+    const vector = mockMaplibreGL.mock.results[0].value.addTo.mock.results[0].value;
+    layer.unmount();
+    expect(vector.remove).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([1, 2, 3])('limits only the basemap resolution at device pixel ratio %s', (devicePixelRatio) => {
+    const originalRatio = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio');
+    Object.defineProperty(window, 'devicePixelRatio', { configurable: true, value: devicePixelRatio });
+    try {
+      render(<MapView />);
+      const container = mockMapContainer.mock.calls[0][0] as { children: React.ReactNode };
+      const basemap = React.Children.toArray(container.children).find(
+        (child) => React.isValidElement(child) && typeof child.type === 'function' && child.type.name === 'OpenFreeMapLayer'
+      );
+      const layer = render(basemap as React.ReactElement);
+      expect(mockMaplibreGL).toHaveBeenCalledWith(expect.objectContaining({
+        pixelRatio: Math.min(devicePixelRatio, 1.5),
+        fadeDuration: 0,
+        style: 'https://tiles.openfreemap.org/styles/liberty',
+      }));
+      const { remove } = mockMaplibreGL.mock.results[0].value.addTo.mock.results[0].value;
+      layer.unmount();
+      expect(remove).toHaveBeenCalledTimes(1);
+    } finally {
+      if (originalRatio) Object.defineProperty(window, 'devicePixelRatio', originalRatio);
+      else Reflect.deleteProperty(window, 'devicePixelRatio');
+    }
+  });
+
   it('uses lightweight CSS zoom animations and batches wheel zoom input', () => {
     render(<MapView />);
 
@@ -173,4 +253,18 @@ describe('web map primitives', () => {
       })
     );
   });
+  it('uses the profile preference for the basemap and attribution without an inline selector', async () => {
+    await setMapStylePreference('standard');
+    render(<MapView />);
+    await act(async () => { await setMapStylePreference('walking'); });
+    const props = mockMapContainer.mock.calls[mockMapContainer.mock.calls.length - 1][0] as { children: React.ReactNode };
+    const children = React.Children.toArray(props.children).filter(React.isValidElement);
+    const basemap = children.find((child) => typeof child.type === 'function' && child.type.name === 'OpenFreeMapLayer');
+    const attribution = children.find((child) => typeof child.type === 'function' && child.type.name === 'OpenFreeMapAttribution');
+    expect(basemap?.props).toEqual({ styleId: 'walking' });
+    expect(attribution?.props).toEqual(expect.objectContaining({ styleId: 'walking' }));
+    expect(children.some((child) => typeof child.type === 'function' && child.type.name === 'WebMapStyleControl')).toBe(false);
+    await act(async () => { await setMapStylePreference('standard'); });
+  });
+
 });

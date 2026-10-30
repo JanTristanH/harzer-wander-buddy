@@ -1,5 +1,4 @@
 import { Feather, MaterialIcons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -16,6 +15,8 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { EmptyState } from '@/components/empty-state';
+import { AppColors } from '@/constants/theme';
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
@@ -503,7 +504,7 @@ export default function ToursTabScreen() {
                 })();
             }}
             refreshing={isPullRefreshing}
-            tintColor="#2e6b4b"
+            tintColor={AppColors.primary}
           />
         }
         renderItem={({ item }) => {
@@ -560,11 +561,12 @@ export default function ToursTabScreen() {
           if (item.type === 'empty') {
             return (
               <View style={styles.emptyStateWrap}>
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyTitle}>{emptyStateTitle}</Text>
-                  <Image contentFit="contain" source={emptyStateIllustration} style={styles.emptyIllustration} />
-                  <Text style={styles.emptyCopy}>{emptyStateCopy}</Text>
-                </View>
+                <EmptyState
+                  title={emptyStateTitle}
+                  body={emptyStateCopy}
+                  image={emptyStateIllustration}
+                  variant="discovery"
+                />
               </View>
             );
           }
@@ -594,7 +596,7 @@ export default function ToursTabScreen() {
           isCreateDisabled && styles.floatingAddButtonDisabled,
           pressed && styles.pressed,
         ]}>
-        <Feather color="#F5F3EE" name="plus" size={24} />
+        <Feather color={AppColors.background} name="plus" size={24} />
       </Pressable>
 
       <Modal animationType="fade" onRequestClose={() => setIsSortOpen(false)} transparent visible={isSortOpen}>
@@ -636,7 +638,7 @@ export default function ToursTabScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: AppColors.background,
   },
   listContent: {
     paddingTop: 20,
@@ -657,7 +659,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 12,
     gap: 12,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: AppColors.background,
   },
   loadingTitleRow: {
     flexDirection: 'row',
@@ -682,11 +684,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   loadingTourCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: AppColors.surface,
     borderRadius: 18,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    shadowColor: '#141e14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -704,13 +706,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 24,
     lineHeight: 30,
     fontFamily: 'serif',
   },
   totalLabel: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -719,7 +721,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 10,
-    shadowColor: '#141e14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.18,
     shadowRadius: 24,
@@ -729,20 +731,20 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   quickstartEyebrow: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 12,
     lineHeight: 16,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   quickstartTitle: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '700',
   },
   quickstartBody: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 12,
     lineHeight: 16,
     opacity: 0.9,
@@ -754,9 +756,9 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: AppColors.surface,
     borderRadius: 16,
-    shadowColor: '#141e14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -769,7 +771,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#2e3a2e',
+    color: AppColors.textSecondary,
     fontSize: 13,
     lineHeight: 16,
     paddingVertical: 0,
@@ -792,7 +794,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ebe5d7',
   },
   filterPillActive: {
-    backgroundColor: '#2e6b4b',
+    backgroundColor: AppColors.primary,
   },
   filterPillPressed: {
     opacity: 0.85,
@@ -803,7 +805,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   filterPillLabelActive: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontWeight: '700',
   },
   sortButton: {
@@ -811,21 +813,21 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     flexDirection: 'row',
     gap: 6,
-    backgroundColor: '#ffffff',
+    backgroundColor: AppColors.surface,
     borderRadius: 16,
     minHeight: 40,
     paddingHorizontal: 14,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#141e14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 20,
     elevation: 4,
   },
   sortButtonLabel: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
@@ -838,25 +840,25 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     width: 300,
-    backgroundColor: '#ffffff',
+    backgroundColor: AppColors.surface,
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 12,
-    shadowColor: '#141e14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.16,
     shadowRadius: 28,
     elevation: 6,
   },
   sortTitle: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },
   sortSectionLabel: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '600',
@@ -875,7 +877,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   sortChipActive: {
-    backgroundColor: '#2e6b4b',
+    backgroundColor: AppColors.primary,
   },
   sortChipLabel: {
     color: '#4a574a',
@@ -884,17 +886,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   sortChipLabelActive: {
-    color: '#f5f3ee',
+    color: AppColors.background,
   },
   floatingAddButton: {
     alignItems: 'center',
-    backgroundColor: '#2E6B4B',
+    backgroundColor: AppColors.primary,
     borderRadius: 18,
     height: 52,
     justifyContent: 'center',
     position: 'absolute',
     right: 20,
-    shadowColor: '#141E14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 20,
@@ -908,11 +910,11 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: AppColors.surface,
     borderRadius: 18,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    shadowColor: '#141e14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -921,7 +923,7 @@ const styles = StyleSheet.create({
   },
   cardPressed: {
     backgroundColor: '#ecf2ea',
-    borderColor: '#2e6b4b',
+    borderColor: AppColors.primary,
     borderWidth: 1,
     shadowOpacity: 0.18,
     elevation: 4,
@@ -933,7 +935,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     flex: 1,
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
@@ -943,7 +945,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   cardMeta: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -970,13 +972,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   creatorBadge: {
-    backgroundColor: '#2e6b4b',
+    backgroundColor: AppColors.primary,
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   creatorBadgeLabel: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 10,
     lineHeight: 12,
     fontWeight: '700',
@@ -1035,30 +1037,6 @@ const styles = StyleSheet.create({
   emptyStateWrap: {
     paddingHorizontal: 20,
     marginTop: 8,
-  },
-  emptyState: {
-    backgroundColor: '#fffaf0',
-    borderRadius: 22,
-    padding: 20,
-    gap: 8,
-  },
-  emptyTitle: {
-    color: '#2e3a2e',
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  emptyCopy: {
-    color: '#6b7a6b',
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-  emptyIllustration: {
-    width: 120,
-    height: 120,
-    alignSelf: 'center',
   },
   pressed: {
     opacity: 0.85,

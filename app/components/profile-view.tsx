@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   type ImageStyle,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -22,6 +23,7 @@ import { BadgeArtwork } from '@/components/badge-artwork';
 import { BadgeProfileSection } from '@/components/badge-profile-section';
 import { useBadgeAlbum } from '@/lib/badges';
 import { badgeTitle } from '@/lib/badge-types';
+import { AdvancedSettings } from '@/components/profile/advanced-settings';
 import { InstallAppBanner } from '@/components/profile/install-app-banner';
 import { TechnicalDetails } from '@/components/profile/technical-details';
 import { ProfileTimelineSummarySection } from '@/components/profile-timeline-summary-section';
@@ -1031,6 +1033,8 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             ) : null}
           </ProfileSection>
         ) : null}
+
+        {data.mode === 'self' && Platform.OS === 'web' ? <AdvancedSettings /> : null}
 
         {data.mode === 'self' ? <TechnicalDetails /> : null}
 

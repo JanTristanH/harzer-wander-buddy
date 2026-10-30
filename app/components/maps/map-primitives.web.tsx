@@ -1,7 +1,7 @@
 import type { LeafletEventHandlerFnMap, Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
 import '@maplibre/maplibre-gl-leaflet';
-import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, { createContext, forwardRef, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Marker as LeafletMarker,
   Polyline as LeafletPolyline,
@@ -11,7 +11,11 @@ import {
 } from 'react-leaflet';
 import { Image, View, type StyleProp, type ViewStyle } from 'react-native';
 
+import { SELECTED_MARKER_Z_INDEX, createSelectedMapPinHtml } from '@/lib/map-marker-selection';
+import { useMapStylePreference } from '@/lib/map-style-preferences';
 import { areMapCoordinatesEqual } from '@/lib/map-viewport';
+import { CanvasMapMarkers, type CanvasMapMarker } from '@/lib/canvas-map-markers';
+import { reduceWalkingStyle, WEB_MAP_STYLES, type WebMapStyleId } from '@/lib/web-map-style';
 import { createCssMapMarkerHtml, normalizeWebMarkerLabel, WEB_MAP_MARKER_CSS } from '@/lib/web-map-marker';
 
 export type LatLng = {
@@ -73,6 +77,8 @@ type MapViewProps = {
 };
 
 type MarkerProps = {
+  identifier?: string;
+  selected?: boolean;
   accessibilityLabel?: string;
   anchor?: { x: number; y: number };
   children?: React.ReactNode;
@@ -99,8 +105,13 @@ const DEFAULT_REGION: Region = {
 
 const MAP_CONTAINER_STYLE = { height: '100%', width: '100%' } as const;
 const OPEN_FREE_MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+// High-DPI phones otherwise rasterize nine physical pixels per CSS pixel.
+// Keep DOM markers/text at full device resolution; limit only the GL basemap.
+const MAX_BASEMAP_PIXEL_RATIO = 1.5;
 const OPEN_FREE_MAP_ATTRIBUTION =
   '<a href="https://openfreemap.org/">OpenFreeMap</a> <a href="https://openmaptiles.org/">&copy; OpenMapTiles</a> Data from <a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>';
+const RASTER_MAP_ATTRIBUTION =
+  '<a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap contributors</a>';
 const WEB_MARKER_SIZE = 48;
 const WEB_MARKER_SIZE_COMPACT = 24;
 const MIN_ZOOM = 2;
@@ -108,6 +119,12 @@ const MAX_ZOOM = 19;
 const WEB_MAP_DIAGNOSTIC_INTERVAL_MS = 4000;
 const LEAFLET_STYLE_TAG_ID = 'hwb-leaflet-runtime-css';
 const LEAFLET_RUNTIME_CSS = `
+.hwb-map-marker-selected {
+  background: transparent;
+  border: 0;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
+}
+
 .leaflet-container {
   background: #ddd;
   overflow: hidden;
@@ -261,8 +278,44 @@ svg.leaflet-zoom-animated { will-change: transform; }
   border: 0;
   overflow: visible;
 }
+.hwb-canvas-marker-target { background: transparent; border: 0; }
+.hwb-canvas-marker-target .hwb-css-marker__label {
+  clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden;
+  padding: 0; position: absolute; white-space: nowrap;
+}
 ${WEB_MAP_MARKER_CSS}
 `;
+
+const CanvasMarkerContext = createContext<CanvasMapMarkers | null>(null);
+
+function CanvasMarkerProvider({ children }: { children: React.ReactNode }) {
+  const map = useMap();
+  const renderer = useMemo(() => new CanvasMapMarkers(map), [map]);
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    // Explicit diagnostic baseline for same-build touch/paint comparisons.
+    if (query.get('markerRenderer') !== 'dom') setActive(renderer.attach());
+    if (process.env.EXPO_PUBLIC_DATA_MODE === 'static' && query.has('mapPerf')) {
+      (window as Window & { __HWB_MAP_PERF__?: LeafletMap }).__HWB_MAP_PERF__ = map;
+    }
+    return () => {
+      renderer.detach();
+      delete (window as Window & { __HWB_MAP_PERF__?: LeafletMap }).__HWB_MAP_PERF__;
+    };
+  }, [map, renderer]);
+  return <CanvasMarkerContext.Provider value={active ? renderer : null}>{children}</CanvasMarkerContext.Provider>;
+}
+
+function CanvasMarkerRegistration({ renderer, record }: { renderer: CanvasMapMarkers; record: CanvasMapMarker }) {
+  const key = useRef(Symbol('map-marker')).current;
+  const { latitude, longitude, color, label, size, anchorX, anchorY, zIndex, selected } = record;
+  useEffect(() => {
+    renderer.set(key, { latitude, longitude, color, label, size, anchorX, anchorY, zIndex, selected });
+    return () => renderer.delete(key);
+  }, [renderer, key, latitude, longitude, color, label, size, anchorX, anchorY, zIndex, selected]);
+  return null;
+}
 
 const iconCache = new Map<string, L.Icon | L.DivIcon>();
 const webMapPerfDebugState = {
@@ -428,8 +481,10 @@ function createIcon(options: {
   imageSize?: { height?: number; width?: number } | null;
   label?: string | null;
   size: number;
+  canvas?: boolean;
+  selected?: boolean;
 }) {
-  const { anchor, color, imageSize, imageUri, label, size } = options;
+  const { anchor, color, imageSize, imageUri, label, size, canvas, selected = false } = options;
   const width = size;
   const inferredImageRatio =
     imageSize?.width && imageSize?.height && imageSize.width > 0 && imageSize.height > 0
@@ -446,7 +501,7 @@ function createIcon(options: {
   ];
 
   const normalizedLabel = normalizeWebMarkerLabel(label ?? null);
-  const cacheKey = `${imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
+  const cacheKey = `${selected}:${canvas ? 'canvas' : imageUri ?? 'css'}:${color}:${size}:${iconAnchor[0]}:${iconAnchor[1]}:${normalizedLabel ?? ''}:${
     imageSize?.width ?? ''
   }x${imageSize?.height ?? ''}`;
   const existing = iconCache.get(cacheKey);
@@ -457,15 +512,17 @@ function createIcon(options: {
     return existing;
   }
 
-  const icon = imageUri
+  const icon = imageUri && !selected
     ? L.icon({
         iconAnchor,
         iconSize: [width, height],
         iconUrl: imageUri,
       })
     : L.divIcon({
-        className: 'hwb-leaflet-div-icon',
-        html: createCssMapMarkerHtml({ color, label: normalizedLabel, size }),
+        className: `${canvas ? 'hwb-canvas-marker-target' : 'hwb-leaflet-div-icon'}${selected && !canvas ? ' hwb-map-marker-selected' : ''}`,
+        html: canvas
+          ? `<span aria-hidden="true" class="hwb-css-marker__label">${(normalizedLabel ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')}</span>`
+          : selected ? createSelectedMapPinHtml() : createCssMapMarkerHtml({ color, label: normalizedLabel, size }),
         iconAnchor,
         iconSize: [width, height],
       });
@@ -554,24 +611,56 @@ function MapInstanceBridge(props: { onMapReady?: (map: LeafletMap) => void }) {
   return null;
 }
 
-function OpenFreeMapLayer() {
+function OpenFreeMapLayer({ styleId = 'standard' }: { styleId?: WebMapStyleId }) {
   const map = useMap();
+  const layerRef = useRef<L.MaplibreGL | null>(null);
+  const appliedStyleRef = useRef<WebMapStyleId>('standard');
+  const isRaster = styleId === 'raster';
 
   useEffect(() => {
+    if (isRaster) {
+      // Browser-composited images avoid vector decoding, label placement and GL
+      // rendering during gestures. Keep ordinary 256px tiles on high-DPI phones.
+      const layer = L.tileLayer(WEB_MAP_STYLES.raster.url, {
+        attribution: RASTER_MAP_ATTRIBUTION,
+        detectRetina: false,
+        maxNativeZoom: MAX_ZOOM,
+        maxZoom: MAX_ZOOM,
+        updateWhenIdle: true,
+        updateWhenZooming: false,
+        keepBuffer: 1,
+      }).addTo(map);
+      return () => { layer.remove(); };
+    }
     const layer = L.maplibreGL({
       attributionControl: { customAttribution: OPEN_FREE_MAP_ATTRIBUTION },
+      pixelRatio: Math.min(window.devicePixelRatio || 1, MAX_BASEMAP_PIXEL_RATIO),
+      // Leaflet already animates the map. Avoid extra GL label fade frames.
+      fadeDuration: 0,
       style: OPEN_FREE_MAP_STYLE_URL,
     }).addTo(map);
+    layerRef.current = layer;
+    appliedStyleRef.current = 'standard';
 
     return () => {
       layer.remove();
+      layerRef.current = null;
     };
-  }, [map]);
+  }, [map, isRaster]);
+
+  useEffect(() => {
+    if (!layerRef.current || appliedStyleRef.current === styleId) return;
+    const glMap = layerRef.current.getMaplibreMap();
+    glMap.setStyle(WEB_MAP_STYLES[styleId].url, {
+      transformStyle: (_previous, next) => styleId === 'walking' ? reduceWalkingStyle(next) : next,
+    });
+    appliedStyleRef.current = styleId;
+  }, [map, styleId]);
 
   return null;
 }
 
-function OpenFreeMapAttribution({ attributionPlacement }: Pick<MapViewProps, 'attributionPlacement'>) {
+function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewProps, 'attributionPlacement'> & { styleId: WebMapStyleId }) {
   const map = useMap();
 
   useEffect(() => {
@@ -588,7 +677,15 @@ function OpenFreeMapAttribution({ attributionPlacement }: Pick<MapViewProps, 'at
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', 'Karten-Attribution anzeigen');
       toggle.textContent = 'i';
-      content.innerHTML = OPEN_FREE_MAP_ATTRIBUTION;
+      content.innerHTML = styleId === 'raster' ? RASTER_MAP_ATTRIBUTION : OPEN_FREE_MAP_ATTRIBUTION;
+      if (styleId === 'raster') {
+        // The raster tile provider requires visible attribution, not a hidden
+        // credit behind the information toggle.
+        container.classList.add('is-expanded');
+        container.style.cssText = 'min-height:0;border:1px solid #cad4cc;border-radius:6px;padding:3px 5px;';
+        toggle.style.display = 'none';
+        content.style.cssText = 'max-width:none;opacity:1;padding:0;font-size:11px;';
+      }
 
       L.DomEvent.disableClickPropagation(container);
       L.DomEvent.on(toggle, 'click', () => {
@@ -604,7 +701,7 @@ function OpenFreeMapAttribution({ attributionPlacement }: Pick<MapViewProps, 'at
     return () => {
       control.remove();
     };
-  }, [attributionPlacement, map]);
+  }, [attributionPlacement, map, styleId]);
 
   return null;
 }
@@ -623,6 +720,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
     style,
   } = props;
   const [map, setMap] = useState<LeafletMap | null>(null);
+  const mapStyle = useMapStylePreference();
   const [isClient, setIsClient] = useState(false);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
   const lastUserLocationRef = useRef<LatLng | null>(null);
@@ -826,11 +924,14 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
         <MapInstanceBridge
           onMapReady={(nextMap) => {
             setMap(nextMap);
+            // Report the measured viewport on mount as well as after gestures.
+            // Overlays need its actual scale when a fullscreen map replaces a card.
+            onRegionChangeComplete?.(regionFromMap(nextMap));
             onMapReady?.();
           }}
         />
-        <OpenFreeMapLayer />
-        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} />
+        <OpenFreeMapLayer styleId={mapStyle} />
+        <OpenFreeMapAttribution attributionPlacement={attributionPlacement} styleId={mapStyle} />
         <MapEventBridge
           onPress={onPress}
           onRegionChange={onRegionChange}
@@ -847,7 +948,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
             zIndexOffset={80}
           />
         ) : null}
-        {children}
+        <CanvasMarkerProvider>{children}</CanvasMarkerProvider>
       </MapContainer>
     </View>
   );
@@ -858,6 +959,7 @@ type InternalMarkerProps = MarkerProps & {
 };
 
 function Marker(props: InternalMarkerProps) {
+  const canvasRenderer = useContext(CanvasMarkerContext);
   const {
     accessibilityLabel,
     anchor,
@@ -867,6 +969,7 @@ function Marker(props: InternalMarkerProps) {
     onPress,
     pinColor,
     zIndex,
+    selected = false,
   } = props;
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
   const markerRef = useRef<L.Marker | null>(null);
@@ -882,6 +985,13 @@ function Marker(props: InternalMarkerProps) {
             click(event) {
               event.originalEvent?.stopPropagation?.();
               onPressRef.current?.();
+            },
+            keydown(event) {
+              const key = event.originalEvent.key;
+              if (key !== 'Enter' && key !== ' ') return;
+              event.originalEvent.preventDefault();
+              event.originalEvent.stopPropagation();
+              if (!event.originalEvent.repeat) onPressRef.current?.();
             },
           }
         : undefined,
@@ -917,10 +1027,12 @@ function Marker(props: InternalMarkerProps) {
 
     if (isPressable) {
       markerElement.setAttribute('role', 'button');
+      markerElement.setAttribute('aria-pressed', String(selected));
     } else {
       markerElement.removeAttribute('role');
+      markerElement.removeAttribute('aria-pressed');
     }
-  }, [accessibilityLabel, isPressable]);
+  }, [accessibilityLabel, isPressable, selected]);
 
   const imageSource = resolveImageSource(image);
   const imageUri = imageSource?.uri ?? null;
@@ -933,13 +1045,17 @@ function Marker(props: InternalMarkerProps) {
   const shouldUseCompactMarker = Boolean(children) && !imageUri && !markerLabel;
   const derivedColor =
     pinColor ?? (typeof zIndex === 'number' && zIndex <= 14 ? '#2f7dd7' : '#2e6b4b');
+  const size = shouldUseCompactMarker && !selected ? WEB_MARKER_SIZE_COMPACT : WEB_MARKER_SIZE;
+  const useCanvas = Boolean(canvasRenderer) && !imageUri;
   const icon = createIcon({
     anchor,
     color: derivedColor,
     imageSize: imageSource,
     imageUri,
     label: markerLabel,
-    size: shouldUseCompactMarker ? WEB_MARKER_SIZE_COMPACT : WEB_MARKER_SIZE,
+    size,
+    canvas: useCanvas,
+    selected,
   });
 
   if (perfDebugEnabled) {
@@ -947,6 +1063,12 @@ function Marker(props: InternalMarkerProps) {
   }
 
   return (
+    <>
+    {useCanvas && canvasRenderer ? <CanvasMarkerRegistration renderer={canvasRenderer} record={{
+      latitude: markerLatitude, longitude: markerLongitude, color: derivedColor,
+      label: normalizeWebMarkerLabel(markerLabel), size, anchorX: anchor?.x ?? 0.5,
+      anchorY: anchor?.y ?? 1, zIndex: selected ? SELECTED_MARKER_Z_INDEX : zIndex ?? 0, selected,
+    }} /> : null}
     <LeafletMarker
       alt={accessibilityLabel}
       eventHandlers={markerEventHandlers}
@@ -954,8 +1076,9 @@ function Marker(props: InternalMarkerProps) {
       position={position}
       ref={markerRef}
       title={accessibilityLabel}
-      zIndexOffset={typeof zIndex === 'number' ? zIndex : 0}
+      zIndexOffset={selected ? SELECTED_MARKER_Z_INDEX : zIndex ?? 0}
     />
+    </>
   );
 }
 

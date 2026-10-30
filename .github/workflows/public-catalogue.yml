@@ -1,0 +1,37 @@
+name: Public stamp catalogue
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/export-public-stamps.py'
+      - 'scripts/tests/**'
+      - 'backend/hwb/db/doNotDeploy-data/hwb.db.Stampboxes.csv'
+      - 'backend/hwb/db/doNotDeploy-data/hwb.db.ParkingSpots.csv'
+      - '.github/workflows/public-catalogue.yml'
+  push:
+    branches: [develop, main]
+    paths:
+      - 'scripts/export-public-stamps.py'
+      - 'scripts/tests/**'
+      - 'backend/hwb/db/doNotDeploy-data/hwb.db.Stampboxes.csv'
+      - 'backend/hwb/db/doNotDeploy-data/hwb.db.ParkingSpots.csv'
+      - '.github/workflows/public-catalogue.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-catalogue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 -m unittest discover -s scripts/tests -v
+      - run: python3 scripts/export-public-stamps.py --as-of 2026-10-20 --output /tmp/guest_stamps.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-stamp-catalogue
+          path: /tmp/guest_stamps.json
