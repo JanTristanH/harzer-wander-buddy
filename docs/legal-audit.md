@@ -133,3 +133,11 @@ Der [vertiefte Abgleich](provider-contracts-free.md#vertiefung-bereits-selbst-kl
 - Die EDPB-FAQ, Abschnitt 3.3, bestätigt: Auch bei DPF-zertifizierten US-Auftragsverarbeitern ist ein Art.-28-Vertrag erforderlich. Hersteller-DPF-Aussage und auffindbares Registerprofil lösen die Auth0-Free-DPA-Frage nicht. Aus der hier nur als JavaScript-Shell abrufbaren Registerseite wird kein aktiver Zertifizierungsstatus abgeleitet.
 
 Öffentliche Quellen und diese Codebefunde sind im Quellenregister ergänzt. Diese Runde ändert ausschließlich die Dokumentation; zusätzliche Cache-/UI-/Speicheranpassungen sind damit noch nicht implementiert und keine Anbietervereinbarung wurde abgeschlossen.
+
+## Cache-Fix vom 30. Oktober 2026
+
+Der zuvor bei `e8c4149` festgestellte fehlende physische Ablauf-Löschlauf ist nun implementiert. `processAccountDeletions` löscht `PlaceSearchCache`-Zeilen mit abgelaufenem `expiresAt` oder ohne gültig gesetzte Ablaufzeit, bevor Auth0-Aufträge verarbeitet werden. Der vorhandene Webworker und der eigenständige Cloud Run Job verwenden beide diese Funktion; eine leere Löschwarteschlange verhindert die Cachebereinigung nicht. Gültige Cachezeilen bleiben unverändert, und ein anschließender Providerfehler blockiert die bereits ausgeführte Bereinigung nicht.
+
+Die zwei neuen Regressionstests reproduzierten die fehlende Löschung vor der Änderung und bestehen mit dem Fix. Insgesamt 42 Backend-Tests erfolgreich. Die Tests verwenden isolierte In-Memory-Datenbanken; reale Cloud-Run-/Scheduler-/PostgreSQL-Abnahme und produktives Deployment bleiben offen. Für diesen Ablauf-Fix ist keine zusätzliche Schema-Migration erforderlich.
+
+Die historische Nachprüfung oben beschreibt den damaligen Stand. Aktuell offen bleiben die unabhängig davon dokumentierten Places-Feld-/Anzeige-Lizenzen und die langfristige Aufbewahrung von Google-Routenkoordinaten in `TravelTimes`.

@@ -100,6 +100,10 @@ async function processAccountDeletions(deleteIdentity = deleteAuth0Identity) {
   try {
     const db = await cds.connect.to('db');
     const { SELECT, UPDATE, DELETE } = cds.ql;
+    // Enforce physical cache expiry even without another search, an empty
+    // deletion queue, or a failing identity provider. Undated entries are unusable.
+    await db.run(DELETE.from('hwb.db.PlaceSearchCache')
+      .where('expiresAt <=', new Date().toISOString()).or('expiresAt is null'));
     // Retry the least recently attempted entries first. Persistent failures must
     // not monopolize every batch. Existing rows need no timestamp backfill.
     const pending = await db.run(SELECT.from('hwb.db.AccountDeletions')

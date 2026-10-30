@@ -96,3 +96,46 @@ test('a database deletion on another instance also invalidates a cached media re
   await DELETE.from('hwb.db.Attachments_local').where({ ID });
   assert.equal((await request(path)).status, 404);
 });
+
+test('worker physically removes expired or undated Places cache entries without another search', async () => {
+  const { processAccountDeletions } = require('../srv/account-privacy');
+  const freshKey = 'purge-test-fresh';
+  await INSERT.into('hwb.db.PlaceSearchCache').entries([
+    { cacheKey: 'purge-test-expired', expiresAt: '2000-01-01T00:00:00Z', payload: '["old-place"]' },
+    { cacheKey: 'purge-test-no-expiry', expiresAt: null, payload: '["undated-place"]' },
+    { cacheKey: freshKey, expiresAt: new Date(Date.now() + 3600000).toISOString(), payload: '["fresh-place"]' },
+  ]);
+  const freshBefore = await SELECT.one.from('hwb.db.PlaceSearchCache').where({ cacheKey: freshKey });
+  const provider = async () => assert.fail('An empty deletion queue must not call Auth0');
+  const result = await processAccountDeletions(provider);
+  assert.equal(result.processed, 0);
+  assert.equal(await SELECT.one.from('hwb.db.PlaceSearchCache').where({ cacheKey: 'purge-test-expired' }), undefined);
+  assert.equal(await SELECT.one.from('hwb.db.PlaceSearchCache').where({ cacheKey: 'purge-test-no-expiry' }), undefined);
+  assert.deepEqual(await SELECT.one.from('hwb.db.PlaceSearchCache').where({ cacheKey: freshKey }), freshBefore);
+  await processAccountDeletions(provider);
+  assert.deepEqual(await SELECT.one.from('hwb.db.PlaceSearchCache').where({ cacheKey: freshKey }), freshBefore);
+});
+
+test('Places cache cleanup still runs when identity deletion fails', async () => {
+  const { processAccountDeletions, subjectHash } = require('../srv/account-privacy');
+  const hash = subjectHash('cache-cleanup-provider-failure');
+  await INSERT.into('hwb.db.AccountDeletions').entries({ subjectHash: hash,
+    pendingSubject: 'cache-cleanup-provider-failure', requestedAt: new Date().toISOString() });
+  await INSERT.into('hwb.db.PlaceSearchCache').entries([
+    { cacheKey: 'purge-test-provider-failure', expiresAt: '2000-01-01T00:00:00Z', payload: '["expired-place"]' },
+    { cacheKey: 'purge-test-provider-failure-fresh', expiresAt: new Date(Date.now() + 3600000).toISOString(),
+      payload: '["fresh-place"]' },
+  ]);
+  try {
+    const result = await processAccountDeletions(async () => { throw new Error('provider unavailable'); });
+    assert.equal(result.failed, 1);
+    assert.equal(result.remaining, 1);
+    assert.equal(await SELECT.one.from('hwb.db.PlaceSearchCache')
+      .where({ cacheKey: 'purge-test-provider-failure' }), undefined);
+    assert.equal((await SELECT.one.from('hwb.db.AccountDeletions').where({ subjectHash: hash })).pendingSubject,
+      'cache-cleanup-provider-failure');
+    assert.ok(await SELECT.one.from('hwb.db.PlaceSearchCache').where({ cacheKey: 'purge-test-provider-failure-fresh' }));
+  } finally {
+    await DELETE.from('hwb.db.AccountDeletions').where({ subjectHash: hash });
+  }
+});
