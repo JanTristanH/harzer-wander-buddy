@@ -18,6 +18,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList } from '@/components/friends-list';
+import { BadgeTitle } from '@/components/badge-title';
+import { BadgeArtwork } from '@/components/badge-artwork';
+import { BadgeProfileSection } from '@/components/badge-profile-section';
+import { useBadgeAlbum } from '@/lib/badges';
+import { badgeTitle } from '@/lib/badge-types';
 import { AdvancedSettings } from '@/components/profile/advanced-settings';
 import { InstallAppBanner } from '@/components/profile/install-app-banner';
 import { TechnicalDetails } from '@/components/profile/technical-details';
@@ -82,6 +87,7 @@ type CompareStampItem = {
 };
 
 export type ProfileViewModel = {
+  badgeUserId?: string;
   mode: 'self' | 'user';
   name: string;
   subtitle: string;
@@ -517,6 +523,9 @@ export function ProfileErrorState({
 }
 
 export function ProfileView({ data }: { data: ProfileViewModel }) {
+  const badges = useBadgeAlbum(data.badgeUserId);
+  const selectedFrame = badges.data?.entries.find(entry => entry.id === badges.data?.selection.frame)?.frame;
+  const selectedTitle = badgeTitle(badges.data);
   const actionCard = data.actionCard;
   const [showAllVisits, setShowAllVisits] = useState(false);
   const [showAllFriends, setShowAllFriends] = useState(false);
@@ -610,17 +619,15 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
           ) : null}
           <View style={styles.heroRow}>
             <View style={styles.avatarBadgeWrap}>
-              <HeaderAvatar
+              {selectedFrame ? <BadgeArtwork frame={selectedFrame} image={data.avatarImage} initials={data.name.slice(0,2).toUpperCase()} size={118} /> : <HeaderAvatar
                 color={data.avatarColor || avatarColor()}
                 compact={false}
                 image={data.avatarImage}
-              />
-              <View style={styles.profileBadge}>
-                <Text style={styles.profileBadgeLabel}>WANDERER</Text>
-              </View>
+              />}
             </View>
             <View style={styles.headerBody}>
               <Text style={styles.headerName}>{data.name}</Text>
+              <BadgeTitle title={selectedTitle} />
               <Text style={styles.headerMeta}>{data.subtitle}</Text>
               {data.headerAction?.type === 'edit' ? (
                 <Pressable
@@ -745,6 +752,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
           </View>
         ) : null}
 
+        <BadgeProfileSection album={badges.data} error={badges.error} own={data.mode === 'self'} />
         {data.achievements && data.achievements.length > 0 ? (
           <ProfileSection title="Erfolge & Meilensteine">
             <View style={styles.achievementRow}>
@@ -1580,8 +1588,8 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
   },
   hapticChipActive: {
-    backgroundColor: '#2e6b4b',
-    borderColor: '#2e6b4b',
+    backgroundColor: '#e3e6df',
+    borderColor: '#596252',
   },
   hapticChipLabel: {
     color: '#3d4a3d',
@@ -1589,18 +1597,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   hapticChipLabelActive: {
-    color: '#f5f3ee',
+    color: '#20291f',
   },
   hapticTestButton: {
+    borderWidth: 1,
+    borderColor: '#c3cfc3',
     marginTop: 10,
     alignSelf: 'flex-start',
     borderRadius: 12,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: '#fff',
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   hapticTestButtonLabel: {
-    color: '#f5f3ee',
+    color: '#2e6b4b',
     fontSize: 13,
     fontWeight: '700',
   },

@@ -3,6 +3,24 @@ import { appConfig } from '@/lib/config';
 import { assertLiveBackend, isStaticWebsite, loadStaticCatalogue, staticStampboxes } from '@/lib/static-website';
 import { prepareProfileImageForUpload, type UploadableImage } from '@/lib/image-upload';
 import buildODataQuery, { type QueryOptions } from 'odata-query';
+import type { BadgeAlbum, BadgeSelection } from '@/lib/badge-types';
+
+export async function fetchBadgeAlbum(token: string, userId?: string): Promise<BadgeAlbum> {
+  const parameters = userId ? `userId='${escapeODataString(userId)}'` : 'userId=null';
+  const payload = await fetchOData<unknown>(token, buildUrl(`getBadgeAlbum(${parameters})`));
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Das Abzeichenalbum konnte nicht geladen werden.');
+  return JSON.parse(raw) as BadgeAlbum;
+}
+
+export async function saveBadgeProfile(token: string, selection: BadgeSelection): Promise<BadgeAlbum> {
+  const payload = await mutateOData<unknown>(token, buildUrl('saveBadgeProfile'), {
+    method: 'POST', body: JSON.stringify(selection),
+  });
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Die Auswahl konnte nicht gespeichert werden.');
+  return JSON.parse(raw) as BadgeAlbum;
+}
 
 export type StampedUser = {
   ID: string;
@@ -2073,6 +2091,18 @@ export async function fetchStampboxes(
   });
 
   return sortStampboxes(rows);
+}
+
+/** Load only the fixed requirement locations for a badge, never the entire catalog. */
+export async function fetchBadgeStampboxes(accessToken: string, stampIds: readonly string[]): Promise<Stampbox[]> {
+  const ids = [...new Set(stampIds.map(id => id.trim()).filter(Boolean))];
+  if (!ids.length) return [];
+  return sortStampboxes(await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
+    select: ['ID', 'number', 'name', 'description', 'heroImageUrl', 'image', 'imageCaption', 'hasVisited'],
+    filter: ids.map(id => buildStringEqualsFilter('ID', id)).join(' or '),
+    orderBy: 'orderBy asc',
+    top: ids.length,
+  }));
 }
 
 export async function fetchMapData(
