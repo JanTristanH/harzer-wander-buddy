@@ -6,6 +6,8 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   RefreshControl,
   Share,
@@ -593,8 +595,9 @@ export default function FriendsScreen() {
           transparent
           visible={isSearchModalVisible}
           onRequestClose={closeSearchModal}>
-          <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <Pressable style={styles.modalBackdrop} onPress={closeSearchModal} />
+            <SafeAreaView style={styles.modalSafeArea} pointerEvents="box-none">
             <View style={styles.modalCard}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Freunde finden</Text>
@@ -623,7 +626,7 @@ export default function FriendsScreen() {
                 />
               </View>
 
-              <View style={styles.searchResultsColumn}>
+              <ScrollView style={styles.searchResultsScroll} contentContainerStyle={styles.searchResultsColumn} keyboardShouldPersistTaps="handled">
                 {isSearchLoading ? (
                   <View style={styles.searchStatusWrap}>
                     <ActivityIndicator color={AppColors.primary} size="small" />
@@ -650,10 +653,11 @@ export default function FriendsScreen() {
                 {!isSearchLoading && !searchError && searchResults.length > 0 ? (
                   <FriendsList items={searchListItems} />
                 ) : null}
-              </View>
+              </ScrollView>
 
             </View>
-          </View>
+            </SafeAreaView>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     </SafeAreaView>
@@ -773,6 +777,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-start',
   },
+  modalSafeArea: { flex: 1, paddingVertical: 16 },
+  searchResultsScroll: { flexGrow: 0, flexShrink: 1 },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(46,58,46,0.35)',
@@ -781,7 +787,8 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surface,
     borderRadius: 22,
     marginHorizontal: 20,
-    marginTop: 120,
+    maxHeight: '100%',
+    flexShrink: 1,
     paddingHorizontal: 16,
     paddingVertical: 16,
     shadowColor: AppColors.shadow,
