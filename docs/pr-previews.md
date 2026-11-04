@@ -30,6 +30,51 @@ aus `codex/abzeichenalbum` nach `develop`.
 - Fork-PRs werden übersprungen. Es wird `pull_request`, niemals
   `pull_request_target` zum Ausführen von PR-Code verwendet.
 
+## Geführte Einrichtung auf deinem Rechner
+
+Starte aus dem Repository den deutschsprachigen Assistenten:
+
+```bash
+bash scripts/setup-pr-previews.sh
+```
+
+Er führt durch die folgenden Abschnitte: lokale Werkzeuge, GitHub-/GCP-Anmeldung,
+Projekt und Billing, GCP-Ressourcen, GitHub-Environment, Android-Signatur und
+optionalen Maps-Key. Zum Schluss setzt er die fünf Repository-Variablen mit
+`gh`; `GCP_PREVIEW_PROJECT_ID` setzt er zuletzt, um neue Previews zu aktivieren.
+Vor Änderungen fragt er nach. Er startet keinen Build und merged oder pusht
+keinen Branch. Für die Ausführung brauchst du GCP-Administrationsrechte im
+Preview-Projekt und GitHub-Adminrechte für das Repository.
+
+Nur die lokalen Voraussetzungen prüfen (ohne Anmeldung oder Cloud-Änderungen):
+
+```bash
+bash scripts/setup-pr-previews.sh --check
+```
+
+Fehlende Werkzeuge zeigt der Assistent mit Installationsbefehlen für Homebrew an
+und bietet bei vorhandenem Homebrew die Installation nach Bestätigung an.
+Docker und Android SDK sind für die Einrichtung nicht nötig; gebaut wird später
+in GitHub Actions. Das GCP-Projekt und die Billing-Verknüpfung legst du bei Bedarf
+über die angezeigten Console-Links an. Der Assistent prüft danach aktives Billing
+und zeigt dir den Hinweis zum Budget an. Bestehende GitHub-Environment-Schutzregeln
+bleiben erhalten und müssen im Browser auf passende Freigaben/Branches geprüft werden.
+
+Vorhandene Android-Signatur-Secrets bleiben erhalten. Fehlt die Signatur, fragt der
+Assistent nach einem dauerhaften Keystore-Pfad **außerhalb des Repositorys** und
+einem verdeckt eingegebenen Passwort. Einen vorhandenen Preview-Keystore kannst
+du dort wiederverwenden; einen neuen erzeugt er erst nach Bestätigung. Keystore
+und Passwort separat sicher aufbewahren. Bei einer unvollständigen bestehenden
+Signaturkonfiguration verlangt er den bisherigen Schlüssel. Secrets werden über
+Standardeingabe an `gh` übergeben und nicht als Befehlsargument gespeichert.
+
+Bei einem Abbruch denselben Assistenten erneut starten; GCP-Setup und vorhandene
+Signatur werden wiederverwendet. Bereits ausgeführte Schritte werden nicht
+zurückgerollt. Bei schon aktiven Previews keine parallelen Builds während einer
+Umkonfiguration laufen lassen. Optional kannst du `PROJECT_ID`, `REGION` und
+`GITHUB_REPOSITORY` als Vorgaben exportieren; es wird keine lokale Passwort- oder
+Konfigurationsdatei geschrieben. Die einzelnen manuellen Schritte stehen im Folgenden.
+
 ## 1. Ein eigenes GCP-Projekt vorbereiten
 
 Ein separates Preview-Projekt mit aktiviertem Billing verwenden. Dadurch bleiben
