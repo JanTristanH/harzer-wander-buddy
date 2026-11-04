@@ -4,11 +4,25 @@ import * as Updates from 'expo-updates';
 import React, { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useServerInfoQuery } from '@/lib/queries';
+
 export function TechnicalDetails() {
   const [expanded, setExpanded] = useState(false);
+  const { data: serverInfo, isFetching, isError } = useServerInfoQuery(expanded);
+  const serverUnavailable = isFetching ? 'Wird geladen…' : 'Nicht verfügbar';
+  const serverDate = serverInfo?.serverTime ? new Date(serverInfo.serverTime) : null;
+  const serverTime =
+    serverDate && Number.isFinite(serverDate.getTime())
+      ? new Intl.DateTimeFormat('de-DE', {
+          dateStyle: 'medium',
+          timeStyle: 'long',
+        }).format(serverDate)
+      : serverUnavailable;
   const isWeb = Platform.OS === 'web';
   const unavailable = isWeb ? 'In der Web-App nicht verfügbar' : 'Nicht verfügbar';
   const rows = [
+    ['Server-Version', (!isError && serverInfo?.version) || serverUnavailable],
+    ['Server-Zeit (beim Abruf)', isError ? serverUnavailable : serverTime],
     [
       'App-Version',
       (!isWeb && Constants.nativeAppVersion) || Constants.expoConfig?.version || 'Nicht verfügbar',

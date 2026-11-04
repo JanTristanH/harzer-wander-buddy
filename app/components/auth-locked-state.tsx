@@ -4,6 +4,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AppColors } from '@/constants/theme';
 import { SkeletonBlock } from '@/components/skeleton';
 
 const lockedIllustration = require('@/assets/images/buddy/telescope.png');
@@ -41,7 +42,7 @@ export function LockedGuestRows({
       </View>
       <View style={styles.lockedOverlay}>
         <View style={styles.lockIcon}>
-          <Feather color="#2e6b4b" name="lock" size={15} />
+          <Feather color={AppColors.primary} name="lock" size={15} />
         </View>
         <Text style={styles.lockedText}>{body}</Text>
         <Pressable
@@ -76,7 +77,7 @@ export function SignInRequiredScreen({
             accessibilityRole="button"
             onPress={onSignIn}
             style={({ pressed }) => [styles.screenButton, pressed && styles.signInButtonPressed]}>
-            <Feather color="#f5f3ee" name="log-in" size={16} />
+            <Feather color={AppColors.background} name="log-in" size={16} />
             <Text style={styles.screenButtonLabel}>{ctaLabel}</Text>
           </Pressable>
         </View>
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
   },
   signInButton: {
     borderRadius: 999,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: AppColors.primary,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
@@ -142,14 +143,14 @@ const styles = StyleSheet.create({
     opacity: 0.86,
   },
   signInButtonLabel: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '700',
   },
   screenSafeArea: {
     flex: 1,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: AppColors.background,
   },
   screenContent: {
     flex: 1,
@@ -162,12 +163,12 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 380,
     borderRadius: 22,
-    backgroundColor: '#ffffff',
+    backgroundColor: AppColors.surface,
     paddingHorizontal: 22,
     paddingVertical: 24,
     alignItems: 'center',
     gap: 12,
-    shadowColor: '#141e14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
     height: 118,
   },
   screenTitle: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '700',
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
   screenButton: {
     minHeight: 44,
     borderRadius: 999,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: AppColors.primary,
     paddingHorizontal: 18,
     paddingVertical: 11,
     flexDirection: 'row',
@@ -202,7 +203,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   screenButtonLabel: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '700',

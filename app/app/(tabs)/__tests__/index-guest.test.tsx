@@ -1,5 +1,6 @@
 import { act, render, screen, within } from '@testing-library/react-native';
 import React from 'react';
+import { FlatList, PanResponder, StyleSheet, View, type GestureResponderEvent, type PanResponderGestureState } from 'react-native';
 
 import type { Stampbox } from '@/lib/api';
 jest.mock('@/lib/badges', () => ({ useBadgeAlbum: () => ({data:undefined}) }));
@@ -144,6 +145,42 @@ describe('StampsScreen', () => {
       jest.runAllTimers();
     });
   }
+
+  it('clamps a drag outside the rail and resumes smoothly when the finger returns', async () => {
+    const responderSpy = jest.spyOn(PanResponder, 'create');
+    mockGuestData(Array.from({ length: 30 }, (_, index) => createStamp({
+      ID: `stamp-${index}`, number: String(index + 1),
+    })));
+    await renderScreen();
+    const list = screen.UNSAFE_getByType(FlatList).instance;
+    const scrollSpy = jest.spyOn(list, 'scrollToIndex').mockImplementation(() => {});
+    const handlers = responderSpy.mock.calls.at(-1)![0];
+    const event = (locationY: number) => ({ nativeEvent: { locationY } }) as GestureResponderEvent;
+    const gesture = (dy: number) => ({ dy }) as PanResponderGestureState;
+    // Android grants the responder after a small vertical movement already occurred.
+    act(() => handlers.onPanResponderGrant!(event(100), gesture(8)));
+    expect(scrollSpy.mock.calls.at(-1)![0].index).toBeGreaterThan(2);
+    act(() => handlers.onPanResponderMove!(event(999), gesture(-500)));
+    expect(scrollSpy.mock.calls.at(-1)![0].index).toBe(2);
+    act(() => handlers.onPanResponderMove!(event(-999), gesture(1000)));
+    expect(scrollSpy.mock.calls.at(-1)![0].index).toBe(31);
+    // The native local coordinate stays misleading; displacement returns to the start.
+    act(() => handlers.onPanResponderMove!(event(-999), gesture(8)));
+    expect(scrollSpy.mock.calls.at(-1)![0].index).toBe(scrollSpy.mock.calls[0][0].index);
+    act(() => handlers.onPanResponderRelease!(event(100), gesture(8)));
+    responderSpy.mockRestore();
+  });
+
+  it('leaves the outer 4 px outside the scroller touch area', async () => {
+    mockGuestData([createStamp()]);
+    await renderScreen();
+    const touchArea = screen.UNSAFE_getAllByType(View).find((view) => {
+      const style = StyleSheet.flatten(view.props.style);
+      return style?.position === 'absolute' && style?.right === 4 && style?.bottom === 0;
+    });
+    expect(touchArea).toBeDefined();
+    expect(StyleSheet.flatten(touchArea!.parent!.props.style).width).toBe(74);
+  });
 
   it('renders the list header for guests', async () => {
     mockGuestData([createStamp()]);

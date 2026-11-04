@@ -114,7 +114,7 @@ export default function ProfileScreen() {
       headerAction: {
         type: 'edit',
         label: 'Profil anpassen',
-        onPress: () => router.push('/profile/customize' as never),
+        onPress: () => router.push('/profile/badges/customize' as never),
       },
       avatarColor: '#dde9df',
       avatarImage: profilePicture,

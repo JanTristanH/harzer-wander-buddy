@@ -47,8 +47,6 @@ function loadPlan(root = '.', runGit = git) {
 
 async function publish(plan, { github, context, core, runGit = git }) {
   const repo = context.repo;
-  let appReleased = false;
-  let appSha = '';
   // loadPlan validates all components before any remote mutation happens.
   for (const item of plan) {
     const sha = item.tagSha || context.sha;
@@ -69,12 +67,6 @@ async function publish(plan, { github, context, core, runGit = git }) {
       throw new Error(`${item.tag} is not a published stable release`);
     }
     core.info(`${item.tag}: ${existing ? 'already published' : 'published'} at ${sha}`);
-    // A rerun of the publishing commit can retry the native build job. Later
-    // documentation/main commits must not rebuild an already published app.
-    if (item.path === 'app' && (!existing || sha === context.sha)) {
-      appReleased = true;
-      appSha = sha;
-    }
     item.tagSha = sha;
   }
 
@@ -100,8 +92,6 @@ async function publish(plan, { github, context, core, runGit = git }) {
     await github.rest.issues.addLabels({ ...repo, issue_number: pr.number, labels: ['autorelease: tagged'] });
     await github.rest.issues.removeLabel({ ...repo, issue_number: pr.number, name: 'autorelease: pending' });
   }
-  core.setOutput('app_released', String(appReleased));
-  core.setOutput('app_sha', appSha);
 }
 
 module.exports = { loadPlan, publish, releaseNotes, validateVersion };

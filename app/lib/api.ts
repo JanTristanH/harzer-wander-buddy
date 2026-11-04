@@ -1,6 +1,7 @@
 import { isRegularStamp } from './stamp-kind';
 import { normalizeRoleTokens } from '@/lib/admin-access';
 import { appConfig } from '@/lib/config';
+import { assertLiveBackend, isStaticWebsite, loadStaticCatalogue, staticStampboxes } from '@/lib/static-website';
 import { prepareProfileImageForUpload, type UploadableImage } from '@/lib/image-upload';
 import buildODataQuery, { type QueryOptions } from 'odata-query';
 import type { BadgeAlbum, BadgeSelection } from '@/lib/badge-types';
@@ -104,6 +105,7 @@ type NeighborParkingRow = {
 
 type TravelTimeRow = {
   ID: string;
+  positionString?: string;
   fromPoi?: string;
   toPoi?: string;
   durationSeconds?: number;
@@ -481,6 +483,7 @@ export type TourPathEntry = {
   rank: number;
   travelTime?: {
     ID: string;
+    positionString?: string;
     fromPoi?: string;
     toPoi?: string;
     durationSeconds: number | null;
@@ -733,6 +736,7 @@ async function readErrorBody(response: Response) {
 }
 
 async function fetchOData<T>(accessToken: string, url: string) {
+  assertLiveBackend();
   const response = await fetch(url, {
     headers: {
       Accept: 'application/json',
@@ -758,7 +762,17 @@ async function fetchOData<T>(accessToken: string, url: string) {
   return (await response.json()) as T;
 }
 
+export type ServerInfo = {
+  version: string;
+  serverTime: string;
+};
+
+export function fetchServerInfo(accessToken: string) {
+  return fetchOData<ServerInfo>(accessToken, buildUrl('getServerInfo()'));
+}
+
 async function fetchPublicOData<T>(url: string) {
+  assertLiveBackend();
   const response = await fetch(url, {
     headers: {
       Accept: 'application/json',
@@ -782,6 +796,7 @@ async function mutateOData<T>(
   url: string,
   init: RequestInit & { body?: string }
 ) {
+  assertLiveBackend();
   const response = await fetch(url, {
     ...init,
     headers: {
@@ -998,6 +1013,7 @@ function normalizeTravelTime(value?: TravelTimeRow) {
 
   return {
     ID: value.ID,
+    positionString: safeTrim(value.positionString) || undefined,
     fromPoi: safeTrim(value.fromPoi) || undefined,
     toPoi: safeTrim(value.toPoi) || undefined,
     durationSeconds: toRoundedNumberOrNull(value.durationSeconds),
@@ -2081,6 +2097,18 @@ export async function fetchStampboxes(
   return sortStampboxes(rows);
 }
 
+/** Load only the fixed requirement locations for a badge, never the entire catalog. */
+export async function fetchBadgeStampboxes(accessToken: string, stampIds: readonly string[]): Promise<Stampbox[]> {
+  const ids = [...new Set(stampIds.map(id => id.trim()).filter(Boolean))];
+  if (!ids.length) return [];
+  return sortStampboxes(await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
+    select: ['ID', 'number', 'name', 'description', 'heroImageUrl', 'image', 'imageCaption', 'hasVisited'],
+    filter: ids.map(id => buildStringEqualsFilter('ID', id)).join(' or '),
+    orderBy: 'orderBy asc',
+    top: ids.length,
+  }));
+}
+
 export async function fetchMapData(
   accessToken: string,
   currentUserId?: string,
@@ -2133,6 +2161,7 @@ export async function fetchMapData(
 }
 
 export async function fetchPublicStampboxes(mode: StampboxFetchMode = 'default') {
+  if (isStaticWebsite) return staticStampboxes(mode);
   const filter = buildStampboxModeFilter(mode);
 
   const rows = await fetchPublicCollection<Stampbox>('Stampboxes', {
@@ -2175,7 +2204,7 @@ export async function fetchPublicMapData(
 ) {
   const [stamps, parkingSpots] = await Promise.all([
     prefetchedStamps ? Promise.resolve(prefetchedStamps) : fetchPublicStampboxes(stampboxFetchMode),
-    fetchPublicCollection<ParkingSpot>('ParkingSpots', {
+    isStaticWebsite ? loadStaticCatalogue().then((data) => data.parkingSpots) : fetchPublicCollection<ParkingSpot>('ParkingSpots', {
       select: ['ID', 'name', 'description', 'image', 'latitude', 'longitude'],
       top: 500,
     }),
@@ -2195,13 +2224,16 @@ export async function fetchPublicMapData(
 }
 
 export async function fetchPublicStampDetail(stampId: string) {
-  const stamp = await fetchPublicEntityById<Stampbox>('Stampboxes', stampId, [
+  const stamp = isStaticWebsite
+    ? (await staticStampboxes('all')).find((item) => item.ID === stampId)
+    : await fetchPublicEntityById<Stampbox>('Stampboxes', stampId, [
     [
       '$select',
       'ID,number,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
     ],
   ]);
 
+  if (!stamp) throw new Error('Stempelstelle nicht gefunden.');
   return {
     stamp: {
       ...stamp,
@@ -2219,10 +2251,13 @@ export async function fetchPublicStampDetail(stampId: string) {
 }
 
 export async function fetchPublicParkingDetail(parkingId: string) {
-  const parking = await fetchPublicEntityById<ParkingSpot>('ParkingSpots', parkingId, [
+  const parking = isStaticWebsite
+    ? (await loadStaticCatalogue()).parkingSpots.find((item) => item.ID === parkingId)
+    : await fetchPublicEntityById<ParkingSpot>('ParkingSpots', parkingId, [
     ['$select', 'ID,name,description,image,latitude,longitude'],
   ]);
 
+  if (!parking) throw new Error('Parkplatz nicht gefunden.');
   return {
     parking,
     nearbyStamps: [],

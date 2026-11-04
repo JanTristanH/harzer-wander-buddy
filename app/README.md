@@ -1,5 +1,8 @@
 # Harzer Wanderbuddy app
 
+Die öffentliche Website baut dieselbe Expo-App mit statischem Datenprofil:
+[Buildprofil und Datenadapter](../docs/public-stamp-catalogue.md).
+
 This is the React Native app for Harzer Wanderbuddy. Basic development uses a separate Expo Web server; Auth0 web development is served by CAP; see [Local web development and Auth0](#local-web-development-and-auth0).
 
 ## Local development profiles
@@ -61,6 +64,17 @@ Auth0 callback changes.
 
    ```bash
    npm ci
+   ```
+
+   Run `npm ci` after checkout or when the lockfile changes. It installs the locked
+   dependencies, including `react-native-svg` and its `filter-image` entry point.
+   The test, native-build and OTA workflows use the same installation. From the
+   repository root, use `npm ci --prefix app`.
+
+   Run the app tests with the configuration also used by CI:
+
+   ```bash
+   npm test -- --runInBand --config jest.config.js
    ```
 
 2. Start Expo for native development

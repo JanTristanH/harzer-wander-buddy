@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Fonts } from '@/constants/theme';
+import { AppColors, Fonts } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 
@@ -115,7 +115,7 @@ function FriendsListRow({
         </Pressable>
       ) : item.onPress ? (
         <Pressable hitSlop={8} onPress={item.onPress} style={({ pressed }) => [styles.chevronButton, pressed && styles.pressed]}>
-          <Feather color="#2E6B4B" name="chevron-right" size={18} />
+          <Feather color={AppColors.primary} name="chevron-right" size={18} />
         </Pressable>
       ) : null}
     </View>
@@ -138,13 +138,13 @@ const styles = StyleSheet.create({
   },
   friendCard: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface,
     borderRadius: 18,
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    shadowColor: '#141E14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   friendName: {
-    color: '#1E2A1E',
+    color: AppColors.text,
     fontFamily: Fonts.sans,
     fontSize: 16,
     fontWeight: '700',
@@ -180,13 +180,13 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   friendMeta: {
-    color: '#6B7A6B',
+    color: AppColors.textMuted,
     fontFamily: Fonts.sans,
     fontSize: 12,
     lineHeight: 16,
   },
   inlineActionButton: {
-    backgroundColor: '#2E6B4B',
+    backgroundColor: AppColors.primary,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -198,13 +198,13 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   inlineActionLabel: {
-    color: '#F5F3EE',
+    color: AppColors.background,
     fontFamily: Fonts.sans,
     fontSize: 12,
     lineHeight: 16,
   },
   inlineActionLabelMuted: {
-    color: '#2E3A2E',
+    color: AppColors.textSecondary,
   },
   chevronButton: {
     alignItems: 'center',

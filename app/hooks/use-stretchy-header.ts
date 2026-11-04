@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, Platform, type NativeScrollEvent, type NativeSyntheticEvent, type ScrollView } from 'react-native';
+import { Gesture } from 'react-native-gesture-handler';
 
 const PULL_RESISTANCE = 0.45;
 const MAX_PULL = 160;
@@ -165,6 +166,41 @@ export function useStretchyHeader(height: number, onRefresh: () => void, refresh
     onPanResponderTerminationRequest: () => false,
   }), [pull, release, usesNativeBounce]);
 
+  // Android's ScrollView can intercept touches before the JS responder captures
+  // them. Observe the pull alongside native scrolling in the native gesture arena.
+  const androidGesture = useMemo(() => Gesture.Simultaneous(
+    Gesture.Native().enabled(Platform.OS === 'android'),
+    Gesture.Pan()
+      .enabled(Platform.OS === 'android')
+      .runOnJS(true)
+      .maxPointers(1)
+      .activeOffsetY(8)
+      .failOffsetY(-8)
+      .failOffsetX([-12, 12])
+      .onBegin(() => {
+        didPull.current = false;
+        startedAtTop.current = scrollOffset.current <= 0;
+      })
+      .onStart(() => {
+        if (!startedAtTop.current) return;
+        didPull.current = true;
+        pull.stopAnimation();
+      })
+      .onUpdate((event) => {
+        if (!startedAtTop.current) return;
+        if (event.numberOfPointers !== 1) {
+          release(false);
+          return;
+        }
+        const distance = Math.min(MAX_PULL, Math.max(0, event.translationY * PULL_RESISTANCE));
+        pullDistance.current = distance;
+        pull.setValue(distance);
+      })
+      .onFinalize((_event, success) => {
+        if (didPull.current) release(success);
+      }),
+  ), [pull, release]);
+
   const onScroll = useMemo(() => usesNativeBounce
     ? Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })
     : (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -184,7 +220,8 @@ export function useStretchyHeader(height: number, onRefresh: () => void, refresh
     usesNativeBounce,
     didPull,
     scrollRef,
-    panHandlers: usesNativeBounce ? {} : panResponder.panHandlers,
+    androidGesture,
+    panHandlers: Platform.OS === 'web' ? panResponder.panHandlers : {},
     onScroll,
     contentStyle: usesNativeBounce ? undefined : { transform: [{ translateY: pull }] },
     backgroundStyle,

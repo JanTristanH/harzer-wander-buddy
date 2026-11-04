@@ -5,6 +5,10 @@ import React from 'react';
 import { Platform } from 'react-native';
 
 import { TechnicalDetails } from '@/components/profile/technical-details';
+import { useServerInfoQuery } from '@/lib/queries';
+
+jest.mock('@/lib/queries', () => ({ useServerInfoQuery: jest.fn() }));
+const mockServerInfoQuery = useServerInfoQuery as jest.Mock;
 
 jest.mock('expo-constants', () => ({
   __esModule: true,
@@ -24,6 +28,11 @@ jest.mock('expo-updates', () => ({
 
 const originalPlatform = Platform.OS;
 beforeEach(() => {
+  mockServerInfoQuery.mockReturnValue({
+    data: { version: '2.8.0', serverTime: '2026-10-15T10:30:45Z' },
+    isFetching: false,
+    isError: false,
+  });
   Object.assign(Platform, { OS: 'ios' });
   Object.assign(Constants, {
     nativeAppVersion: '1.5.2',
@@ -95,4 +104,26 @@ it('does not present native Expo metadata as web update information', () => {
   expect(screen.queryByText('Expo Update')).toBeNull();
   expect(screen.getByText('Web-App')).toBeTruthy();
   expect(screen.getAllByText('In der Web-App nicht verfügbar').length).toBeGreaterThan(0);
+});
+
+it('loads server metadata only while expanded and formats the server timestamp', () => {
+  render(<TechnicalDetails />);
+  expect(mockServerInfoQuery).toHaveBeenLastCalledWith(false);
+  expand();
+  expect(mockServerInfoQuery).toHaveBeenLastCalledWith(true);
+  expect(screen.getByText('2.8.0')).toBeTruthy();
+  expect(screen.getByText(new Intl.DateTimeFormat('de-DE', {
+    dateStyle: 'medium', timeStyle: 'long',
+  }).format(new Date('2026-10-15T10:30:45Z')))).toBeTruthy();
+});
+
+it('handles loading and failed server requests without hiding the app metadata', () => {
+  mockServerInfoQuery.mockReturnValue({ isFetching: true });
+  const { rerender } = render(<TechnicalDetails />);
+  expand();
+  expect(screen.getAllByText('Wird geladen…')).toHaveLength(2);
+  mockServerInfoQuery.mockReturnValue({ isFetching: false, isError: true });
+  rerender(<TechnicalDetails />);
+  expect(screen.getAllByText('Nicht verfügbar')).toHaveLength(2);
+  expect(screen.getByText('42')).toBeTruthy();
 });

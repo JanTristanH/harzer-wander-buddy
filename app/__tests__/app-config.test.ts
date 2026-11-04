@@ -71,6 +71,12 @@ describe('Expo backend configuration', () => {
     expect(() => resolveBackendUrl('file:///tmp/backend')).toThrow(/must use http or https/);
   });
 
+  it('mounts the actual app at the static website path without changing live builds', () => {
+    expect(createExpoConfig({ EXPO_PUBLIC_DATA_MODE: 'static' }).experiments?.baseUrl).toBe('/preview/overview/app');
+    expect(createExpoConfig({ EXPO_PUBLIC_DATA_MODE: 'static', EXPO_PUBLIC_STATIC_BASE_PATH: '/overview/app' }).experiments?.baseUrl).toBe('/overview/app');
+    expect(createExpoConfig({}).experiments?.baseUrl).toBe('/app/rnweb');
+  });
+
   it('maps localhost to the Android emulator while preserving other platforms', () => {
     expect(resolveBackendUrlForPlatform(LOCAL_BACKEND_URL, 'android')).toBe(
       'http://10.0.2.2:4004'

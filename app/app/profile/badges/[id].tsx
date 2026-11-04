@@ -1,7 +1,12 @@
-import { Feather } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
+import { fetchBadgeStampboxes } from '@/lib/api';
+import { useIdTokenClaims } from '@/lib/auth';
+import { useAuthorizedRequest } from '@/lib/queries';
+import { StampListItem } from '@/components/stamp-list-item';
+import { RewardPreview } from '@/components/reward-preview';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { AuthGuard } from '@/components/auth-guard';
 import { BadgeArtwork } from '@/components/badge-artwork';
 import {
@@ -19,6 +24,15 @@ function Detail() {
   const router = useRouter();
   const entry = data?.entries.find((e) => e.id === id);
   const missing = entry?.required.filter((stamp) => !stamp.visited) ?? [];
+  const claims = useIdTokenClaims<{ sub?: string }>();
+  const request = useAuthorizedRequest();
+  const ids =
+    entry?.required.flatMap((stamp) => (stamp.id ? [stamp.id] : [])) ?? [];
+  const locations = useQuery({
+    queryKey: ['badge-stamps', claims?.sub, [...ids].sort().join(',')],
+    enabled: Boolean(claims?.sub && ids.length),
+    queryFn: () => request((token) => fetchBadgeStampboxes(token, ids)),
+  });
   return (
     <BadgePage title="Abzeichendetails">
       {!data ? (
@@ -59,6 +73,7 @@ function Detail() {
               <Text style={s.text}>{entry.note}</Text>
             </View>
           ) : null}
+          <RewardPreview entry={entry} />
           {entry.required.length ? (
             <View style={s.card}>
               <Text style={s.heading}>
@@ -72,50 +87,61 @@ function Detail() {
                   beliebige.
                 </Text>
               ) : null}
-              {entry.required.map((stamp) => (
-                <Pressable
-                  key={stamp.number}
-                  disabled={!stamp.id}
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: !stamp.id }}
-                  accessibilityLabel={`${stamp.name}, ${stamp.visited ? 'besucht' : 'offen'}${stamp.id ? ', Details und Karte öffnen' : ', noch nicht im Stempelkatalog verfügbar'}`}
-                  onPress={() =>
-                    stamp.id && router.push(`/stamps/${stamp.id}` as never)
-                  }
-                  style={[
-                    s.divider,
-                    { flexDirection: 'row', alignItems: 'center', gap: 10 },
-                  ]}
-                >
-                  <Feather
-                    name={stamp.visited ? 'check-circle' : 'circle'}
-                    color="#2e6b4b"
-                    size={20}
+              {locations.error ? (
+                <Text style={s.text}>
+                  Bilder konnten nicht aktualisiert werden. Die Pflichtstellen
+                  bleiben sichtbar.
+                </Text>
+              ) : null}
+              {entry.required.map((stamp, index) => {
+                const metadata = locations.data?.find(
+                  (item) => item.ID === stamp.id
+                );
+                return (
+                  <StampListItem
+                    key={stamp.number}
+                    index={index}
+                    disabled={!stamp.id}
+                    item={{
+                      ...metadata,
+                      ID: stamp.id || stamp.number,
+                      number: stamp.number,
+                      name: stamp.name,
+                      description:
+                        metadata?.description ||
+                        (!stamp.id
+                          ? 'Noch nicht im Stempelkatalog verfügbar.'
+                          : 'Pflichtstelle für dieses Abzeichen.'),
+                      hasVisited: stamp.visited,
+                    }}
+                    metaLabel={
+                      entry.id === 'witch'
+                        ? stamp.mandatory
+                          ? 'Pflicht'
+                          : 'Auswahl'
+                        : undefined
+                    }
+                    onPress={() => {
+                      if (stamp.id) router.push(`/stamps/${stamp.id}` as never);
+                    }}
                   />
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.text}>
-                      {/^\d+$/.test(stamp.number) ? `${stamp.number} · ` : ''}
-                      {stamp.name}
-                      {entry.id === 'witch' && stamp.mandatory
-                        ? ' · Pflicht'
-                        : ''}
-                    </Text>
-                    {!stamp.id ? (
-                      <Text style={s.text}>
-                        Noch nicht im Stempelkatalog verfügbar
-                      </Text>
-                    ) : null}
-                  </View>
-                  {stamp.id ? (
-                    <Feather name="chevron-right" color="#2e6b4b" size={18} />
-                  ) : null}
-                </Pressable>
-              ))}
+                );
+              })}
             </View>
-          ) : null}
+          ) : (
+            <View style={s.card}>
+              <Text style={s.heading}>Dein nächstes Wanderziel</Text>
+              <Text style={s.text}>
+                Für dieses Leistungsabzeichen zählt jede reguläre Stempelstelle.
+              </Text>
+              <BadgeButton secondary onPress={() => router.push('/(tabs)')}>
+                Stempelstellenliste öffnen
+              </BadgeButton>
+            </View>
+          )}
           {entry.unlocked ? (
             <View style={s.card}>
-              <Text style={s.heading}>Für dein Profil</Text>
+              <Text style={s.heading}>Im Profil verwenden</Text>
               {entry.titles.length ? (
                 <Text style={s.text}>
                   Titel: {entry.titles.map((t) => t.label).join(' / ')}

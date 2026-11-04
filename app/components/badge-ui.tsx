@@ -73,7 +73,7 @@ export const badgeStyles = StyleSheet.create({
     paddingVertical: 12,
     minHeight: 44,
   },
-  selected: { backgroundColor: '#2e6b4b' },
+  selected: { backgroundColor: '#e3e6df' },
   status: {
     alignSelf: 'center',
     borderRadius: 20,

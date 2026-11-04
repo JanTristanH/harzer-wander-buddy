@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 import { Animated, PanResponder, Platform, type GestureResponderEvent, type PanResponderGestureState, type ScrollView } from 'react-native';
+import type { PanGesture } from 'react-native-gesture-handler';
 
 import { useStretchyHeader } from '@/hooks/use-stretchy-header';
 
@@ -80,6 +81,64 @@ it('leaves the native iOS bounce and refresh gesture in control', () => {
   expect(result.current.panHandlers).toEqual({});
   handlers.onStartShouldSetPanResponderCapture?.(touch, gesture(0));
   expect(handlers.onMoveShouldSetPanResponderCapture?.(touch, gesture(30))).toBe(false);
+});
+
+describe('native Android pull', () => {
+  function setupAndroid() {
+    const hook = setup();
+    const pan = hook.result.current.androidGesture.toGestureArray()[1] as PanGesture;
+    return { ...hook, pan, callbacks: pan.handlers };
+  }
+
+  it('observes pulling alongside native scrolling and returns on release', () => {
+    const { result, pan, callbacks, onRefresh } = setupAndroid();
+    expect(result.current.panHandlers).toEqual({});
+    expect(pan.config).toEqual(expect.objectContaining({ enabled: true, runOnJS: true, activeOffsetYEnd: 8, failOffsetYStart: -8, maxPointers: 1 }));
+    const spring = jest.spyOn(Animated, 'spring');
+    const setValue = jest.spyOn(Animated.Value.prototype, 'setValue');
+    act(() => {
+      callbacks.onBegin?.({} as never);
+      callbacks.onStart?.({} as never);
+      callbacks.onUpdate?.({ translationY: 100, numberOfPointers: 1 } as never);
+    });
+    expect(setValue).toHaveBeenLastCalledWith(45);
+    expect(result.current.didPull.current).toBe(true);
+    act(() => callbacks.onFinalize?.({} as never, true));
+    expect(spring).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ toValue: 0, useNativeDriver: true }));
+    expect(onRefresh).not.toHaveBeenCalled();
+  });
+
+  it('ignores pulls away from the top and cancels when another finger joins', () => {
+    const { result, callbacks } = setupAndroid();
+    const setValue = jest.spyOn(Animated.Value.prototype, 'setValue');
+    act(() => result.current.onScroll({ nativeEvent: { contentOffset: { y: 100 } } } as never));
+    act(() => {
+      callbacks.onBegin?.({} as never);
+      callbacks.onStart?.({} as never);
+      callbacks.onUpdate?.({ translationY: 100, numberOfPointers: 1 } as never);
+    });
+    expect(setValue).not.toHaveBeenCalled();
+    expect(result.current.didPull.current).toBe(false);
+    act(() => result.current.onScroll({ nativeEvent: { contentOffset: { y: 0 } } } as never));
+    const spring = jest.spyOn(Animated, 'spring');
+    act(() => {
+      callbacks.onBegin?.({} as never);
+      callbacks.onStart?.({} as never);
+      callbacks.onUpdate?.({ translationY: 100, numberOfPointers: 2 } as never);
+    });
+    expect(spring).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ toValue: 0 }));
+  });
+
+  it.each([true, false])('refreshes a long pull only after a successful release (%s)', (success) => {
+    const { callbacks, onRefresh } = setupAndroid();
+    act(() => {
+      callbacks.onBegin?.({} as never);
+      callbacks.onStart?.({} as never);
+      callbacks.onUpdate?.({ translationY: 240, numberOfPointers: 1 } as never);
+      callbacks.onFinalize?.({} as never, success);
+    });
+    expect(onRefresh).toHaveBeenCalledTimes(success ? 1 : 0);
+  });
 });
 
 describe('web wheel overscroll', () => {

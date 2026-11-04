@@ -82,37 +82,36 @@ test('rejects existing tags not reachable from main', t => {
     return localGit(...args);
   }), /not an ancestor/);
 });
-test('tags the exact main commit, publishes notes, and enables native builds', async () => {
+test('tags the exact main commit and publishes notes', async () => {
   const deps = mock();
   await publish([candidate()], deps);
   assert.deepEqual(deps.calls.map(([name]) => name), ['tag', 'release']);
   assert.equal(deps.calls[0][1].sha, 'main-sha');
   assert.equal(deps.calls[1][1].body, 'New filters');
-  assert.equal(deps.outputs.app_released, 'true');
-  assert.equal(deps.outputs.app_sha, 'main-sha');
+  assert.deepEqual(deps.outputs, {});
 });
-test('later main commits do not republish or rebuild existing releases', async () => {
+test('later main commits do not republish existing releases', async () => {
   const deps = mock({ existing: true });
   await publish([{ ...candidate(), tagSha: 'previous-main' }], deps);
   assert.deepEqual(deps.calls, []);
-  assert.equal(deps.outputs.app_released, 'false');
+  assert.deepEqual(deps.outputs, {});
 });
-test('reruns on the publishing commit can retry native builds', async () => {
+test('reruns on the publishing commit are idempotent', async () => {
   const deps = mock({ existing: true });
   await publish([{ ...candidate(), tagSha: 'main-sha' }], deps);
   assert.deepEqual(deps.calls, []);
-  assert.equal(deps.outputs.app_released, 'true');
+  assert.deepEqual(deps.outputs, {});
 });
 test('repairs an interrupted publish after tag creation without moving the tag', async () => {
   const deps = mock();
   await publish([{ ...candidate(), tagSha: 'previous-main' }], deps);
   assert.deepEqual(deps.calls.map(([name]) => name), ['release']);
-  assert.equal(deps.outputs.app_sha, 'previous-main');
+  assert.equal(deps.calls[0][1].target_commitish, 'previous-main');
 });
-test('CAP-only release does not enable native builds', async () => {
+test('publishes CAP-only releases', async () => {
   const deps = mock();
   await publish([{ ...candidate(), path: 'backend/hwb', tag: 'cap-v2.7.0', version: '2.7.0' }], deps);
-  assert.equal(deps.outputs.app_released, 'false');
+  assert.deepEqual(deps.outputs, {});
 });
 const pending = { number: 42, merged_at: 'date', merge_commit_sha: 'prepared', labels: [{ name: 'autorelease: pending' }] };
 test('acknowledges published preparation PRs so the next release can be prepared', async () => {

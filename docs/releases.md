@@ -71,9 +71,9 @@ In den EAS-Umgebungen `preview` und `production` insbesondere
 verwaltet; dafür sind keine Keystore-/Zertifikatsdateien im Git-Repository nötig.
 
 Danach zuerst einen Android-Preview-Build starten und auf einem Gerät prüfen.
-Produktionsbuilds bei App-Releases laufen weiterhin automatisch über den
-Release-Workflow; der manuelle Workflow dient auch für neue Preview-Runtimes
-und gezielte erneute Builds.
+Native Builds werden ausschließlich manuell über **Native Build** gestartet.
+Der Release-Workflow veröffentlicht Tags und Release-Notizen und erstellt den
+Backmerge-PR; er startet keine Production-App-Builds.
 
 Quellen: [EAS aus CI starten](https://docs.expo.dev/build/building-on-ci/),
 [Expo-Tokens](https://docs.expo.dev/accounts/programmatic-access/),
@@ -112,9 +112,9 @@ Quellen: [EAS aus CI starten](https://docs.expo.dev/build/building-on-ci/),
    jeweiligen Changelogs. Er schreibt keine Dateien/Branch-Commits. Veröffentliche
    Vorbereitungs-PRs werden als `autorelease: tagged` markiert, damit Release
    Please anschließend die nächste Version vorbereiten kann.
-8. Bei einem App-Release werden Produktionsbuilds für Android und iOS gestartet.
-   EAS erhöht die Buildnummern. Der Workflow wartet auf die Auftragsannahme;
-   fertige Builds und Store-Einreichung anschließend in EAS prüfen.
+8. Bei einem App-Release werden keine nativen Builds automatisch gestartet.
+   Falls eine neue Runtime oder Store-Binary benötigt wird, **Native Build**
+   manuell mit dem gewünschten Profil und Branch `main` starten.
 9. Nach erfolgreicher Veröffentlichung erstellt/aktualisiert **Releases**
    automatisch den Backmerge-PR `main` → `develop`, sofern main dort noch nicht
    integriert ist. Der Link steht in der Job-Zusammenfassung. Diesen PR prüfen
@@ -137,9 +137,8 @@ unabhängig voneinander; ein fehlgeschlagener GitHub-Job stoppt Google nicht.
   main veröffentlichen; Release Please wartet solange auf dessen Tag.
 - **Releases** nur auf `main` starten. Ein erneuter Lauf kann eine unterbrochene
   Veröffentlichung ergänzen. Vorhandene Tags werden nicht verschoben.
-- Ein Wiederholungslauf desselben Veröffentlichungscommits kann die nativen
-  Builds erneut starten. Spätere main-Commits bauen eine schon veröffentlichte
-  App-Version nicht nochmals über den Release-Workflow.
+- Ein Wiederholungslauf veröffentlicht fehlende Tags/Releases und aktualisiert
+  den Backmerge-PR. Native Builds werden dabei nicht gestartet.
 - Manifest, package.json und die beiden Versionsfelder der Lockdatei müssen
   zusammenpassen. Neue Versionen ohne passende Changelog-Notizen werden abgelehnt.
 - Nachträgliche Features nach dem Versionsbump vermeiden: Die Automatik prüft
@@ -172,7 +171,23 @@ und die erste echte Version mit **Prepare Release** vorbereiten.
   Der Wechsel von appVersion erfordert neue installierte Binaries. Bestehende
   appVersion-Builds erhalten keine neuen fingerprint-Updates. Auch bei späteren
   Fingerprint-Änderungen ist ein neuer nativer Build erforderlich.
+- `app/fingerprint.config.js` nimmt mit `ExpoConfigVersions` die App-Version,
+  Android-versionCode und iOS-buildNumber vom Fingerprint aus. Reine
+  Versionsbumps durch Release Please erzeugen damit keine neue Runtime. Native
+  Konfiguration und Abhängigkeiten bleiben Teil der Kompatibilitätsprüfung.
+  `app.config.ts` liest die JSON-Dateien als Daten statt über `require()`, damit
+  diese nicht zusätzlich unnormalisiert als Config-Plugin-Quellen gehasht werden.
+- Die Einführung dieser Fingerprint-Konfiguration erzeugt einmalig eine neue
+  Runtime. Nach diesem Release einen neuen Android-Preview-Build von `main`
+  erstellen und installieren. Alte APKs (einschließlich 1.7.0) wechseln nicht
+  per OTA auf diese Runtime; spätere kompatible OTAs können über Release-
+  Versionsgrenzen hinweg empfangen werden.
+- Build und OTA müssen dieselben EAS-Umgebungswerte verwenden, insbesondere
+  für native Konfiguration wie den Google-Maps-Key.
+
 - Expo-SDK- und SAP-CDS-Abhängigkeiten werden separat aktualisiert.
+
+Quelle: [Expo Fingerprint](https://docs.expo.dev/versions/v54.0.0/sdk/fingerprint/).
 
 ## Docker
 

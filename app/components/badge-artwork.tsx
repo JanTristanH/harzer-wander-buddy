@@ -58,6 +58,8 @@ const frames: Record<string, { active: number; locked: number }> = {
   },
 };
 
+const medalColors:Record<string,{fill:string;ink:string}>={bronze:{fill:'#ecd1ba',ink:'#6d4229'},silver:{fill:'#dfe5e4',ink:'#3e5350'},gold:{fill:'#f1dfaa',ink:'#70501b'},king:{fill:'#eddbac',ink:'#6b4b20'},emperor:{fill:'#ead797',ink:'#435b33'},backpack:{fill:'#dfe5e2',ink:'#3a4e48'},steiger:{fill:'#d9dfd9',ink:'#405148'},shoe:{fill:'#e8c5a8',ink:'#68442b'},goethe:{fill:'#eee0ba',ink:'#6d5630'},witch:{fill:'#d9e1c8',ink:'#435c42'},border:{fill:'#d1e0d0',ink:'#3d6050'},prince:{fill:'#c9e2d9',ink:'#32685a'}};
+
 export function BadgeArtwork({
   entry,
   frame,
@@ -94,7 +96,7 @@ export function BadgeArtwork({
             width: centerSize,
             height: centerSize,
             borderRadius: centerSize / 2,
-            backgroundColor: locked ? '#e4e3df' : '#f5f3ee',
+            backgroundColor: locked ? '#e4e3df' : entry ? medalColors[frameId]?.fill||'#eee8d6' : '#f5f3ee',
           },
         ]}
       >
@@ -118,7 +120,7 @@ export function BadgeArtwork({
           <Feather
             name={entry?.icon || 'feather'}
             size={size * 0.28}
-            color={locked ? '#767973' : '#2e6b4b'}
+            color={locked ? '#767973' : entry ? medalColors[frameId]?.ink||'#2e6b4b' : '#2e6b4b'}
           />
         )}
       </View>

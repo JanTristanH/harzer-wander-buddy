@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { isStaticWebsite, openStaticStampArticle } from '@/lib/static-website';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -50,6 +51,7 @@ import {
 } from '@/lib/group-marker';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { getPreGeneratedMapMarkerImageSource } from '@/lib/map-marker-images';
+import { selectMapMarker } from '@/lib/map-marker-selection';
 import { geometry, resolveMapMarkerLabelStyle } from '@/lib/map-marker-style';
 import { isCoordinateInPaddedRegion } from '@/lib/map-viewport';
 import { canCreateMapVisit, getMapPrimaryActionLabel } from '@/lib/map-stamp-action';
@@ -783,13 +785,9 @@ export default function MapScreen() {
     });
   }, [showStamps, stampItems, visitFilter]);
 
-  const viewportStampItems = useMemo(() => {
-    if (Platform.OS !== 'web') {
-      return visibleStampItems;
-    }
-
-    return visibleStampItems.filter((item) => isCoordinateInPaddedRegion(item.coordinate, region));
-  }, [region, visibleStampItems]);
+  // Keep all stamp markers mounted, including the 222 regular stamps on web.
+  // A viewport update must not rebuild their elements or mount/unmount pins.
+  const viewportStampItems = visibleStampItems;
 
   const visibleParkingItems = useMemo(() => {
     if (!showParking) {
@@ -894,6 +892,7 @@ export default function MapScreen() {
             accessibilityLabel={accessibilityLabel}
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
+            identifier={stampItem.id}
             key={`${stampItem.id}:${visual.visualKind}`}
             onPress={() => handleMarkerPress(stampItem)}
             tracksViewChanges={false}
@@ -924,6 +923,7 @@ export default function MapScreen() {
             accessibilityLabel={accessibilityLabel}
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
+            identifier={stampItem.id}
             key={`${stampItem.id}:${visual.visualKind}:fallback`}
             onPress={() => handleMarkerPress(stampItem)}
             pinColor={Platform.OS === 'web' ? colors.fill : undefined}
@@ -951,6 +951,7 @@ export default function MapScreen() {
           accessibilityLabel={accessibilityLabel}
           anchor={MARKER_ANCHOR}
           coordinate={stampItem.coordinate}
+          identifier={stampItem.id}
           image={visual.image}
           key={`${stampItem.id}:${visual.visualKind}`}
           onPress={() => handleMarkerPress(stampItem)}
@@ -984,6 +985,7 @@ export default function MapScreen() {
             accessibilityLabel={`Parkplatz: ${item.title}`}
             anchor={MARKER_ANCHOR}
             coordinate={item.coordinate}
+            identifier={item.id}
             key={item.id}
             onPress={() => handleMarkerPress(item)}
             zIndex={markerZIndex(item.kind)}>
@@ -1009,6 +1011,7 @@ export default function MapScreen() {
           accessibilityLabel={`Parkplatz: ${item.title}`}
           anchor={MARKER_ANCHOR}
           coordinate={item.coordinate}
+          identifier={item.id}
           image={markerImage}
           key={item.id}
           onPress={() => handleMarkerPress(item)}
@@ -1022,6 +1025,15 @@ export default function MapScreen() {
     parkingMarkerBuildDurationMsRef.current = getNowMs() - buildStartMs;
     return elements;
   }, [handleMarkerPress, viewportParkingItems]);
+
+  const selectedStampMarkerElements = useMemo(
+    () => selectMapMarker(stampMarkerElements, selectedItemId),
+    [stampMarkerElements, selectedItemId]
+  );
+  const selectedParkingMarkerElements = useMemo(
+    () => selectMapMarker(parkingMarkerElements, selectedItemId),
+    [parkingMarkerElements, selectedItemId]
+  );
 
   useEffect(() => {
     if (!localhostPerfEnabled || typeof window === 'undefined' || typeof PerformanceObserver === 'undefined') {
@@ -2175,8 +2187,8 @@ export default function MapScreen() {
         showsMyLocationButton={false}
         style={StyleSheet.absoluteFill}
         toolbarEnabled={false}>
-        {stampMarkerElements}
-        {parkingMarkerElements}
+        {selectedStampMarkerElements}
+        {selectedParkingMarkerElements}
         {selectedExternalPlace ? (
           <Marker
             anchor={MARKER_ANCHOR}
@@ -2363,7 +2375,9 @@ export default function MapScreen() {
             onDetailsPress={() =>
               selectedItem.kind === 'parking'
                 ? router.push(`/parking/${selectedItem.parkingId}` as never)
-                : router.push(`/stamps/${selectedItem.stampId}` as never)
+                : isStaticWebsite
+                  ? void openStaticStampArticle(selectedItem.stampId)
+                  : router.push(`/stamps/${selectedItem.stampId}` as never)
             }
             onHeightChange={setSelectedSheetHeight}
             onToggleExpand={handleSelectionSheetToggleExpand}
