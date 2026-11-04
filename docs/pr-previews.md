@@ -225,6 +225,9 @@ unset PREVIEW_ANDROID_KEYSTORE_PASSWORD
 
 Optional für native Karten: Google **Maps SDK for Android** aktivieren und einen
 Android-API-Key als Environment-Secret **`PREVIEW_GOOGLE_MAPS_API_KEY`** hinterlegen.
+Eine Environment-Variable gleichen Namens wird ebenfalls unterstützt. Wenn beides
+gesetzt ist, hat das Secret Vorrang. Nach dem Eintragen muss eine neue APK gebaut
+und installiert werden; bestehende APKs übernehmen die Einstellung nicht live.
 Den Key auf Maps SDK for Android und die Kombinationen aus Paketname und
 SHA-1-Fingerprint des Preview-Keystores beschränken. Für die Demo ist der Paketname
 `de.kuestenbit.harzerwanderbuddy.preview.pr65`; bei neuen PRs entsprechende

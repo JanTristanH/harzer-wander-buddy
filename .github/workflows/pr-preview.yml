@@ -179,7 +179,7 @@ jobs:
       HWB_PREVIEW_SHA: ${{ needs.source.outputs.sha }}
       EXPO_PUBLIC_AUTH_MODE: basic
       EXPO_PUBLIC_BACKEND_URL: ${{ needs.deploy.outputs.url }}
-      EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.PREVIEW_GOOGLE_MAPS_API_KEY }}
+      EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.PREVIEW_GOOGLE_MAPS_API_KEY || vars.PREVIEW_GOOGLE_MAPS_API_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:

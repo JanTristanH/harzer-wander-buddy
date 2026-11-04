@@ -37,6 +37,10 @@ Siehe den [Fehlerbericht mit nativem Stacktrace im Maps-Projekt](https://github.
 3. In GitHub unter **Settings → Environments → pr-preview → Environment secrets**
    den Key als **`PREVIEW_GOOGLE_MAPS_API_KEY`** setzen. Der Workflow übergibt ihn
    beim Build als `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY`.
+   Alternativ wird eine Environment-Variable gleichen Namens unterstützt; ein
+   vorhandenes Secret hat Vorrang. Die Unterscheidung ist wichtig: Frühere
+   Workflow-Versionen lasen ausschließlich `secrets.*`, sodass ein Eintrag unter
+   **Variables** trotz korrektem Namen nicht im APK ankam.
 4. Die Preview erneut bauen und die neue APK installieren. Eine Einstellung am
    Cloud-Run-Backend kann den fehlenden Key im bereits installierten APK nicht
    nachträglich ersetzen. Preview-OTAs sind deaktiviert.
