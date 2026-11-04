@@ -21,6 +21,12 @@ RUN --mount=type=secret,id=proxy_ca \
 COPY --chown=node:node backend/hwb/srv ./srv
 COPY --chown=node:node backend/hwb/db/schema.cds ./db/schema.cds
 COPY --chown=node:node backend/hwb/db/doNotDeploy-data ./db/data
+# CSV import needs more heap than the inexpensive 1-GiB runtime allows.
+# Seed once during the image build; cold starts only copy the resulting database.
+RUN NODE_ENV=development CDS_ENV=dev-basic \
+    CDS_REQUIRES_DB_CREDENTIALS_URL=/srv/hwb/preview-seed.sqlite \
+    NODE_OPTIONS=--max-old-space-size=2048 \
+    ./node_modules/.bin/cds deploy --profile dev-basic
 COPY --from=web --chown=node:node /build/dist ./app/rnweb
 COPY --chown=node:node deploy/preview/start.sh ./start.sh
 ARG PREVIEW_SHA

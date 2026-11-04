@@ -26,9 +26,16 @@ aus `codex/abzeichenalbum` nach `develop`.
   Die öffentliche URL und das bekannte Testkonto sind nur für Testdaten gedacht.
 - SQLite auf dem flüchtigen Container-Dateisystem, initialisiert mit allen vorhandenen
   CAP-Dummy-CSV-Dateien aus `backend/hwb/db/doNotDeploy-data`. Das Preview-Image
-  kopiert diese nach `db/data`; die Quelldateien bleiben unverändert. Keine lokale
-  `db.sqlite` oder Produktions-DB-Anbindung wird übernommen. Daten gehen beim Neustart
+  kopiert diese nach `db/data` und importiert sie bereits beim Docker-Build in
+  `preview-seed.sqlite`. Der Kaltstart kopiert diese Datenbank nach `/tmp`, statt
+  die großen CSV-Dateien unter dem 1-GiB-Limit erneut zu importieren. Die Quelldateien
+  bleiben unverändert. Keine lokale `db.sqlite` oder Produktions-DB-Anbindung wird
+  übernommen. Daten gehen beim Neustart
   verloren. Maximal eine Instanz pro Commit, Skalierung auf null im Leerlauf.
+- Vor dem Cloud-Deployment prüft `check-pr-preview-container.sh` den gebauten
+  Container unter 1 GiB RAM und 1 CPU einschließlich Web-Route, Login und SQLite.
+  Der Image-Build erlaubt dem einmaligen CSV-Import 2 GiB Node-Heap; diese höhere
+  Grenze wird nicht in die Laufzeitkonfiguration übernommen.
 - Das Deployment startet deaktiviert mit `--scaling=0` und ohne Startup-Healthcheck.
   Erst nach erfolgreichem APK-Build aktiviert der Workflow automatische Skalierung
   mit `min=0, max=1` und prüft die Live-App. Bei APK-Fehlern bleibt der neue Dienst

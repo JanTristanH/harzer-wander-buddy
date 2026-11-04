@@ -132,6 +132,10 @@ jobs:
             PREVIEW_SHA=${{ needs.source.outputs.sha }}
           cache-from: type=gha,scope=pr-preview
           cache-to: type=gha,mode=max,scope=pr-preview
+      - name: Check container cold start under Cloud Run memory and CPU limits
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+        run: bash scripts/check-pr-preview-container.sh
       - id: deploy
         env:
           IMAGE: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
