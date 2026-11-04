@@ -140,7 +140,7 @@ jobs:
           gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
             --image "$IMAGE" --service-account "$RUNTIME_SERVICE_ACCOUNT" \
             --port 8080 --memory 1Gi --cpu 1 --concurrency 20 \
-            --scaling 0 --min 0 --max 1 --min-instances 0 --max-instances 1 \
+            --scaling 0 --min-instances 0 --max-instances 1 \
             --cpu-throttling --no-cpu-boost --no-deploy-health-check --timeout 300 \
             --allow-unauthenticated --ingress all \
             --labels "managed-by=hwb-pr-preview,pr=$PREVIEW_PR" --quiet
