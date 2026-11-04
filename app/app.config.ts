@@ -16,6 +16,8 @@ type BuildEnvironment = Record<string, string | undefined>;
 
 export function resolveBackendUrl(envValue?: string) {
   const candidate = envValue?.trim() || LOCAL_BACKEND_URL;
+  // Static web previews call the CAP server that serves their own bundle.
+  if (candidate === 'same-origin') return candidate;
   let parsedUrl: URL;
 
   try {
@@ -37,6 +39,13 @@ export function createExpoConfig(
 ): ExpoConfig {
   const androidGoogleMapsApiKey = env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
   const isAndroidEasBuild = env.EAS_BUILD_PLATFORM === 'android';
+  const previewPr = env.HWB_PREVIEW_PR;
+  if (previewPr && !/^[1-9]\d*$/.test(previewPr)) {
+    throw new Error('HWB_PREVIEW_PR must be a positive PR number.');
+  }
+  if (previewPr && env.EXPO_PUBLIC_AUTH_MODE !== 'basic') {
+    throw new Error('PR previews require EXPO_PUBLIC_AUTH_MODE=basic.');
+  }
 
   if (isAndroidEasBuild && !androidGoogleMapsApiKey) {
     throw new Error(
@@ -47,14 +56,23 @@ export function createExpoConfig(
   return {
     ...baseConfig,
     version,
+    ...(previewPr ? {
+      name: `HWB PR ${previewPr}`,
+      scheme: `hwb-preview-${previewPr}`,
+      updates: { ...baseConfig.updates, enabled: false },
+      // Standalone Gradle builds do not need EAS runtime fingerprint resolution.
+      runtimeVersion: version,
+    } : {}),
     experiments: {
       ...baseConfig.experiments,
-      baseUrl: env.EXPO_PUBLIC_DATA_MODE === 'static'
-        ? env.EXPO_PUBLIC_STATIC_BASE_PATH || '/preview/overview/app'
-        : env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : baseConfig.experiments?.baseUrl,
+      baseUrl: previewPr ? '/app/rnweb'
+        : env.EXPO_PUBLIC_DATA_MODE === 'static'
+          ? env.EXPO_PUBLIC_STATIC_BASE_PATH || '/preview/overview/app'
+          : env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : baseConfig.experiments?.baseUrl,
     },
     android: {
       ...baseConfig.android,
+      ...(previewPr ? { package: `${baseConfig.android?.package}.preview.pr${previewPr}` } : {}),
       config: {
         ...(baseConfig.android?.config ?? {}),
         ...(androidGoogleMapsApiKey

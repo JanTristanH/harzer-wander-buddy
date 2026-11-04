@@ -1,0 +1,222 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Open PR number (head must be in this repository)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Let an active deployment finish before cleanup. A close event replaces any
+# pending build, and then removes every revision of this PR.
+concurrency:
+  group: pr-preview-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PREVIEW_PROJECT_ID }}
+  REGION: ${{ vars.GCP_PREVIEW_REGION || 'europe-west3' }}
+  REPOSITORY: hwb-previews
+
+jobs:
+  source:
+    if: >-
+      vars.GCP_PREVIEW_PROJECT_ID != '' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pr: ${{ steps.source.outputs.pr }}
+      sha: ${{ steps.source.outputs.sha }}
+      service: ${{ steps.source.outputs.service }}
+      closed: ${{ steps.source.outputs.closed }}
+    steps:
+      - uses: actions/github-script@v7
+        id: source
+        env:
+          REQUESTED_PR: ${{ github.event.pull_request.number || inputs.pr }}
+        with:
+          script: |
+            const number = process.env.REQUESTED_PR;
+            if (!/^[1-9]\d*$/.test(number)) throw new Error('Invalid PR number');
+            const { data: pr } = await github.rest.pulls.get({ ...context.repo, pull_number: Number(number) });
+            if (pr.head.repo?.full_name !== context.payload.repository.full_name) throw new Error('Fork previews are disabled');
+            if (context.eventName === 'workflow_dispatch' && pr.state !== 'open') throw new Error('Choose an open PR');
+            // Fetch the current head instead of building a superseded event SHA.
+            core.setOutput('pr', number);
+            core.setOutput('sha', pr.head.sha);
+            core.setOutput('service', `hwb-pr-${number}-${pr.head.sha.slice(0, 12)}`);
+            core.setOutput('closed', pr.state === 'closed' ? 'true' : 'false');
+
+  deploy:
+    needs: source
+    if: needs.source.outputs.closed == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: pr-preview
+      url: ${{ steps.deploy.outputs.url }}/app/rnweb
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+      image: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+    env:
+      PREVIEW_PR: ${{ needs.source.outputs.pr }}
+      PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+      SERVICE: ${{ needs.source.outputs.service }}
+      RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_PREVIEW_RUNTIME_SERVICE_ACCOUNT }}
+    steps:
+      - name: Check preview configuration
+        env:
+          WIF_PROVIDER: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
+          DEPLOY_ACCOUNT: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
+          PREVIEW_KEYSTORE: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_BASE64 }}
+          PREVIEW_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          for setting in WIF_PROVIDER DEPLOY_ACCOUNT RUNTIME_SERVICE_ACCOUNT PREVIEW_KEYSTORE PREVIEW_PASSWORD; do
+            if [ -z "${!setting}" ]; then
+              echo "::error::Missing $setting. See docs/pr-previews.md."
+              exit 1
+            fi
+          done
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+      - id: image
+        run: echo "name=$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/pr-$PREVIEW_PR" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          file: deploy/preview/Dockerfile
+          push: true
+          tags: ${{ steps.image.outputs.name }}:${{ needs.source.outputs.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          build-args: |
+            PREVIEW_PR=${{ needs.source.outputs.pr }}
+            PREVIEW_SHA=${{ needs.source.outputs.sha }}
+          cache-from: type=gha,scope=pr-preview
+          cache-to: type=gha,mode=max,scope=pr-preview
+      - id: deploy
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --image "$IMAGE" --service-account "$RUNTIME_SERVICE_ACCOUNT" \
+            --port 8080 --memory 1Gi --cpu 1 --concurrency 20 \
+            --min-instances 0 --max-instances 1 --timeout 300 \
+            --allow-unauthenticated --ingress all \
+            --labels "managed-by=hwb-pr-preview,pr=$PREVIEW_PR" --quiet
+          url=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          PREVIEW_URL="$url" node scripts/smoke-pr-preview.cjs
+          {
+            echo "## PR #$PREVIEW_PR preview"
+            echo "- Web: $url/app/rnweb"
+            echo "- API: $url/odata/v4/api"
+            echo "- Commit: $PREVIEW_SHA"
+            echo "- Image: $IMAGE"
+            echo '- APK: artifact in the Android job of this run.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  android:
+    needs: [source, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: pr-preview
+      url: ${{ needs.deploy.outputs.url }}/app/rnweb
+    env:
+      CI: '1'
+      EXPO_NO_DOTENV: '1'
+      EXPO_NO_TELEMETRY: '1'
+      HWB_PREVIEW_PR: ${{ needs.source.outputs.pr }}
+      EXPO_PUBLIC_AUTH_MODE: basic
+      EXPO_PUBLIC_BACKEND_URL: ${{ needs.deploy.outputs.url }}
+      EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.PREVIEW_GOOGLE_MAPS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+        working-directory: app
+      - name: Build standalone APK (no EAS, no Metro server)
+        env:
+          PREVIEW_ANDROID_KEYSTORE_BASE64: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_BASE64 }}
+          PREVIEW_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
+        run: bash scripts/build-pr-preview-apk.sh
+      - name: Record backend and APK provenance
+        env:
+          PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+          PREVIEW_IMAGE: ${{ needs.deploy.outputs.image }}
+        run: |
+          node -e 'const fs=require("fs"),crypto=require("crypto"); fs.writeFileSync("preview-artifacts/preview.json",JSON.stringify({pr:process.env.HWB_PREVIEW_PR,sha:process.env.PREVIEW_SHA,url:process.env.EXPO_PUBLIC_BACKEND_URL,image:process.env.PREVIEW_IMAGE,apkSha256:crypto.createHash("sha256").update(fs.readFileSync("preview-artifacts/preview.apk")).digest("hex")},null,2))'
+      - uses: actions/upload-artifact@v4
+        id: apk
+        with:
+          name: hwb-pr-${{ needs.source.outputs.pr }}-${{ needs.source.outputs.sha }}-android
+          path: preview-artifacts/
+          if-no-files-found: error
+          retention-days: 14
+      - env:
+          ARTIFACT_URL: ${{ steps.apk.outputs.artifact-url }}
+        run: |
+          echo "APK + backend manifest (GitHub login required): $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+
+  cleanup:
+    needs: source
+    if: needs.source.outputs.closed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: pr-preview
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PREVIEW_PR: ${{ needs.source.outputs.pr }}
+    steps:
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Delete every Cloud Run service for this PR
+        run: |
+          set -euo pipefail
+          services=$(gcloud run services list --project "$PROJECT_ID" --region "$REGION" \
+            --filter="metadata.labels.managed-by=hwb-pr-preview AND metadata.labels.pr=$PREVIEW_PR" \
+            --format='value(metadata.name)')
+          while IFS= read -r service; do
+            [ -z "$service" ] || gcloud run services delete "$service" --project "$PROJECT_ID" --region "$REGION" --quiet
+          done <<< "$services"

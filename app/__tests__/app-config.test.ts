@@ -77,6 +77,29 @@ describe('Expo backend configuration', () => {
     expect(createExpoConfig({}).experiments?.baseUrl).toBe('/app/rnweb');
   });
 
+  it('isolates PR installs, disables OTA and serves Basic web from CAP', () => {
+    const config = createExpoConfig({
+      HWB_PREVIEW_PR: '42', EXPO_PUBLIC_AUTH_MODE: 'basic',
+      EXPO_PUBLIC_BACKEND_URL: 'https://preview.example',
+    });
+    expect(config.android?.package).toBe('de.kuestenbit.harzerwanderbuddy.preview.pr42');
+    expect(config.name).toBe('HWB PR 42');
+    expect(config.scheme).toBe('hwb-preview-42');
+    expect(config.updates?.enabled).toBe(false);
+    expect(config.runtimeVersion).toBe(require('../package.json').version);
+    expect(config.experiments?.baseUrl).toBe('/app/rnweb');
+    expect(config.extra?.backendUrl).toBe('https://preview.example');
+    expect(() => createExpoConfig({ HWB_PREVIEW_PR: '42' })).toThrow(/require.*basic/);
+    expect(() => createExpoConfig({ HWB_PREVIEW_PR: '../42' })).toThrow(/positive PR/);
+    expect(createExpoConfig({}).updates?.enabled).not.toBe(false);
+  });
+
+  it('accepts same-origin web bundles but rejects that URL in native apps', () => {
+    expect(resolveBackendUrl('same-origin')).toBe('same-origin');
+    expect(() => resolveBackendUrlForPlatform('same-origin', 'android')).toThrow(/explicit backend URL/);
+    expect(() => resolveBackendUrlForPlatform('same-origin', 'ios')).toThrow(/explicit backend URL/);
+  });
+
   it('maps localhost to the Android emulator while preserving other platforms', () => {
     expect(resolveBackendUrlForPlatform(LOCAL_BACKEND_URL, 'android')).toBe(
       'http://10.0.2.2:4004'
