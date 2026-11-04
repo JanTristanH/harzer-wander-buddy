@@ -34,6 +34,8 @@ import Markdown from 'react-native-markdown-display';
 import { GestureDetector } from 'react-native-gesture-handler';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SectionCard } from '@/components/section-card';
+import { AppColors } from '@/constants/theme';
 import { LockedGuestRows } from '@/components/auth-locked-state';
 import { CurrentPositionDistanceSection } from '@/components/current-position-distance-section';
 import { DetailOverflowMenu } from '@/components/detail-overflow-menu';
@@ -281,32 +283,13 @@ function SkeletonRow() {
   );
 }
 
-function Section({
-  title,
-  action,
-  children,
-}: React.PropsWithChildren<{
-  title: string;
-  action?: React.ReactNode;
-}>) {
-  return (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {action}
-      </View>
-      {children}
-    </View>
-  );
-}
-
 function StampDetailLoadingState({ onBack }: { onBack: () => void }) {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.loadingContent} showsVerticalScrollIndicator={false}>
         <View style={styles.loadingHero}>
           <Pressable onPress={onBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
-            <Feather color="#1e2a1e" name="arrow-left" size={18} />
+            <Feather color={AppColors.text} name="arrow-left" size={18} />
           </Pressable>
           <View style={styles.heroBadge}>
             <Text style={styles.heroBadgeText}>Stempelstelle</Text>
@@ -321,16 +304,16 @@ function StampDetailLoadingState({ onBack }: { onBack: () => void }) {
             <SkeletonLine width="62%" />
           </View>
 
-          <Section title="Stempel in der Naehe">
+          <SectionCard title="Stempel in der Naehe">
             <SkeletonRow />
             <SkeletonRow />
             <SkeletonRow />
-          </Section>
+          </SectionCard>
 
-          <Section title="Parkplätze in der Nähe">
+          <SectionCard title="Parkplätze in der Nähe">
             <SkeletonRow />
             <SkeletonRow />
-          </Section>
+          </SectionCard>
         </View>
 
         <Text style={styles.helperText}>Lade Details aus dem OData-v4-Service...</Text>
@@ -1845,7 +1828,7 @@ function StampDetailContent() {
               <RefreshControl
                 onRefresh={handleRefresh}
                 refreshing={isPullRefreshing}
-                tintColor="#2e6b4b"
+                tintColor={AppColors.primary}
               />
             ) : undefined
           }
@@ -1883,13 +1866,13 @@ function StampDetailContent() {
                 />
               ) : null}
               <Pressable onPress={handleBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
-                <Feather color="#1e2a1e" name="arrow-left" size={18} />
+                <Feather color={AppColors.text} name="arrow-left" size={18} />
               </Pressable>
 
               <View style={styles.topRightActions}>
                 <View style={[styles.statusPill, visited ? styles.statusPillVisited : styles.statusPillOpen]}>
                   <Feather
-                    color={visited ? '#2e6b4b' : '#7a6a4a'}
+                    color={visited ? AppColors.primary : '#7a6a4a'}
                     name={visited ? 'check' : 'x'}
                     size={11}
                   />
@@ -1958,7 +1941,7 @@ function StampDetailContent() {
               )}
 
               {!isGuest ? (
-                <Section action={<GroupSelector />} title="Wandergruppe">
+                <SectionCard action={<GroupSelector />} title="Wandergruppe">
                   {selectedFriendIds.length > 0 ? (
                     <>
                       <Text style={styles.groupSummary}>
@@ -2016,11 +1999,11 @@ function StampDetailContent() {
                       Wähle Freunde aus, um den gemeinsamen Fortschritt zu sehen.
                     </Text>
                   )}
-                </Section>
+                </SectionCard>
               ) : null}
 
               {isGuest || detail.myVisits.length > 0 ? (
-                <Section
+                <SectionCard
                   title="Meine bisherigen Besuche"
                   action={
                     !isGuest && detail.myVisits.length > 0 ? (
@@ -2095,16 +2078,16 @@ function StampDetailContent() {
                       </View>
                     ))
                   )}
-                </Section>
+                </SectionCard>
               ) : null}
 
               {isGuest ? (
-                <Section title="Meine Notiz">
+                <SectionCard title="Meine Notiz">
                   <LockedGuestRows
                     body="Melde dich an, um persönliche Notizen zu dieser Stempelstelle zu speichern."
                     onSignIn={() => router.push('/login' as never)}
                   />
-                </Section>
+                </SectionCard>
               ) : (
                 <StampNoteSection
                   isDirty={isNoteDirty}
@@ -2121,12 +2104,12 @@ function StampDetailContent() {
               )}
 
               {isGuest ? (
-                <Section title="Von aktueller Position">
+                <SectionCard title="Von aktueller Position">
                   <LockedGuestRows
                     body="Melde dich an, um Distanz, Höhenmeter und Reisezeit von deinem Standort zu berechnen."
                     onSignIn={() => router.push('/login' as never)}
                   />
-                </Section>
+                </SectionCard>
               ) : (
                 <CurrentPositionDistanceSection
                   actionLabel="Distanz berechnen"
@@ -2188,7 +2171,7 @@ function StampDetailContent() {
                           styles.sectionActionPressed,
                         ]}>
                         <Feather
-                          color="#2e3a2e"
+                          color={AppColors.textSecondary}
                           name={routeToCurrentPositionQuery.isFetching ? 'refresh-cw' : 'rotate-cw'}
                           size={14}
                         />
@@ -2198,7 +2181,7 @@ function StampDetailContent() {
                 </CurrentPositionDistanceSection>
               )}
 
-              <Section title="Parkplätze in der Nähe">
+              <SectionCard title="Parkplätze in der Nähe">
                 {isGuest ? (
                   <LockedGuestRows
                     body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
@@ -2237,9 +2220,9 @@ function StampDetailContent() {
                 ) : (
                   <Text style={styles.emptySectionText}>Keine Parkplätze in der Nähe gefunden.</Text>
                 )}
-              </Section>
+              </SectionCard>
 
-              <Section title="Stempel in der Nähe">
+              <SectionCard title="Stempel in der Nähe">
                 {isGuest ? (
                   <LockedGuestRows
                     body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
@@ -2298,9 +2281,9 @@ function StampDetailContent() {
                     </Text>
                   </View>
                 )}
-              </Section>
+              </SectionCard>
 
-              <Section title="Freunde hier gewesen">
+              <SectionCard title="Freunde hier gewesen">
                 {isGuest ? (
                   <LockedGuestRows
                     body="Melde dich an, um Besuche deiner Freunde zu sehen."
@@ -2323,14 +2306,14 @@ function StampDetailContent() {
                 ) : (
                   <Text style={styles.emptySectionText}>Noch keine Freundesbesuche fuer diese Stelle.</Text>
                 )}
-              </Section>
+              </SectionCard>
 
             </View>
           </Animated.View>
         </Animated.ScrollView>
         </AndroidHeaderGesture>
         {!stretchyHeader.usesNativeBounce && isPullRefreshing ? (
-          <ActivityIndicator color="#2e6b4b" style={styles.refreshIndicator} />
+          <ActivityIndicator color={AppColors.primary} style={styles.refreshIndicator} />
         ) : null}
       </View>
 
@@ -2345,7 +2328,7 @@ function StampDetailContent() {
                 styles.secondaryButtonWithIcon,
                 pressed && styles.secondaryButtonPressed,
               ]}>
-              <Feather color="#2e3a2e" name="navigation" size={16} />
+              <Feather color={AppColors.textSecondary} name="navigation" size={16} />
               <Text style={styles.secondaryButtonLabel}>Navigation starten</Text>
             </Pressable>
             <Pressable
@@ -2356,7 +2339,7 @@ function StampDetailContent() {
                 styles.secondaryButtonWithIcon,
                 pressed && styles.secondaryButtonPressed,
               ]}>
-              <Feather color="#2e3a2e" name="map-pin" size={16} />
+              <Feather color={AppColors.textSecondary} name="map-pin" size={16} />
               <Text style={styles.secondaryButtonLabel}>Auf Karte anzeigen</Text>
             </Pressable>
           </View>
@@ -2393,7 +2376,7 @@ function StampDetailContent() {
                     (isStamping || (!isGuest && !canPerformWrites)) && styles.primaryButtonDisabled,
                     pressed && !isStamping && (isGuest || canPerformWrites) && styles.primaryButtonPressed,
                   ]}>
-                  <Feather color="#f5f3ee" name={visited ? 'refresh-cw' : 'check-circle'} size={16} />
+                  <Feather color={AppColors.background} name={visited ? 'refresh-cw' : 'check-circle'} size={16} />
                   <Text style={styles.primaryButtonLabel}>
                     {isGuest
                       ? 'Anmelden zum Stempeln'
@@ -2481,7 +2464,7 @@ function StampDetailContent() {
                     activeCarouselIndex <= 0 && styles.webCarouselNavButtonDisabled,
                     pressed && activeCarouselIndex > 0 && styles.topButtonPressed,
                   ]}>
-                  <Feather color="#f5f3ee" name="chevron-left" size={18} />
+                  <Feather color={AppColors.background} name="chevron-left" size={18} />
                   <Text style={styles.webCarouselNavButtonLabel}>Zurück</Text>
                 </Pressable>
 
@@ -2494,7 +2477,7 @@ function StampDetailContent() {
                     pressed && activeCarouselIndex < carouselImages.length - 1 && styles.topButtonPressed,
                   ]}>
                   <Text style={styles.webCarouselNavButtonLabel}>Weiter</Text>
-                  <Feather color="#f5f3ee" name="chevron-right" size={18} />
+                  <Feather color={AppColors.background} name="chevron-right" size={18} />
                 </Pressable>
               </View>
 
@@ -2600,7 +2583,7 @@ function StampDetailContent() {
               hitSlop={14}
               onPress={closeImageCarousel}
               style={({ pressed }) => [styles.carouselCloseButton, pressed && styles.topButtonPressed]}>
-              <Feather color="#f5f3ee" name="x" size={18} />
+              <Feather color={AppColors.background} name="x" size={18} />
             </Pressable>
             {showNearbyCarouselPill ? (
               <View style={styles.carouselNearbyPill}>
@@ -2624,7 +2607,7 @@ function StampDetailContent() {
                 display="spinner"
                 mode="datetime"
                 onChange={handlePickerChange}
-                textColor="#1e2a1e"
+                textColor={AppColors.text}
                 themeVariant="light"
                 value={pickerState.value}
               />
@@ -2672,7 +2655,7 @@ export default function StampDetailScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: AppColors.background,
   },
   scrollContent: {
     paddingBottom: 180,
@@ -2687,7 +2670,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     padding: 8,
     borderRadius: 20,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: AppColors.background,
   },
   loadingContent: {
     paddingBottom: 40,
@@ -2753,7 +2736,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 6,
     paddingHorizontal: 10,
-    shadowColor: '#141e14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 10,
@@ -2785,7 +2768,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   statusPillLabelVisited: {
-    color: '#2e6b4b',
+    color: AppColors.primary,
   },
   statusPillLabelOpen: {
     color: '#7a6a4a',
@@ -2794,13 +2777,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 20,
     bottom: 16,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: AppColors.background,
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   heroBadgeText: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -2821,7 +2804,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   heroCaptionStrong: {
-    color: '#2e3a2e',
+    color: AppColors.textSecondary,
     fontWeight: '700',
   },
   heroCaptionLink: {
@@ -2837,7 +2820,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 24,
     lineHeight: 30,
     fontFamily: 'serif',
@@ -2864,42 +2847,18 @@ const styles = StyleSheet.create({
   },
   groupMemberName: {
     flex: 1,
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 13,
     lineHeight: 17,
   },
   groupMemberStatus: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
-  section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 8,
-    shadowColor: '#141e14',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 3,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  sectionTitle: {
-    color: '#1e2a1e',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '600',
-  },
   sectionAction: {
     borderRadius: 999,
-    backgroundColor: '#eef4ef',
+    backgroundColor: AppColors.actionSurface,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
@@ -2907,7 +2866,7 @@ const styles = StyleSheet.create({
     opacity: 0.82,
   },
   sectionActionLabel: {
-    color: '#2e6b4b',
+    color: AppColors.primary,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '600',
@@ -2946,7 +2905,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   rowBadgeLabelStamp: {
-    color: '#2e6b4b',
+    color: AppColors.primary,
   },
   rowBadgeLabelParking: {
     color: '#2f7dd7',
@@ -2964,7 +2923,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: '#eef4ef',
+    backgroundColor: AppColors.actionSurface,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2977,7 +2936,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   rowMeta: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -3011,14 +2970,14 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 42,
     borderRadius: 12,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: AppColors.background,
     paddingHorizontal: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   visitPickerLabel: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 13,
     lineHeight: 16,
   },
@@ -3045,12 +3004,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   simpleItemTitle: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
   emptySectionText: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -3099,7 +3058,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   secondaryButtonLabel: {
-    color: '#2e3a2e',
+    color: AppColors.textSecondary,
     fontSize: 13,
     lineHeight: 16,
     textAlign: 'center',
@@ -3126,7 +3085,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonShadow: {
     borderRadius: 14,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: AppColors.primary,
     shadowColor: '#132217',
     shadowOffset: { width: 0, height: 9 },
     shadowOpacity: 0.28,
@@ -3142,7 +3101,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: AppColors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -3159,7 +3118,7 @@ const styles = StyleSheet.create({
     transform: [{ translateY: 2 }, { scale: 0.99 }],
   },
   primaryButtonLabel: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 13,
     lineHeight: 16,
     textAlign: 'center',
@@ -3197,7 +3156,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   webCarouselFallbackTitle: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '600',
@@ -3243,7 +3202,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   webCarouselNavButtonLabel: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',
@@ -3267,7 +3226,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   carouselCounterLabel: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',
@@ -3320,7 +3279,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   carouselCaptionTitle: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '600',
@@ -3344,7 +3303,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   carouselCaptionStrong: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontWeight: '700',
   },
   carouselCaptionLink: {
@@ -3357,7 +3316,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: '#fffaf0',
+    backgroundColor: AppColors.discoverySurface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -3366,7 +3325,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   modalTitle: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 18,
     lineHeight: 24,
     fontWeight: '700',
@@ -3384,19 +3343,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalButtonPrimary: {
-    backgroundColor: '#2e6b4b',
+    backgroundColor: AppColors.primary,
   },
   modalButtonSecondary: {
     backgroundColor: '#e9e2d6',
   },
   modalButtonPrimaryLabel: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',
   },
   modalButtonSecondaryLabel: {
-    color: '#2e3a2e',
+    color: AppColors.textSecondary,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',

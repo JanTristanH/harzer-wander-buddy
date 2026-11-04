@@ -1,12 +1,13 @@
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   RefreshControl,
   Share,
@@ -18,11 +19,12 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { EmptyState } from '@/components/empty-state';
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import { FriendsList } from '@/components/friends-list';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
-import { Fonts } from '@/constants/theme';
+import { AppColors, Fonts } from '@/constants/theme';
 import {
   acceptPendingFriendshipRequest,
   createFriendRequest,
@@ -71,36 +73,6 @@ function FriendFilterChip({
       ]}>
       <Text style={[styles.filterChipLabel, active && styles.filterChipLabelActive]}>{label}</Text>
     </Pressable>
-  );
-}
-
-function EmptyState({
-  title,
-  body,
-  image,
-  ctaLabel,
-  ctaIconName,
-  onCtaPress,
-}: {
-  title: string;
-  body: string;
-  image?: number;
-  ctaLabel?: string;
-  ctaIconName?: React.ComponentProps<typeof Feather>['name'];
-  onCtaPress?: () => void;
-}) {
-  return (
-    <View style={styles.emptyCard}>
-      <Text style={styles.emptyTitle}>{title}</Text>
-      {image ? <Image contentFit="contain" source={image} style={styles.emptyIllustration} /> : null}
-      <Text style={styles.emptyBody}>{body}</Text>
-      {ctaLabel && onCtaPress ? (
-        <Pressable onPress={onCtaPress} style={({ pressed }) => [styles.emptyCtaButton, pressed && styles.pressed]}>
-          <Feather color="#F5F3EE" name={ctaIconName ?? 'search'} size={16} />
-          <Text style={styles.emptyCtaLabel}>{ctaLabel}</Text>
-        </Pressable>
-      ) : null}
-    </View>
   );
 }
 
@@ -454,7 +426,7 @@ export default function FriendsScreen() {
                 })();
               }}
               refreshing={isPullRefreshing}
-              tintColor="#2E6B4B"
+              tintColor={AppColors.primary}
             />
           }
           showsVerticalScrollIndicator={false}>
@@ -614,7 +586,7 @@ export default function FriendsScreen() {
             !canPerformWrites && styles.searchButtonDisabled,
             pressed && styles.pressed,
           ]}>
-          <Feather color="#F5F3EE" name="search" size={24} />
+          <Feather color={AppColors.background} name="search" size={24} />
         </Pressable>
 
         <Modal
@@ -623,8 +595,9 @@ export default function FriendsScreen() {
           transparent
           visible={isSearchModalVisible}
           onRequestClose={closeSearchModal}>
-          <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <Pressable style={styles.modalBackdrop} onPress={closeSearchModal} />
+            <SafeAreaView style={styles.modalSafeArea} pointerEvents="box-none">
             <View style={styles.modalCard}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Freunde finden</Text>
@@ -632,13 +605,13 @@ export default function FriendsScreen() {
                   accessibilityLabel="Suche schliessen"
                   onPress={closeSearchModal}
                   style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]}>
-                  <Feather color="#1E2A1E" name="x" size={16} />
+                  <Feather color={AppColors.text} name="x" size={16} />
                 </Pressable>
               </View>
 
               <View style={styles.searchInputShell}>
                 <View style={styles.searchInputIconWrap}>
-                  <Feather color="#6B7A6B" name="search" size={14} />
+                  <Feather color={AppColors.textMuted} name="search" size={14} />
                 </View>
                 <ClearableSearchInput
                   autoCapitalize="none"
@@ -647,16 +620,16 @@ export default function FriendsScreen() {
                   ref={searchInputRef}
                   onChangeText={setSearchQuery}
                   placeholder="Name oder Nutzername suchen"
-                  placeholderTextColor="#6B7A6B"
+                  placeholderTextColor={AppColors.textMuted}
                   style={styles.searchInput}
                   value={searchQuery}
                 />
               </View>
 
-              <View style={styles.searchResultsColumn}>
+              <ScrollView style={styles.searchResultsScroll} contentContainerStyle={styles.searchResultsColumn} keyboardShouldPersistTaps="handled">
                 {isSearchLoading ? (
                   <View style={styles.searchStatusWrap}>
-                    <ActivityIndicator color="#2E6B4B" size="small" />
+                    <ActivityIndicator color={AppColors.primary} size="small" />
                   </View>
                 ) : null}
 
@@ -680,10 +653,11 @@ export default function FriendsScreen() {
                 {!isSearchLoading && !searchError && searchResults.length > 0 ? (
                   <FriendsList items={searchListItems} />
                 ) : null}
-              </View>
+              </ScrollView>
 
             </View>
-          </View>
+            </SafeAreaView>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     </SafeAreaView>
@@ -693,11 +667,11 @@ export default function FriendsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F3EE',
+    backgroundColor: AppColors.background,
   },
   screen: {
     flex: 1,
-    backgroundColor: '#F5F3EE',
+    backgroundColor: AppColors.background,
   },
   content: {
     paddingHorizontal: 20,
@@ -705,7 +679,7 @@ const styles = StyleSheet.create({
     paddingBottom: 160,
   },
   title: {
-    color: '#1E2A1E',
+    color: AppColors.text,
     fontFamily: Fonts.serif,
     fontSize: 24,
     lineHeight: 30,
@@ -717,22 +691,22 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   filterChip: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   filterChipActive: {
-    backgroundColor: '#2E6B4B',
+    backgroundColor: AppColors.primary,
   },
   filterChipLabel: {
-    color: '#2E3A2E',
+    color: AppColors.textSecondary,
     fontFamily: Fonts.sans,
     fontSize: 12,
     lineHeight: 16,
   },
   filterChipLabelActive: {
-    color: '#F5F3EE',
+    color: AppColors.background,
     fontWeight: '700',
   },
   centered: {
@@ -749,13 +723,13 @@ const styles = StyleSheet.create({
   },
   loadingFriendCard: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface,
     borderRadius: 18,
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    shadowColor: '#141E14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
@@ -766,14 +740,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   helperText: {
-    color: '#6B7A6B',
+    color: AppColors.textMuted,
     fontFamily: Fonts.sans,
     fontSize: 14,
     lineHeight: 20,
     marginTop: 12,
   },
   refreshHint: {
-    color: '#6B7A6B',
+    color: AppColors.textMuted,
     fontFamily: Fonts.sans,
     fontSize: 14,
     lineHeight: 20,
@@ -782,64 +756,15 @@ const styles = StyleSheet.create({
   inlineActionButtonDisabled: {
     opacity: 0.7,
   },
-  emptyCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    paddingHorizontal: 18,
-    paddingVertical: 18,
-    shadowColor: '#141E14',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 2,
-  },
-  emptyTitle: {
-    color: '#1E2A1E',
-    fontFamily: Fonts.sans,
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 20,
-    marginBottom: 6,
-  },
-  emptyBody: {
-    color: '#6B7A6B',
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  emptyIllustration: {
-    alignSelf: 'center',
-    height: 120,
-    marginBottom: 12,
-    width: 120,
-  },
-  emptyCtaButton: {
-    alignItems: 'center',
-    alignSelf: 'center',
-    backgroundColor: '#2E6B4B',
-    borderRadius: 999,
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  emptyCtaLabel: {
-    color: '#F5F3EE',
-    fontFamily: Fonts.sans,
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
   searchButton: {
     alignItems: 'center',
-    backgroundColor: '#2E6B4B',
+    backgroundColor: AppColors.primary,
     borderRadius: 18,
     height: 52,
     justifyContent: 'center',
     position: 'absolute',
     right: 20,
-    shadowColor: '#141E14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.2,
     shadowRadius: 20,
@@ -852,18 +777,21 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-start',
   },
+  modalSafeArea: { flex: 1, paddingVertical: 16 },
+  searchResultsScroll: { flexGrow: 0, flexShrink: 1 },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(46,58,46,0.35)',
   },
   modalCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface,
     borderRadius: 22,
     marginHorizontal: 20,
-    marginTop: 120,
+    maxHeight: '100%',
+    flexShrink: 1,
     paddingHorizontal: 16,
     paddingVertical: 16,
-    shadowColor: '#141E14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.2,
     shadowRadius: 28,
@@ -876,7 +804,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   modalTitle: {
-    color: '#1E2A1E',
+    color: AppColors.text,
     fontFamily: Fonts.serif,
     fontSize: 20,
     lineHeight: 24,
@@ -907,7 +835,7 @@ const styles = StyleSheet.create({
     width: 14,
   },
   searchInput: {
-    color: '#1E2A1E',
+    color: AppColors.text,
     flex: 1,
     fontFamily: Fonts.sans,
     fontSize: 12,
@@ -924,7 +852,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   searchStatusText: {
-    color: '#6B7A6B',
+    color: AppColors.textMuted,
     fontFamily: Fonts.sans,
     fontSize: 12,
     lineHeight: 16,

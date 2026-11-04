@@ -6,7 +6,7 @@ export type HapticStrength = 'off' | 'light' | 'medium' | 'strong';
 export type HapticEvent = 'poiAdded' | 'tabChange' | 'selectionChange';
 
 const HAPTIC_STRENGTH_STORAGE_KEY = '@hwb:haptic-strength';
-export const DEFAULT_HAPTIC_STRENGTH: HapticStrength = 'medium';
+export const DEFAULT_HAPTIC_STRENGTH: HapticStrength = 'strong';
 
 let cachedStrength: HapticStrength = DEFAULT_HAPTIC_STRENGTH;
 let hasLoadedStrength = false;

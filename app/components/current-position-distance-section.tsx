@@ -2,7 +2,9 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SectionCard } from '@/components/section-card';
 import { SkeletonBlock } from '@/components/skeleton';
+import { AppColors } from '@/constants/theme';
 
 export type CurrentPositionDistanceSectionStatus =
   | 'no-coordinates'
@@ -39,31 +41,20 @@ export function CurrentPositionDistanceSection({
   children,
 }: CurrentPositionDistanceSectionProps) {
   return (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-      </View>
-
+    <SectionCard title={title}>
       {status === 'no-coordinates' ? (
         <Text style={styles.emptySectionText}>{noCoordinatesText}</Text>
-      ) : status === 'idle' ? (
+      ) : status === 'idle' || status === 'denied' || (status === 'error' && errorActionLabel) ? (
         <View style={styles.routePrompt}>
-          <Text style={styles.emptySectionText}>{promptText}</Text>
+          <Text style={styles.emptySectionText}>{status === 'error' ? errorText : promptText}</Text>
           <Pressable
+            accessibilityRole="button"
             onPress={onRequestDistance}
             style={({ pressed }) => [styles.routeActionButton, pressed && styles.sectionActionPressed]}>
             <MaterialCommunityIcons color="black" name="map-marker-distance" size={16} />
-            <Text style={styles.routeActionButtonLabel}>{actionLabel}</Text>
-          </Pressable>
-        </View>
-      ) : status === 'denied' ? (
-        <View style={styles.routePrompt}>
-          <Text style={styles.emptySectionText}>{promptText}</Text>
-          <Pressable
-            onPress={onRequestDistance}
-            style={({ pressed }) => [styles.routeActionButton, pressed && styles.sectionActionPressed]}>
-            <MaterialCommunityIcons color="black" name="map-marker-distance" size={16} />
-            <Text style={styles.routeActionButtonLabel}>{retryLabel}</Text>
+            <Text style={styles.routeActionButtonLabel}>
+              {status === 'idle' ? actionLabel : status === 'denied' ? retryLabel : errorActionLabel}
+            </Text>
           </Pressable>
         </View>
       ) : status === 'loading' ? (
@@ -73,53 +64,17 @@ export function CurrentPositionDistanceSection({
           ))}
         </>
       ) : status === 'error' ? (
-        errorActionLabel ? (
-          <View style={styles.routePrompt}>
-            <Text style={styles.emptySectionText}>{errorText}</Text>
-            <Pressable
-              onPress={onRequestDistance}
-              style={({ pressed }) => [styles.routeActionButton, pressed && styles.sectionActionPressed]}>
-              <MaterialCommunityIcons color="black" name="map-marker-distance" size={16} />
-              <Text style={styles.routeActionButtonLabel}>{errorActionLabel}</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Text style={styles.emptySectionText}>{errorText}</Text>
-        )
+        <Text style={styles.emptySectionText}>{errorText}</Text>
       ) : (
         children
       )}
-    </View>
+    </SectionCard>
   );
 }
 
 const styles = StyleSheet.create({
-  section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 8,
-    shadowColor: '#141e14',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 3,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  sectionTitle: {
-    color: '#1e2a1e',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '600',
-  },
   emptySectionText: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -129,7 +84,7 @@ const styles = StyleSheet.create({
   routeActionButton: {
     minHeight: 42,
     borderRadius: 12,
-    backgroundColor: '#eef4ef',
+    backgroundColor: AppColors.actionSurface,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -138,7 +93,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   routeActionButtonLabel: {
-    color: '#2e3a2e',
+    color: AppColors.textSecondary,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',

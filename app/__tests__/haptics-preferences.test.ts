@@ -27,8 +27,8 @@ describe('Haptic preference interaction', () => {
     notificationAsync.mockClear();
   });
 
-  it('defaults to the documented medium strength', () => {
-    expect(DEFAULT_HAPTIC_STRENGTH).toBe('medium');
+  it('defaults to strong feedback', () => {
+    expect(DEFAULT_HAPTIC_STRENGTH).toBe('strong');
   });
 
   it('persists a chosen strength and exposes it via the cache', async () => {
