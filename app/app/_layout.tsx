@@ -170,7 +170,7 @@ export default function RootLayout() {
                   <Stack.Screen name="admin/parking/index" />
                   <Stack.Screen name="admin/parking/[id]" />
                 </Stack>
-                <StatusBar style="light" />
+                <StatusBar style="dark" />
               </ThemeProvider>
               <WebDocumentBehavior />
               <QueryFocusBridge />
