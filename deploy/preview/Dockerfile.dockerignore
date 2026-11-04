@@ -17,6 +17,5 @@ app/android
 app/ios
 app/dist
 backend/hwb/app/rnweb
-backend/hwb/db/doNotDeploy-data
 backend/hwb/gen
 **/.DS_Store

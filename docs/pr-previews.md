@@ -24,8 +24,10 @@ aus `codex/abzeichenalbum` nach `develop`.
   App installiert werden. Eine neuere APK desselben PRs ersetzt dessen alte APK.
 - HTTPS-Basic-Login mit dem Testkonto aus [AGENTS.md](../AGENTS.md), kein Auth0.
   Die öffentliche URL und das bekannte Testkonto sind nur für Testdaten gedacht.
-- SQLite auf dem flüchtigen Container-Dateisystem, drei künstliche Stempelstellen,
-  keine kopierte Bestandsdatenbank oder Benutzerexporte. Daten gehen beim Neustart
+- SQLite auf dem flüchtigen Container-Dateisystem, initialisiert mit allen vorhandenen
+  CAP-Dummy-CSV-Dateien aus `backend/hwb/db/doNotDeploy-data`. Das Preview-Image
+  kopiert diese nach `db/data`; die Quelldateien bleiben unverändert. Keine lokale
+  `db.sqlite` oder Produktions-DB-Anbindung wird übernommen. Daten gehen beim Neustart
   verloren. Maximal eine Instanz pro Commit, Skalierung auf null im Leerlauf.
 - Das Deployment startet deaktiviert mit `--scaling=0` und ohne Startup-Healthcheck.
   Erst nach erfolgreichem APK-Build aktiviert der Workflow automatische Skalierung
@@ -323,3 +325,9 @@ auf GCP und GitHub Actions durch, einschließlich installierbarer Android-APK.
 Die anschließenden Änderungen für Opt-in per Label, PR-Beschreibung und den
 deaktivierten Start mit späterer Aktivierung sind lokal mit Policy-Tests und
 Workflow-Lint geprüft; dieser neue Cloud-Ablauf ist noch separat live zu prüfen.
+
+Für die Umstellung auf die vorhandenen CAP-Dummy-Daten wurden alle zwölf CSV-Dateien
+aus `db/doNotDeploy-data` in eine separate SQLite-Datenbank importiert. Die
+Zeilenzahlen aller Tabellen stimmen mit CAPs CSV-Parser überein, darunter 222
+Stempelstellen, 211 Parkplätze und 4.358 Reisezeit-Datensätze. Die Quelldaten und
+vorhandenen lokalen Datenbanken wurden dabei nicht verändert.

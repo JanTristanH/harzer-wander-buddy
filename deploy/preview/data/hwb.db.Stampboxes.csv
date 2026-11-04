@@ -1,4 +1,0 @@
-ID;number;orderBy;name;latitude;longitude;validFrom;validTo;description
-00000000-0000-4000-8000-000000000001;1;001;Preview Stempel 1;51.800;10.615;1970-01-01T00:00:00Z;2099-12-31T23:59:59Z;Künstliche Testdaten für die PR-Preview.
-00000000-0000-4000-8000-000000000002;2;002;Preview Stempel 2;51.805;10.620;1970-01-01T00:00:00Z;2099-12-31T23:59:59Z;Künstliche Testdaten für die PR-Preview.
-00000000-0000-4000-8000-000000000003;3;003;Preview Stempel 3;51.810;10.625;1970-01-01T00:00:00Z;2099-12-31T23:59:59Z;Künstliche Testdaten für die PR-Preview.
