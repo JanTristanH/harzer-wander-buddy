@@ -40,6 +40,11 @@ Plan and share tours with your friends in a way, you can keep track the progress
 
 Die [Preisstrategie](founder/pricing-strategy.md) beschreibt die kostenlose Basis, die Tourenautomatik als Premiumfunktion und gemeinsam mit Freunden nutzbare Urlaubspässe und Jahresabos. Sie enthält die Zielgruppen, den geprüften Funktionsstand und die Kostenbasis. Preise und Passregeln sind als Vorschläge beziehungsweise bestätigte Entscheidungen gekennzeichnet.
 
+## PR-Previews
+
+Live-Web-App und passende Android-APK pro PR-Commit auf GCP Cloud Run:
+[Einrichtung und Demo mit `codex/abzeichenalbum`](docs/pr-previews.md).
+
 ## Docker image
 
 [here](https://github.com/JanTristanH/harzer-wander-buddy/pkgs/container/hwb)

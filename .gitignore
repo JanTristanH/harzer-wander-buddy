@@ -6,3 +6,5 @@ content/
 /brag-output*/
 /.agents/skills/brag/
 /.agents/skills/hwb-video/**/__pycache__/
+preview-artifacts/
+gha-creds-*.json

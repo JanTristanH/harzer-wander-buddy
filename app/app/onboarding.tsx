@@ -23,7 +23,7 @@ import {
   type PressableProps,
   type PressableStateCallbackType,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList, type FriendsListItem } from '@/components/friends-list';
@@ -135,7 +135,6 @@ function ActionButton({
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const {
     accessToken,
@@ -182,7 +181,6 @@ export default function OnboardingScreen() {
     matchingCurrentUserProfile?.name || claims?.name || claims?.nickname || claims?.given_name || ''
   );
   const effectiveProfilePicture = selectedProfileImage?.uri || profilePicture || null;
-  const bottomDockPadding = Math.max(insets.bottom, 16);
   const currentStep = STEPS[step];
   const busy = isProfileSaving || isAdvancing;
 
@@ -376,7 +374,7 @@ export default function OnboardingScreen() {
 
     const asset = result.assets[0];
     setProfileSaveError(null);
-    setSelectedAvatar(null);
+    setSelectedAvatar('custom');
     setSelectedProfileImage({
       uri: asset.uri,
       fileName: asset.fileName || `profile-${Date.now()}.jpg`,
@@ -556,6 +554,9 @@ export default function OnboardingScreen() {
         requireOnlineForWrite(canPerformWrites);
         setSubmittingUserId(userId);
         await createFriendRequest(accessToken, userId);
+        // Tabs retain inactive queries and disable refetchOnMount, so refresh those too.
+        void queryClient.invalidateQueries({ queryKey: queryKeys.friendsOverview(claims?.sub), refetchType: 'all' });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.profileOverview(claims?.sub), refetchType: 'all' });
         const matchedUser = searchResults.find((result) => result.id === userId);
         setSentRequests((current) => {
           if (current.some((request) => request.key === userId)) {
@@ -590,7 +591,7 @@ export default function OnboardingScreen() {
         setSubmittingUserId(null);
       }
     },
-    [accessToken, canPerformWrites, logout, searchResults]
+    [accessToken, canPerformWrites, claims?.sub, logout, queryClient, searchResults]
   );
   const searchListItems = useMemo<FriendsListItem[]>(
     () =>
@@ -647,7 +648,7 @@ export default function OnboardingScreen() {
   return (
     <LinearGradient colors={['#f7f5ef', '#f3efe6', '#f0ebe1']} style={styles.gradient}>
       <StatusBar style="dark" />
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safeArea}>
         <KeyboardAvoidingView style={styles.flow} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.navigation}>
             <Pressable accessibilityRole="button" accessibilityLabel="Vorheriger Schritt" disabled={step === 0 || busy}
@@ -662,7 +663,7 @@ export default function OnboardingScreen() {
             accessibilityLabel="Onboarding-Fortschritt" style={styles.progressRow}>
             {STEPS.map((item, index) => <View key={item.label} style={[styles.progressSegment, index <= step && styles.progressActive]} />)}
           </View>
-          <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" bounces={false}
+          <ScrollView ref={scrollRef} style={styles.stepScroll} keyboardShouldPersistTaps="handled" bounces={false}
             contentContainerStyle={styles.flowContent} showsVerticalScrollIndicator={false}>
             <View style={[styles.scene, step === 2 && styles.compactScene]}>
               {step === 0 ? <Image contentFit="contain" source={bearIllustration} style={styles.welcomeIllustration} /> :
@@ -706,19 +707,26 @@ export default function OnboardingScreen() {
 
             {step === 2 ? <>
               <View style={styles.avatarGrid}>
-                {[...DEFAULT_AVATARS, { id: 'none', label: 'Kein Avatar', source: null }].map((avatar) => {
-                  const selected = selectedAvatar === avatar.id || (avatar.id === 'none' && !effectiveProfilePicture);
-                  return <Pressable key={avatar.id} accessibilityRole="radio" accessibilityLabel={avatar.label}
+                {[...DEFAULT_AVATARS, { id: 'custom', label: 'Eigenes Foto', source: null }].map((avatar) => {
+                  const selected = selectedAvatar === avatar.id || (avatar.id === 'custom' && selectedAvatar === null && !!effectiveProfilePicture);
+                  return <Pressable key={avatar.id} accessibilityRole="radio" accessibilityLabel={avatar.label} aria-checked={selected}
                     accessibilityState={{ checked: selected, disabled: busy || !canPerformWrites }} disabled={busy || !canPerformWrites}
-                    onPress={() => selectAvatar(avatar.id)} style={[styles.avatarOption, selected && styles.avatarOptionSelected]}>
+                    onPress={() => avatar.id === 'custom' ? void handlePickProfileImage() : selectAvatar(avatar.id)} style={[styles.avatarOption, selected && styles.avatarOptionSelected]}>
                     {avatar.source ? <Image source={avatar.source} contentFit="cover" style={styles.choiceImage} /> :
-                      <View style={styles.noneAvatar}><Feather name="user" size={35} color="#788779" /></View>}
+                      selected && effectiveProfilePicture ? <Image accessibilityLabel="Dein eigenes Foto" source={selectedProfileImage ? { uri: selectedProfileImage.uri } : buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)} contentFit="cover" style={styles.choiceImage} /> :
+                      <View style={styles.noneAvatar}><Feather name="camera" size={35} color="#788779" /></View>}
                     <Text style={[styles.avatarLabel, selected && styles.avatarLabelSelected]}>{avatar.label}</Text>
                     {selected ? <View style={styles.selectionCheck}><Feather name="check" size={14} color="white" /></View> : null}
                   </Pressable>;
                 })}
               </View>
-              <ActionButton disabled={busy || !canPerformWrites} label="Eigenes Foto hochladen" onPress={() => void handlePickProfileImage()} />
+              <Pressable accessibilityRole="radio" accessibilityLabel="Kein Avatar" aria-checked={selectedAvatar === 'none' || !effectiveProfilePicture}
+                accessibilityState={{ checked: selectedAvatar === 'none' || !effectiveProfilePicture, disabled: busy || !canPerformWrites }}
+                disabled={busy || !canPerformWrites} onPress={() => selectAvatar('none')}
+                style={[styles.noAvatarButton, (selectedAvatar === 'none' || !effectiveProfilePicture) && styles.avatarOptionSelected]}>
+                <Text style={styles.avatarLabel}>Kein Avatar</Text>
+                {selectedAvatar === 'none' || !effectiveProfilePicture ? <Feather name="check" size={18} color="#41664A" /> : null}
+              </Pressable>
               <Text style={styles.guidance}>Dein Avatar ist für deine Wanderbuddies sichtbar.</Text>
             </> : null}
 
@@ -741,7 +749,7 @@ export default function OnboardingScreen() {
             </View> : null}
             {profileSaveError && step > 0 ? <Text accessibilityRole="alert" style={styles.errorText}>{profileSaveError}</Text> : null}
           </ScrollView>
-          <View style={[styles.flowDock, { paddingBottom: bottomDockPadding }]}>
+          <View style={styles.flowDock}>
             <ActionButton disabled={primaryDisabled || busy || (step === 1 && !profileName.trim()) || locationPermission === 'checking'}
               label={busy ? 'Wird gespeichert…' : step === 0 ? 'Los geht’s' : step === 4 ? 'Zu den Stempelstellen' : step === 3 && locationPermission !== 'granted' ? 'Ohne Standort weiter' : 'Weiter'}
               onPress={() => void handleAdvance()} variant="primary" style={styles.bottomButton} />
@@ -754,8 +762,9 @@ export default function OnboardingScreen() {
           transparent
           visible={isSearchModalVisible}
           onRequestClose={closeSearchModal}>
-          <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <Pressable style={styles.modalBackdrop} onPress={closeSearchModal} />
+            <SafeAreaView style={styles.modalSafeArea} pointerEvents="box-none">
             <View style={styles.modalCard}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Freunde finden</Text>
@@ -783,7 +792,7 @@ export default function OnboardingScreen() {
                 />
               </View>
 
-              <View style={styles.searchResultsColumn}>
+              <ScrollView style={styles.searchResultsScroll} contentContainerStyle={styles.searchResultsColumn} keyboardShouldPersistTaps="handled">
                 {isSearchLoading ? (
                   <View style={styles.searchStatusWrap}>
                     <ActivityIndicator color="#2E6B4B" size="small" />
@@ -810,7 +819,7 @@ export default function OnboardingScreen() {
                 {!isSearchLoading && !searchError && searchResults.length > 0 ? (
                   <FriendsList items={searchListItems} />
                 ) : null}
-              </View>
+              </ScrollView>
 
               <View style={styles.modalHint}>
                 <Text style={styles.modalHintText}>
@@ -818,7 +827,8 @@ export default function OnboardingScreen() {
                 </Text>
               </View>
             </View>
-          </View>
+            </SafeAreaView>
+          </KeyboardAvoidingView>
         </Modal>
       </SafeAreaView>
     </LinearGradient>
@@ -826,6 +836,8 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
+  stepScroll: { flex: 1, minHeight: 0 },
+  noAvatarButton: { minHeight: 52, borderWidth: 2, borderColor: '#E1E4D8', borderRadius: 18, backgroundColor: '#e8dfcf', padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   flow: { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
   navigation: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 12 },
   backButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: '#E7EBDD' },
@@ -866,7 +878,7 @@ const styles = StyleSheet.create({
   avatarLabelSelected: { color: '#315B43', fontWeight: '700' },
   selectionCheck: { position: 'absolute', top: 10, right: 10, backgroundColor: '#41664A', width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   infoRow: { flexDirection: 'row', gap: 14, alignItems: 'center' },
-  flowDock: { paddingHorizontal: 28, paddingTop: 12, gap: 10, backgroundColor: '#F3EFE6' },
+  flowDock: { flexShrink: 0, paddingHorizontal: 28, paddingTop: 12, paddingBottom: 16, gap: 10, backgroundColor: '#F3EFE6' },
   gradient: {
     flex: 1,
   },
@@ -908,7 +920,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   actionButtonPrimary: {
     backgroundColor: '#397b52',
@@ -955,6 +968,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-start',
   },
+  modalSafeArea: { flex: 1, paddingVertical: 16 },
+  searchResultsScroll: { flexGrow: 0, flexShrink: 1 },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(46,58,46,0.35)',
@@ -963,7 +978,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 22,
     marginHorizontal: 20,
-    marginTop: 120,
+    maxHeight: '100%',
+    flexShrink: 1,
     paddingHorizontal: 16,
     paddingVertical: 16,
     shadowColor: '#141E14',

@@ -5,8 +5,10 @@ import MapView, {
   type LatLng,
   type Region,
 } from 'react-native-maps';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { SELECTED_MARKER_Z_INDEX } from '@/lib/map-marker-selection';
+import { isPreviewMapBlocked, recordPreviewEvent } from '@/lib/preview-diagnostics';
 
 export type { Camera, LatLng, Region };
 
@@ -20,7 +22,22 @@ const NativeMapView = React.forwardRef<MapView, NativeMapViewProps>(function Nat
   { attributionPlacement: _attributionPlacement, controlsAtTop: _controlsAtTop, ...props },
   ref
 ) {
-  return <MapView ref={ref} {...props} />;
+  useEffect(() => {
+    void recordPreviewEvent(isPreviewMapBlocked ? 'map.blocked_missing_key' : 'map.opened');
+  }, []);
+  if (isPreviewMapBlocked) {
+    return (
+      <View style={[props.style, styles.unavailable]} accessibilityRole="alert">
+        <Text style={styles.title}>Karte in dieser Preview nicht verfügbar</Text>
+        <Text style={styles.message}>Der Google-Maps-Key fehlt in diesem Android-Build. Liste und Anmeldung können weiter verwendet werden.</Text>
+        <Text style={styles.message}>Details stehen im Profil unter „Technische Details → Preview-Protokoll“.</Text>
+      </View>
+    );
+  }
+  return <MapView ref={ref} {...props} onMapReady={(event) => {
+    void recordPreviewEvent('map.ready');
+    props.onMapReady?.(event);
+  }} />;
 });
 
 type MarkerProps = React.ComponentProps<typeof NativeMarker> & {
@@ -56,3 +73,9 @@ const Marker = React.forwardRef<React.ComponentRef<typeof NativeMarker>, MarkerP
 
 export default NativeMapView;
 export { Marker, Polyline };
+
+const styles = StyleSheet.create({
+  unavailable: { flex: 1, backgroundColor: '#f3f5ee', justifyContent: 'center', padding: 28, gap: 14 },
+  title: { color: '#1e2a1e', fontSize: 20, fontWeight: '600' },
+  message: { color: '#4d5d4d', fontSize: 15, lineHeight: 22 },
+});
