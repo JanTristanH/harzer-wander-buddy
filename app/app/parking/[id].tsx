@@ -18,6 +18,8 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SectionCard } from '@/components/section-card';
+import { AppColors } from '@/constants/theme';
 import { LockedGuestRows } from '@/components/auth-locked-state';
 import { CurrentPositionDistanceSection } from '@/components/current-position-distance-section';
 import { DetailOverflowMenu } from '@/components/detail-overflow-menu';
@@ -112,29 +114,13 @@ function SkeletonRow() {
   );
 }
 
-function Section({
-  title,
-  children,
-}: React.PropsWithChildren<{
-  title: string;
-}>) {
-  return (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-      </View>
-      {children}
-    </View>
-  );
-}
-
 function ParkingDetailLoadingState({ onBack }: { onBack: () => void }) {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.loadingContent} showsVerticalScrollIndicator={false}>
         <View style={styles.loadingHero}>
           <Pressable onPress={onBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
-            <Feather color="#1e2a1e" name="arrow-left" size={18} />
+            <Feather color={AppColors.text} name="arrow-left" size={18} />
           </Pressable>
           <View style={styles.heroBadge}>
             <Text style={styles.heroBadgeText}>Parkplatz</Text>
@@ -149,16 +135,16 @@ function ParkingDetailLoadingState({ onBack }: { onBack: () => void }) {
             <SkeletonLine width="56%" />
           </View>
 
-          <Section title="Stempel in der Nähe">
+          <SectionCard title="Stempel in der Nähe">
             <SkeletonRow />
             <SkeletonRow />
             <SkeletonRow />
-          </Section>
+          </SectionCard>
 
-          <Section title="Parkplätze in der Nähe">
+          <SectionCard title="Parkplätze in der Nähe">
             <SkeletonRow />
             <SkeletonRow />
-          </Section>
+          </SectionCard>
         </View>
 
         <Text style={styles.helperText}>Lade Parkplatz-Details...</Text>
@@ -395,7 +381,7 @@ function ParkingDetailContent() {
           ) : null}
 
           <Pressable onPress={handleBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
-            <Feather color="#1e2a1e" name="arrow-left" size={18} />
+            <Feather color={AppColors.text} name="arrow-left" size={18} />
           </Pressable>
 
           {isAdmin ? (
@@ -433,7 +419,7 @@ function ParkingDetailContent() {
             <Text style={styles.description}>Keine Beschreibung fuer diesen Parkplatz verfuegbar.</Text>
           )}
 
-          <Section title="Stempel in der Nähe">
+          <SectionCard title="Stempel in der Nähe">
             {isGuest ? (
               <LockedGuestRows
                 body="Melde dich an, um nahe Stempelstellen und Reisezeiten zu sehen."
@@ -491,9 +477,9 @@ function ParkingDetailContent() {
                 </Text>
               </View>
             )}
-          </Section>
+          </SectionCard>
 
-          <Section title="Parkplätze in der Nähe">
+          <SectionCard title="Parkplätze in der Nähe">
             {isGuest ? (
               <LockedGuestRows
                 body="Melde dich an, um nahe Parkplätze und Reisezeiten zu sehen."
@@ -531,15 +517,15 @@ function ParkingDetailContent() {
             ) : (
               <Text style={styles.emptySectionText}>Keine Parkplätze in der Nähe gefunden.</Text>
             )}
-          </Section>
+          </SectionCard>
 
           {isGuest ? (
-            <Section title="Von aktueller Position">
+            <SectionCard title="Von aktueller Position">
               <LockedGuestRows
                 body="Melde dich an, um Distanz, Höhenmeter und Reisezeit von deinem Standort zu berechnen."
                 onSignIn={() => router.push('/login' as never)}
               />
-            </Section>
+            </SectionCard>
           ) : (
             <CurrentPositionDistanceSection
               actionLabel="Distanz berechnen"
@@ -597,7 +583,7 @@ function ParkingDetailContent() {
                       pressed && styles.sectionActionPressed,
                     ]}>
                     <Feather
-                      color="#2e3a2e"
+                      color={AppColors.textSecondary}
                       name={routeToCurrentPositionQuery.isFetching ? 'refresh-cw' : 'rotate-cw'}
                       size={14}
                     />
@@ -620,7 +606,7 @@ function ParkingDetailContent() {
                 styles.secondaryButtonWithIcon,
                 pressed && styles.secondaryButtonPressed,
               ]}>
-              <Feather color="#2e3a2e" name="navigation" size={16} />
+              <Feather color={AppColors.textSecondary} name="navigation" size={16} />
               <Text style={styles.secondaryButtonLabel}>Navigation starten</Text>
             </Pressable>
             <Pressable
@@ -631,7 +617,7 @@ function ParkingDetailContent() {
                 styles.secondaryButtonWithIcon,
                 pressed && styles.secondaryButtonPressed,
               ]}>
-              <Feather color="#2e3a2e" name="map-pin" size={16} />
+              <Feather color={AppColors.textSecondary} name="map-pin" size={16} />
               <Text style={styles.secondaryButtonLabel}>Auf Karte anzeigen</Text>
             </Pressable>
           </View>
@@ -642,7 +628,7 @@ function ParkingDetailContent() {
               styles.secondaryButtonWithIcon,
               pressed && styles.secondaryButtonPressed,
             ]}>
-            <Feather color="#2e3a2e" name="share-2" size={16} />
+            <Feather color={AppColors.textSecondary} name="share-2" size={16} />
             <Text style={styles.secondaryButtonLabel}>Parkplatz teilen</Text>
           </Pressable>
         </View>
@@ -658,7 +644,7 @@ export default function ParkingDetailScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: AppColors.background,
   },
   scrollContent: {
     paddingBottom: 180,
@@ -683,13 +669,13 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   helperText: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
   },
   errorTitle: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 18,
     lineHeight: 22,
     textAlign: 'center',
@@ -698,7 +684,7 @@ const styles = StyleSheet.create({
   retryButton: {
     marginTop: 6,
     borderRadius: 999,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: AppColors.primary,
     paddingHorizontal: 16,
     paddingVertical: 9,
   },
@@ -706,7 +692,7 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   retryButtonLabel: {
-    color: '#f5f3ee',
+    color: AppColors.background,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',
@@ -749,13 +735,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 20,
     bottom: 16,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: AppColors.background,
     borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   heroBadgeText: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -768,7 +754,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    color: '#1e2a1e',
+    color: AppColors.text,
     fontSize: 24,
     lineHeight: 30,
     fontFamily: 'serif',
@@ -777,30 +763,6 @@ const styles = StyleSheet.create({
     color: '#445244',
     fontSize: 14,
     lineHeight: 22,
-  },
-  section: {
-    backgroundColor: '#ffffff',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 8,
-    shadowColor: '#141e14',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 3,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  sectionTitle: {
-    color: '#1e2a1e',
-    fontSize: 16,
-    lineHeight: 20,
-    fontWeight: '600',
   },
   rowItem: {
     flexDirection: 'row',
@@ -836,7 +798,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   rowBadgeLabelStamp: {
-    color: '#2e6b4b',
+    color: AppColors.primary,
   },
   rowBadgeLabelParking: {
     color: '#2f7dd7',
@@ -851,12 +813,12 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   rowMeta: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
   emptySectionText: {
-    color: '#6b7a6b',
+    color: AppColors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
@@ -945,7 +907,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   secondaryButtonLabel: {
-    color: '#2e3a2e',
+    color: AppColors.textSecondary,
     fontSize: 13,
     lineHeight: 16,
     textAlign: 'center',

@@ -1,6 +1,16 @@
 # Web-Karte: Zoomdarstellung und Performance-Fallback
 
-Stand: 2026-08-07
+Stand: 2026-10-24
+
+## Mobile Hintergrundkarte und dauerhaft montierte Stempel
+
+Die MapLibre-Hintergrundkarte begrenzt `pixelRatio` auf 1.5 und deaktiviert
+zusätzliche GL-Beschriftungs-Fades. DOM-Marker bleiben in voller Auflösung.
+Stempel werden nicht mehr nach Viewport ausgesiebt: Alle 222 regulären Stempel
+bleiben montiert; fachliche Filter gelten weiterhin. Die unten beschriebenen
+Culling-Erkenntnisse gelten damit nur noch für Parkplätze beziehungsweise den
+historischen Zustand. Messungen und Grenzen stehen in
+[`docs/mobile-web-map-performance.md`](../../docs/mobile-web-map-performance.md).
 
 ## Aktueller, optisch schöner Zustand
 

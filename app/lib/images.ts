@@ -1,4 +1,5 @@
 import { appConfig } from '@/lib/config';
+import { isStaticWebsite } from '@/lib/static-website';
 
 function normalizeBaseUrl(url: string) {
   return url.replace(/\/$/, '');
@@ -10,7 +11,7 @@ function resolveImageUri(uri: string) {
     return trimmedUri;
   }
 
-  if (/^(https?:|file:|data:|content:|asset:)/i.test(trimmedUri)) {
+  if (isStaticWebsite || /^(https?:|file:|data:|content:|asset:)/i.test(trimmedUri)) {
     return trimmedUri;
   }
 

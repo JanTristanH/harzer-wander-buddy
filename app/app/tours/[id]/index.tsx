@@ -12,6 +12,7 @@ import {
   type ImageRequireSource,
   Linking,
   Modal,
+  Platform,
   Pressable,
   Animated as RNAnimated,
   Easing as RNEasing,
@@ -41,6 +42,7 @@ import {
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import { triggerHaptic } from '@/lib/haptics-preferences';
+import { buildRouteDirectionArrows, buildTourRouteSegments, findSharedRouteSections, TOUR_ROUTE_STYLES } from '@/lib/tour-route';
 import { useHikingGroup } from '@/lib/hiking-group';
 import {
   getPreGeneratedMapMarkerFallbackImageSource,
@@ -983,6 +985,8 @@ export default function TourDetailScreen() {
   const [isRemoteSearchLoading, setIsRemoteSearchLoading] = useState(false);
   const [remoteSearchError, setRemoteSearchError] = useState<string | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [routeRegion, setRouteRegion] = useState(HARZ_REGION);
+  const [routeMapHeight, setRouteMapHeight] = useState(350);
   const [mapCenter, setMapCenter] = useState<Coordinate>({
     latitude: HARZ_REGION.latitude,
     longitude: HARZ_REGION.longitude,
@@ -1322,7 +1326,21 @@ export default function TourDetailScreen() {
     [markerRenderStates]
   );
 
-  const routeCoordinates = useMemo(
+  const routeSegments = useMemo(
+    () => buildTourRouteSegments(livePathEntries, draftPoiIds),
+    [livePathEntries, draftPoiIds]
+  );
+  const routeCoordinates = useMemo(() => routeSegments.flatMap((segment) => segment.coordinates), [routeSegments]);
+  const sharedRouteSections = useMemo(() => findSharedRouteSections(routeSegments), [routeSegments]);
+  const routeDirections = useMemo(
+    () => routeSegments.map((segment, segmentIndex) => ({
+      color: TOUR_ROUTE_STYLES[segment.mode].color,
+      arrows: buildRouteDirectionArrows(segment.coordinates, routeRegion.latitudeDelta, routeMapHeight,
+        sharedRouteSections.filter((section) => section.segmentIndex === segmentIndex)),
+    })),
+    [routeSegments, sharedRouteSections, routeRegion.latitudeDelta, routeMapHeight]
+  );
+  const stopCoordinates = useMemo(
     () =>
       draftPoiIds
         .map((poiId) => mapItemById.get(poiId.toLowerCase()))
@@ -1800,8 +1818,8 @@ export default function TourDetailScreen() {
     }
 
     const coordinatesToFit =
-      routeCoordinates.length > 0
-        ? routeCoordinates
+      routeCoordinates.length > 0 || stopCoordinates.length > 0
+        ? [...routeCoordinates, ...stopCoordinates]
         : allMapItems
             .slice(0, 16)
             .map((item) => ({ latitude: item.latitude, longitude: item.longitude }));
@@ -1828,7 +1846,7 @@ export default function TourDetailScreen() {
       edgePadding: MAP_EDGE_PADDING,
       animated: true,
     });
-  }, [allMapItems, isEditMode, isMapReady, routeCoordinates]);
+  }, [allMapItems, isEditMode, isMapReady, routeCoordinates, stopCoordinates]);
 
   const handleZoomBy = useCallback((factor: number) => {
     const map = mapRef.current;
@@ -2579,11 +2597,13 @@ export default function TourDetailScreen() {
   }
 
   const renderTourMap = (isFullscreen: boolean) => (
-    <View style={[styles.mapCard, isFullscreen && styles.mapCardFullscreen]}>
+    <View
+      onLayout={(event) => setRouteMapHeight(event.nativeEvent.layout.height)}
+      style={[styles.mapCard, isFullscreen && styles.mapCardFullscreen]}>
       <MapView
         attributionPlacement="bottom-right"
         ref={mapRef}
-        initialRegion={HARZ_REGION}
+        initialRegion={routeRegion}
         onMapReady={() => setIsMapReady(true)}
         onPress={() => {
           if (Date.now() - lastMarkerPressAtRef.current < 250) {
@@ -2596,6 +2616,7 @@ export default function TourDetailScreen() {
         }}
         onRegionChangeComplete={(nextRegion) => {
           regionRef.current = nextRegion;
+          setRouteRegion(nextRegion);
           setMapCenter({
             latitude: nextRegion.latitude,
             longitude: nextRegion.longitude,
@@ -2603,17 +2624,30 @@ export default function TourDetailScreen() {
         }}
         style={StyleSheet.absoluteFill}
         toolbarEnabled={false}>
-        {routeCoordinates.length > 1 ? (
-          <Polyline coordinates={routeCoordinates} strokeColor="#2e6b4b" strokeWidth={4} />
-        ) : null}
+        {routeSegments.map((segment, index) => (
+          <Polyline key={`route-${index}`} coordinates={segment.coordinates}
+            strokeColor={TOUR_ROUTE_STYLES[segment.mode].color} strokeWidth={5} />
+        ))}
+        {routeDirections.flatMap(({ arrows, color }, segmentIndex) =>
+          arrows.map((coordinates, arrowIndex) => (
+            <React.Fragment key={`direction-${segmentIndex}-${arrowIndex}`}>
+              <Polyline coordinates={coordinates} strokeColor="#ffffff" strokeWidth={7} />
+              <Polyline coordinates={coordinates} strokeColor={color} strokeWidth={3} />
+            </React.Fragment>
+          ))
+        )}
 
         {markerRenderStates.map((state) => (
           <Marker
+            accessibilityState={{ selected: normalizedSelectedMapItemId === state.id.toLowerCase() }}
             anchor={{ x: 0.5, y: 1 }}
             coordinate={state.coordinate}
             noticeBadge={parseActiveNotices(state.item.activeNotices).length > 0}
-            accessibilityLabel={`${state.item.name}${parseActiveNotices(state.item.activeNotices).length ? ". Aktuelle Sperrung oder Meldung" : ""}`}
             image={state.baseImage}
+            {...(Platform.OS === 'web' ? {
+              selected: normalizedSelectedMapItemId === state.id.toLowerCase(),
+            } : {})}
+            accessibilityLabel={`${state.item.markerLabel} • ${state.item.name}${parseActiveNotices(state.item.activeNotices).length ? ". Aktuelle Sperrung oder Meldung" : ""}`}
             key={state.baseKey}
             onPress={() => focusMapItemOnMap(state.item)}
             tracksViewChanges={false}
@@ -2623,7 +2657,7 @@ export default function TourDetailScreen() {
 
         {markerRenderStates.map((state) => {
           const isSelected = normalizedSelectedMapItemId === state.id.toLowerCase();
-          if (!isSelected) {
+          if (!isSelected || Platform.OS === 'web') {
             return null;
           }
 
@@ -2632,6 +2666,8 @@ export default function TourDetailScreen() {
               anchor={{ x: 0.5, y: 1 }}
               coordinate={state.coordinate}
               key={`${state.overlayKey}:halo`}
+              accessibilityState={{ selected: true }}
+              selectionOverlay
               tracksViewChanges={tracksOverlayViewChanges}
               zIndex={markerHaloZIndex(state.kind)}>
               <View collapsable={false} pointerEvents="none" style={styles.markerOverlayWrap}>
@@ -2647,6 +2683,9 @@ export default function TourDetailScreen() {
           }
 
           const isSelected = normalizedSelectedMapItemId === state.id.toLowerCase();
+          if (Platform.OS === 'web' && isSelected) {
+            return null;
+          }
 
           return (
             <Marker
@@ -2655,6 +2694,8 @@ export default function TourDetailScreen() {
               key={`${state.overlayKey}:badge:${state.routeOrderLabel ?? '--'}`}
               onPress={() => focusMapItemOnMap(state.item)}
               tracksViewChanges={tracksOverlayViewChanges}
+              accessibilityState={{ selected: isSelected }}
+              selectionOverlay
               zIndex={markerBadgeZIndex(state.kind, isSelected)}>
               <View collapsable={false} pointerEvents="none" style={styles.markerOverlayWrap}>
                 <View style={styles.poiInTourMarkerBadge}>
@@ -2765,6 +2806,23 @@ export default function TourDetailScreen() {
           </Text>
         ) : null}
       </View>
+
+      {routeSegments.length > 0 && !selectedMapItem ? (
+        <View pointerEvents="none" style={[styles.routeLegend, isFullscreen && { bottom: insets.bottom + 24 }]}>
+          {(['walk', 'drive'] as const).filter((mode) => routeSegments.some((segment) => segment.mode === mode)).map((mode) => (
+            <View key={mode} style={styles.routeLegendItem}>
+              <Feather name="arrow-right" color={TOUR_ROUTE_STYLES[mode].color} size={18} />
+              <Text style={styles.routeLegendLabel}>{TOUR_ROUTE_STYLES[mode].label}</Text>
+            </View>
+          ))}
+          {sharedRouteSections.length > 0 ? (
+            <View style={styles.routeLegendItem}>
+              <Feather name="repeat" color="#4d5b4d" size={16} />
+              <Text style={styles.routeLegendLabel}>Hin- und Rückweg auf gleicher Strecke</Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
 
       <View style={[styles.mapZoomControls, isFullscreen && { top: insets.top + 72 }]}>
         <Pressable onPress={() => handleZoomBy(0.65)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
@@ -3732,6 +3790,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
+  routeLegend: {
+    position: 'absolute', bottom: 24, left: 12,
+    backgroundColor: '#ffffff', borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 7, gap: 4,
+  },
+  routeLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  routeLegendLabel: { color: '#263526', fontSize: 12, fontWeight: '600' },
   mapCard: {
     height: 390,
     borderRadius: 22,

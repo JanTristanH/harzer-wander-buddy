@@ -6,25 +6,25 @@
   "license": "UNLICENSED",
   "private": true,
   "dependencies": {
-    "@cap-js-community/odata-v2-adapter": "^1.12.8",
+    "@cap-js-community/odata-v2-adapter": "^1.16.1",
     "@cap-js/attachments": "^1.2.1",
-    "@cap-js/postgres": "^1.8.0",
-    "@sap/cds": "^8",
+    "@cap-js/postgres": "^1.14.2",
+    "@sap/cds": "^8.9.10",
     "cheerio": "^1.0.0",
     "cors": "^2.8.6",
-    "dotenv": "^16.4.5",
-    "express": "^4",
-    "express-openid-connect": "^2.17.1",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.3",
+    "express-openid-connect": "^2.20.2",
     "hwb": "file:",
-    "jose": "^6.2.1",
-    "jsonwebtoken": "^9.0.2",
+    "jose": "^6.2.12",
+    "jsonwebtoken": "^9.0.3",
     "node-fetch": "^2.7.0",
     "sharp": "^0.35.5",
-    "sqlite3": "^5.0.8",
-    "uuid": "^9.0.0"
+    "sqlite3": "^5.1.7",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@sap/cds-dk": "^7"
+    "@sap/cds-dk": "^7.9.10"
   },
   "scripts": {
     "dev:basic:cap": "npm run watch:basic",
@@ -163,7 +163,7 @@
   },
   "hwbProfiles": {
     "dev-basic": {
-      "description": "Lokaler CAP-Server mit SQLite und HTTP Basic Auth; benötigt kein Auth0.",
+      "description": "Lokaler CAP-Server mit SQLite und HTTP Basic Auth; ben\u00f6tigt kein Auth0.",
       "watch": "npm run dev:basic:cap",
       "start": "npm run start:basic",
       "frontend": "Im zweiten Terminal: npm run dev:basic:web --prefix app (vom Projektroot).",
@@ -178,7 +178,7 @@
       "url": "http://localhost:4004/app/rnweb"
     },
     "production": {
-      "description": "Bestehendes Container-Profil mit PostgreSQL und Auth0; unverändert.",
+      "description": "Bestehendes Container-Profil mit PostgreSQL und Auth0; unver\u00e4ndert.",
       "start": "npm start (im bestehenden Container mit Produktionsprofil)"
     },
     "note": "Nur einen CAP-Server auf Port 4004 starten; vor dem Profilwechsel den laufenden Server beenden."

@@ -49,7 +49,9 @@ export function createExpoConfig(
     version,
     experiments: {
       ...baseConfig.experiments,
-      baseUrl: env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : baseConfig.experiments?.baseUrl,
+      baseUrl: env.EXPO_PUBLIC_DATA_MODE === 'static'
+        ? env.EXPO_PUBLIC_STATIC_BASE_PATH || '/preview/overview/app'
+        : env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? '' : baseConfig.experiments?.baseUrl,
     },
     android: {
       ...baseConfig.android,
