@@ -1,4 +1,5 @@
-import { buildRouteDirectionArrows, buildTourRouteSegments, parseRoutePositionString } from '@/lib/tour-route';
+import { buildRouteDirectionArrows, buildTourRouteSegments, findSharedRouteSections, parseRoutePositionString } from '@/lib/tour-route';
+import type { TourRouteSegment } from '@/lib/tour-route';
 import type { TourPathEntry } from '@/lib/api';
 
 const positionString = '10.6;51.7;0;10.61;51.72;0;10.62;51.71;0';
@@ -81,5 +82,53 @@ describe('route direction chevrons', () => {
     expect(buildRouteDirectionArrows([east[0], east[0]], 0.02, 400)).toEqual([]);
     expect(buildRouteDirectionArrows([], 0.02, 400)).toEqual([]);
     expect(buildRouteDirectionArrows(east, 0, 400)).toEqual([]);
+  });
+});
+
+describe('shared outbound and return sections', () => {
+  const a = { latitude: 51.7, longitude: 10.6 };
+  const b = { latitude: 51.7, longitude: 10.61 };
+  const c = { latitude: 51.7, longitude: 10.62 };
+  const segment = (coordinates: typeof a[]) => ({ coordinates, mode: 'walk' as const });
+  const directions = (segments: TourRouteSegment[], delta = 0.02) => {
+    const shared = findSharedRouteSections(segments);
+    return segments.map(({ coordinates }, segmentIndex) => buildRouteDirectionArrows(
+      coordinates, delta, 400, shared.filter((section) => section.segmentIndex === segmentIndex)
+    ));
+  };
+
+  it('removes both sets of arrows on a complete return, including within a single leg', () => {
+    expect(directions([segment([a, b, c]), segment([c, b, a])])).toEqual([[], []]);
+    expect(directions([segment([a, b, c, b, a])])).toEqual([[]]);
+    expect(directions([segment([a, a, b, c]), segment([c, a])], 0.01)).toEqual([[], []]);
+  });
+
+  it('detects partial overlaps with different sampling and keeps arrows on the rest', () => {
+    const [outbound, returning] = directions([segment([a, c]), segment([c, b])]);
+    expect(outbound.length).toBeGreaterThan(0);
+    expect(outbound.every(([, tip]) => tip.longitude < b.longitude)).toBe(true);
+    expect(returning).toEqual([]);
+  });
+
+  it('tolerates small geometry differences without treating parallel trails or crossings as returns', () => {
+    const shifted = (point: typeof a, metres: number) => ({ ...point, latitude: point.latitude + metres / 111_320 });
+    expect(directions([segment([a, c]), segment([shifted(c, 1), shifted(a, 1)])])).toEqual([[], []]);
+    for (const coordinates of [
+      [shifted(c, 8), shifted(a, 8)],
+      [a, c], // repeated in the same direction
+      [{ ...b, latitude: 51.69 }, { ...b, latitude: 51.71 }], // crossing
+      [c, { latitude: 51.71, longitude: 10.6 }], // diverging at a turnaround
+    ]) {
+      expect(findSharedRouteSections([segment([a, c]), segment(coordinates)])).toEqual([]);
+    }
+  });
+
+  it('preserves ordinary round trips, handles empty geometry, and works across travel modes', () => {
+    const loop = [a, b, { latitude: 51.71, longitude: 10.61 }, a];
+    expect(findSharedRouteSections([segment(loop)])).toEqual([]);
+    expect(directions([segment(loop)])[0].length).toBeGreaterThan(0);
+    expect(findSharedRouteSections([])).toEqual([]);
+    expect(findSharedRouteSections([segment([a, a])])).toEqual([]);
+    expect(directions([segment([a, c]), { coordinates: [c, a], mode: 'drive' }])).toEqual([[], []]);
   });
 });

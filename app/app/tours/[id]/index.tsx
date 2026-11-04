@@ -10,6 +10,7 @@ import {
   type ImageRequireSource,
   Linking,
   Modal,
+  Platform,
   Pressable,
   Animated as RNAnimated,
   Easing as RNEasing,
@@ -39,7 +40,7 @@ import {
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 import { triggerHaptic } from '@/lib/haptics-preferences';
-import { buildRouteDirectionArrows, buildTourRouteSegments, TOUR_ROUTE_STYLES } from '@/lib/tour-route';
+import { buildRouteDirectionArrows, buildTourRouteSegments, findSharedRouteSections, TOUR_ROUTE_STYLES } from '@/lib/tour-route';
 import { useHikingGroup } from '@/lib/hiking-group';
 import {
   getPreGeneratedMapMarkerFallbackImageSource,
@@ -1326,12 +1327,14 @@ export default function TourDetailScreen() {
     [livePathEntries, draftPoiIds]
   );
   const routeCoordinates = useMemo(() => routeSegments.flatMap((segment) => segment.coordinates), [routeSegments]);
+  const sharedRouteSections = useMemo(() => findSharedRouteSections(routeSegments), [routeSegments]);
   const routeDirections = useMemo(
-    () => routeSegments.map((segment) => ({
+    () => routeSegments.map((segment, segmentIndex) => ({
       color: TOUR_ROUTE_STYLES[segment.mode].color,
-      arrows: buildRouteDirectionArrows(segment.coordinates, routeRegion.latitudeDelta, routeMapHeight),
+      arrows: buildRouteDirectionArrows(segment.coordinates, routeRegion.latitudeDelta, routeMapHeight,
+        sharedRouteSections.filter((section) => section.segmentIndex === segmentIndex)),
     })),
-    [routeSegments, routeRegion.latitudeDelta, routeMapHeight]
+    [routeSegments, sharedRouteSections, routeRegion.latitudeDelta, routeMapHeight]
   );
   const stopCoordinates = useMemo(
     () =>
@@ -2632,9 +2635,14 @@ export default function TourDetailScreen() {
 
         {markerRenderStates.map((state) => (
           <Marker
+            accessibilityState={{ selected: normalizedSelectedMapItemId === state.id.toLowerCase() }}
             anchor={{ x: 0.5, y: 1 }}
             coordinate={state.coordinate}
             image={state.baseImage}
+            {...(Platform.OS === 'web' ? {
+              selected: normalizedSelectedMapItemId === state.id.toLowerCase(),
+            } : {})}
+            accessibilityLabel={`${state.item.markerLabel} • ${state.item.name}`}
             key={state.baseKey}
             onPress={() => focusMapItemOnMap(state.item)}
             tracksViewChanges={false}
@@ -2644,7 +2652,7 @@ export default function TourDetailScreen() {
 
         {markerRenderStates.map((state) => {
           const isSelected = normalizedSelectedMapItemId === state.id.toLowerCase();
-          if (!isSelected) {
+          if (!isSelected || Platform.OS === 'web') {
             return null;
           }
 
@@ -2653,6 +2661,8 @@ export default function TourDetailScreen() {
               anchor={{ x: 0.5, y: 1 }}
               coordinate={state.coordinate}
               key={`${state.overlayKey}:halo`}
+              accessibilityState={{ selected: true }}
+              selectionOverlay
               tracksViewChanges={tracksOverlayViewChanges}
               zIndex={markerHaloZIndex(state.kind)}>
               <View collapsable={false} pointerEvents="none" style={styles.markerOverlayWrap}>
@@ -2668,6 +2678,9 @@ export default function TourDetailScreen() {
           }
 
           const isSelected = normalizedSelectedMapItemId === state.id.toLowerCase();
+          if (Platform.OS === 'web' && isSelected) {
+            return null;
+          }
 
           return (
             <Marker
@@ -2676,6 +2689,8 @@ export default function TourDetailScreen() {
               key={`${state.overlayKey}:badge:${state.routeOrderLabel ?? '--'}`}
               onPress={() => focusMapItemOnMap(state.item)}
               tracksViewChanges={tracksOverlayViewChanges}
+              accessibilityState={{ selected: isSelected }}
+              selectionOverlay
               zIndex={markerBadgeZIndex(state.kind, isSelected)}>
               <View collapsable={false} pointerEvents="none" style={styles.markerOverlayWrap}>
                 <View style={styles.poiInTourMarkerBadge}>
@@ -2794,6 +2809,12 @@ export default function TourDetailScreen() {
               <Text style={styles.routeLegendLabel}>{TOUR_ROUTE_STYLES[mode].label}</Text>
             </View>
           ))}
+          {sharedRouteSections.length > 0 ? (
+            <View style={styles.routeLegendItem}>
+              <Feather name="repeat" color="#4d5b4d" size={16} />
+              <Text style={styles.routeLegendLabel}>Hin- und Rückweg auf gleicher Strecke</Text>
+            </View>
+          ) : null}
         </View>
       ) : null}
 

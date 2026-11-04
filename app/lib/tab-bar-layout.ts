@@ -11,7 +11,7 @@ export function getTabBarBottomMargin(bottomInset: number) {
     return bottomInset + ANDROID_NAVBAR_CLEARANCE;
   }
 
-  return DEFAULT_BOTTOM_MARGIN;
+  return Math.max(DEFAULT_BOTTOM_MARGIN, bottomInset);
 }
 
 export function getFloatingActionBottomOffset(bottomInset: number) {
