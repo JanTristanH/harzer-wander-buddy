@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useServerInfoQuery } from '@/lib/queries';
+import { PreviewDiagnostics } from './preview-diagnostics';
 
 export function TechnicalDetails() {
   const [expanded, setExpanded] = useState(false);
@@ -67,6 +68,7 @@ export function TechnicalDetails() {
               </Text>
             </View>
           ))}
+          <PreviewDiagnostics />
         </View>
       ) : null}
     </View>
