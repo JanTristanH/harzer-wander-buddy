@@ -2,13 +2,18 @@ name: PR Preview
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened, labeled, unlabeled, closed]
   workflow_dispatch:
     inputs:
       pr:
         description: Open PR number (head must be in this repository)
         required: true
         type: string
+      action:
+        description: Deploy a preview or remove every preview service of this PR
+        type: choice
+        default: deploy
+        options: [deploy, remove]
 
 permissions:
   contents: read
@@ -29,7 +34,9 @@ jobs:
     if: >-
       vars.GCP_PREVIEW_PROJECT_ID != '' &&
       (github.event_name == 'workflow_dispatch' ||
-       github.event.pull_request.head.repo.full_name == github.repository)
+       (github.event.pull_request.head.repo.full_name == github.repository &&
+        (github.event.action != 'labeled' && github.event.action != 'unlabeled' ||
+         github.event.label.name == 'preview')))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,28 +45,38 @@ jobs:
       pr: ${{ steps.source.outputs.pr }}
       sha: ${{ steps.source.outputs.sha }}
       service: ${{ steps.source.outputs.service }}
-      closed: ${{ steps.source.outputs.closed }}
+      action: ${{ steps.source.outputs.action }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
       - uses: actions/github-script@v7
         id: source
         env:
           REQUESTED_PR: ${{ github.event.pull_request.number || inputs.pr }}
+          REQUESTED_ACTION: ${{ inputs.action || 'deploy' }}
         with:
           script: |
             const number = process.env.REQUESTED_PR;
             if (!/^[1-9]\d*$/.test(number)) throw new Error('Invalid PR number');
             const { data: pr } = await github.rest.pulls.get({ ...context.repo, pull_number: Number(number) });
             if (pr.head.repo?.full_name !== context.payload.repository.full_name) throw new Error('Fork previews are disabled');
-            if (context.eventName === 'workflow_dispatch' && pr.state !== 'open') throw new Error('Choose an open PR');
+            if (context.eventName === 'workflow_dispatch' && pr.state !== 'open' && process.env.REQUESTED_ACTION !== 'remove') throw new Error('Choose an open PR');
+            const { previewAction } = require('./scripts/pr-preview-policy.cjs');
+            const action = previewAction({ pr, eventName: context.eventName,
+              action: context.payload.action, label: context.payload.label?.name,
+              requestedAction: process.env.REQUESTED_ACTION });
+            core.setOutput('action', action);
+            core.notice(`Preview action: ${action}. Automatic deploys require the preview label.`);
             // Fetch the current head instead of building a superseded event SHA.
             core.setOutput('pr', number);
             core.setOutput('sha', pr.head.sha);
             core.setOutput('service', `hwb-pr-${number}-${pr.head.sha.slice(0, 12)}`);
-            core.setOutput('closed', pr.state === 'closed' ? 'true' : 'false');
 
   deploy:
     needs: source
-    if: needs.source.outputs.closed == 'false'
+    if: needs.source.outputs.action == 'deploy'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     environment:
@@ -123,25 +140,27 @@ jobs:
           gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
             --image "$IMAGE" --service-account "$RUNTIME_SERVICE_ACCOUNT" \
             --port 8080 --memory 1Gi --cpu 1 --concurrency 20 \
-            --min-instances 0 --max-instances 1 --timeout 300 \
+            --scaling 0 --min 0 --max 1 --min-instances 0 --max-instances 1 \
+            --cpu-throttling --no-cpu-boost --no-deploy-health-check --timeout 300 \
             --allow-unauthenticated --ingress all \
             --labels "managed-by=hwb-pr-preview,pr=$PREVIEW_PR" --quiet
           url=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
           echo "url=$url" >> "$GITHUB_OUTPUT"
-          PREVIEW_URL="$url" node scripts/smoke-pr-preview.cjs
           {
             echo "## PR #$PREVIEW_PR preview"
             echo "- Web: $url/app/rnweb"
             echo "- API: $url/odata/v4/api"
             echo "- Commit: $PREVIEW_SHA"
             echo "- Image: $IMAGE"
-            echo '- APK: artifact in the Android job of this run.'
+            echo '- Disabled until the Android APK has built successfully.'
           } >> "$GITHUB_STEP_SUMMARY"
 
   android:
     needs: [source, deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    outputs:
+      apk_url: ${{ steps.apk.outputs.artifact-url }}
     environment:
       name: pr-preview
       url: ${{ needs.deploy.outputs.url }}/app/rnweb
@@ -197,9 +216,86 @@ jobs:
         run: |
           echo "APK + backend manifest (GitHub login required): $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
 
+  activate:
+    needs: [source, deploy, android]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: pr-preview
+      url: ${{ needs.deploy.outputs.url }}/app/rnweb
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SERVICE: ${{ needs.source.outputs.service }}
+      PREVIEW_PR: ${{ needs.source.outputs.pr }}
+      PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+      PREVIEW_URL: ${{ needs.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Enable request-based autoscaling from zero to one instance
+        id: enable
+        run: |
+          gcloud run services update "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --scaling auto --min 0 --max 1 --quiet
+      - name: Check live web app, commit and SQLite login
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if node scripts/smoke-pr-preview.cjs; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Disable service again if the live check fails
+        if: failure() && steps.enable.outcome == 'success'
+        run: |
+          gcloud run services update "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --scaling 0 --quiet
+
+  report:
+    needs: [source, deploy, android, activate, cleanup]
+    if: >-
+      always() && (needs.deploy.result == 'success' || needs.cleanup.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Update preview section in PR description
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_PR: ${{ needs.source.outputs.pr }}
+          PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+          PREVIEW_URL: ${{ needs.deploy.outputs.url }}
+          APK_URL: ${{ needs.android.outputs.apk_url }}
+          ACTIVE: ${{ needs.activate.result == 'success' }}
+          REMOVED: ${{ needs.cleanup.result == 'success' }}
+        with:
+          script: |
+            const { previewSection, publish } = require('./scripts/pr-preview-policy.cjs');
+            const removed = process.env.REMOVED === 'true';
+            const sha = process.env.PREVIEW_SHA;
+            const section = previewSection({ sha, url: process.env.PREVIEW_URL,
+              apkUrl: process.env.APK_URL, active: process.env.ACTIVE === 'true', removed,
+              runUrl: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}` });
+            await publish({ github, ...context.repo, number: Number(process.env.PREVIEW_PR),
+              sha, section, removed, manual: context.eventName === 'workflow_dispatch' });
+
   cleanup:
     needs: source
-    if: needs.source.outputs.closed == 'true'
+    if: needs.source.outputs.action == 'remove'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: pr-preview
