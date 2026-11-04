@@ -16,6 +16,7 @@ import { appConfig, getAuth0ClientIdForPlatform, getMissingConfig } from '@/lib/
 import { useConnectivity } from '@/lib/connectivity';
 import { clearPersistedQueryCache } from '@/lib/query-persistence';
 import { queryClient } from '@/lib/query-client';
+import { isStaticWebsite, openLiveAppLogin } from '@/lib/static-website';
 
 if (typeof WebBrowser.maybeCompleteAuthSession === 'function') {
   WebBrowser.maybeCompleteAuthSession();
@@ -545,9 +546,26 @@ function isNetworkRefreshError(error: unknown) {
 }
 
 export function AuthProvider({ children }: React.PropsWithChildren) {
+  if (isStaticWebsite) return <StaticWebsiteAuthProvider>{children}</StaticWebsiteAuthProvider>;
   return appConfig.authMode === 'basic'
     ? <BasicAuthProvider>{children}</BasicAuthProvider>
     : <SsoAuthProvider>{children}</SsoAuthProvider>;
+}
+
+function StaticWebsiteAuthProvider({ children }: React.PropsWithChildren) {
+  const login = async () => { openLiveAppLogin(); };
+  const noop = async () => {};
+  const value: AuthContextValue = {
+    accessToken: null, idToken: null, refreshToken: null, issuedAt: null, expiresIn: null,
+    sessionMode: 'online', isOffline: false, canPerformWrites: false,
+    currentUserProfile: null, hasCompletedOnboarding: true,
+    isAuthenticated: false, isLoading: false, authError: null, configError: null,
+    login, signup: login, completeWebRedirectAuth: async () => false,
+    getValidAccessToken: async () => null, completeOnboarding: noop,
+    logout: noop, logoutEverywhere: noop, resetApp: noop,
+    preloadCurrentUserProfile: async () => null, setCurrentUserProfile: () => {},
+  };
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 function BasicAuthProvider({ children }: React.PropsWithChildren) {

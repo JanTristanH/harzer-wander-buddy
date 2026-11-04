@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import { FriendAvatar } from '@/components/friends-list';
-import { Fonts } from '@/constants/theme';
+import { AppColors, Fonts } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { useHikingGroup } from '@/lib/hiking-group';
 
@@ -55,7 +55,7 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
         onPress={() => setIsVisible(true)}
         style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}
         testID={testID}>
-        <Feather color="#2E6B4B" name="users" size={16} />
+        <Feather color={AppColors.primary} name="users" size={16} />
         <Text style={styles.triggerLabel}>Gruppe</Text>
         {selectionCount > 0 ? (
           <View style={styles.countBadge}>
@@ -92,13 +92,13 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
                 onPress={closeSelector}
                 style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
                 testID="group-selector-close">
-                <Feather color="#1E2A1E" name="x" size={17} />
+                <Feather color={AppColors.text} name="x" size={17} />
               </Pressable>
             </View>
 
             {isLoading ? (
               <View style={styles.statusWrap} testID="group-selector-loading">
-                <ActivityIndicator color="#2E6B4B" size="small" />
+                <ActivityIndicator color={AppColors.primary} size="small" />
                 <Text style={styles.statusText}>Freunde werden geladen …</Text>
               </View>
             ) : members.length === 0 ? (
@@ -145,7 +145,7 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
                           isSelected && styles.checkboxSelected,
                         ]}>
                         {isSelected ? (
-                          <Feather color="#FFFFFF" name="check" size={15} />
+                          <Feather color={AppColors.surface} name="check" size={15} />
                         ) : null}
                       </View>
                     </Pressable>
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   triggerLabel: {
-    color: '#2E3A2E',
+    color: AppColors.textSecondary,
     fontFamily: Fonts.sans,
     fontSize: 13,
     fontWeight: '700',
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   },
   countBadge: {
     alignItems: 'center',
-    backgroundColor: '#2E6B4B',
+    backgroundColor: AppColors.primary,
     borderRadius: 999,
     justifyContent: 'center',
     minHeight: 20,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   countBadgeLabel: {
-    color: '#FFFFFF',
+    color: AppColors.surface,
     fontFamily: Fonts.sans,
     fontSize: 11,
     fontWeight: '800',
@@ -238,13 +238,13 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: AppColors.surface,
     borderRadius: 22,
     maxHeight: '82%',
     maxWidth: 520,
     paddingHorizontal: 18,
     paddingVertical: 18,
-    shadowColor: '#141E14',
+    shadowColor: AppColors.shadow,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.2,
     shadowRadius: 28,
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   modalTitle: {
-    color: '#1E2A1E',
+    color: AppColors.text,
     fontFamily: Fonts.serif,
     fontSize: 21,
     lineHeight: 26,
@@ -329,14 +329,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   memberName: {
-    color: '#1E2A1E',
+    color: AppColors.text,
     fontFamily: Fonts.sans,
     fontSize: 15,
     fontWeight: '700',
     lineHeight: 20,
   },
   memberMeta: {
-    color: '#6B7A6B',
+    color: AppColors.textMuted,
     fontFamily: Fonts.sans,
     fontSize: 12,
     lineHeight: 16,
@@ -352,8 +352,8 @@ const styles = StyleSheet.create({
     width: 24,
   },
   checkboxSelected: {
-    backgroundColor: '#2E6B4B',
-    borderColor: '#2E6B4B',
+    backgroundColor: AppColors.primary,
+    borderColor: AppColors.primary,
   },
   actions: {
     flexDirection: 'row',
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   secondaryButtonLabel: {
-    color: '#2E6B4B',
+    color: AppColors.primary,
     fontFamily: Fonts.sans,
     fontSize: 13,
     fontWeight: '700',
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     alignItems: 'center',
-    backgroundColor: '#2E6B4B',
+    backgroundColor: AppColors.primary,
     borderRadius: 999,
     justifyContent: 'center',
     minHeight: 42,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   primaryButtonLabel: {
-    color: '#F5F3EE',
+    color: AppColors.background,
     fontFamily: Fonts.sans,
     fontSize: 13,
     fontWeight: '800',

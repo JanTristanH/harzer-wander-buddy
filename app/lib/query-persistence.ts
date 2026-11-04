@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
+import { isStaticWebsite } from '@/lib/static-website';
 
 const QUERY_PERSISTENCE_STORAGE_KEY = 'hwb-react-query-cache-v1';
 const QUERY_PERSISTENCE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -13,7 +14,9 @@ export const queryPersister = createAsyncStoragePersister({
 export const queryPersistOptions = {
   persister: queryPersister,
   maxAge: QUERY_PERSISTENCE_MAX_AGE_MS,
-  buster: 'v2-offline-core-sync',
+  buster: isStaticWebsite
+    ? `static-${process.env.EXPO_PUBLIC_STATIC_REVISION || 'preview'}`
+    : 'v2-offline-core-sync',
 };
 
 export async function clearPersistedQueryCache() {
