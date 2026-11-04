@@ -100,6 +100,17 @@ describe('Expo backend configuration', () => {
     expect(() => resolveBackendUrlForPlatform('same-origin', 'ios')).toThrow(/explicit backend URL/);
   });
 
+  it('exposes preview build identity and key presence without copying the Maps key into extra', () => {
+    const env = { HWB_PREVIEW_PR: '110', HWB_PREVIEW_SHA: 'abc123', EXPO_PUBLIC_AUTH_MODE: 'basic' };
+    expect(createExpoConfig(env).extra?.preview).toEqual({ pr: '110', sha: 'abc123', mapsConfigured: false });
+    expect(createExpoConfig({ ...env, EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: '  ' }).extra?.preview.mapsConfigured).toBe(false);
+    const configured = createExpoConfig({ ...env, EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: 'test-only-maps-key' });
+    expect(configured.extra?.preview.mapsConfigured).toBe(true);
+    expect(configured.android?.config?.googleMaps?.apiKey).toBe('test-only-maps-key');
+    expect(JSON.stringify(configured.extra)).not.toContain('test-only-maps-key');
+    expect(createExpoConfig({}).extra?.preview).toBeUndefined();
+  });
+
   it('maps localhost to the Android emulator while preserving other platforms', () => {
     expect(resolveBackendUrlForPlatform(LOCAL_BACKEND_URL, 'android')).toBe(
       'http://10.0.2.2:4004'

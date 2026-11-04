@@ -37,7 +37,7 @@ export function createExpoConfig(
   env: BuildEnvironment = process.env,
   baseConfig: ExpoConfig = config
 ): ExpoConfig {
-  const androidGoogleMapsApiKey = env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const androidGoogleMapsApiKey = env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
   const isAndroidEasBuild = env.EAS_BUILD_PLATFORM === 'android';
   const previewPr = env.HWB_PREVIEW_PR;
   if (previewPr && !/^[1-9]\d*$/.test(previewPr)) {
@@ -87,6 +87,15 @@ export function createExpoConfig(
     extra: {
       ...(baseConfig.extra ?? {}),
       backendUrl: resolveBackendUrl(env.EXPO_PUBLIC_BACKEND_URL),
+      ...(previewPr ? {
+        preview: {
+          pr: previewPr,
+          sha: env.HWB_PREVIEW_SHA || '',
+          // android.config is stripped from Expo's public manifest. Expose only
+          // this boolean so JS can avoid mounting Maps without a native key.
+          mapsConfigured: !!(androidGoogleMapsApiKey || baseConfig.android?.config?.googleMaps?.apiKey?.trim()),
+        },
+      } : {}),
     },
   };
 }

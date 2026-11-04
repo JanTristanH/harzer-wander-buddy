@@ -223,6 +223,11 @@ Ohne Key baut die APK trotzdem, die vorhandene Karten-Fehlermeldung bleibt sicht
 Ein in einer APK eingebetteter Maps-Key ist auslesbar; seine API-/App-Beschränkung
 ist daher entscheidend.
 
+Analyse eines sofortigen Android-Kartenabsturzes, Key-Einrichtung und das lokale
+Protokoll unter **Profil → Technische Details → Preview-Protokoll**:
+[Preview-Diagnose](preview-diagnostics.md). JavaScript-Logs und native
+Crash-Berichte sind unterschiedliche Dinge; die Grenzen sind dort dokumentiert.
+
 ## 4. Demo mit `codex/abzeichenalbum` / PR #65
 
 1. Den eigenständigen Preview-PR aus `codex/pr-preview-deployments` nach
