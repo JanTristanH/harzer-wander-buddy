@@ -5,7 +5,7 @@ import {
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { ErrorBoundary as RouterErrorBoundary, type ErrorBoundaryProps, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus, Platform } from 'react-native';
@@ -15,6 +15,7 @@ import 'react-native-reanimated';
 import { NativeOfflineVisitsProvider } from '@/lib/native-offline-visits';
 import { OfflineVisitStatus } from '@/components/offline-visit-status';
 import { OfflineBanner } from '@/components/offline-banner';
+import { PreviewDiagnosticsBridge } from '@/components/preview-diagnostics-bridge';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth, useIdTokenClaims } from '@/lib/auth';
 import { ConnectivityProvider, configureQueryOnlineManager, useConnectivity } from '@/lib/connectivity';
@@ -22,6 +23,14 @@ import { runCoreOfflineSync } from '@/lib/core-offline-sync';
 import { HikingGroupProvider } from '@/lib/hiking-group';
 import { queryPersistOptions } from '@/lib/query-persistence';
 import { queryClient } from '@/lib/query-client';
+import { recordPreviewEvent } from '@/lib/preview-diagnostics';
+
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  useEffect(() => {
+    void recordPreviewEvent('react.render_error', props.error.stack || props.error.message, 'error');
+  }, [props.error]);
+  return <RouterErrorBoundary {...props} />;
+}
 
 const WEB_DOCUMENT_STYLE_TAG_ID = 'hwb-web-document-behavior';
 const WEB_DOCUMENT_CSS = `
@@ -178,6 +187,7 @@ export default function RootLayout() {
                     <StatusBar style="dark" />
                   </ThemeProvider>
                   <WebDocumentBehavior />
+                  <PreviewDiagnosticsBridge />
                   <QueryFocusBridge />
                   <CoreOfflineSyncBridge />
                   <OnboardingRouteSync />

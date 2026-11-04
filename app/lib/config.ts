@@ -24,6 +24,10 @@ function readConfig(key: keyof ExtraConfig, envValue?: string) {
 }
 
 export function resolveBackendUrlForPlatform(url: string, platform = Platform.OS) {
+  if (url === 'same-origin') {
+    if (platform !== 'web') throw new Error('Native builds require an explicit backend URL.');
+    return typeof window !== 'undefined' ? window.location.origin : '';
+  }
   if (platform !== 'android') {
     return url;
   }
