@@ -260,10 +260,20 @@ einrichten; ein Budget ist kein hartes Ausgabenlimit. Je offenem PR-Commit bleib
 ein Dienst bestehen, bis der PR geschlossen wird.
 
 `cleanup` entfernt alle mit `managed-by=hwb-pr-preview,pr=<Nummer>` markierten
-Cloud-Run-Dienste. Images werden absichtlich aufbewahrt, damit laufende ältere
-APKs weiter kalt starten können. Nach PR-Schließung die betreffenden Images in
-**Artifact Registry → hwb-previews → pr-65** samt Versionen löschen. Keine pauschale
-Alters-Löschregel aktivieren, solange offene Previews diese Digests noch benötigen.
+Cloud-Run-Dienste. Images bleiben aktuell in Artifact Registry liegen und können
+Speichergebühren verursachen, auch wenn der Dienst gelöscht oder deaktiviert ist.
+Nach PR-Schließung die betreffenden Images in **Artifact Registry → hwb-previews
+→ pr-65** samt Versionen löschen. Auch Images fehlgeschlagener Deployments bleiben
+dort erhalten, wenn der Image-Push bereits erfolgreich war.
+
+Alternativ lässt sich im dedizierten Repository `hwb-previews` eine automatische
+Cleanup-Policy einrichten, etwa für Images älter als 14 Tage. Cloud Run importiert
+das Image beim Deployment: Das Löschen des ursprünglichen Registry-Images beendet
+einen bereits deployten Dienst nicht und verhindert auch dessen Kaltstart nicht.
+Ein späteres neues Deployment desselben gelöschten Digests erfordert jedoch einen
+erneuten Image-Build/Push. Der Workflow richtet derzeit keine Image-Löschregel ein.
+Siehe [Cloud Run: Image-Import](https://docs.cloud.google.com/run/docs/deploying)
+und [Artifact Registry: Cleanup-Policies](https://docs.cloud.google.com/artifact-registry/docs/repositories/cleanup-policy).
 APK-Artefakte laufen unabhängig davon nach 14 Tagen ab.
 
 Falls ein Cleanup-Run ausfällt oder die Workflow-Datei noch nicht im Default-Branch
