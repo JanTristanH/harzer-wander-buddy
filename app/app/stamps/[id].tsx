@@ -2343,7 +2343,7 @@ function StampDetailContent() {
               <Text style={styles.secondaryButtonLabel}>Auf Karte anzeigen</Text>
             </Pressable>
           </View>
-          {!isGuest ? (
+          {!isGuest && selectedFriendIds.length > 0 ? (
             <Pressable
               accessibilityRole="button"
               disabled={!accessToken || !canPerformWrites}
