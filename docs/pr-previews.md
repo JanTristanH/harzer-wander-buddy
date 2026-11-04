@@ -9,7 +9,7 @@ aus `codex/abzeichenalbum` nach `develop`.
 
 ## Ergebnis und Verhalten
 
-- Dienst: `hwb-pr-65-<12 Zeichen Commit-SHA>`; automatische HTTPS-URL von Cloud Run.
+- Dienst: fest `hwb-pr-65`; eine stabile HTTPS-URL pro PR von Cloud Run.
 - Web: `<Cloud-Run-URL>/app/rnweb`; API: `<Cloud-Run-URL>/odata/v4/api`.
 - Live-URL, APK-Download und Workflow-Link stehen nach dem Build direkt in einem
   automatisch aktualisierten Abschnitt der PR-Beschreibung. Der übrige Text bleibt
@@ -31,7 +31,7 @@ aus `codex/abzeichenalbum` nach `develop`.
   die großen CSV-Dateien unter dem 1-GiB-Limit erneut zu importieren. Die Quelldateien
   bleiben unverändert. Keine lokale `db.sqlite` oder Produktions-DB-Anbindung wird
   übernommen. Daten gehen beim Neustart
-  verloren. Maximal eine Instanz pro Commit, Skalierung auf null im Leerlauf.
+  verloren. Ein Cloud-Run-Dienst pro PR mit maximal einer Instanz, Skalierung auf null im Leerlauf.
 - Vor dem Cloud-Deployment prüft `check-pr-preview-container.sh` den gebauten
   Container unter 1 GiB RAM und 1 CPU einschließlich Web-Route, Login und SQLite.
   Der Image-Build erlaubt dem einmaligen CSV-Import 2 GiB Node-Heap; diese höhere
@@ -41,10 +41,20 @@ aus `codex/abzeichenalbum` nach `develop`.
   mit `min=0, max=1` und prüft die Live-App. Bei APK-Fehlern bleibt der neue Dienst
   deaktiviert. Request-basierte Abrechnung (`--cpu-throttling`) und deaktivierter
   CPU-Boost halten die Kosten niedrig; es wird keine Instanz dauerhaft vorgehalten.
-- Neue Commits erhalten eigene Dienste: ältere APKs behalten ihr passendes Backend.
-  Die Preview ist daher kein Ort für dauerhafte Daten. Alle Dienste eines PRs
-  werden beim Schließen/Mergen gelöscht; anschließend funktionieren dessen APKs
-  nicht mehr. Container-Images bleiben im Registry-Speicher (siehe Aufräumen).
+- Neue Commits ersetzen das Backend im selben Dienst und unter derselben URL.
+  Ältere APKs dieses PRs verwenden deshalb ebenfalls das neueste Backend; ihre
+  ursprüngliche Commit-/Image-Zuordnung im Manifest ist keine dauerhafte Bindung
+  an eine unveränderte Serverversion. Zum Testen die aktuelle APK verwenden.
+  Die Preview ist kein Ort für dauerhafte Daten. Beim Schließen/Mergen oder
+  Entfernen des Labels wird der Dienst gelöscht. Container-Images bleiben im
+  Registry-Speicher (siehe Aufräumen).
+- Migration: Vor dem Deployment entfernt der Workflow alle alten, durch ihn
+  verwalteten Dienste dieses PRs mit Commit-Suffix. Ein bereits vorhandener
+  stabiler Dienst bleibt bestehen und wird aktualisiert. Nach dem Deployment
+  prüft der Workflow, dass genau ein verwalteter Dienst für den PR vorhanden ist.
+  Alte APKs mit Commit-URLs benötigen einmalig eine neue APK mit der stabilen URL.
+  Während Deployment und APK-Build bleibt der stabile Dienst deaktiviert; nach
+  erfolgreichem Build wird er wieder aktiviert.
 - Fork-PRs werden übersprungen. Es wird `pull_request`, niemals
   `pull_request_target` zum Ausführen von PR-Code verwendet.
 
@@ -79,7 +89,7 @@ deaktivierter Cloud-Run-Dienst verwendet **manuelle Skalierung 0**, nicht
 `--max-instances=0`. Nach Aktivierung fährt `min=0, max=1` bei Bedarf von null
 hoch und im Leerlauf wieder herunter. Startup, Anfragen, Builds, Artefakte und
 Registry-Speicher können weiterhin Kosten verursachen. Das Maximum gilt je
-Commit-Dienst; mehrere parallel aufgerufene Commit-Previews haben eigene Limits.
+PR-Dienst; mehrere gleichzeitig getestete PRs haben eigene Limits.
 Siehe [Cloud Run: manuelle Skalierung](https://docs.cloud.google.com/run/docs/configuring/services/manual-scaling).
 
 ## Geführte Einrichtung auf deinem Rechner
@@ -244,8 +254,9 @@ Crash-Berichte sind unterschiedliche Dinge; die Grenzen sind dort dokumentiert.
 5. Web und APK mit dem Testkonto aus `AGENTS.md` anmelden; Profil/Album prüfen.
    Die Deployment-Prüfung prüft bereits Commit-Metadaten, Web-Route, Ablehnung
    anonymer API-Aufrufe, Testlogin und lesbare SQLite-Testdaten.
-6. Einen weiteren Commit pushen: neue URL und neue APK, beide gleicher Commit.
-   Beim Schließen/Mergen von #65 müssen dessen Dienste verschwinden.
+6. Einen weiteren Commit pushen: gleiche URL, neue Backend-Revision und neue APK.
+   Es darf nur `hwb-pr-65` als verwalteter Dienst dieses PRs vorhanden sein. Beim
+   Schließen/Mergen von #65 oder Entfernen des Labels muss der Dienst verschwinden.
 
 Nach Übernahme der Workflow-Datei in den Default-Branch steht zusätzlich der
 manuelle Start zur Verfügung. Den Branch wählen, der die Preview-Implementierung
@@ -268,8 +279,8 @@ Google-Trigger für Produktions-Builds von `main` bleibt zuständig für Produkt
 Cloud Run skaliert im Leerlauf auf null, ist aber nicht garantiert kostenlos.
 Build-Minuten in GitHub Actions, Cloud-Run-Anfragen/Startzeiten und Registry-Speicher
 können Kosten verursachen. Im Preview-Projekt ein Budget mit Benachrichtigung
-einrichten; ein Budget ist kein hartes Ausgabenlimit. Je offenem PR-Commit bleibt
-ein Dienst bestehen, bis der PR geschlossen wird.
+einrichten; ein Budget ist kein hartes Ausgabenlimit. Je aktivem PR bleibt genau
+ein Dienst bestehen, bis das Label entfernt oder der PR geschlossen wird.
 
 `cleanup` entfernt alle mit `managed-by=hwb-pr-preview,pr=<Nummer>` markierten
 Cloud-Run-Dienste. Images bleiben aktuell in Artifact Registry liegen und können

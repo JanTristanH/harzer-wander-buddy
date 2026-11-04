@@ -63,7 +63,7 @@ jobs:
             const { data: pr } = await github.rest.pulls.get({ ...context.repo, pull_number: Number(number) });
             if (pr.head.repo?.full_name !== context.payload.repository.full_name) throw new Error('Fork previews are disabled');
             if (context.eventName === 'workflow_dispatch' && pr.state !== 'open' && process.env.REQUESTED_ACTION !== 'remove') throw new Error('Choose an open PR');
-            const { previewAction } = require('./scripts/pr-preview-policy.cjs');
+            const { previewAction, previewServiceName } = require('./scripts/pr-preview-policy.cjs');
             const action = previewAction({ pr, eventName: context.eventName,
               action: context.payload.action, label: context.payload.label?.name,
               requestedAction: process.env.REQUESTED_ACTION });
@@ -72,7 +72,7 @@ jobs:
             // Fetch the current head instead of building a superseded event SHA.
             core.setOutput('pr', number);
             core.setOutput('sha', pr.head.sha);
-            core.setOutput('service', `hwb-pr-${number}-${pr.head.sha.slice(0, 12)}`);
+            core.setOutput('service', previewServiceName(number));
 
   deploy:
     needs: source
@@ -116,6 +116,8 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v3
+      - name: Remove legacy commit services and retain only the stable PR service
+        run: node scripts/manage-pr-preview-services.cjs migrate
       - run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
       - id: image
         run: echo "name=$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/pr-$PREVIEW_PR" >> "$GITHUB_OUTPUT"
@@ -148,6 +150,7 @@ jobs:
             --cpu-throttling --no-cpu-boost --no-deploy-health-check --timeout 300 \
             --allow-unauthenticated --ingress all \
             --labels "managed-by=hwb-pr-preview,pr=$PREVIEW_PR" --quiet
+          node scripts/manage-pr-preview-services.cjs verify
           url=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
           echo "url=$url" >> "$GITHUB_OUTPUT"
           {
@@ -310,17 +313,14 @@ jobs:
     env:
       PREVIEW_PR: ${{ needs.source.outputs.pr }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
       - uses: google-github-actions/auth@v3
         with:
           workload_identity_provider: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v3
-      - name: Delete every Cloud Run service for this PR
-        run: |
-          set -euo pipefail
-          services=$(gcloud run services list --project "$PROJECT_ID" --region "$REGION" \
-            --filter="metadata.labels.managed-by=hwb-pr-preview AND metadata.labels.pr=$PREVIEW_PR" \
-            --format='value(metadata.name)')
-          while IFS= read -r service; do
-            [ -z "$service" ] || gcloud run services delete "$service" --project "$PROJECT_ID" --region "$REGION" --quiet
-          done <<< "$services"
+      - name: Delete stable and legacy Cloud Run services for this PR
+        run: node scripts/manage-pr-preview-services.cjs remove
