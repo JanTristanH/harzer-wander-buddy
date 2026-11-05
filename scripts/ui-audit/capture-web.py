@@ -31,6 +31,14 @@ async def main():
                 print(name, re.sub(r'https?://\S+', '<url>', str(error))[:900],flush=True)
                 close=page.get_by_role('button',name='Gruppenauswahl schließen').last
                 if await close.count(): await close.click()
+        async def dialog_keyboard(name):
+            dialog=page.get_by_role('dialog',name=name,exact=True)
+            await dialog.wait_for()
+            for key in ['Tab']*12 + ['Shift+Tab']*12:
+                await page.keyboard.press(key)
+                assert await dialog.evaluate('(el) => el.contains(document.activeElement)')
+            checks.append({'flow':f'{name}: focus remains in dialog through 24 Tab steps','passed':True})
+
         async def open_page(path):
             await page.goto(BASE + path, wait_until='networkidle', timeout=90000)
             await page.wait_for_timeout(1000)
@@ -66,6 +74,7 @@ async def main():
             await page.get_by_role('button',name='Kartenfilter öffnen').click()
             await page.wait_for_timeout(600)
             await shot('map-filter')
+            await dialog_keyboard('Kartenfilter')
             switch=page.get_by_role('switch',name='Parkplätze anzeigen')
             await switch.click()
             assert await switch.get_attribute('aria-checked') == 'false'
@@ -113,6 +122,7 @@ async def main():
                 await page.get_by_test_id('stamps-header-group-selector').click()
                 await page.wait_for_timeout(600)
                 await shot('group-open')
+                await dialog_keyboard('Wandergruppe auswählen')
                 member=page.get_by_test_id('group-selector-friend-ui-audit-nora')
                 await member.focus()
                 await page.keyboard.press('Space')
@@ -157,6 +167,8 @@ async def main():
             await page.get_by_role('textbox',name='Dein Name').fill('Wanderbuddy Review')
             await page.get_by_text('Speichern',exact=True).click()
             await page.get_by_text('Wanderbuddy Review',exact=True).wait_for(timeout=15000)
+            visited=await page.get_by_text('Besucht',exact=True).first.locator('..').inner_text()
+            assert visited.strip().endswith('1')
             await shot('profile-saved')
             checks.append({'flow':'edit and save local profile name','passed':True})
             await page.goto(BASE + '/friends')
@@ -169,6 +181,7 @@ async def main():
             checks.append({'flow':'accept fictional local buddy request','passed':True})
             await page.get_by_role('button',name='Freunde suchen',exact=True).click()
             await page.get_by_role('textbox').fill('UI-Test Ida')
+            await dialog_keyboard('Freunde finden')
             await page.wait_for_timeout(2000)
             await shot('friends-search')
             await page.get_by_role('button',name='Suche schließen',exact=True).click()
@@ -190,6 +203,11 @@ async def main():
             await shot('tour-point-selected')
             await page.get_by_text('Zur Tour hinzufügen',exact=True).last.click()
             await page.wait_for_timeout(1500)
+            await page.keyboard.press('Escape')
+            await page.wait_for_timeout(700)
+            sequence=page.get_by_text('Aktuelle Reihenfolge',exact=True).locator('..')
+            await sequence.scroll_into_view_if_needed()
+            assert 'Brocken' in await sequence.inner_text()
             await shot('tour-point-added')
             checks.append({'flow':'find and add first local tour point','passed':True})
 

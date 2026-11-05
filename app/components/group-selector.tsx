@@ -66,7 +66,7 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
         ) : null}
       </Pressable>
 
-      <Modal
+      <Modal accessibilityLabel="Wandergruppe auswählen"
         animationType="fade"
         onRequestClose={closeSelector}
         transparent

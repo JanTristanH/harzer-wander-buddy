@@ -595,7 +595,7 @@ export default function FriendsScreen() {
         </View>
       ) : null}
 
-        <Modal
+        <Modal accessibilityLabel="Freunde finden"
           animationType="fade"
           onShow={handleSearchModalShow}
           transparent

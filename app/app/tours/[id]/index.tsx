@@ -68,10 +68,10 @@ const HARZ_REGION: Region = {
 };
 
 const MAP_EDGE_PADDING = {
-  top: 70,
+  top: 168,
   right: 70,
-  bottom: 70,
-  left: 70,
+  bottom: 64,
+  left: 48,
 };
 
 const MIN_ZOOM_DELTA = 0.008;
@@ -1013,6 +1013,8 @@ export default function TourDetailScreen() {
   const latestDraftPoiIdsRef = useRef<string[]>([]);
   const poiAutosaveDebounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didFitEmptyEditorRef = useRef(false);
+  useEffect(() => { didFitEmptyEditorRef.current = false; }, [tourId]);
   const isAutoSaveRunningRef = useRef(false);
   const wasEditModeRef = useRef(false);
   const renameDebounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1811,9 +1813,9 @@ export default function TourDetailScreen() {
   }, [accessToken, isOffline, isSearchFocused, logout, mapCenter, normalizedSearchQuery, poiSearchQuery]);
 
   useEffect(() => {
-    if (!isMapReady || isEditMode) {
-      return;
-    }
+    if (!isMapReady) return;
+    // Fit an empty editor once; later point changes preserve the user's map position.
+    if (isEditMode && (draftPoiIds.length > 0 || didFitEmptyEditorRef.current)) return;
 
     const coordinatesToFit =
       routeCoordinates.length > 0 || stopCoordinates.length > 0
@@ -1840,11 +1842,12 @@ export default function TourDetailScreen() {
       return;
     }
 
+    if (isEditMode) didFitEmptyEditorRef.current = true;
     mapRef.current.fitToCoordinates(coordinatesToFit, {
       edgePadding: MAP_EDGE_PADDING,
       animated: true,
     });
-  }, [allMapItems, isEditMode, isMapReady, routeCoordinates, stopCoordinates]);
+  }, [allMapItems, draftPoiIds.length, isEditMode, isMapReady, routeCoordinates, stopCoordinates]);
 
   const handleZoomBy = useCallback((factor: number) => {
     const map = mapRef.current;
@@ -2597,7 +2600,7 @@ export default function TourDetailScreen() {
   const renderTourMap = (isFullscreen: boolean) => (
     <View
       onLayout={(event) => setRouteMapHeight(event.nativeEvent.layout.height)}
-      style={[styles.mapCard, isFullscreen && styles.mapCardFullscreen]}>
+      style={[styles.mapCard, isEditMode && draftPoiIds.length === 0 && styles.emptyMapCard, isFullscreen && styles.mapCardFullscreen]}>
       <MapView
         attributionPlacement="bottom-right"
         ref={mapRef}
@@ -3426,6 +3429,7 @@ export default function TourDetailScreen() {
 
       <Modal
         animationType="none"
+        accessibilityLabel="Tourkarte"
         visible={isMapFullscreen}
         onRequestClose={closeMapFullscreen}>
         <View style={styles.mapFullscreenSafeArea}>
@@ -3807,6 +3811,7 @@ const styles = StyleSheet.create({
   },
   routeLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   routeLegendLabel: { color: '#263526', fontSize: 12, fontWeight: '600' },
+  emptyMapCard: { height: 460 },
   mapCard: {
     height: 390,
     borderRadius: 22,

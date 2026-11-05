@@ -135,7 +135,7 @@ const MIN_ZOOM_DELTA = 0.0018;
 const MAX_ZOOM_DELTA = 1.2;
 const CAMERA_MIN_ZOOM = 2;
 const CAMERA_MAX_ZOOM = 19;
-const MAP_EDGE_PADDING = { top: 196, right: 80, bottom: 160, left: 48 };
+const MAP_EDGE_PADDING = { top: 180, right: 80, bottom: 128, left: 48 };
 const MAP_TOP_CONTROLS_TOP = 12;
 const MAP_TOP_CONTROLS_HEIGHT = 90;
 const MAP_TOP_CONTROLS_CLEARANCE = 12;
@@ -2452,7 +2452,7 @@ export default function MapScreen() {
         />
       ) : null}
 
-      <Modal animationType="fade" onRequestClose={() => setIsFilterOpen(false)} transparent visible={isFilterOpen}>
+      <Modal accessibilityLabel="Kartenfilter" animationType="fade" onRequestClose={() => setIsFilterOpen(false)} transparent visible={isFilterOpen}>
         <View style={styles.modalBackdrop}>
           <Pressable onPress={() => setIsFilterOpen(false)} style={StyleSheet.absoluteFill} />
           <View style={[styles.filterPopover, { top: topOverlayContentOffset, width: filterPopoverWidth }]}>

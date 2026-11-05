@@ -1,3 +1,4 @@
+import { fitMapBounds } from '@/lib/fit-map-bounds';
 import { Design } from '@/constants/theme';
 import type { LeafletEventHandlerFnMap, Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
@@ -827,7 +828,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
         const bounds = L.latLngBounds(coordinates.map((coordinate) => coordinateToTuple(coordinate)));
         const edgePadding = options?.edgePadding ?? {};
 
-        map.fitBounds(bounds, {
+        fitMapBounds(map, bounds, {
           animate: options?.animated ?? true,
           paddingBottomRight: [edgePadding.right ?? 0, edgePadding.bottom ?? 0],
           paddingTopLeft: [edgePadding.left ?? 0, edgePadding.top ?? 0],

@@ -758,7 +758,7 @@ export default function OnboardingScreen() {
           </View>
         </KeyboardAvoidingView>
 
-        <Modal
+        <Modal accessibilityLabel="Freunde finden"
           animationType="fade"
           transparent
           visible={isSearchModalVisible}

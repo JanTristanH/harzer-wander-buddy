@@ -1,0 +1,202 @@
+{
+  "checks": [
+    {
+      "screen": "list",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "flow": "guest onboarding scroll 320",
+      "passed": true
+    },
+    {
+      "screen": "onboarding",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "flow": "guest onboarding scroll 390",
+      "passed": true
+    },
+    {
+      "screen": "onboarding",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "flow": "guest onboarding scroll 768",
+      "passed": true
+    },
+    {
+      "screen": "onboarding",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "flow": "guest onboarding scroll 1440",
+      "passed": true
+    },
+    {
+      "screen": "onboarding",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "flow": "search, empty and clear",
+      "passed": true
+    },
+    {
+      "flow": "map switch checked state and close",
+      "passed": true
+    },
+    {
+      "flow": "SSO and onboarding through port 4004",
+      "passed": true
+    },
+    {
+      "flow": "group choose and clear fictional local buddy",
+      "passed": true
+    },
+    {
+      "flow": "multiple selection and cancel",
+      "passed": true
+    },
+    {
+      "flow": "local visit write and immediate acknowledgement",
+      "passed": true
+    },
+    {
+      "flow": "edit and save local profile name",
+      "passed": true
+    },
+    {
+      "flow": "accept fictional local buddy request",
+      "passed": true
+    },
+    {
+      "flow": "create local tour",
+      "passed": true
+    },
+    {
+      "flow": "find and add first local tour point",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "sourceHead": "a9e9d8b84ce396af8fc8451b8a663c74b7e471bb"
+}

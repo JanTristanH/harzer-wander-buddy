@@ -373,3 +373,74 @@ All 41 PNGs in `screenshots/develop-round-4` inspected independently. No browser
 | Tour created / bottom | 6.5 / 6.5 |
 
 Findings: low-contrast tour-map hint, no clear empty-tour start action, technical metric placeholders; narrow focus inside friend search, small friend actions; group count ambiguous beside total including self; narrow empty-state guidance below illustration. Profile save/upload/validation, full route editing, native, screen readers and offline/error scenarios remained unverified. The next iteration addresses the specific findings without treating missing evidence as a pass.
+
+### Diagnostic runs 3 and 5
+
+These runs have no independent numerical review. Their browser records are retained rather than treated as successful rounds. Run 3 exposed a local-fixture timing issue (buddy records seeded after the friends query) and a capture locator error; fixtures now seed before authenticated API reads. Run 5 exercised Space and exposed the React Native Web checkable-role gap. Its group assertion failed; the follow-up adds explicit Space activation for non-button checkable elements. The run-4 keyboard record likewise preserves the failed switch assertion. Escape/clear and all four onboarding-end reachability checks passed. None of these logs establish native or screen-reader support.
+
+Source changes through `a9e9d8b` pass 374 tests in 67 suites and TypeScript. Lint has zero errors and the two existing require-import warnings in map-primitives.ts. The contrast samples in `contrast-checks.json` all exceed 4.5:1; this is not an exhaustive rendered-screen contrast audit.
+
+### Build and interaction evidence after repairs
+
+- Android local x86 release compiled successfully: **BUILD SUCCESSFUL in 8m 56s**, 982 tasks (481 executed, 501 up-to-date). This establishes compilation, not a native UI/gesture/accessibility pass. The software emulator previously stalled during boot/package-manager operations; no usable signed-in native session was observed.
+- Final keyboard record: all **7 checks passed**, including account-action reachability at 320/390/768/1440, clearing search with Enter, switching parking with Space, and closing map filter with Escape.
+- Axe WCAG 2 A/AA + 2.1 AA on guest list, map, login, onboarding and tours: **zero violations on each route**. See `axe-guest-checks.json`. This limited automated scan does not certify all screens or assistive technologies.
+
+## Develop review 6 — a9e9d8b
+
+Independent reviewer inspected all 66 main PNGs and 13 keyboard PNGs (nine byte-identical duplicates), 42/42 browser checks and 7/7 keyboard checks. No pageerrors. Group confirmation/clear, profile-name save and first tour-point addition now pass. Scores below precede the profile-refresh and precise-fit corrections.
+
+| Category | Score /10 |
+| --- | ---: |
+| Icons | 8.5 |
+| Color/contrast | 8.5 |
+| Typography | 8.5 |
+| Visual hierarchy | 8.5 |
+| Spacing/layout | 8.5 |
+| Radii/forms | 8.5 |
+| Buttons/interactions | 8.5 |
+| Navigation | 8.5 |
+| Map UX | 8.0 |
+| Forms/search | 8.5 |
+| Feedback/system states | 8.0 |
+| Accessibility | 8.0 Web partial |
+| Responsive/adaptive | 8.5 |
+| Consistency | 8.0 |
+| Information quality | 8.0 |
+| Polish/brand | 8.5 |
+
+| Guest image prefix | 320 | 390 | 768 | 1440 |
+| --- | ---: | ---: | ---: | ---: |
+| List | 8.5 | 8.5 | 8.5 | 8.5 |
+| Map | 8.0 | 8.5 | 8.5 | 8.5 |
+| Login | 8.5 | 8.5 | 8.5 | 8.5 |
+| Onboarding | 8.5 | 8.5 | 8.5 | 8.5 |
+| Onboarding end | 8.5 | 8.5 | 8.5 | 8.5 |
+| Tours | 8.5 | 8.5 | 8.5 | 8.5 |
+| Friends | 8.5 | 8.5 | 8.5 | 8.5 |
+| Profile | 8.5 | 8.5 | 8.5 | 8.5 |
+
+| Additional image/state | Score /10 |
+| --- | ---: |
+| Search focus / empty | 8.5 / 8.5 |
+| Map filter | 8.5 |
+| Signed list 390 / 1440 | 8.5 / 8.5 |
+| Signed map 390 / 1440 | 8.5 / 8.5 |
+| Signed tours 390 / 1440 | 8.5 / 8.5 |
+| Signed friends 390 / 1440 | 8.5 / 8.5 |
+| Signed profile 390 / 1440 | 8.5 / 8.5 |
+| Profile edit / saved | 8.5 / 6.5 |
+| Friends request / accepted / search | 8.5 / 8.5 / 8.5 |
+| Group open / selected | 8.5 / 8.0 |
+| Multiple selected | 8.5 |
+| Onboarding 0 / 1 / 2 / 3 / 4 | 8.5 / 8.5 / 8.5 / 8.5 / 8.5 |
+| Stamp detail / bottom / success | 8.5 / 8.5 / 8.5 |
+| Tour created / bottom | 8.0 / 8.5 |
+| Tour search / point selected / point added | 8.0 / 8.5 / 8.5 |
+| Keyboard guest list 320 | 8.5 |
+| Keyboard onboarding initial 320 / 390 / 768 / 1440 | 8.5 / 8.5 / 8.5 / 8.5 |
+| Keyboard onboarding end 320 / 390 / 768 / 1440 | 8.5 / 8.5 / 8.5 / 8.5 |
+| Keyboard search focus 320 / empty 320 | 8.5 / 8.5 |
+| Keyboard map filter 320 / map zoomed 320 | 8.5 / 8.5 |
+
+Specific remaining findings: profile shows one visit in history but zero visited/completion after name save; dense pin overlap in 320 overview and tour map; small group status signs/high group cards. Accessibility has measured Web evidence but lacks complete dialog-focus and screen-reader verification. Multileg route calculation/reordering, navigation outdoors, image upload, offline/errors and native UI remain unverified. Android compilation alone does not pass those flows.
