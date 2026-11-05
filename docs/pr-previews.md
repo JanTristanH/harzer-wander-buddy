@@ -23,6 +23,10 @@ aus `codex/abzeichenalbum` nach `develop`.
   Name `HWB PR 65`, keine OTA-Updates. Mehrere PRs können parallel zur normalen
   App installiert werden. Eine neuere APK desselben PRs ersetzt dessen alte APK.
 - HTTPS-Basic-Login mit dem Testkonto aus [AGENTS.md](../AGENTS.md), kein Auth0.
+  Zusätzlich gibt es im Profil `dev-basic` (lokal und in PR-Previews) das Admin-Testkonto
+  `admin@hwb.de` mit Passwort `admin@hwb.deA` und der Rolle `admin`.
+  `user1@hwb.de` behält normale Nutzerrechte. Beide Konten sind ausschließlich
+  für Testumgebungen vorgesehen; Produktion verwendet weiterhin Auth0.
   Die öffentliche URL und das bekannte Testkonto sind nur für Testdaten gedacht.
 - SQLite auf dem flüchtigen Container-Dateisystem, initialisiert mit allen vorhandenen
   CAP-Dummy-CSV-Dateien aus `backend/hwb/db/doNotDeploy-data`. Das Preview-Image
@@ -256,7 +260,7 @@ Crash-Berichte sind unterschiedliche Dinge; die Grenzen sind dort dokumentiert.
    herunterladen, entpacken und die APK installieren.
 5. Web und APK mit dem Testkonto aus `AGENTS.md` anmelden; Profil/Album prüfen.
    Die Deployment-Prüfung prüft bereits Commit-Metadaten, Web-Route, Ablehnung
-   anonymer API-Aufrufe, Testlogin und lesbare SQLite-Testdaten.
+   anonymer API-Aufrufe, Testlogins, Adminrechte und lesbare SQLite-Testdaten.
 6. Einen weiteren Commit pushen: gleiche URL, neue Backend-Revision und neue APK.
    Es darf nur `hwb-pr-65` als verwalteter Dienst dieses PRs vorhanden sein. Beim
    Schließen/Mergen von #65 oder Entfernen des Labels muss der Dienst verschwinden.
