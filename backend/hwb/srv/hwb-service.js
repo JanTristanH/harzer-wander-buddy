@@ -684,6 +684,17 @@ async function handleTourByPOIList(req, options = { persist: true }) {
       return isParkingToParking ? isDriveTravelMode(route.travelMode) : !isDriveTravelMode(route.travelMode);
     });
   aTravelTimesWithPositionString = getUniqueRoutes(aTravelTimesWithPositionString);
+  // The typed view intentionally omits the large geometry. Load only the
+  // selected existing legs, so the update response can redraw the saved route.
+  if (aTravelTimesWithPositionString.length) {
+    const geometries = await SELECT.from(TravelTimes)
+      .columns('ID', 'positionString')
+      .where({ ID: { in: aTravelTimesWithPositionString.map(route => route.ID) } });
+    const geometryById = new Map(geometries.map(route => [route.ID, route.positionString]));
+    aTravelTimesWithPositionString = aTravelTimesWithPositionString.map(route => ({
+      ...route, positionString: geometryById.get(route.ID)
+    }));
+  }
 
   // Step 2: Identify missing travel times
   // Create a set of POI pairs from the results for easier lookup
@@ -803,7 +814,10 @@ async function handleTourByPOIList(req, options = { persist: true }) {
 
   oTour.idListTravelTimes = idListTravelTimes;
   oTour.newStampCountForUser = newStampCountForUser;
-  oTour.path = orderedTour2TravelTime;
+  oTour.path = orderedTour2TravelTime.map(link => ({
+    ...link,
+    travelTime: travelTimesById.get(link.travelTime_ID)
+  }));
   return oTour;
 
   function getRankedTour2TravelTimes(aRelevantTravelTimes, aPois, tourId) {
