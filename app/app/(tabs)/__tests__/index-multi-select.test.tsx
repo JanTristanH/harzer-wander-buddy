@@ -75,7 +75,7 @@ it('stamps every selected place including existing visits and exits selection', 
   hold('open');
   fireEvent.press(screen.getByTestId('stamp-list-item-visited'));
   await act(async () => { fireEvent.press(screen.getByText('Stempeln (2)')); });
-  await act(async () => { jest.advanceTimersByTime(250); });
+  await act(async () => { jest.advanceTimersByTime(1250); });
   expect(mockCreate).toHaveBeenCalledTimes(2);
   expect(mockCreate).toHaveBeenCalledWith('test-token', 'open');
   expect(mockCreate).toHaveBeenCalledWith('test-token', 'visited');
@@ -107,12 +107,12 @@ it('retains failed places for retry and permits an intentional repeated visit', 
   await openScreen();
   hold('open');
   await act(async () => { fireEvent.press(screen.getByText('Stempeln (1)')); });
-  await act(async () => { jest.advanceTimersByTime(250); });
+  await act(async () => { jest.advanceTimersByTime(1250); });
   expect(screen.getByText('1 ausgewählt')).toBeTruthy();
   expect(screen.getByText('0 erledigt. 1 fehlgeschlagen. Bitte erneut versuchen.')).toBeTruthy();
   mockVisits.mockResolvedValue([{ ID: 'already-created' }]);
   await act(async () => { fireEvent.press(screen.getByText('Stempeln (1)')); });
-  await act(async () => { jest.advanceTimersByTime(250); });
+  await act(async () => { jest.advanceTimersByTime(1250); });
   expect(mockCreate).toHaveBeenCalledTimes(2);
   expect(screen.queryByTestId('stamp-selection-toolbar')).toBeNull();
 });
@@ -190,9 +190,31 @@ it('celebrates only acknowledged full success, never a failed mutation', async (
   await act(async () => { fireEvent.press(screen.getByText('Stempeln (1)')); });
   expect(screen.queryByTestId('stamp-selection-celebration', { includeHiddenElements: true })).toBeNull();
   await act(async () => { fireEvent.press(screen.getByText('Stempeln (1)')); });
-  await act(async () => { jest.advanceTimersByTime(250); });
+  await act(async () => { jest.advanceTimersByTime(1250); });
   expect(screen.getByTestId('stamp-progress-hero')).toBeTruthy();
   expect(screen.getByTestId('stamp-selection-celebration', { includeHiddenElements: true })).toBeTruthy();
-  await act(async () => { jest.advanceTimersByTime(1500); });
+  await act(async () => { jest.advanceTimersByTime(5000); });
   expect(screen.queryByTestId('stamp-selection-celebration', { includeHiddenElements: true })).toBeNull();
+});
+
+it('starts empty selection from the header button without a long press', async () => {
+  await openScreen();
+  fireEvent.press(screen.getByLabelText('Stempelstellen auswählen'));
+  expect(screen.getByText('0 ausgewählt')).toBeTruthy();
+  expect(screen.queryByTestId('stamp-progress-hero')).toBeNull();
+  fireEvent.press(screen.getByTestId('stamp-list-item-open'));
+  expect(screen.getByText('1 ausgewählt')).toBeTruthy();
+  expect(mockPush).not.toHaveBeenCalled();
+  fireEvent.press(screen.getByLabelText('Auswahlmodus schließen'));
+  expect(screen.queryByTestId('stamp-selection-toolbar')).toBeNull();
+});
+
+it('takes guests to login instead of enabling unauthenticated selection', async () => {
+  mockAuth.mockReturnValue({ isAuthenticated: false, canPerformWrites: false });
+  await openScreen();
+  expect(screen.queryByText('2 gesamt')).toBeNull();
+  fireEvent.press(screen.getByLabelText('Stempelstellen auswählen'));
+  expect(mockPush).toHaveBeenCalledWith('/login');
+  expect(screen.queryByTestId('stamp-selection-toolbar')).toBeNull();
+  expect(mockCreate).not.toHaveBeenCalled();
 });

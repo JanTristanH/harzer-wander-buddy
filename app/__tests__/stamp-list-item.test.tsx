@@ -175,3 +175,10 @@ it('consumes long-press release across selection rerenders but accepts a new tap
   fireEvent.press(screen.getByTestId('stamp-list-item-hold'));
   expect(press).toHaveBeenCalledTimes(1);
 });
+
+it('does not expose selectable text inside an interactive stamp card', () => {
+  render(<StampListItem index={0} item={{ ID: 'safari', name: 'Brocken', description: 'Wanderziel' }} onPress={jest.fn()} />);
+  expect(screen.getByText(/Brocken/).props.selectable).toBe(false);
+  expect(screen.getByText('Wanderziel').props.selectable).toBe(false);
+  expect(screen.getByText('Unbesucht').props.selectable).toBe(false);
+});

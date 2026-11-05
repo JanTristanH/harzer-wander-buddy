@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
+import { useReducedMotion } from 'react-native-reanimated';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Animated,
@@ -30,6 +31,7 @@ import { StampSelectionCelebration, StampSelectionFill } from '@/components/stam
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
 import { createStamping, deleteStamping, fetchOwnStampings, type Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { STAMP_SELECTION_FILL_MS } from '@/lib/stamp-selection-motion';
 import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
@@ -146,6 +148,7 @@ function isRelocatedStamp(validTo?: string) {
 
 export default function StampsScreen() {
   const router = useRouter();
+  const reducedMotion = useReducedMotion();
   const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
@@ -226,7 +229,7 @@ export default function StampsScreen() {
     cancelSelection();
   }, [activeFilter, selectedFriendKey, cancelSelection]);
 
-  const beginSelection = useCallback((stampId: string) => {
+  const beginSelection = useCallback((stampId?: string) => {
     if (!isAuthenticated || bulkBusyRef.current) return;
     setCelebrationCount(0);
     setIsFastScrollerVisible(false);
@@ -235,13 +238,34 @@ export default function StampsScreen() {
     setBulkMessage('');
     setToastVisible(false);
     setSelectionMode(true);
-    setSelectedIds((ids) => ids.includes(stampId) ? ids : [...ids, stampId]);
-    if (!selectedIds.includes(stampId)) {
+    setSelectedIds((ids) => stampId ? (ids.includes(stampId) ? ids : [...ids, stampId]) : []);
+    if (stampId && !selectedIds.includes(stampId)) {
       void triggerHaptic('selectionChange').catch(() => {
         // Selection remains usable when native feedback is unavailable.
       });
     }
   }, [isAuthenticated, selectedIds]);
+
+  const startSelection = useCallback(() => {
+    if (bulkBusyRef.current) return;
+    if (!isAuthenticated) { router.push('/login' as never); return; }
+    beginSelection();
+  }, [beginSelection, isAuthenticated, router]);
+
+  const renderSelectionButton = useCallback((loading = false) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={selectionMode ? 'Auswahlmodus schließen' : 'Stempelstellen auswählen'}
+      accessibilityHint={!isAuthenticated ? 'Zum Auswählen zuerst anmelden' : undefined}
+      accessibilityState={{ expanded: selectionMode }}
+      disabled={loading || isBulkBusy}
+      hitSlop={4}
+      onPress={selectionMode ? cancelSelection : startSelection}
+      style={styles.headerSelectionButton}
+      testID="stamp-start-selection">
+      <Text style={styles.headerSelectionLabel}>{selectionMode ? 'Abbrechen' : 'Auswählen'}</Text>
+    </Pressable>
+  ), [cancelSelection, isAuthenticated, isBulkBusy, selectionMode, startSelection]);
 
   const selectedStamps = stamps.filter((stamp) => selectedIds.includes(stamp.ID));
   const stampableCount = selectedStamps.length;
@@ -288,7 +312,7 @@ export default function StampsScreen() {
       }
       if (!remove && completed > 0 && failedIds.length === 0) {
         setStampProgress(1);
-        await new Promise<void>((resolve) => setTimeout(resolve, 240));
+        await new Promise<void>((resolve) => setTimeout(resolve, reducedMotion ? 120 : STAMP_SELECTION_FILL_MS));
       }
       await queryClient.invalidateQueries();
       if (!mounted.current) return;
@@ -313,7 +337,7 @@ export default function StampsScreen() {
         setStampProgress(null);
       }
     }
-  }, [accessToken, canPerformWrites, currentUserProfile?.id, logout, queryClient, selectedIds, showBulkToast]);
+  }, [accessToken, canPerformWrites, currentUserProfile?.id, logout, queryClient, reducedMotion, selectedIds, showBulkToast]);
 
   const prepareRemoval = useCallback(async () => {
     if (!accessToken || !currentUserProfile?.id || !canPerformWrites || bulkBusyRef.current) return;
@@ -773,12 +797,11 @@ export default function StampsScreen() {
   const renderIntro = useCallback(() => (
     <View style={styles.introContent}>
       <View style={styles.titleRow} testID="stamps-title-row">
-        <Text style={styles.title}>Stempelstellen</Text>
-        {isAuthenticated ? (
-          <GroupSelector testID="stamps-header-group-selector" />
-        ) : (
-          <Text style={styles.totalLabel}>{totalCount} gesamt</Text>
-        )}
+        <View style={styles.headerTitleGroup}>
+          <Text style={styles.title}>Stempelstellen</Text>
+          {isAuthenticated ? <GroupSelector testID="stamps-header-group-selector" /> : null}
+        </View>
+        {renderSelectionButton()}
       </View>
 
       <View
@@ -824,7 +847,7 @@ export default function StampsScreen() {
       {isRefreshing ? <Text style={styles.refreshHint}>Aktualisiere Daten im Hintergrund...</Text> : null}
     </View>
   ), [
-    selectionMode, selectionPinned, heroHeight, renderSelectionToolbar, celebrationCount, finishCelebration,
+    selectionMode, selectionPinned, heroHeight, renderSelectionToolbar, renderSelectionButton, celebrationCount, finishCelebration,
     isAuthenticated,
     isRefreshing,
     lastVisited,
@@ -1012,12 +1035,11 @@ export default function StampsScreen() {
         <View style={styles.loadingContent}>
           <View style={styles.loadingIntro}>
             <View style={styles.loadingTitleRow} testID="stamps-title-row">
-              <Text style={styles.title}>Stempelstellen</Text>
-              {isAuthenticated ? (
-                <GroupSelector testID="stamps-header-group-selector" />
-              ) : (
-                <Text style={styles.totalLabel}>-- gesamt</Text>
-              )}
+              <View style={styles.headerTitleGroup}>
+                <Text style={styles.title}>Stempelstellen</Text>
+                {isAuthenticated ? <GroupSelector testID="stamps-header-group-selector" /> : null}
+              </View>
+              {renderSelectionButton(true)}
             </View>
             <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.loadingProgressCard}>
               <SkeletonBlock height={14} radius={7} width="34%" />
@@ -1232,6 +1254,9 @@ export default function StampsScreen() {
 const styles = StyleSheet.create({
   confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.35)' },
   confirmCard: { width: '100%', maxWidth: 420, padding: 24, borderRadius: 22, backgroundColor: '#f5f3ee', gap: 20 },
+  headerTitleGroup: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  headerSelectionButton: { minHeight: 40, minWidth: 86, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderWidth: 1, borderColor: '#d9e2d9', borderRadius: 999 },
+  headerSelectionLabel: { color: '#5c745f', fontSize: 12, fontWeight: '600' },
   selectionToolbar: { padding: 12, gap: 6, justifyContent: 'center', borderRadius: 22, backgroundColor: '#e2eee6', zIndex: 20 },
   selectionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   pinnedSelection: { position: 'absolute', top: 0, left: 20, right: 20, zIndex: 30, elevation: 8 },
