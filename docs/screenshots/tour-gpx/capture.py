@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import urllib.request
+import xml.etree.ElementTree as ET
 
 from playwright.sync_api import sync_playwright
 
@@ -27,13 +28,18 @@ def api(path, data=None, method=None):
 
 
 # Only the local test backend is used. No browser storage or tokens are saved.
-leg = api("TravelTimes?$filter=travelMode%20eq%20'walk'&$top=1")['value'][0]
-stamp = api(f"Stampboxes?$filter=ID%20eq%20{leg['fromPoi']}&$top=1")['value'][0]
+routes = api("TravelTimes?$select=ID,fromPoi,toPoi&$filter=travelMode%20eq%20'walk'&$top=10000")['value']
+stamps = {stamp['ID']: stamp for stamp in api('Stampboxes?$select=ID,name,heroImageUrl,image&$top=500')['value']}
+by_start = {route['fromPoi']: route for route in routes}
+first = next(route for route in routes if route['fromPoi'] in stamps and route['toPoi'] in by_start)
+leg = api(f"TravelTimes({first['ID']})")
+next_leg = by_start[leg['toPoi']]
+stamp = stamps[leg['fromPoi']]
 profile = api('getCurrentUser()')
 api(f"Users('{profile['ID']}')", {'onboardingCompleted': True}, 'PATCH')
 name = 'Webtest – Tour im Harz'
-tour = api('Tours', {'name': name, 'idListTravelTimes': leg['ID']})
-saved = api('updateTourByPOIList', {'TourID': tour['ID'], 'POIList': f"{leg['fromPoi']};{leg['toPoi']}"})
+tour = api('Tours', {'name': name, 'idListTravelTimes': f"{leg['ID']};{next_leg['ID']}"})
+saved = api('updateTourByPOIList', {'TourID': tour['ID'], 'POIList': f"{leg['fromPoi']};{leg['toPoi']};{next_leg['toPoi']}"})
 assert saved['path'][0]['travelTime']['positionString'] == leg['positionString']
 
 with sync_playwright() as playwright:
@@ -80,12 +86,25 @@ with sync_playwright() as playwright:
         page.get_by_role('button', name='Tour als GPX exportieren').wait_for()
         page.wait_for_timeout(500)
         page.screenshot(path=str(OUTPUT / '02-actions-menu.png'))
-        with page.expect_download() as event:
+        page.get_by_role('button', name='Tour als GPX exportieren').click()
+        page.get_by_role('button', name='Verbundene Route', exact=True).wait_for()
+        page.wait_for_timeout(300)
+        page.screenshot(path=str(OUTPUT / '06-export-choice.png'))
+        # Cancel does not download; both export modes are then tested with two legs.
+        page.get_by_role('button', name='GPX-Export abbrechen').click()
+        for label, tracks in [('Verbundene Route', 1), ('Einzelne Etappen', 2)]:
             page.get_by_role('button', name='Tour als GPX exportieren').click()
-        download = event.value
-        assert download.suggested_filename.endswith('.gpx')
-        content = Path(download.path()).read_text()
-        assert '<trkpt lat=' in content and 'http://www.topografix.com/GPX/1/1' in content
+            with page.expect_download() as event:
+                page.get_by_role('button', name=label, exact=True).click()
+            download = event.value
+            assert download.suggested_filename.endswith('.gpx')
+            root = ET.parse(download.path()).getroot()
+            ns = {'g': 'http://www.topografix.com/GPX/1/1'}
+            assert len(root.findall('g:trk', ns)) == tracks
+            assert len(root.findall('.//g:trkseg', ns)) == tracks
+            assert len(root.findall('.//g:trkpt', ns)) > 2
+            if tracks == 1:
+                page.get_by_role('button', name='Aktionen', exact=True).click()
         page.get_by_text('Bearbeiten', exact=True).click()
         page.wait_for_timeout(500)
         page.screenshot(path=str(OUTPUT / '03-edit-route.png'))
@@ -103,6 +122,6 @@ with sync_playwright() as playwright:
         page.wait_for_timeout(300)
         assert page.locator('.leaflet-marker-icon[aria-pressed="true"]').count() == 0
         page.screenshot(path=str(OUTPUT / '05-dismissed-marker.png'))
-        print('Real route, GPX menu/download and transparent-corner deselection verified.')
+        print('Real route, export choice/cancellation, both GPX formats and marker deselection verified.')
     finally:
         browser.close()

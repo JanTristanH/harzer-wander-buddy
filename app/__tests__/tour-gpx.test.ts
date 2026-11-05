@@ -29,3 +29,24 @@ test('retains valid zero and negative coordinates and strips illegal XML control
   expect(parseTourGeometry('0;0;0;-1;-2;0')).toEqual([{ latitude: 0, longitude: 0 }, { latitude: -2, longitude: -1 }]);
   expect(buildTourGpx('A\u0000B', [leg(1)]).content).toContain('<name>AB</name>');
 });
+
+test('connects ordered legs in one track and segment, deduplicating shared endpoints', () => {
+  const path = [leg(2, '10.2;51.2;0;10.3;51.3;0'), leg(1)];
+  const { content } = buildTourGpx('Harz', path, 'connected');
+  expect(content.match(/<trk>/g)).toHaveLength(1);
+  expect(content.match(/<trkseg>/g)).toHaveLength(1);
+  expect(content.match(/<trkpt /g)).toHaveLength(3);
+  expect(content.indexOf('lat="51.1"')).toBeLessThan(content.indexOf('lat="51.3"'));
+  expect(content).toContain('<name>Harz</name><type>hiking</type>');
+  expect(path[0].rank).toBe(2);
+});
+
+test('includes driving legs and gaps in the connected route without declaring everything hiking', () => {
+  const { content } = buildTourGpx('Harz', [leg(1), leg(2, '11;52;0;12;53;0', 'car')], 'connected');
+  expect(content.match(/<trk>/g)).toHaveLength(1);
+  expect(content.match(/<trkseg>/g)).toHaveLength(1);
+  expect(content.match(/<trkpt /g)).toHaveLength(4);
+  expect(content).not.toContain('<type>');
+  expect(content).toContain('lat="53" lon="12"');
+  expect(() => buildTourGpx('Harz', [leg(1), leg(2, '')], 'connected')).toThrow();
+});
