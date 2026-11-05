@@ -59,6 +59,7 @@ function StampListItemComponent({
   groupSize,
 }: StampListItemProps) {
   const { accessToken, isAuthenticated } = useAuth();
+  const consumedLongPress = React.useRef(false);
   const showUncollectedArtwork = isAuthenticated && !item.hasVisited;
   const artworkUri = item.heroImageUrl?.trim() || item.image?.trim() || '';
   const artworkSource = React.useMemo(
@@ -85,8 +86,12 @@ function StampListItemComponent({
       accessibilityHint={onLongPress ? 'Gedrückt halten, um mehrere Stempelstellen auszuwählen' : undefined}
       testID={`stamp-list-item-${item.ID}`}
       disabled={disabled}
-      onPress={onPress}
-      onLongPress={onLongPress}
+      onPressIn={() => { consumedLongPress.current = false; }}
+      onPress={() => {
+        if (consumedLongPress.current) { consumedLongPress.current = false; return; }
+        onPress();
+      }}
+      onLongPress={onLongPress ? () => { consumedLongPress.current = true; onLongPress(); } : undefined}
       delayLongPress={500}
       style={({ pressed }) => [
         styles.card,

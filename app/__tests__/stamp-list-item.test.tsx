@@ -159,3 +159,19 @@ describe('StampListItem user interaction', () => {
     expect(screen.getByLabelText(/Anna Adler besucht/)).toBeTruthy();
   });
 });
+
+it('consumes long-press release across selection rerenders but accepts a new tap', () => {
+  const press = jest.fn();
+  const hold = jest.fn();
+  const item = { ID: 'hold', name: 'Brocken', number: '1' };
+  const { rerender } = render(<StampListItem index={0} item={item} onPress={press} onLongPress={hold} />);
+  fireEvent(screen.getByTestId('stamp-list-item-hold'), 'pressIn');
+  fireEvent(screen.getByTestId('stamp-list-item-hold'), 'longPress');
+  rerender(<StampListItem index={0} item={item} onPress={press} onLongPress={hold} selectionMode selected />);
+  fireEvent.press(screen.getByTestId('stamp-list-item-hold'));
+  expect(hold).toHaveBeenCalledTimes(1);
+  expect(press).not.toHaveBeenCalled();
+  fireEvent(screen.getByTestId('stamp-list-item-hold'), 'pressIn');
+  fireEvent.press(screen.getByTestId('stamp-list-item-hold'));
+  expect(press).toHaveBeenCalledTimes(1);
+});
