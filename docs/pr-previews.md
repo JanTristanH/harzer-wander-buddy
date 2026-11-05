@@ -11,7 +11,7 @@ aus `codex/abzeichenalbum` nach `develop`.
 
 - Dienst: fest `hwb-pr-65`; eine stabile HTTPS-URL pro PR von Cloud Run.
 - Web: `<Cloud-Run-URL>/app/rnweb`; API: `<Cloud-Run-URL>/odata/v4/api`.
-- Live-URL und Workflow-Link stehen nach erfolgreicher Aktivierung und Live-Prüfung
+- Live-URL und Workflow-Link stehen nach erfolgreicher Aktivierung
   direkt in einem automatisch aktualisierten Abschnitt der PR-Beschreibung, während
   die Android-APK parallel weiterbaut. Ihr Download-Link folgt nach Build-Ende; bis
   dahin wird der laufende Build angezeigt. Der übrige Text bleibt
@@ -44,9 +44,12 @@ aus `codex/abzeichenalbum` nach `develop`.
   Grenze wird nicht in die Laufzeitkonfiguration übernommen.
 - Das Deployment startet deaktiviert mit `--scaling=0` und ohne Startup-Healthcheck.
   Unabhängig vom APK-Build aktiviert der Workflow automatische Skalierung
-  mit `min=0, max=1` und prüft die Live-App. Bei fehlgeschlagener Live-Prüfung wird
-  der Dienst wieder deaktiviert; APK-Fehler deaktivieren eine geprüfte Web-Preview
-  nicht. Request-basierte Abrechnung (`--cpu-throttling`) und deaktivierter
+  mit `min=0, max=1`, ohne die Preview-URL aufzurufen. Die HTTP-Smoke-Prüfung
+  läuft bereits vor dem Deployment im lokalen CI-Container. Eine zusätzliche
+  Live-Prüfung ist nur beim manuellen Start mit `live_check=true` aktiv und
+  startet eine Cloud-Run-Instanz. Schlägt diese optionale Prüfung fehl, wird
+  der Dienst wieder deaktiviert; APK-Fehler deaktivieren die Web-Preview nicht.
+  Request-basierte Abrechnung (`--cpu-throttling`) und deaktivierter
   CPU-Boost halten die Kosten niedrig; es wird keine Instanz dauerhaft vorgehalten.
 - Neue Commits ersetzen das Backend im selben Dienst und unter derselben URL.
   Ältere APKs dieses PRs verwenden deshalb ebenfalls das neueste Backend; ihre
@@ -61,7 +64,7 @@ aus `codex/abzeichenalbum` nach `develop`.
   prüft der Workflow, dass genau ein verwalteter Dienst für den PR vorhanden ist.
   Alte APKs mit Commit-URLs benötigen einmalig eine neue APK mit der stabilen URL.
   Während des Deployments bleibt der stabile Dienst deaktiviert; anschließend
-  wird er unabhängig vom laufenden APK-Build wieder aktiviert und geprüft.
+  wird er unabhängig vom laufenden APK-Build wieder aktiviert.
 - Fork-PRs werden übersprungen. Es wird `pull_request`, niemals
   `pull_request_target` zum Ausführen von PR-Code verwendet.
 
@@ -86,6 +89,18 @@ ohne Label auch keine automatischen Builds bei weiteren Pushes aus. Bei einem
 manuellen `remove` bleibt ein vorhandenes Label erhalten; für dauerhaftes Abschalten
 also zusätzlich das Label entfernen. Der manuelle Start ist erst verfügbar, wenn
 die Workflow-Datei im Default-Branch existiert.
+
+Normale Deployments senden keine HTTP-Smoke-Requests an die Cloud-Run-URL.
+Für eine gezielte Live-Prüfung beim manuellen Start **`live_check`** aktivieren
+(Standard: aus), zum Beispiel:
+
+```bash
+gh workflow run pr-preview.yml --ref develop -f pr=65 -f action=deploy -F live_check=true
+```
+
+Die Live-Prüfung läuft dann mit bis zu sechs Versuchen. Öffentliche Aufrufe durch
+Nutzer oder Scanner können weiterhin Instanzen starten; die Änderung ist kein
+Zugangsschutz und schaltet vorhandene Previews nicht ab.
 
 Die Repository-Variable `GCP_PREVIEW_PROJECT_ID` bleibt die globale Freigabe:
 ohne sie startet kein Preview-Job, auch kein Cleanup. Deshalb zum Abschalten
@@ -262,7 +277,7 @@ Crash-Berichte sind unterschiedliche Dinge; die Grenzen sind dort dokumentiert.
    direkt in der PR-Beschreibung; nach **android** folgt der APK-Download. Das ZIP
    herunterladen, entpacken und die APK installieren.
 5. Web und APK mit dem Testkonto aus `AGENTS.md` anmelden; Profil/Album prüfen.
-   Die Deployment-Prüfung prüft bereits Commit-Metadaten, Web-Route, Ablehnung
+   Die lokale Containerprüfung im CI prüft bereits Commit-Metadaten, Web-Route, Ablehnung
    anonymer API-Aufrufe, Testlogins, Adminrechte und lesbare SQLite-Testdaten.
 6. Einen weiteren Commit pushen: gleiche URL, neue Backend-Revision und neue APK.
    Es darf nur `hwb-pr-65` als verwalteter Dienst dieses PRs vorhanden sein. Beim
