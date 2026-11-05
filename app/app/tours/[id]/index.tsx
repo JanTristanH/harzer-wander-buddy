@@ -1007,7 +1007,6 @@ export default function TourDetailScreen() {
   const mapRef = useRef<MapViewRef | null>(null);
   const hasAppliedAutoStartEditModeRef = useRef(false);
   const regionRef = useRef<Region>(HARZ_REGION);
-  const lastMarkerPressAtRef = useRef(0);
   const activeSaveRequestIdRef = useRef(0);
   const queuedPoiIdsRef = useRef<string[] | null>(null);
   const latestDraftPoiIdsRef = useRef<string[]>([]);
@@ -1384,6 +1383,7 @@ export default function TourDetailScreen() {
     }
 
     setLiveTourMetrics(createLiveTourMetrics(data.tour));
+    setLivePathEntries(data.path ?? []);
     if (!arraysEqual(draftPoiIds, originalPoiIds)) {
       setDraftPoiIds(originalPoiIds);
     }
@@ -1887,7 +1887,6 @@ export default function TourDetailScreen() {
       clearTimeout(searchBlurTimeoutRef.current);
       searchBlurTimeoutRef.current = null;
     }
-    lastMarkerPressAtRef.current = Date.now();
 
     const nextRegion: Region = {
       latitude: item.latitude,
@@ -1912,7 +1911,6 @@ export default function TourDetailScreen() {
       clearTimeout(searchBlurTimeoutRef.current);
       searchBlurTimeoutRef.current = null;
     }
-    lastMarkerPressAtRef.current = Date.now();
 
     const nextRegion: Region = {
       latitude: place.latitude,
@@ -1994,8 +1992,10 @@ export default function TourDetailScreen() {
         const refreshed = await refetch();
         if (refreshed.data?.tour) {
           setLiveTourMetrics(createLiveTourMetrics(refreshed.data.tour));
-          if (!isEditMode) {
+          if (arraysEqual(latestDraftPoiIdsRef.current, poiIds)) {
             setLivePathEntries(refreshed.data.path ?? []);
+          }
+          if (!isEditMode) {
             const refreshedPoiIds = derivePoiSequence(refreshed.data.path ?? []);
             setDraftPoiIds(refreshedPoiIds);
             setLastPersistedPoiIds(refreshedPoiIds);
@@ -2602,8 +2602,8 @@ export default function TourDetailScreen() {
         ref={mapRef}
         initialRegion={routeRegion}
         onMapReady={() => setIsMapReady(true)}
-        onPress={() => {
-          if (Date.now() - lastMarkerPressAtRef.current < 250) {
+        onPress={(event) => {
+          if ('action' in event.nativeEvent && event.nativeEvent.action === 'marker-press') {
             return;
           }
 
@@ -2979,29 +2979,26 @@ export default function TourDetailScreen() {
 
             {!isEditMode ? (
               <View style={styles.headerActions}>
-                <TourGpxExport name={data.tour.name} path={data.path} disabled={isFetching} />
                 <Pressable
                   onPress={() => void handleShareTour()}
                   style={({ pressed }) => [styles.shareHeaderButton, pressed && styles.pressed]}>
                   <Feather color="#3a4f84" name="share-2" size={14} />
                   <Text style={styles.shareHeaderButtonLabel}>Teilen</Text>
                 </Pressable>
-                {canEnterEditMode ? (
                 <Pressable
-                  disabled={deleteTourMutation.isPending || !canPerformWrites}
+                  accessibilityRole="button"
+                  accessibilityLabel="Aktionen"
                   onPress={handleOpenViewOverflowMenu}
                   style={({ pressed }) => [
                     styles.overflowHeaderButton,
-                    (deleteTourMutation.isPending || !canPerformWrites) && styles.overflowHeaderButtonDisabled,
-                    pressed && !deleteTourMutation.isPending && canPerformWrites && styles.pressed,
+                    pressed && styles.pressed,
                   ]}>
                   <Feather
-                    color={deleteTourMutation.isPending || !canPerformWrites ? '#9ba59a' : '#2e3a2e'}
+                    color="#2e3a2e"
                     name="more-horizontal"
                     size={16}
                   />
                 </Pressable>
-                ) : null}
               </View>
             ) : null}
           </View>
@@ -3352,6 +3349,9 @@ export default function TourDetailScreen() {
           <View style={[styles.overflowPopover, { top: insets.top + 58 }]}>
             <Text style={styles.overflowTitle}>Aktionen</Text>
 
+            <TourGpxExport name={data.tour.name} path={data.path} disabled={isFetching}
+              onExported={handleCloseViewOverflowMenu} />
+
             {canEnterEditMode ? (
               <Pressable
                 disabled={deleteTourMutation.isPending || !canPerformWrites}
@@ -3376,9 +3376,7 @@ export default function TourDetailScreen() {
                   Tour loeschen
                 </Text>
               </Pressable>
-            ) : (
-              <Text style={styles.overflowEmptyHint}>Keine verfuegbaren Aktionen.</Text>
-            )}
+            ) : null}
           </View>
         </View>
       </Modal>

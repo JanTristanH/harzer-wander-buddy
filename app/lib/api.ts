@@ -1009,7 +1009,10 @@ function normalizeTourPathEntry(value: TourPathRow) {
     travelTime_ID: safeTrim(value.travelTime_ID),
     tour_ID: safeTrim(value.tour_ID),
     rank: toRoundedNumberOrNull(value.rank) ?? 0,
-    travelTime: normalizeTravelTime(value.travelTime),
+    travelTime: normalizeTravelTime(value.travelTime ? {
+      ...value.travelTime,
+      ID: value.travelTime.ID || safeTrim(value.travelTime_ID),
+    } : undefined),
   } satisfies TourPathEntry;
 }
 
