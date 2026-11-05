@@ -113,8 +113,8 @@ export default function ProfileScreen() {
       subtitle: collectorSinceText,
       headerAction: {
         type: 'edit',
-        label: 'Profil anpassen',
-        onPress: () => router.push('/profile/badges/customize' as never),
+        label: 'Profil bearbeiten',
+        onPress: () => router.push('/profile/edit' as never),
       },
       avatarColor: '#dde9df',
       avatarImage: profilePicture,

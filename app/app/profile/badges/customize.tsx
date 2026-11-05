@@ -147,7 +147,7 @@ function Customize() {
   }
   return (
     <BadgePage
-      title="Profil bearbeiten"
+      title="Abzeichen, Titel und Rahmen"
       footer={
         data && selection ? (
           <>

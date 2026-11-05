@@ -3,7 +3,7 @@ import { Feather } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { BadgeArtwork } from '@/components/badge-artwork';
-import { badgeStyles as s } from '@/components/badge-ui';
+import { BadgeButton, badgeStyles as s } from '@/components/badge-ui';
 import type { BadgeAlbum } from '@/lib/badge-types';
 
 export function BadgeProfileSection({
@@ -21,6 +21,14 @@ export function BadgeProfileSection({
   return (
     <View style={s.card}>
       <Text style={s.heading}>{own ? 'Meine Abzeichen' : 'Abzeichen'}</Text>
+      {own ? <>
+        <BadgeButton secondary onPress={() => router.push('/profile/badges')}>
+          Alle Abzeichen entdecken
+        </BadgeButton>
+        <BadgeButton secondary onPress={() => router.push('/profile/badges/customize')}>
+          Abzeichen, Titel und Rahmen auswählen
+        </BadgeButton>
+      </> : null}
       {!album ? (
         <Text style={s.text}>
           {error

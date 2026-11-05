@@ -590,9 +590,6 @@ export function useProfileOverviewQuery() {
       getCachedSelfProfileOverview(queryClient, claims, matchingCurrentUserProfile),
     queryFn: () =>
       authorizedRequest((token) => {
-        const cachedStampsOverview = queryClient.getQueryData<StampsOverviewData>(
-          queryKeys.stampsOverview(claims?.sub)
-        );
         const prefetchedCurrentUser = matchingCurrentUserProfile
           ? {
               id: matchingCurrentUserProfile.id,
@@ -610,8 +607,7 @@ export function useProfileOverviewQuery() {
         return fetchProfileOverview(
           token,
           claims?.sub,
-          prefetchedCurrentUser,
-          cachedStampsOverview?.stamps
+          prefetchedCurrentUser
         );
       }),
   });

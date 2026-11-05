@@ -624,10 +624,10 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                 compact={false}
                 image={data.avatarImage}
               />}
+              {selectedTitle ? <View style={styles.profileBadge}><BadgeTitle title={selectedTitle} /></View> : null}
             </View>
             <View style={styles.headerBody}>
               <Text style={styles.headerName}>{data.name}</Text>
-              <BadgeTitle title={selectedTitle} />
               <Text style={styles.headerMeta}>{data.subtitle}</Text>
               {data.headerAction?.type === 'edit' ? (
                 <Pressable
@@ -1203,12 +1203,10 @@ const styles = StyleSheet.create({
   },
   profileBadge: {
     position: 'absolute',
-    right: -10,
     bottom: 0,
-    backgroundColor: '#e9e2d6',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    alignItems: 'center',
+    left: 0,
+    right: 0,
   },
   profileBadgeLabel: {
     color: '#2e3a2e',
