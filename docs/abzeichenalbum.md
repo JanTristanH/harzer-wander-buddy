@@ -95,8 +95,8 @@ Der Einstieg **Profil bearbeiten** öffnet die Bearbeitung mit der Vorschau oben
 Name und drei Abzeichenplätze werden direkt dort bearbeitet. Avatarrahmen stehen
 als erster Auswahlbereich darunter und sind zunächst eingeklappt. Titel bleiben
 unabhängig wählbar. Auswahlzustände sind neutral; Speichern ist die Primäraktion.
-Das eigene Profil zeigt die drei Plätze mit Stift oder Plus, fremde Profile zeigen
-weiterhin nur die ausgewählten Abzeichen. Die vorhandenen übrigen Profilbereiche
+Die Profilansicht zeigt die ausgewählten Abzeichen als Ansicht; Antippen öffnet
+die Abzeichendetails. Leere Plus-Plätze und Auswahlaktionen bleiben im Editor. Die vorhandenen übrigen Profilbereiche
 und der Footer bleiben erhalten.
 
 Name, Foto, drei Abzeichen, Titel und Rahmen werden auf einem gemeinsamen Screen
@@ -106,17 +106,20 @@ verwenden dieselbe Implementierung. Die Fotoauswahl übernimmt Bildberechtigunge
 übernimmt Profil und Abzeichenauswahl; Teilfehler bleiben sichtbar und wiederholbar.
 Ungespeicherte Änderungen werden beim Verlassen abgefragt.
 
-Profilbilder öffnen im Profil eine Großansicht mit Pinch-Zoom, Verschieben und
-Zoom-Tasten. Im Editor ist dafür „Profilbild groß ansehen“ vorhanden. Oberhalb der
-Timeline führt „Alle Abzeichen entdecken“ direkt zum Album.
+Profilbilder öffnen im Profil eine Großansicht mit Pinch-Zoom, Doppeltipp und
+Verschieben. Im Editor ist dafür „Profilbild groß ansehen“ vorhanden. Die über den
+Listen-Hero erreichbare Timeline führt mit „Alle Abzeichen entdecken“
+direkt zum Album. Auch im Profil führt eine grüne Album-Aktion dorthin.
 
 Aktuelle Browser-Screenshots aus der vollständigen App am lokalen Testbackend:
 
-![Gemeinsamer Profil-Editor](screenshots/profile-unified/editor.png)
+![Eigene Profilansicht mit Demo-Abzeichen](screenshots/profile-unified/profile.png)
+![Timeline hinter dem Listen-Hero](screenshots/profile-unified/timeline.png)
+![Deutlich hervorgehobene Abzeichenauswahl](screenshots/profile-unified/badge-picker.png)
 ![Profilbild mit Zoom](screenshots/profile-unified/photo-zoom.png)
 
-32 fokussierte Tests, TypeScript, ESLint für die geänderten App-Dateien und der
-vollständige Basic-Webexport sind erfolgreich. Fotoauswahl, Vorschau und Zoom-Tasten
+36 fokussierte Tests, TypeScript, ESLint für die geänderten App-Dateien und der
+vollständige Basic-Webexport sind erfolgreich. Fotoauswahl, Vorschau und Großansicht
 wurden im Browser mit einem lokalen Testkonto geprüft. Der Upload ist durch Tests
 mit API-Mocks abgedeckt; eine neue Android-Abnahme der Pinch-Geste steht aus.
 
@@ -168,3 +171,10 @@ zu prüfen; der Web-Smoke-Test ersetzt keinen iOS-/Android-Gerätetest.
 - Kein Produktionslogin oder Live-Upload und keine neue native Geräteprüfung.
   Frühere Screenshots weiter unten bzw. im Screenshotverzeichnis dokumentieren den
   vorherigen UI-Stand, nicht die neue Inline-Bearbeitung.
+
+Elf Backend-Tests für Abzeichenregeln und Demo-Seeding sind erfolgreich.
+
+Die aktuelle Demo-Vorbereitung versieht Testnutzer mit regulär freigeschalteten
+Abzeichen. Der Profilabruf übergibt denselben persönlichen Nutzerfilter wie die
+Stempelliste; der Browsercheck prüft einen Nutzer mit acht Besuchen in beiden Ansichten.
+Die grüne Auswahlaktion im Abzeichen-Picker ist von gesperrten Erfolgen unterscheidbar.

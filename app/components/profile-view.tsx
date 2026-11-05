@@ -1,4 +1,3 @@
-import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -525,7 +524,6 @@ export function ProfileErrorState({
 }
 
 export function ProfileView({ data }: { data: ProfileViewModel }) {
-  const router = useRouter();
   const badges = useBadgeAlbum(data.badgeUserId);
   const selectedFrame = badges.data?.entries.find(entry => entry.id === badges.data?.selection.frame)?.frame;
   const selectedTitle = badgeTitle(badges.data);
@@ -631,7 +629,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             </View></ProfileImageViewer>
             <View style={styles.headerBody}>
               <Text style={styles.headerName}>{data.name}</Text>
-              <Text style={styles.headerMeta}>{data.subtitle}</Text>
+              {data.subtitle ? <Text style={styles.headerMeta}>{data.subtitle}</Text> : null}
               {data.headerAction?.type === 'edit' ? (
                 <Pressable
                   onPress={data.headerAction.onPress}
@@ -808,9 +806,6 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
           )}
         </ProfileSection>
 
-        {data.mode === 'self' ? <Pressable accessibilityRole="button" onPress={() => router.push('/profile/badges')} style={styles.editButton}>
-          <Text style={styles.editButtonLabel}>Alle Abzeichen entdecken</Text>
-        </Pressable> : null}
         {data.timeline ? (
           <ProfileTimelineSummarySection
             onOpenAll={data.timeline.onOpenAll}

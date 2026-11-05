@@ -106,7 +106,7 @@ export type TourDetailData = {
 export async function fetchStampsOverviewData(
   accessToken: string,
   userId?: string,
-  stampboxFetchMode: StampboxFetchMode = 'default',
+  stampboxFetchMode: StampboxFetchMode = 'validToday',
   groupUserIds?: string[]
 ): Promise<StampsOverviewData> {
   const effectiveGroupUserIds = canonicalGroupUserIds(userId, groupUserIds);

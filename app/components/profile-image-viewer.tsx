@@ -1,6 +1,7 @@
+import { Feather } from '@expo/vector-icons';
 import React, { useRef, useState } from 'react';
 import { Image } from 'expo-image';
-import { Modal, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
@@ -13,6 +14,7 @@ export function ProfileImageViewer({ uri, children }: { uri?: string; children: 
   const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 });
   const current = useRef(transform);
   current.current = transform;
+  const lastTap = useRef(0);
   const origin = useRef({ scale: 1, x: 0, y: 0, distance: 0 });
   const responder = useRef(
     PanResponder.create({
@@ -27,6 +29,18 @@ export function ProfileImageViewer({ uri, children }: { uri?: string; children: 
               ? Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY)
               : 0,
         };
+      },
+      onPanResponderRelease: (_, gesture) => {
+        if (origin.current.distance > 0) {
+          lastTap.current = 0;
+          return;
+        }
+        if (Math.abs(gesture.dx) + Math.abs(gesture.dy) > 8) return;
+        const now = Date.now();
+        if (now - lastTap.current < 300) {
+          setTransform((t) => ({ scale: t.scale > 1 ? 1 : 2, x: 0, y: 0 }));
+          lastTap.current = 0;
+        } else lastTap.current = now;
       },
       onPanResponderMove: (event, gesture) => {
         const touches = event.nativeEvent.touches;
@@ -72,34 +86,10 @@ export function ProfileImageViewer({ uri, children }: { uri?: string; children: 
               onPress={() => setVisible(false)}
               style={styles.button}
             >
-              <Text style={styles.text}>Schließen</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Verkleinern"
-              onPress={() => setTransform((t) => ({ scale: clamp(t.scale - 0.5), x: 0, y: 0 }))}
-              style={styles.button}
-            >
-              <Text style={styles.text}>−</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Vergrößern"
-              onPress={() => setTransform((t) => ({ ...t, scale: clamp(t.scale + 0.5) }))}
-              style={styles.button}
-            >
-              <Text style={styles.text}>+</Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Zoom zurücksetzen"
-              onPress={() => setTransform({ scale: 1, x: 0, y: 0 })}
-              style={styles.button}
-            >
-              <Text style={styles.text}>Zurücksetzen</Text>
+              <Feather name="x" size={24} color="#fff" />
             </Pressable>
           </View>
-          <View style={styles.imageArea} {...responder.panHandlers}>
+          <View testID="profile-image-gestures" style={styles.imageArea} {...responder.panHandlers}>
             {uri ? (
               <Image
                 testID="full-profile-image"
@@ -118,9 +108,6 @@ export function ProfileImageViewer({ uri, children }: { uri?: string; children: 
               />
             ) : null}
           </View>
-          <Text style={[styles.text, { textAlign: 'center', padding: 12 }]}>
-            Mit zwei Fingern zoomen, zum Verschieben ziehen.
-          </Text>
         </SafeAreaView>
       </Modal>
     </>
@@ -130,6 +117,5 @@ const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#111' },
   controls: { flexDirection: 'row', flexWrap: 'wrap', padding: 10, gap: 8 },
   button: { padding: 12, minHeight: 44, backgroundColor: '#333', borderRadius: 12 },
-  text: { color: '#fff', fontSize: 15 },
   imageArea: { flex: 1, overflow: 'hidden' },
 });

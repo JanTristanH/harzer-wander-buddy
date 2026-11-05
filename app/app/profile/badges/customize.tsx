@@ -367,7 +367,7 @@ function Customize() {
                       <Text style={[s.text, { fontSize: 13, textAlign: 'center' }]}>
                         {entry.name}
                       </Text>
-                      <Text style={{ fontSize: 11, color: '#647064' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: entry.unlocked ? '#fff' : '#647064', backgroundColor: entry.unlocked ? '#2e6b4b' : '#eceae2', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 18, overflow: 'hidden' }}>
                         {picker !== null && selection.featured[picker] === entry.id
                           ? '✓ Auf diesem Platz'
                           : entry.unlocked

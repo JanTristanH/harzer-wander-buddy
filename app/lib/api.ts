@@ -3265,16 +3265,14 @@ export async function fetchProfileOverview(
   } | null,
   prefetchedStamps?: Stampbox[]
 ) {
-  const resolvedCurrentUserId = safeTrim(currentUserId || prefetchedCurrentUser?.id);
-  const [currentUser, stamps, stampings, friendships] = await Promise.all([
-    prefetchedCurrentUser?.id
-      ? Promise.resolve({
-          ID: prefetchedCurrentUser.id,
-          name: prefetchedCurrentUser.name,
-          picture: prefetchedCurrentUser.picture,
-        } satisfies User)
-      : fetchCurrentUserRecord(accessToken),
-    prefetchedStamps ? Promise.resolve(prefetchedStamps) : fetchStampboxes(accessToken),
+  const currentUser = prefetchedCurrentUser?.id
+    ? { ID: prefetchedCurrentUser.id, name: prefetchedCurrentUser.name, picture: prefetchedCurrentUser.picture } satisfies User
+    : await fetchCurrentUserRecord(accessToken);
+  const resolvedCurrentUserId = safeTrim(currentUserId || currentUser.ID);
+  const [stamps, stampings, friendships] = await Promise.all([
+    prefetchedStamps
+      ? Promise.resolve(prefetchedStamps)
+      : fetchStampboxes(accessToken, 'validToday', resolvedCurrentUserId ? [resolvedCurrentUserId] : undefined),
     resolvedCurrentUserId
       ? fetchCollection<Stamping>(accessToken, 'Stampings', {
           select: ['ID', 'visitedAt', 'createdAt', 'createdBy', 'stamp_ID'],

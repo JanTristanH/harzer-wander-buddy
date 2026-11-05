@@ -367,3 +367,14 @@ aus `db/doNotDeploy-data` in eine separate SQLite-Datenbank importiert. Die
 Zeilenzahlen aller Tabellen stimmen mit CAPs CSV-Parser überein, darunter 222
 Stempelstellen, 211 Parkplätze und 4.358 Reisezeit-Datensätze. Die Quelldaten und
 vorhandenen lokalen Datenbanken wurden dabei nicht verändert.
+
+
+### Abzeichen der Demo-Nutzer
+
+Beim Bau der Preview-Datenbank ergänzt `util/seedPreviewBadges.js` für die
+lokalen Testkonten und die vorhandenen `userN@hwb.de`-Demoidentitäten passende
+Stempelbesuche und gültige Auswahlen von Abzeichen, Titel und Rahmen. Die Nutzer
+zeigen unterschiedliche Fortschritte (mindestens 8, 16, 24 oder 50 Stempel).
+Vorhandene Besuche bleiben erhalten; wiederholtes Seeding dupliziert sie nicht.
+Die Auswahl durchläuft dieselbe Freischaltungsprüfung wie die App. Das Skript
+wird ausschließlich beim Preview-Bau unter `dev-basic` ausgeführt.
