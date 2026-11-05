@@ -287,6 +287,11 @@ svg.leaflet-zoom-animated { will-change: transform; }
   overflow: visible;
 }
 .hwb-canvas-marker-target { background: transparent; border: 0; }
+/* Transparent pin corners must pass clicks through to the map. Keep compact
+   dots unchanged, and clip only the invisible canvas targets / bitmap bounds. */
+.hwb-marker-pin-target {
+  clip-path: polygon(50% 0%, 73% 5%, 88% 20%, 90% 44%, 77% 68%, 50% 100%, 23% 68%, 10% 44%, 12% 20%, 27% 5%);
+}
 .hwb-canvas-marker-target .hwb-css-marker__label {
   clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden;
   padding: 0; position: absolute; white-space: nowrap;
@@ -522,12 +527,13 @@ function createIcon(options: {
 
   const icon = imageUri && !selected
     ? L.icon({
+        className: 'hwb-marker-pin-target',
         iconAnchor,
         iconSize: [width, height],
         iconUrl: imageUri,
       })
     : L.divIcon({
-        className: `${canvas ? 'hwb-canvas-marker-target' : 'hwb-leaflet-div-icon'}${selected && !canvas ? ' hwb-map-marker-selected' : ''}`,
+        className: `${canvas ? 'hwb-canvas-marker-target' : 'hwb-leaflet-div-icon'}${size > WEB_MARKER_SIZE_COMPACT ? ' hwb-marker-pin-target' : ''}${selected && !canvas ? ' hwb-map-marker-selected' : ''}`,
         html: canvas
           ? `<span aria-hidden="true" class="hwb-css-marker__label">${(normalizedLabel ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')}</span>`
           : selected ? createSelectedMapPinHtml() : createCssMapMarkerHtml({ color, label: normalizedLabel, size }),

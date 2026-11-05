@@ -50,13 +50,13 @@ function updateBody(body, section) {
   return `${body.trimEnd()}${body.trim() ? '\n\n' : ''}${block}`;
 }
 
-function previewSection({ sha, url, apkUrl, runUrl, active, removed }) {
+function previewSection({ sha, url, apkUrl, runUrl, active, removed, androidPending = false }) {
   if (removed) return '### PR-Preview\n\nPreview deaktiviert; die zugehörigen Cloud-Run-Dienste wurden entfernt.\n\nMit dem Label `preview` erneut starten.';
   return [
     '### PR-Preview', '',
     `- Commit: \`${sha}\``,
-    active ? `- [Live-Web-App](${url}/app/rnweb)` : '- Live-Web-App: nicht freigegeben (Aktivierung, Prüfung oder APK-Build nicht erfolgreich).',
-    apkUrl ? `- [Android-APK + Backend-Manifest herunterladen](${apkUrl}) (GitHub-Anmeldung; ZIP entpacken; 14 Tage verfügbar)` : '- Android-APK: Build nicht erfolgreich; siehe Workflow.',
+    active ? `- [Live-Web-App](${url}/app/rnweb)` : '- Live-Web-App: nicht freigegeben (Aktivierung oder Prüfung nicht erfolgreich).',
+    apkUrl ? `- [Android-APK + Backend-Manifest herunterladen](${apkUrl}) (GitHub-Anmeldung; ZIP entpacken; 14 Tage verfügbar)` : androidPending ? '- Android-APK: Build läuft; der Download-Link folgt nach Abschluss.' : '- Android-APK: Build nicht erfolgreich; siehe Workflow.',
     `- [Workflow und Logs](${runUrl})`, '',
     'Ein Dienst und eine feste URL pro PR; das Backend wird bei neuen Builds ersetzt. Automatische Updates nur mit Label `preview`. Label entfernen zum Aufräumen. Manuelle Starts sind ebenfalls möglich.',
   ].join('\n');

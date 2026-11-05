@@ -677,7 +677,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
   }, [configError]);
 
   useEffect(() => {
-    if (configError) {
+    if (configError || isOffline) {
       discoveryRef.current = null;
       discoveryPromiseRef.current = null;
       return;
@@ -686,7 +686,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
     void resolveDiscovery().catch((error) => {
       console.warn('Failed to preload Auth0 discovery document.', error);
     });
-  }, [configError, resolveDiscovery]);
+  }, [configError, isOffline, resolveDiscovery]);
 
   const applyCurrentUserProfileState = useCallback(
     (profile: CurrentUserProfileData | null, accessToken?: string | null) => {
@@ -783,7 +783,11 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
         } satisfies ResolveValidTokenResponseResult;
       }
 
-      if (!isOffline && !isTokenFresh(tokenResponse) && !tokenResponse.refreshToken) {
+      if (isOffline) {
+        return { tokenResponse, sessionMode: 'offline_grace' } satisfies ResolveValidTokenResponseResult;
+      }
+
+      if (!isTokenFresh(tokenResponse) && !tokenResponse.refreshToken) {
         logTokenResponseMetadata('expired cached token cannot refresh', tokenResponse);
         await clearTokenResponse();
         return {
@@ -840,19 +844,23 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
     [auth0ClientId, isOffline, resolveDiscovery]
   );
 
+  // Startup and outbox consumers share one refresh, including token rotation.
+  const resolveSession = useCallback(() => {
+    if (!refreshPromiseRef.current) {
+      refreshPromiseRef.current = resolveValidTokenResponse().finally(() => {
+        refreshPromiseRef.current = null;
+      });
+    }
+    return refreshPromiseRef.current;
+  }, [resolveValidTokenResponse]);
+
   const getValidAccessToken = useCallback(async () => {
     if (configError) {
       return null;
     }
 
     try {
-      if (!refreshPromiseRef.current) {
-        refreshPromiseRef.current = resolveValidTokenResponse().finally(() => {
-          refreshPromiseRef.current = null;
-        });
-      }
-
-      const resolved = await refreshPromiseRef.current;
+      const resolved = await resolveSession();
       if (resolved.tokenResponse) {
         setAuthState(toAuthState(resolved.tokenResponse));
         setSessionMode(resolved.sessionMode);
@@ -886,7 +894,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
 
       throw error;
     }
-  }, [configError, resolveValidTokenResponse]);
+  }, [configError, resolveSession]);
 
   useEffect(() => {
     let isMounted = true;
@@ -936,18 +944,16 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
           return;
         }
 
-        if (!isOffline && !isTokenFresh(cachedTokenResponse) && !cachedTokenResponse.refreshToken) {
-          logTokenResponseMetadata('startup found expired cached token without refresh token', cachedTokenResponse);
-          await clearTokenResponse();
-          applySessionFromToken(null, 'online');
-          return;
-        }
-
         logTokenResponseMetadata('startup restored cached token', cachedTokenResponse);
+        // Local restoration must not depend on discovery, refresh or profile requests.
+        applySessionFromToken(cachedTokenResponse, isOffline ? 'offline_grace' : 'online');
         if (isMounted) {
           setHasCompletedOnboarding(await loadInitialOnboardingState(cachedTokenResponse.accessToken));
+          const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(
+            getCurrentUserProfileQueryKey(cachedTokenResponse.accessToken)
+          );
+          if (isMounted && cachedProfile) applyCurrentUserProfileState(cachedProfile, cachedTokenResponse.accessToken);
         }
-        applySessionFromToken(cachedTokenResponse, isOffline ? 'offline_grace' : 'online');
       } catch (error) {
         const shouldInvalidateSession = isUnauthorizedError(error);
 
@@ -966,7 +972,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
       }
 
       try {
-        const resolved = await resolveValidTokenResponse();
+        const resolved = await resolveSession();
         if (!resolved.tokenResponse) {
           applySessionFromToken(null, 'online');
           return;
@@ -1014,7 +1020,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
     return () => {
       isMounted = false;
     };
-  }, [configError, isOffline, preloadCurrentUserProfileForToken, resolveValidTokenResponse]);
+  }, [applyCurrentUserProfileState, configError, isOffline, preloadCurrentUserProfileForToken, resolveSession]);
 
   useEffect(() => {
     if (Platform.OS === 'web' || typeof AppState.addEventListener !== 'function') {

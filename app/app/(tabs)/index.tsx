@@ -1,4 +1,5 @@
 import { Design } from '@/constants/theme';
+import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -28,10 +29,12 @@ import { CompletionConfetti, useCompletionConfetti } from '@/components/completi
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
 import { StampListItem } from '@/components/stamp-list-item';
+import { StampSelectionCelebration, StampSelectionFill } from '@/components/stamp-selection-feedback';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
 import { createStamping, deleteStamping, fetchOwnStampings, type Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useReduceMotion } from '@/hooks/use-reduce-motion';
+import { STAMP_SELECTION_FILL_MS } from '@/lib/stamp-selection-motion';
 import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
@@ -150,11 +153,24 @@ export default function StampsScreen() {
   const router = useRouter();
   const reduceMotion = useReduceMotion();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
+  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, isOffline, logout } = useAuth();
   const visibleFilters = useMemo(() => isAuthenticated ? FILTERS : FILTERS.filter((filter) => filter.key !== 'visited' && filter.key !== 'open'), [isAuthenticated]);
+  const reducedMotion = reduceMotion;
   const queryClient = useQueryClient();
+  const offlineVisits = useOfflineVisits();
+  const canRecordVisit = offlineVisits.isNative ? offlineVisits.canRecord : canPerformWrites || offlineVisits.canRecord;
   const insets = useSafeAreaInsets();
   const [selectionMode, setSelectionMode] = useState(false);
+  const [heroHeight, setHeroHeight] = useState<number>();
+  const [selectionPinned, setSelectionPinned] = useState(false);
+  const [stampProgress, setStampProgress] = useState<number | null>(null);
+  const [celebrationCount, setCelebrationCount] = useState(0);
+  const finishCelebration = useCallback(() => setCelebrationCount(0), []);
+  const mounted = React.useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; };
+  }, []);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isBulkBusy, setIsBulkBusy] = useState(false);
   const bulkBusyRef = React.useRef(false);
@@ -222,21 +238,47 @@ export default function StampsScreen() {
     cancelSelection();
   }, [activeFilter, selectedFriendKey, cancelSelection]);
 
-  const beginSelection = useCallback((stampId: string) => {
+  const beginSelection = useCallback((stampId?: string) => {
     if (!isAuthenticated || bulkBusyRef.current) return;
+    setCelebrationCount(0);
+    setIsFastScrollerVisible(false);
+    setIsThumbDragging(false);
+    setThumbRatioOverride(null);
     setBulkMessage('');
     setToastVisible(false);
     setSelectionMode(true);
-    setSelectedIds((ids) => ids.includes(stampId) ? ids : [...ids, stampId]);
-    if (!selectedIds.includes(stampId)) {
+    setSelectedIds((ids) => stampId ? (ids.includes(stampId) ? ids : [...ids, stampId]) : []);
+    if (stampId && !selectedIds.includes(stampId)) {
       void triggerHaptic('selectionChange').catch(() => {
         // Selection remains usable when native feedback is unavailable.
       });
     }
   }, [isAuthenticated, selectedIds]);
 
+  const startSelection = useCallback(() => {
+    if (bulkBusyRef.current) return;
+    if (!isAuthenticated) { router.push('/login' as never); return; }
+    beginSelection();
+  }, [beginSelection, isAuthenticated, router]);
+
+  const renderSelectionButton = useCallback((loading = false) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={selectionMode ? 'Auswahlmodus schließen' : 'Stempelstellen auswählen'}
+      accessibilityHint={!isAuthenticated ? 'Zum Auswählen zuerst anmelden' : undefined}
+      accessibilityState={{ expanded: selectionMode }}
+      disabled={loading || isBulkBusy}
+      hitSlop={4}
+      onPress={selectionMode ? cancelSelection : startSelection}
+      style={styles.headerSelectionButton}
+      testID="stamp-start-selection">
+      <Text style={styles.headerSelectionLabel}>{selectionMode ? 'Abbrechen' : 'Auswählen'}</Text>
+    </Pressable>
+  ), [cancelSelection, isAuthenticated, isBulkBusy, selectionMode, startSelection]);
+
   const selectedStamps = stamps.filter((stamp) => selectedIds.includes(stamp.ID));
   const stampableCount = selectedStamps.length;
+  const hasPendingSelection = offlineVisits.entries.some((entry) => selectedIds.includes(entry.stamp.ID));
   const removableCount = selectedStamps.filter((stamp) => stamp.hasVisited).length;
   const removalVisitCount = removalPlan.reduce((count, place) => count + place.visitIds.length, 0);
 
@@ -247,10 +289,11 @@ export default function StampsScreen() {
   }, []);
 
   const applyBulkAction = useCallback(async (remove: boolean, plan?: RemovalPlan) => {
-    if (!accessToken || !currentUserProfile?.id || !canPerformWrites || bulkBusyRef.current) return;
+    if (!accessToken || (!offlineVisits.canRecord && !currentUserProfile?.id) || (remove ? (!canPerformWrites || hasPendingSelection) : !canRecordVisit) || bulkBusyRef.current) return;
     if (remove && !plan) return;
     bulkBusyRef.current = true;
     setIsBulkBusy(true);
+    setStampProgress(remove ? null : 0.08);
     setToastVisible(false);
     const targetIds = remove ? (plan ?? []).map((place) => place.stampId) : selectedIds;
     const failedIds: string[] = [];
@@ -265,9 +308,14 @@ export default function StampsScreen() {
               removedVisits++;
             }
           } else {
-            await createStamping(accessToken, stampId);
+            const stamp = stamps.find((item) => item.ID === stampId);
+            if (offlineVisits.canRecord) {
+              if (!stamp) throw new Error('Die Stempelstelle ist nicht lokal verfügbar.');
+              await offlineVisits.record(stamp);
+            } else await createStamping(accessToken, stampId);
           }
           completed++;
+          if (!remove && mounted.current) setStampProgress(0.08 + 0.82 * completed / targetIds.length);
         } catch (nextError) {
           failedIds.push(stampId);
           if (nextError instanceof Error && nextError.name === 'UnauthorizedError') {
@@ -276,7 +324,18 @@ export default function StampsScreen() {
           }
         }
       }
+      if (!remove && completed > 0 && failedIds.length === 0) {
+        setStampProgress(1);
+        await new Promise<void>((resolve) => setTimeout(resolve, reducedMotion ? 120 : STAMP_SELECTION_FILL_MS));
+      }
       await queryClient.invalidateQueries();
+      if (!mounted.current) return;
+      if (!remove && completed > 0 && failedIds.length === 0) {
+        setCelebrationCount(completed);
+        // Returning to progress is intentional only after a successful explicit action.
+        listRef.current?.scrollToOffset({ offset: 0, animated: false });
+        void triggerHaptic('poiAdded').catch(() => {});
+      }
       setSelectedIds(failedIds);
       setSelectionMode(failedIds.length > 0);
       setRemovalPlan([]);
@@ -284,15 +343,20 @@ export default function StampsScreen() {
         ? `${completed} erledigt. ${failedIds.length} fehlgeschlagen. Bitte erneut versuchen.`
         : remove
           ? `${removedVisits} ${removedVisits === 1 ? 'Besuch' : 'Besuche'} entfernt.`
-          : `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} gestempelt.`);
+          : offlineVisits.canRecord && isOffline
+            ? `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} auf diesem Gerät gespeichert.`
+            : `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} gestempelt.`);
     } finally {
       bulkBusyRef.current = false;
-      setIsBulkBusy(false);
+      if (mounted.current) {
+        setIsBulkBusy(false);
+        setStampProgress(null);
+      }
     }
-  }, [accessToken, canPerformWrites, currentUserProfile?.id, logout, queryClient, selectedIds, showBulkToast]);
+  }, [accessToken, canPerformWrites, canRecordVisit, hasPendingSelection, isOffline, offlineVisits, stamps, currentUserProfile?.id, logout, queryClient, reducedMotion, selectedIds, showBulkToast]);
 
   const prepareRemoval = useCallback(async () => {
-    if (!accessToken || !currentUserProfile?.id || !canPerformWrites || bulkBusyRef.current) return;
+    if (!accessToken || !currentUserProfile?.id || !canPerformWrites || hasPendingSelection || bulkBusyRef.current) return;
     bulkBusyRef.current = true;
     setIsBulkBusy(true);
     setToastVisible(false);
@@ -321,7 +385,7 @@ export default function StampsScreen() {
       showBulkToast('Keine Besuche zum Entfernen vorhanden.');
       await queryClient.invalidateQueries();
     }
-  }, [accessToken, canPerformWrites, currentUserProfile?.id, selectedIds, logout, showBulkToast, queryClient]);
+  }, [accessToken, canPerformWrites, hasPendingSelection, currentUserProfile?.id, selectedIds, logout, showBulkToast, queryClient]);
 
   useEffect(() => {
     let isMounted = true;
@@ -480,7 +544,7 @@ export default function StampsScreen() {
       thumbTop + thumbHeight / 2 - FAST_SCROLLER_PREVIEW_HEIGHT / 2
     )
   );
-  const scrollerOpacity = isFastScrollerVisible || isThumbDragging ? 1 : 0;
+  const scrollerOpacity = !selectionMode && (isFastScrollerVisible || isThumbDragging) ? 1 : 0;
 
   const clearFastScrollerHideTimeout = React.useCallback(() => {
     if (!hideFastScrollerTimeoutRef.current) {
@@ -492,13 +556,13 @@ export default function StampsScreen() {
   }, []);
 
   const showFastScroller = React.useCallback(() => {
-    if (!hasScrollableList) {
+    if (!hasScrollableList || selectionMode) {
       return;
     }
 
     clearFastScrollerHideTimeout();
     setIsFastScrollerVisible(true);
-  }, [clearFastScrollerHideTimeout, hasScrollableList]);
+  }, [clearFastScrollerHideTimeout, hasScrollableList, selectionMode]);
 
   const scheduleFastScrollerHide = React.useCallback(() => {
     clearFastScrollerHideTimeout();
@@ -634,8 +698,14 @@ export default function StampsScreen() {
     setThumbRatioOverride(null);
   }, [clearFastScrollerHideTimeout, hasScrollableList]);
 
+  const lastProgressRun = React.useRef<number | null>(null);
+  const previousVisitedCount = React.useRef(0);
   useEffect(() => {
     let isActive = true;
+    const replay = lastProgressRun.current !== progressAnimationRunId;
+    lastProgressRun.current = progressAnimationRunId;
+    const fromCount = replay ? 0 : previousVisitedCount.current;
+    previousVisitedCount.current = visitedCount;
     const listenerId = visitedCountAnimation.addListener(({ value }) => {
       if (!isActive) {
         return;
@@ -647,9 +717,9 @@ export default function StampsScreen() {
 
     progressFillAnimation.stopAnimation();
     visitedCountAnimation.stopAnimation();
-    progressFillAnimation.setValue(0);
-    visitedCountAnimation.setValue(0);
-    setAnimatedVisitedCount(0);
+    progressFillAnimation.setValue(totalCount > 0 ? fromCount / totalCount : 0);
+    visitedCountAnimation.setValue(fromCount);
+    setAnimatedVisitedCount(fromCount);
 
     if (totalCount === 0) {
       return () => {
@@ -671,13 +741,13 @@ export default function StampsScreen() {
     Animated.parallel([
       Animated.timing(progressFillAnimation, {
         toValue: progressRatio,
-        duration: PROGRESS_FILL_DURATION_MS,
+        duration: replay ? PROGRESS_FILL_DURATION_MS : 650,
         easing: PROGRESS_FILL_EASING,
         useNativeDriver: false,
       }),
       Animated.timing(visitedCountAnimation, {
         toValue: visitedCount,
-        duration: VISITED_COUNT_ROLL_OVER_DURATION_MS,
+        duration: replay ? VISITED_COUNT_ROLL_OVER_DURATION_MS : 650,
         easing: VISITED_COUNT_ROLL_OVER_EASING,
         useNativeDriver: false,
       }),
@@ -729,18 +799,47 @@ export default function StampsScreen() {
     [router, selectionMode, selectedIds, cancelSelection]
   );
 
+  const renderSelectionToolbar = useCallback((pinned = false) => (
+        <View style={[styles.selectionToolbar, !pinned && { minHeight: heroHeight }]} testID={pinned ? "stamp-selection-toolbar-pinned" : "stamp-selection-toolbar"}>
+          <View style={styles.selectionTitleRow}>
+            <Text style={styles.selectionCount}>{selectedIds.length} ausgewählt</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Auswahl beenden" disabled={isBulkBusy} onPress={cancelSelection} style={styles.selectionButton}>
+              <Text style={styles.selectionButtonText}>Abbrechen</Text>
+            </Pressable>
+          </View>
+          <Text style={styles.totalLabel}>{isBulkBusy ? 'Wird gespeichert…' : !canPerformWrites ? (offlineVisits.canRecord ? 'Besuche werden auf diesem Gerät gespeichert. Entfernen ist nur online möglich.' : 'Stempeln und Entfernen sind nur online möglich.') : 'Weitere Einträge antippen'}</Text>
+          <View style={styles.selectionActions}>
+            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canRecordVisit || stampableCount === 0} onPress={() => { void applyBulkAction(false); }} style={[styles.selectionButton, styles.stampPrimary, (isBulkBusy || !canRecordVisit || stampableCount === 0) && styles.selectionDisabled]}>
+              {stampProgress !== null ? <StampSelectionFill progress={stampProgress} /> : null}
+              <Text style={[styles.selectionButtonText, styles.stampPrimaryText]}>Stempeln ({stampableCount})</Text>
+            </Pressable>
+            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || hasPendingSelection || removableCount === 0} onPress={() => { void prepareRemoval(); }} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || hasPendingSelection || removableCount === 0) && styles.selectionDisabled]}>
+              <Text style={styles.selectionButtonText}>Entfernen ({removableCount})</Text>
+            </Pressable>
+          </View>
+
+        </View>
+  ), [heroHeight, selectedIds.length, cancelSelection, isBulkBusy, canPerformWrites, canRecordVisit, hasPendingSelection, offlineVisits.canRecord, stampableCount, removableCount, applyBulkAction, prepareRemoval, stampProgress]);
+
   const renderIntro = useCallback(() => (
     <View style={styles.introContent}>
       <View style={styles.titleRow} testID="stamps-title-row">
-        <Text style={styles.title}>Stempelstellen</Text>
-        {isAuthenticated ? (
-          <GroupSelector testID="stamps-header-group-selector" />
-        ) : (
-          <Text style={styles.totalLabel}>{totalCount} gesamt</Text>
-        )}
+        <View style={styles.headerTitleGroup}>
+          <Text style={styles.title}>Stempelstellen</Text>
+          {isAuthenticated ? <GroupSelector testID="stamps-header-group-selector" /> : null}
+        </View>
+        {renderSelectionButton()}
       </View>
 
-      <Pressable
+      <View
+        testID="stamp-hero-slot"
+        accessibilityElementsHidden={selectionMode && selectionPinned}
+        importantForAccessibility={selectionMode && selectionPinned ? "no-hide-descendants" : "auto"}
+        pointerEvents={selectionMode && selectionPinned ? "none" : "auto"}
+        onLayout={(event) => { if (!selectionMode) setHeroHeight(event.nativeEvent.layout.height); }}
+        style={selectionMode ? { minHeight: heroHeight } : undefined}>
+      {selectionMode ? renderSelectionToolbar() : <Pressable
+        testID="stamp-progress-hero"
         accessibilityRole="button"
         onPress={() => router.push((isAuthenticated ? '/profile/timeline/self' : '/login') as never)}
         style={({ pressed }) => [pressed && styles.progressCardPressed]}>
@@ -768,11 +867,14 @@ export default function StampsScreen() {
               : 'Noch keine besuchten Stempelstellen'}
           </Text>
         </LinearGradient>
-      </Pressable>
+      </Pressable>}
+      {!selectionMode && celebrationCount > 0 ? <StampSelectionCelebration count={celebrationCount} onFinish={finishCelebration} /> : null}
+      </View>
 
       {isRefreshing ? <Text style={styles.refreshHint}>Aktualisiere Daten im Hintergrund...</Text> : null}
     </View>
   ), [
+    selectionMode, selectionPinned, heroHeight, renderSelectionToolbar, renderSelectionButton, celebrationCount, finishCelebration,
     isAuthenticated,
     isRefreshing,
     lastVisited,
@@ -969,12 +1071,11 @@ export default function StampsScreen() {
         <View style={styles.loadingContent}>
           <View style={styles.loadingIntro}>
             <View style={styles.loadingTitleRow} testID="stamps-title-row">
-              <Text style={styles.title}>Stempelstellen</Text>
-              {isAuthenticated ? (
-                <GroupSelector testID="stamps-header-group-selector" />
-              ) : (
-                <Text style={styles.totalLabel}>-- gesamt</Text>
-              )}
+              <View style={styles.headerTitleGroup}>
+                <Text style={styles.title}>Stempelstellen</Text>
+                {isAuthenticated ? <GroupSelector testID="stamps-header-group-selector" /> : null}
+              </View>
+              {renderSelectionButton(true)}
             </View>
             <LinearGradient colors={[Design.color.brandDeep, Design.color.brand]} style={styles.loadingProgressCard}>
               <SkeletonBlock height={14} radius={7} width="34%" />
@@ -1071,25 +1172,8 @@ export default function StampsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {selectionMode ? (
-        <View style={styles.selectionToolbar} testID="stamp-selection-toolbar">
-          <View style={styles.titleRow}>
-            <Text style={styles.selectionCount}>{selectedIds.length} ausgewählt</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Auswahl beenden" disabled={isBulkBusy} onPress={cancelSelection} style={styles.selectionButton}>
-              <Text style={styles.selectionButtonText}>Abbrechen</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.totalLabel}>Deine Stempel · Weitere Einträge antippen</Text>
-          <View style={styles.selectionActions}>
-            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || stampableCount === 0} onPress={() => { void applyBulkAction(false); }} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || stampableCount === 0) && styles.selectionDisabled]}>
-              <Text style={styles.selectionButtonText}>Stempeln ({stampableCount})</Text>
-            </Pressable>
-            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || removableCount === 0} onPress={() => { void prepareRemoval(); }} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || removableCount === 0) && styles.selectionDisabled]}>
-              <Text style={styles.selectionButtonText}>Entfernen ({removableCount})</Text>
-            </Pressable>
-          </View>
-          {isBulkBusy ? <Text style={styles.totalLabel}>Wird gespeichert…</Text> : !canPerformWrites ? <Text style={styles.filterHint}>Stempeln und Entfernen sind nur online möglich.</Text> : null}
-        </View>
+      {selectionMode && selectionPinned ? (
+        <View style={[styles.pinnedSelection, { top: insets.top + 10 }]}>{renderSelectionToolbar(true)}</View>
       ) : null}
       <StampingSuccessToast key={toastRunId} message={bulkMessage} visible={toastVisible} onHide={() => setToastVisible(false)} topOffset={insets.top + (selectionMode ? 140 : 10)} />
       <Modal visible={showRemoveConfirmation} transparent animationType="fade" onRequestClose={() => setShowRemoveConfirmation(false)}>
@@ -1101,7 +1185,7 @@ export default function StampsScreen() {
               <Pressable accessibilityRole="button" onPress={() => setShowRemoveConfirmation(false)} style={styles.selectionButton}>
                 <Text style={styles.selectionButtonText}>Behalten</Text>
               </Pressable>
-              <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || removableCount === 0} onPress={() => {
+              <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || hasPendingSelection || removableCount === 0} onPress={() => {
                 setShowRemoveConfirmation(false);
                 void applyBulkAction(true, removalPlan);
               }} style={styles.selectionButton}>
@@ -1113,6 +1197,7 @@ export default function StampsScreen() {
       </Modal>
       <View style={styles.listContainer}>
         <FlatList
+          testID="stamp-list"
           keyboardShouldPersistTaps="handled"
           ref={listRef}
           data={listItems}
@@ -1133,6 +1218,8 @@ export default function StampsScreen() {
             }
           }}
           onScroll={({ nativeEvent }) => {
+            const pin = nativeEvent.contentOffset.y > introHeight - 40;
+            setSelectionPinned((current) => current === pin ? current : pin);
             if (!isThumbDragging) {
               updatePreviewFromOffset(nativeEvent.contentOffset.y);
             }
@@ -1180,8 +1267,8 @@ export default function StampsScreen() {
           showsVerticalScrollIndicator={false}
           style={styles.list}
         />
-        {hasScrollableList ? (
-          <View pointerEvents="box-none" style={[styles.fastScrollerOverlay, { top: fastScrollerTopInset }]}>
+        {hasScrollableList && !selectionMode ? (
+          <View testID="stamp-fast-scroller" pointerEvents="box-none" style={[styles.fastScrollerOverlay, { top: fastScrollerTopInset }]}>
             <View pointerEvents="box-none" style={styles.fastScrollerRail}>
               <View
                 pointerEvents="none"
@@ -1206,7 +1293,14 @@ export default function StampsScreen() {
 const styles = StyleSheet.create({
   confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.35)' },
   confirmCard: { width: '100%', maxWidth: 420, padding: 24, borderRadius: 22, backgroundColor: '#f5f3ee', gap: 20 },
-  selectionToolbar: { paddingHorizontal: 20, paddingVertical: 12, gap: 8, backgroundColor: '#e2eee6', zIndex: 20 },
+  headerTitleGroup: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  headerSelectionButton: { minHeight: 40, minWidth: 86, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderWidth: 1, borderColor: '#d9e2d9', borderRadius: 999 },
+  headerSelectionLabel: { color: '#5c745f', fontSize: 12, fontWeight: '600' },
+  selectionToolbar: { padding: 12, gap: 6, justifyContent: 'center', borderRadius: 22, backgroundColor: '#e2eee6', zIndex: 20 },
+  selectionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  pinnedSelection: { position: 'absolute', top: 0, left: 20, right: 20, zIndex: 30, elevation: 8 },
+  stampPrimary: { backgroundColor: '#2e6b4b', minHeight: 48, overflow: 'hidden', justifyContent: 'center', flexGrow: 1, alignItems: 'center' },
+  stampPrimaryText: { color: '#ffffff' },
   selectionCount: { color: '#1e2a1e', fontSize: 18, fontWeight: '700' },
   selectionActions: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
   selectionButton: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: '#ffffff' },
