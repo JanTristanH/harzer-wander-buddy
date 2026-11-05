@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList } from '@/components/friends-list';
+import { ProfileImageViewer } from '@/components/profile-image-viewer';
 import { BadgeTitle } from '@/components/badge-title';
 import { BadgeArtwork } from '@/components/badge-artwork';
 import { BadgeProfileSection } from '@/components/badge-profile-section';
@@ -523,6 +525,7 @@ export function ProfileErrorState({
 }
 
 export function ProfileView({ data }: { data: ProfileViewModel }) {
+  const router = useRouter();
   const badges = useBadgeAlbum(data.badgeUserId);
   const selectedFrame = badges.data?.entries.find(entry => entry.id === badges.data?.selection.frame)?.frame;
   const selectedTitle = badgeTitle(badges.data);
@@ -618,14 +621,14 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             </Pressable>
           ) : null}
           <View style={styles.heroRow}>
-            <View style={styles.avatarBadgeWrap}>
+            <ProfileImageViewer uri={data.avatarImage}><View style={styles.avatarBadgeWrap}>
               {selectedFrame ? <BadgeArtwork frame={selectedFrame} image={data.avatarImage} initials={data.name.slice(0,2).toUpperCase()} size={118} /> : <HeaderAvatar
                 color={data.avatarColor || avatarColor()}
                 compact={false}
                 image={data.avatarImage}
               />}
               {selectedTitle ? <View style={styles.profileBadge}><BadgeTitle title={selectedTitle} /></View> : null}
-            </View>
+            </View></ProfileImageViewer>
             <View style={styles.headerBody}>
               <Text style={styles.headerName}>{data.name}</Text>
               <Text style={styles.headerMeta}>{data.subtitle}</Text>
@@ -805,6 +808,9 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
           )}
         </ProfileSection>
 
+        {data.mode === 'self' ? <Pressable accessibilityRole="button" onPress={() => router.push('/profile/badges')} style={styles.editButton}>
+          <Text style={styles.editButtonLabel}>Alle Abzeichen entdecken</Text>
+        </Pressable> : null}
         {data.timeline ? (
           <ProfileTimelineSummarySection
             onOpenAll={data.timeline.onOpenAll}

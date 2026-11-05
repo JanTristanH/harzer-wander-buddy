@@ -40,7 +40,7 @@ export function BadgeProfilePreview({
         disabled={!editable || offline}
         onPress={onAvatar}
         accessibilityRole="button"
-        accessibilityLabel="Name und Profilbild bearbeiten"
+        accessibilityLabel="Profilbild ändern"
         style={{ position: 'relative' }}
       >
         <BadgeArtwork

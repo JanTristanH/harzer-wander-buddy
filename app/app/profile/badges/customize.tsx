@@ -1,20 +1,18 @@
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { AuthGuard } from '@/components/auth-guard';
 import { BadgeArtwork } from '@/components/badge-artwork';
 import { BadgeProfilePreview } from '@/components/badge-profile-preview';
-import {
-  BadgeButton,
-  BadgeLoadState,
-  BadgePage,
-  badgeStyles as s,
-} from '@/components/badge-ui';
-import { saveBadgeProfile, updateCurrentUserProfile } from '@/lib/api';
+import { BadgeButton, BadgeLoadState, BadgePage, badgeStyles as s } from '@/components/badge-ui';
+import { saveBadgeProfile, updateCurrentUserProfile, uploadProfileImage } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useBadgeAlbum } from '@/lib/badges';
+import type { UploadableImage } from '@/lib/image-upload';
+import { ProfileImageViewer } from '@/components/profile-image-viewer';
 import type { BadgeSelection } from '@/lib/badge-types';
 import { requireOnlineForWrite } from '@/lib/offline-write';
 import { queryKeys, useAuthorizedRequest } from '@/lib/queries';
@@ -27,6 +25,7 @@ function Customize() {
   }>();
   const {
     currentUserProfile,
+    preloadCurrentUserProfile,
     setCurrentUserProfile,
     canPerformWrites,
     isOffline,
@@ -38,27 +37,49 @@ function Customize() {
   const [selection, setSelection] = useState<BadgeSelection | null>(null);
   const [name, setName] = useState(currentUserProfile?.name || '');
   const sourceName = useRef(currentUserProfile?.name || '');
-  const legacyName = useRef<string | null>(null);
-  const openLegacyEditor = () => {
-    legacyName.current = currentUserProfile?.name || '';
-    router.push('/profile/edit');
-  };
-  useFocusEffect(
-    useCallback(() => {
-      if (legacyName.current !== null) {
-        if ((currentUserProfile?.name || '') !== legacyName.current)
-          setName(currentUserProfile?.name || '');
-        legacyName.current = null;
+  const navigation = useNavigation();
+  const allowLeave = useRef(false);
+  const [selectedImage, setSelectedImage] = useState<UploadableImage | null>(null);
+  async function pickImage() {
+    try {
+      requireOnlineForWrite(canPerformWrites);
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        setMessage('Bitte erlaube den Zugriff auf deine Fotos.');
+        return;
       }
-    }, [currentUserProfile?.name])
-  );
+      const result = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        mediaTypes: ['images'],
+        quality: 1,
+      });
+      if (result.canceled || !result.assets.length) return;
+      const asset = result.assets[0];
+      setSelectedImage({
+        uri: asset.uri,
+        fileName: asset.fileName || `profile-${Date.now()}.jpg`,
+        mimeType: asset.mimeType || 'image/jpeg',
+      });
+      setMessage('');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Bild konnte nicht ausgewählt werden.');
+    }
+  }
   const [frames, setFrames] = useState(false);
   const [picker, setPicker] = useState<number | null>(
     slot !== undefined ? Math.max(0, Math.min(2, Number(slot) || 0)) : null
   );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
-  const disabled = isOffline || saving;
+  useEffect(() => {
+    if (!currentUserProfile && preloadCurrentUserProfile) {
+      void preloadCurrentUserProfile().catch((error) =>
+        setMessage(error instanceof Error ? error.message : 'Profil konnte nicht geladen werden.')
+      );
+    }
+  }, [currentUserProfile, preloadCurrentUserProfile]);
+  const disabled = isOffline || !canPerformWrites || saving;
   useEffect(() => {
     const nextName = currentUserProfile?.name || '';
     setName((draft) => (draft === sourceName.current ? nextName : draft));
@@ -80,13 +101,9 @@ function Customize() {
     setSelection((old) => (old ? { ...old, ...value } : old));
   function choose(id: string) {
     if (!selection || picker === null || disabled) return;
-    const next = Array.from(
-      { length: 3 },
-      (_, i) => selection.featured[i] || ''
-    );
+    const next = Array.from({ length: 3 }, (_, i) => selection.featured[i] || '');
     const previous = next.indexOf(id);
-    if (id && previous >= 0 && previous !== picker)
-      next[previous] = next[picker];
+    if (id && previous >= 0 && previous !== picker) next[previous] = next[picker];
     next[picker] = id;
     change({ featured: next });
     setPicker(null);
@@ -102,34 +119,31 @@ function Customize() {
     let nameSaved = false;
     try {
       requireOnlineForWrite(canPerformWrites);
-      if (name.trim() !== (currentUserProfile?.name || '').trim()) {
+      if (selectedImage || name.trim() !== (currentUserProfile?.name || '').trim()) {
         if (!currentUserProfile)
           throw new Error('Profildaten fehlen. Bitte lade das Profil erneut.');
+        const picture = selectedImage
+          ? (await request((token) => uploadProfileImage(token, selectedImage))).url
+          : currentUserProfile.picture;
         const updated = await request((token) =>
-          updateCurrentUserProfile(
-            token,
-            { name: name.trim() },
-            currentUserProfile.id
-          )
+          updateCurrentUserProfile(token, { name: name.trim(), picture }, currentUserProfile.id)
         );
         setCurrentUserProfile({
           ...currentUserProfile,
           name: updated.name || name.trim(),
+          picture: updated.picture || picture,
         });
+        setSelectedImage(null);
         nameSaved = true;
         await client.invalidateQueries({
           queryKey: queryKeys.profileOverview(claims?.sub),
         });
       }
-      const featured = [...new Set(selection.featured.filter(Boolean))].slice(
-        0,
-        3
-      );
-      const result = await request((token) =>
-        saveBadgeProfile(token, { ...selection, featured })
-      );
+      const featured = [...new Set(selection.featured.filter(Boolean))].slice(0, 3);
+      const result = await request((token) => saveBadgeProfile(token, { ...selection, featured }));
       await client.invalidateQueries({ queryKey: ['badgeAlbum'] });
       setSelection(result.selection);
+      allowLeave.current = true;
       router.replace('/(tabs)/profile');
     } catch (nextError) {
       const detail =
@@ -138,16 +152,43 @@ function Customize() {
           : 'Die Auswahl konnte nicht gespeichert werden.';
       setMessage(
         (nameSaved
-          ? 'Name gespeichert. Die Abzeichenauswahl wurde noch nicht gespeichert: '
+          ? 'Name und Profilbild gespeichert. Die Abzeichenauswahl wurde noch nicht gespeichert: '
           : '') + detail
       );
     } finally {
       setSaving(false);
     }
   }
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  const hasChanges =
+    !!selectedImage ||
+    name.trim() !== (currentUserProfile?.name || '').trim() ||
+    !!(selection && data && JSON.stringify(selection) !== JSON.stringify(data.selection));
+  useEffect(
+    () =>
+      navigation.addListener('beforeRemove', (event) => {
+        if (allowLeave.current || (!hasChanges && !saving)) return;
+        event.preventDefault();
+        if (saving) return;
+        Alert.alert('Änderungen speichern?', 'Du hast ungespeicherte Änderungen.', [
+          { text: 'Abbrechen', style: 'cancel' },
+          {
+            text: 'Verwerfen',
+            style: 'destructive',
+            onPress: () => {
+              allowLeave.current = true;
+              navigation.dispatch(event.data.action);
+            },
+          },
+          { text: 'Speichern', onPress: () => void saveRef.current() },
+        ]);
+      }),
+    [navigation, hasChanges, saving]
+  );
   return (
     <BadgePage
-      title="Abzeichen, Titel und Rahmen"
+      title="Profil bearbeiten"
       footer={
         data && selection ? (
           <>
@@ -169,30 +210,26 @@ function Customize() {
         <>
           {data.selectionChanged ? (
             <Text style={[s.text, s.notice]}>
-              Besuche geändert: Nicht mehr berechtigte Auswahlen wurden
-              entfernt.
+              Besuche geändert: Nicht mehr berechtigte Auswahlen wurden entfernt.
             </Text>
           ) : null}
           <BadgeProfilePreview
             album={{ ...data, selection }}
             name={name}
-            picture={currentUserProfile?.picture}
-            count={
-              data.entries.find((e) => e.id === 'emperor')?.progress[0]
-                ?.current || 0
-            }
+            picture={selectedImage?.uri || currentUserProfile?.picture}
+            count={data.entries.find((e) => e.id === 'emperor')?.progress[0]?.current || 0}
             editable
             offline={disabled}
             onName={setName}
             onSlot={setPicker}
-            onAvatar={openLegacyEditor}
+            onAvatar={() => void pickImage()}
           />
-          <BadgeButton secondary disabled={saving} onPress={openLegacyEditor}>
-            Name und Profilbild bearbeiten
+          <BadgeButton secondary disabled={disabled} onPress={() => void pickImage()}>
+            Profilbild auswählen
           </BadgeButton>
-          <Text style={[s.text, { fontSize: 12 }]}>
-            Öffne den Profil-Editor, um dein Bild auszuwählen und hochzuladen.
-          </Text>
+          <ProfileImageViewer uri={selectedImage?.uri || currentUserProfile?.picture}>
+            <Text style={s.text}>Profilbild groß ansehen</Text>
+          </ProfileImageViewer>
           <View style={s.card}>
             <Pressable
               accessibilityRole="button"
@@ -204,54 +241,41 @@ function Customize() {
               <View>
                 <Text style={s.heading}>Avatarrahmen</Text>
                 <Text style={s.text}>
-                  {data.entries.find((e) => e.id === selection.frame)?.name ||
-                    'Kein Rahmen'}
+                  {data.entries.find((e) => e.id === selection.frame)?.name || 'Kein Rahmen'}
                 </Text>
               </View>
-              <Feather
-                name={frames ? 'chevron-up' : 'chevron-down'}
-                size={22}
-                color="#596252"
-              />
+              <Feather name={frames ? 'chevron-up' : 'chevron-down'} size={22} color="#596252" />
             </Pressable>
             {frames ? (
               <View style={s.row}>
-                {[
-                  { id: '', name: 'Kein Rahmen', frame: '', unlocked: true },
-                  ...data.entries,
-                ].map((e) => (
-                  <Pressable
-                    key={e.id}
-                    disabled={disabled || !e.unlocked}
-                    accessibilityRole="radio"
-                    accessibilityLabel={`Rahmen ${e.name}`}
-                    accessibilityState={{
-                      checked: selection.frame === e.id,
-                      disabled: disabled || !e.unlocked,
-                    }}
-                    onPress={() => change({ frame: e.id })}
-                    style={{
-                      width: 90,
-                      padding: 7,
-                      borderWidth: selection.frame === e.id ? 2 : 1,
-                      borderColor:
-                        selection.frame === e.id ? '#596252' : '#dce2d7',
-                      borderRadius: 14,
-                      alignItems: 'center',
-                      gap: 6,
-                      opacity: e.unlocked ? 1 : 0.4,
-                    }}
-                  >
-                    <BadgeArtwork
-                      frame={e.frame}
-                      locked={!e.unlocked}
-                      size={66}
-                    />
-                    <Text style={{ fontSize: 11, textAlign: 'center' }}>
-                      {e.name}
-                    </Text>
-                  </Pressable>
-                ))}
+                {[{ id: '', name: 'Kein Rahmen', frame: '', unlocked: true }, ...data.entries].map(
+                  (e) => (
+                    <Pressable
+                      key={e.id}
+                      disabled={disabled || !e.unlocked}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`Rahmen ${e.name}`}
+                      accessibilityState={{
+                        checked: selection.frame === e.id,
+                        disabled: disabled || !e.unlocked,
+                      }}
+                      onPress={() => change({ frame: e.id })}
+                      style={{
+                        width: 90,
+                        padding: 7,
+                        borderWidth: selection.frame === e.id ? 2 : 1,
+                        borderColor: selection.frame === e.id ? '#596252' : '#dce2d7',
+                        borderRadius: 14,
+                        alignItems: 'center',
+                        gap: 6,
+                        opacity: e.unlocked ? 1 : 0.4,
+                      }}
+                    >
+                      <BadgeArtwork frame={e.frame} locked={!e.unlocked} size={66} />
+                      <Text style={{ fontSize: 11, textAlign: 'center' }}>{e.name}</Text>
+                    </Pressable>
+                  )
+                )}
               </View>
             ) : null}
           </View>
@@ -261,9 +285,7 @@ function Customize() {
               {[
                 { id: '', label: 'Kein Titel' },
                 { id: 'wanderer', label: 'Wanderer' },
-                ...data.entries
-                  .filter((e) => e.unlocked)
-                  .flatMap((e) => e.titles),
+                ...data.entries.filter((e) => e.unlocked).flatMap((e) => e.titles),
               ].map((title) => (
                 <Pressable
                   key={title.id}
@@ -322,9 +344,7 @@ function Customize() {
                       accessibilityRole="radio"
                       accessibilityLabel={entry.name}
                       accessibilityState={{
-                        checked:
-                          picker !== null &&
-                          selection.featured[picker] === entry.id,
+                        checked: picker !== null && selection.featured[picker] === entry.id,
                         disabled: disabled || !entry.unlocked,
                       }}
                       disabled={disabled || !entry.unlocked}
@@ -338,27 +358,17 @@ function Customize() {
                         backgroundColor: '#fff',
                         borderRadius: 16,
                         borderWidth:
-                          picker !== null &&
-                          selection.featured[picker] === entry.id
-                            ? 2
-                            : 1,
+                          picker !== null && selection.featured[picker] === entry.id ? 2 : 1,
                         borderColor: '#596252',
                         opacity: entry.unlocked ? 1 : 0.4,
                       }}
                     >
-                      <BadgeArtwork
-                        entry={entry}
-                        locked={!entry.unlocked}
-                        size={88}
-                      />
-                      <Text
-                        style={[s.text, { fontSize: 13, textAlign: 'center' }]}
-                      >
+                      <BadgeArtwork entry={entry} locked={!entry.unlocked} size={88} />
+                      <Text style={[s.text, { fontSize: 13, textAlign: 'center' }]}>
                         {entry.name}
                       </Text>
                       <Text style={{ fontSize: 11, color: '#647064' }}>
-                        {picker !== null &&
-                        selection.featured[picker] === entry.id
+                        {picker !== null && selection.featured[picker] === entry.id
                           ? '✓ Auf diesem Platz'
                           : entry.unlocked
                             ? 'Auswählen'
@@ -367,11 +377,7 @@ function Customize() {
                     </Pressable>
                   ))}
                 </View>
-                <BadgeButton
-                  secondary
-                  disabled={disabled}
-                  onPress={() => choose('')}
-                >
+                <BadgeButton secondary disabled={disabled} onPress={() => choose('')}>
                   Diesen Platz leeren
                 </BadgeButton>
               </ScrollView>

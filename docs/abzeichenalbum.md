@@ -91,7 +91,7 @@ Verwendeter Prompt:
 
 ## Profilansicht und Anpassung
 
-Der Einstieg **Profil anpassen** öffnet die Bearbeitung mit der Vorschau oben.
+Der Einstieg **Profil bearbeiten** öffnet die Bearbeitung mit der Vorschau oben.
 Name und drei Abzeichenplätze werden direkt dort bearbeitet. Avatarrahmen stehen
 als erster Auswahlbereich darunter und sind zunächst eingeklappt. Titel bleiben
 unabhängig wählbar. Auswahlzustände sind neutral; Speichern ist die Primäraktion.
@@ -99,14 +99,26 @@ Das eigene Profil zeigt die drei Plätze mit Stift oder Plus, fremde Profile zei
 weiterhin nur die ausgewählten Abzeichen. Die vorhandenen übrigen Profilbereiche
 und der Footer bleiben erhalten.
 
-Der bisherige Editor [`app/app/profile/edit.tsx`](../app/app/profile/edit.tsx)
-wird nicht ersetzt oder entfernt. Sowohl der Avatar als auch **Name und Profilbild
-bearbeiten** öffnen ihn unter `/profile/edit`, mit den bestehenden Bildrechten,
-der 1:1-Auswahl, dem echten Upload, Fehlerbehandlung und Schutz ungespeicherter
-Änderungen. `/profile/customize` bleibt als alternativer Einstieg vorhanden.
-Inline-Namen verwenden `updateCurrentUserProfile`, die Abzeichenauswahl verwendet
-`saveBadgeProfile`. Falls nach dem Namen die zweite Anfrage scheitert, weist die
-Oberfläche ausdrücklich auf diesen Teilstand hin und bleibt zur Wiederholung offen.
+Name, Foto, drei Abzeichen, Titel und Rahmen werden auf einem gemeinsamen Screen
+bearbeitet. `/profile/edit`, `/profile/customize` und `/profile/badges/customize`
+verwenden dieselbe Implementierung. Die Fotoauswahl übernimmt Bildberechtigungen,
+1:1-Zuschnitt und echten Upload aus dem bisherigen Editor. Ein Speichern-Button
+übernimmt Profil und Abzeichenauswahl; Teilfehler bleiben sichtbar und wiederholbar.
+Ungespeicherte Änderungen werden beim Verlassen abgefragt.
+
+Profilbilder öffnen im Profil eine Großansicht mit Pinch-Zoom, Verschieben und
+Zoom-Tasten. Im Editor ist dafür „Profilbild groß ansehen“ vorhanden. Oberhalb der
+Timeline führt „Alle Abzeichen entdecken“ direkt zum Album.
+
+Aktuelle Browser-Screenshots aus der vollständigen App am lokalen Testbackend:
+
+![Gemeinsamer Profil-Editor](screenshots/profile-unified/editor.png)
+![Profilbild mit Zoom](screenshots/profile-unified/photo-zoom.png)
+
+32 fokussierte Tests, TypeScript, ESLint für die geänderten App-Dateien und der
+vollständige Basic-Webexport sind erfolgreich. Fotoauswahl, Vorschau und Zoom-Tasten
+wurden im Browser mit einem lokalen Testkonto geprüft. Der Upload ist durch Tests
+mit API-Mocks abgedeckt; eine neue Android-Abnahme der Pinch-Geste steht aus.
 
 „Dein nächstes Ziel“ zeigt alle Fortschrittsbedingungen. Allgemeine
 Leistungsabzeichen verlinken zur Stempelstellenliste, statt alle 222 Stellen zu
