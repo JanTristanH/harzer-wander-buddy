@@ -25,8 +25,8 @@ npm run web:basic --prefix app
 
 Open `http://localhost:8081/login`. Enter the test credentials documented in `../AGENTS.md`.
 The app sends HTTP Basic credentials to CAP at `http://localhost:4004` and creates the
-local user profile on first login. Credentials stay in memory: logout or a page reload
-requires a new login. Local accounts are configured under `[dev-basic]` in CAP's
+local user profile on first login. In the browser, credentials stay in memory: logout
+or a page reload requires a new login. Local accounts are configured under `[dev-basic]` in CAP's
 `package.json`; registration and Auth0 are not used in this mode.
 
 Onboarding is controlled by the user's `onboardingCompleted` field in CAP's
@@ -40,6 +40,10 @@ or restarting Expo does not repeat completed onboarding. A page reload does clea
 the in-memory Basic session and requires another login. For repeat onboarding tests,
 reset only the test user's `onboardingCompleted` field in your own ignored
 `backend/hwb/db.local.db`; do not delete the database or change the checked-in seed.
+
+Native Basic sessions (including PR preview APKs) are saved in Expo SecureStore.
+The login and cached onboarding state survive closing the app and an offline restart.
+Logout, logout everywhere and app reset remove the saved session.
 
 For native Basic development, use `npm run start:basic`. On a physical device, override
 `EXPO_PUBLIC_BACKEND_URL` with the CAP host's LAN address instead of localhost; start
