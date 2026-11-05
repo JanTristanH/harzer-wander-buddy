@@ -20,6 +20,18 @@ service api @(requires: 'authenticated-user') {
         travelTime_ID       : UUID;
         tour_ID             : UUID;
         rank                : Integer;
+        // ID already exists as travelTime_ID; duplicating it here collides
+        // when CAP flattens structured types for SQL.
+        travelTime          : {
+            fromPoi         : UUID;
+            toPoi           : UUID;
+            positionString  : LargeString;
+            travelMode      : String(128);
+            durationSeconds : Integer64;
+            distanceMeters  : Integer64;
+            elevationGain   : Double;
+            elevationLoss   : Double;
+        };
     };
 
     type TourDetailResponse {
