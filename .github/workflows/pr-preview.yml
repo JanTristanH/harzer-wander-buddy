@@ -14,6 +14,10 @@ on:
         type: choice
         default: deploy
         options: [deploy, remove]
+      live_check:
+        description: Run HTTP smoke checks against the deployed preview (starts a Cloud Run instance)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -159,7 +163,7 @@ jobs:
             echo "- API: $url/odata/v4/api"
             echo "- Commit: $PREVIEW_SHA"
             echo "- Image: $IMAGE"
-            echo '- Activation and live checks run independently of the Android APK build.'
+            echo '- Activation runs independently of the Android APK build; live HTTP checks are opt-in.'
           } >> "$GITHUB_STEP_SUMMARY"
 
   android:
@@ -255,6 +259,9 @@ jobs:
           gcloud run services update "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
             --scaling auto --min 0 --max 1 --quiet
       - name: Check live web app, commit and SQLite login
+        # Keep normal deployments cold. The same smoke check already runs in
+        # the local CI container before deployment.
+        if: github.event_name == 'workflow_dispatch' && inputs.live_check
         run: |
           for attempt in 1 2 3 4 5 6; do
             if node scripts/smoke-pr-preview.cjs; then exit 0; fi
