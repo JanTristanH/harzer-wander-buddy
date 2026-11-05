@@ -1,12 +1,10 @@
-import { Design } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AppColors } from '@/constants/theme';
-import { SkeletonBlock } from '@/components/skeleton';
+import { AppColors, Design } from '@/constants/theme';
 
 const lockedIllustration = require('@/assets/images/buddy/telescope.png');
 

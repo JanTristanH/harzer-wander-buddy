@@ -1,3 +1,4 @@
+import { AppColors, Layout, Radii } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -231,9 +232,10 @@ function HeaderAvatar({
     <View
       style={[
         compact ? styles.avatarCompact : styles.avatarPlaceholder,
-        { backgroundColor: color },
-      ]}
-    />
+        { backgroundColor: color, alignItems: 'center', justifyContent: 'center' },
+      ]}>
+      <Feather name="user" size={compact ? 26 : 40} color={AppColors.primary} />
+    </View>
   );
 }
 
@@ -892,6 +894,9 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                 const active = data.activeStampChip === chip.key;
                 return (
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    aria-pressed={active}
                     key={chip.key}
                     onPress={() => data.onSelectStampChip(chip.key)}
                     style={({ pressed }) => [
@@ -1098,7 +1103,7 @@ const styles = StyleSheet.create({
   loadingStatCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 8,
@@ -1134,8 +1139,8 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   backButton: {
-    width: 28,
-    height: 28,
+    width: Layout.touchTarget,
+    height: Layout.touchTarget,
     borderRadius: 8,
     backgroundColor: '#f0e9dd',
     alignItems: 'center',
@@ -1162,17 +1167,18 @@ const styles = StyleSheet.create({
   },
   headerName: {
     color: '#1e2a1e',
-    fontSize: 31,
-    lineHeight: 38,
-    fontFamily: 'serif',
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: '700',
   },
   headerMeta: {
-    color: '#788777',
+    color: AppColors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
   editButton: {
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     alignSelf: 'flex-start',
     marginTop: 4,
     backgroundColor: '#2e6b4b',
@@ -1211,7 +1217,7 @@ const styles = StyleSheet.create({
   },
   statsCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 14,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -1241,7 +1247,7 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 12,
     paddingVertical: 12,
     flexDirection: 'column',
@@ -1377,7 +1383,7 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 8,
@@ -1510,12 +1516,15 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   countChip: {
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     minWidth: 92,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 11,
   },
   countChipActive: {
+    backgroundColor: AppColors.primary,
     shadowColor: '#141e14',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -1544,6 +1553,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   countChipLabelActive: {
+    color: AppColors.onPrimary,
     fontWeight: '700',
   },
   countChipLabelSuccess: {

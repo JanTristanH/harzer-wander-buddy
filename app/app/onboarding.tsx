@@ -752,8 +752,8 @@ export default function OnboardingScreen() {
           </ScrollView>
           <View style={styles.flowDock}>
             <ActionButton disabled={primaryDisabled || busy || (step === 1 && !profileName.trim()) || locationPermission === 'checking'}
-              label={busy ? 'Wird gespeichert…' : step === 0 ? 'Los geht’s' : step === 4 ? 'Zu den Stempelstellen' : step === 3 && locationPermission !== 'granted' ? 'Ohne Standort weiter' : 'Weiter'}
-              onPress={() => void handleAdvance()} variant="primary" style={styles.bottomButton} />
+              label={busy ? 'Wird gespeichert…' : step === 0 ? isAuthenticated ? 'Los geht’s' : 'Ohne Konto entdecken' : step === 4 ? 'Zu den Stempelstellen' : step === 3 && locationPermission !== 'granted' ? 'Ohne Standort weiter' : 'Weiter'}
+              onPress={() => isAuthenticated ? void handleAdvance() : router.replace('/(tabs)')} variant="primary" style={styles.bottomButton} />
             <Text style={styles.footerNote}>{step === 4 ? 'Bereit für deinen ersten Stempel?' : step === 3 ? 'Du entscheidest, was du freigibst.' : 'Dein Abenteuer. Dein Tempo.'}</Text>
           </View>
         </KeyboardAvoidingView>

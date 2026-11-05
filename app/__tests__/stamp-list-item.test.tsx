@@ -71,12 +71,14 @@ describe('StampListItem user interaction', () => {
   });
 
   it('renders the "Unbesucht" pill for unvisited stamps', () => {
+    mockUseAuth.mockReturnValue({ accessToken: null, isAuthenticated: true });
     render(<StampListItem index={0} item={makeStamp({ hasVisited: false })} onPress={jest.fn()} />);
 
     expect(screen.getByText('Unbesucht')).toBeTruthy();
   });
 
   it('renders the "Besucht" pill for visited stamps', () => {
+    mockUseAuth.mockReturnValue({ accessToken: null, isAuthenticated: true });
     render(<StampListItem index={1} item={makeStamp({ hasVisited: true })} onPress={jest.fn()} />);
 
     expect(screen.getByText('Besucht')).toBeTruthy();

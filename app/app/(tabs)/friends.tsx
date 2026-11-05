@@ -24,7 +24,7 @@ import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import { FriendsList } from '@/components/friends-list';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
-import { AppColors, Fonts } from '@/constants/theme';
+import { AppColors, Fonts, Layout, Radii } from '@/constants/theme';
 import {
   acceptPendingFriendshipRequest,
   createFriendRequest,
@@ -674,13 +674,17 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.background,
   },
   content: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 160,
   },
   title: {
     color: AppColors.text,
-    fontFamily: Fonts.serif,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
     fontSize: 24,
     lineHeight: 30,
     marginBottom: 12,
@@ -691,6 +695,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   filterChip: {
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     backgroundColor: AppColors.surface,
     borderRadius: 999,
     paddingHorizontal: 12,
@@ -785,7 +791,7 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: AppColors.surface,
-    borderRadius: 22,
+    borderRadius: Radii.card,
     marginHorizontal: 20,
     maxHeight: '100%',
     flexShrink: 1,
@@ -805,7 +811,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     color: AppColors.text,
-    fontFamily: Fonts.serif,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
     fontSize: 20,
     lineHeight: 24,
   },

@@ -31,6 +31,7 @@ import { StampListItem } from '@/components/stamp-list-item';
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
 import { createStamping, deleteStamping, fetchOwnStampings, type Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
@@ -52,11 +53,11 @@ const NEARBY_DISTANCE_KM = 15;
 const LIST_TOP_PADDING = 20;
 const LIST_BOTTOM_PADDING = 220;
 // 116 px for two description lines, padding and selection border, plus 12 px spacing.
-const KNOWN_STAMP_ROW_HEIGHT = 128;
+const KNOWN_STAMP_ROW_HEIGHT = 136;
 const DEFAULT_INTRO_HEIGHT = 220;
 const DEFAULT_CONTROLS_HEIGHT = 124;
 const STAMP_LIST_START_INDEX = 2;
-const GROUP_STAMP_ROW_HEIGHT = 176;
+const GROUP_STAMP_ROW_HEIGHT = 224;
 const FAST_SCROLLER_HIDE_DELAY_MS = 850;
 const FAST_SCROLLER_THUMB_HEIGHT = 44;
 const FAST_SCROLLER_PREVIEW_HEIGHT = 48;
@@ -147,7 +148,10 @@ function isRelocatedStamp(validTo?: string) {
 
 export default function StampsScreen() {
   const router = useRouter();
+  const reduceMotion = useReduceMotion();
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
+  const visibleFilters = useMemo(() => isAuthenticated ? FILTERS : FILTERS.filter((filter) => filter.key !== 'visited' && filter.key !== 'open'), [isAuthenticated]);
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const [selectionMode, setSelectionMode] = useState(false);
@@ -787,17 +791,17 @@ export default function StampsScreen() {
           <Feather color="#6d7d6e" name="search" size={14} />
         </View>
         <ClearableSearchInput
+          accessibilityLabel="Stempelstellen nach Nummer oder Ort suchen"
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => setIsSearchFocused(false)}
+          returnKeyType="search"
           onChangeText={setQuery}
           placeholder="Suche nach Nummer oder Ort"
           placeholderTextColor={Design.color.muted}
           style={styles.searchInput}
           value={query}
         />
-        {query.length > 0 ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Suche löschen" onPress={() => setQuery('')} style={styles.clearSearch}>
-            <Feather name="x" size={20} color={Design.color.muted} />
-          </Pressable>
-        ) : null}
+
       </View>
 
       <ScrollView
@@ -1111,7 +1115,6 @@ export default function StampsScreen() {
         <FlatList
           keyboardShouldPersistTaps="handled"
           ref={listRef}
-          keyboardShouldPersistTaps="handled"
           data={listItems}
           keyExtractor={keyExtractor}
           onContentSizeChange={(_, height) => {

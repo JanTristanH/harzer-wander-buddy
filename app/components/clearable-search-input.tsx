@@ -1,3 +1,4 @@
+import { AppColors, Layout } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import React, { forwardRef } from 'react';
 import { Pressable, StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
@@ -28,7 +29,7 @@ export const ClearableSearchInput = forwardRef<TextInput, ClearableSearchInputPr
             accessibilityRole="button"
             onPress={() => onChangeText?.('')}
             style={({ pressed }) => [styles.clearButton, pressed && styles.pressed]}>
-            <Feather color="#6b7a6b" name="x" size={18} />
+            <Feather color={AppColors.textMuted} name="x" size={18} />
           </Pressable>
         ) : null}
       </View>
@@ -50,14 +51,15 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   inputWithClearButton: {
-    paddingRight: 44,
+    paddingRight: Layout.touchTarget,
   },
   clearButton: {
     position: 'absolute',
     right: 0,
     top: 0,
     bottom: 0,
-    width: 44,
+    width: Layout.touchTarget,
+    minHeight: Layout.touchTarget,
     alignItems: 'center',
     justifyContent: 'center',
   },

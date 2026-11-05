@@ -79,7 +79,7 @@ function StampListItemComponent({
 
   return (
     <Pressable
-      accessibilityLabel={groupAccessibilityLabel ?? `Stempel ${item.number || '--'}: ${item.name}. ${item.hasVisited ? 'Besucht' : 'Unbesucht'}`}
+      accessibilityLabel={groupAccessibilityLabel ?? `Stempel ${item.number || '--'}: ${item.name}. ${isAuthenticated ? item.hasVisited ? 'Besucht' : 'Unbesucht' : 'Entdecken'}`}
       accessibilityRole={selectionMode ? 'checkbox' : 'button'}
       accessibilityState={{ disabled, ...(selectionMode ? { checked: selected } : {}) }}
       aria-checked={selectionMode ? selected : undefined}
@@ -173,18 +173,17 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: '#ffffff',
     borderRadius: 18,
-    borderWidth: 2,
-    borderColor: 'transparent',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Design.color.border,
   },
   cardWithGroup: {
     minHeight: 152,
   },
   cardMainRow: {
-    flex: 1,    flexDirection: 'row',
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },

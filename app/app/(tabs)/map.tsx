@@ -630,7 +630,7 @@ export default function MapScreen() {
   const [remoteSearchResults, setRemoteSearchResults] = useState<PlaceSearchResult[]>([]);
   const [isRemoteSearchLoading, setIsRemoteSearchLoading] = useState(false);
   const [remoteSearchError, setRemoteSearchError] = useState<string | null>(null);
-  const { locationState, userLocation, handleUserLocationChange, locateMe } = useMapLocation();
+  const { locationState, handleUserLocationChange, locateMe } = useMapLocation();
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('all');
   const [showStamps, setShowStamps] = useState(true);
   const [showParking, setShowParking] = useState(true);
@@ -1471,6 +1471,7 @@ export default function MapScreen() {
   const handleLocateMePress = useCallback(async () => {
     const coordinate = await locateMe();
     if (!coordinate) {
+      Alert.alert('Standort nicht verfügbar', 'Prüfe deine Standortfreigabe in den Systemeinstellungen. Du kannst die Karte auch ohne Standort nutzen.');
       return;
     }
 
@@ -2235,7 +2236,7 @@ export default function MapScreen() {
                   }}
                   accessibilityLabel="Stempelstellen und Parkplätze suchen"
                   returnKeyType="search"
-                  placeholder="Stempel oder Parkplatz suchen"
+                  placeholder={isAuthenticated ? "Stempel oder Ort" : "Stempel oder Parkplatz suchen"}
                   placeholderTextColor={Design.color.muted}
                   style={styles.searchInput}
                   value={searchQuery}
@@ -2316,7 +2317,8 @@ export default function MapScreen() {
 
         <View style={[styles.zoomControls, { bottom: zoomControlsBottomOffset }]}>
           <Pressable
-            accessibilityLabel="Orte mich"
+            accessibilityLabel="Standort freigeben und anzeigen"
+            accessibilityState={{ busy: locationState === 'loading', disabled: locationState === 'loading' }}
             accessibilityRole="button"
             disabled={locationState === 'loading'}
             onPress={handleLocateMePress}

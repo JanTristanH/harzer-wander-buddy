@@ -211,3 +211,11 @@ These are additional original scores, not replacements for the guest scores. Tou
 ## Upstream divergence discovered during PR preparation
 
 The supplied checkout began at `9a51605`. Fetching origin/develop revealed `0c1b6f3`, 77 commits ahead, including changes to onboarding, search, stamp details, preview builds, map styles and group-stamping actions. Consequently all evidence above applies to the supplied baseline plus the recorded intermediate design changes, **not to current develop**. The user has been asked whether to transfer this work onto current develop or continue on the supplied revision. Existing local Auth/SecureStore/onboarding source changes remain untouched and separately preserved. No assertion that the requested global 8.5 threshold is met is justified.
+
+## Authorized transfer to current develop
+
+The user selected current develop as the PR base. The design work was transferred onto `0c1b6f3` on branch `design/ux-ui-review`, retaining the newer search, multiple selection, grouped stamp status, onboarding wizard and local authentication workflows. The pre-existing local onboarding-storage patch was preserved through a three-way integration and remains uncommitted; its two companion files remain local.
+
+Integrated verification observed 278 passing tests in 53 suites and a passing TypeScript check. Lint had only the two existing map-primitives require-import warnings after integration cleanup. New screenshot evidence and browser-checks are under the workspace's `artifacts/ui-audit/current`: 21 guest viewport checks had no document overflow, and an actual local visit write produced a visited stamp state. The browser also logged six React hydration mismatch errors; these are unresolved and prevent treating that run as error-free.
+
+A further requested fetch found six more develop commits through `bf3a5c8`, including native offline visit/note synchronization. This update is being integrated before final review. Historical scores above remain attached to their original source/evidence; none are a final score for the new base.

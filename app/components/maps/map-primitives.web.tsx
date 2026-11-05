@@ -1,3 +1,4 @@
+import { Design } from '@/constants/theme';
 import type { LeafletEventHandlerFnMap, Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
 import '@maplibre/maplibre-gl-leaflet';

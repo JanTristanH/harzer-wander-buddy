@@ -16,7 +16,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/empty-state';
-import { AppColors } from '@/constants/theme';
+import { AppColors, Layout, Radii } from '@/constants/theme';
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { GroupSelector } from '@/components/group-selector';
 import { SkeletonBlock } from '@/components/skeleton';
@@ -378,10 +378,10 @@ export default function ToursTabScreen() {
                 isCreateDisabled && styles.quickstartCardDisabled,
                 pressed && styles.pressed,
               ]}>
-              <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.quickstartCard}>
+              <LinearGradient colors={[AppColors.primaryStrong, AppColors.primary]} style={styles.quickstartCard}>
                 <Text style={styles.quickstartEyebrow}>Schnellstart</Text>
                 <Text style={styles.quickstartTitle}>Neue Tour planen</Text>
-                <Text style={styles.quickstartBody}>Leere Tour erstellen und direkt POIs hinzufügen.</Text>
+                <Text style={styles.quickstartBody}>Stempel und Orte auswählen und deine Route planen.</Text>
               </LinearGradient>
             </Pressable>
 
@@ -479,10 +479,10 @@ export default function ToursTabScreen() {
                 isCreateDisabled && styles.quickstartCardDisabled,
                 pressed && styles.pressed,
               ]}>
-              <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.quickstartCard}>
+              <LinearGradient colors={[AppColors.primaryStrong, AppColors.primary]} style={styles.quickstartCard}>
                 <Text style={styles.quickstartEyebrow}>Schnellstart</Text>
                 <Text style={styles.quickstartTitle}>Neue Tour planen</Text>
-                <Text style={styles.quickstartBody}>Leere Tour erstellen und direkt POIs hinzufügen.</Text>
+                <Text style={styles.quickstartBody}>Stempel und Orte auswählen und deine Route planen.</Text>
               </LinearGradient>
             </Pressable>
           </View>
@@ -641,6 +641,9 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.background,
   },
   listContent: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingTop: 20,
     paddingBottom: 220,
   },
@@ -709,7 +712,7 @@ const styles = StyleSheet.create({
     color: AppColors.text,
     fontSize: 24,
     lineHeight: 30,
-    fontFamily: 'serif',
+    fontWeight: '700',
   },
   totalLabel: {
     color: AppColors.textMuted,
@@ -717,7 +720,7 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   quickstartCard: {
-    borderRadius: 22,
+    borderRadius: Radii.card,
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 10,
@@ -750,6 +753,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   searchShell: {
+    minHeight: Layout.touchTarget,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -772,8 +776,8 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: AppColors.textSecondary,
-    fontSize: 13,
-    lineHeight: 16,
+    fontSize: 16,
+    lineHeight: 22,
     paddingVertical: 0,
   },
   filterRow: {
@@ -788,6 +792,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   filterPill: {
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -815,7 +821,7 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: AppColors.surface,
     borderRadius: 16,
-    minHeight: 40,
+    minHeight: Layout.touchTarget,
     paddingHorizontal: 14,
     paddingVertical: 10,
     alignItems: 'center',
@@ -841,7 +847,7 @@ const styles = StyleSheet.create({
     right: 16,
     width: 300,
     backgroundColor: AppColors.surface,
-    borderRadius: 22,
+    borderRadius: Radii.card,
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 12,
