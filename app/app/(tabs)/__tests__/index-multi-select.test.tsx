@@ -205,7 +205,7 @@ it('starts empty selection from the header button without a long press', async (
   fireEvent.press(screen.getByTestId('stamp-list-item-open'));
   expect(screen.getByText('1 ausgewählt')).toBeTruthy();
   expect(mockPush).not.toHaveBeenCalled();
-  fireEvent.press(screen.getByLabelText('Auswahlmodus schließen'));
+  fireEvent.press(screen.getByLabelText('Auswahl beenden'));
   expect(screen.queryByTestId('stamp-selection-toolbar')).toBeNull();
 });
 

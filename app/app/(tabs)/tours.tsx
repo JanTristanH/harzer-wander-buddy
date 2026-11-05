@@ -586,6 +586,8 @@ export default function ToursTabScreen() {
         stickyHeaderIndices={[1]}
       />
 
+      {tours.length > 0 ? (
+        <View pointerEvents="box-none" style={{ position: 'absolute', width: '100%', maxWidth: Layout.contentWidth, alignSelf: 'center', bottom: 0 }}>
       <Pressable
         accessibilityLabel="Neue Tour erstellen"
         disabled={isCreateDisabled}
@@ -598,6 +600,8 @@ export default function ToursTabScreen() {
         ]}>
         <Feather color={AppColors.background} name="plus" size={24} />
       </Pressable>
+        </View>
+      ) : null}
 
       <Modal animationType="fade" onRequestClose={() => setIsSortOpen(false)} transparent visible={isSortOpen}>
         <View style={styles.modalBackdrop}>

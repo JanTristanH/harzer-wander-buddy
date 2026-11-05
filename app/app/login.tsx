@@ -102,7 +102,7 @@ function LiveLoginScreen() {
                 Sammle deine Stempel, plane Touren und entdecke den Harz mit Freunden.
               </Text>
             </View>
-            <Image contentFit="contain" source={bearIllustration} style={styles.heroImage} />
+            <Image accessibilityLabel="" accessible={false} contentFit="contain" source={bearIllustration} style={styles.heroImage} />
           </View>
 
           <View style={styles.card}>

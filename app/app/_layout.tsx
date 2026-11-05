@@ -7,6 +7,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { ErrorBoundary as RouterErrorBoundary, type ErrorBoundaryProps, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import Head from 'expo-router/head';
 import React, { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -186,6 +187,7 @@ export default function RootLayout() {
                       </Stack>
                       <StatusBar style="dark" />
                     </ThemeProvider>
+                    <Head><title>Harzer Wander Buddy</title></Head>
                     <WebDocumentBehavior />
                     <PreviewDiagnosticsBridge />
                     <QueryFocusBridge />

@@ -216,7 +216,7 @@ describe('StampsScreen', () => {
 
     expect(screen.getByText(/Rabenklippe/)).toBeOnTheScreen();
     expect(screen.getByText(/Brocken/)).toBeOnTheScreen();
-    expect(screen.getByText(/von 2 Stempelstellen/)).toBeOnTheScreen();
+    expect(screen.getByText('Harz entdecken')).toBeOnTheScreen();
   });
 
   it('does not present personal visit progress to guests', async () => {
@@ -228,7 +228,7 @@ describe('StampsScreen', () => {
     await renderScreen();
 
     expect(screen.queryByText('50%')).not.toBeOnTheScreen();
-    expect(screen.getByText('Der Harz wartet auf dich')).toBeOnTheScreen();
+    expect(screen.getByText('Harz entdecken')).toBeOnTheScreen();
   });
 
   it('uses the guest query and disables the authenticated query', async () => {

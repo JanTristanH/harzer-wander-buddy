@@ -1,7 +1,7 @@
 import { Design } from '@/constants/theme';
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { useWindowDimensions } from 'react-native';
+import { Platform, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FloatingBarIcon } from '@/components/floating-bar-icon';
@@ -19,6 +19,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarLabelPosition: 'below-icon',
         tabBarActiveTintColor: Design.color.brand,
         tabBarInactiveTintColor: Design.color.muted,
         tabBarStyle: {
@@ -27,8 +28,9 @@ export default function TabLayout() {
           height: 72,
           paddingTop: 6,
           paddingBottom: 6,
-          width: barWidth,
-          marginHorizontal: (width - barWidth) / 2,
+          ...(Platform.OS === 'web'
+            ? { left: 16, right: 16, maxWidth: 600, marginHorizontal: 'auto' as const }
+            : { width: barWidth, marginHorizontal: (width - barWidth) / 2 }),
           marginBottom: tabBarBottomMargin,
           borderRadius: 24,
           position: 'absolute',

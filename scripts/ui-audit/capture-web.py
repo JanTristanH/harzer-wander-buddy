@@ -1,0 +1,205 @@
+"""Local visual regression capture. Never exports browser storage or tokens."""
+import asyncio, json, os, re, subprocess, sys
+from pathlib import Path
+from playwright.async_api import async_playwright
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent / 'artifacts/ui-audit/final'
+BASE = 'http://localhost:4004/app/rnweb'
+CHROME = Path('/workspace/android-flow/playwright/chromium-1208/chrome-linux64/chrome')
+OUT.mkdir(parents=True, exist_ok=True)
+
+async def main():
+    checks, errors = [], []
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True, executable_path=str(CHROME) if CHROME.exists() else None,
+            args=['--no-sandbox', '--disable-dev-shm-usage'])
+        context = await browser.new_context(viewport={'width':390,'height':844}, reduced_motion='reduce')
+        await context.route('**/app.harzer-wander-buddy.de/**', lambda route: route.abort())
+        page = await context.new_page()
+        page.on('pageerror', lambda error: errors.append(re.sub(r'https?://\S+', '<url>', str(error.stack))))
+        async def shot(name):
+            await page.evaluate('document.fonts.ready')
+            await page.wait_for_timeout(450)
+            await page.screenshot(path=str(OUT / (name + '.png')))
+        async def check(name, action):
+            try:
+                await action()
+                checks.append({'flow':name,'passed':True})
+            except Exception as error:
+                checks.append({'flow':name,'passed':False,'errorType':type(error).__name__})
+                print(name, re.sub(r'https?://\S+', '<url>', str(error))[:900],flush=True)
+                close=page.get_by_role('button',name='Gruppenauswahl schließen').last
+                if await close.count(): await close.click()
+        async def open_page(path):
+            await page.goto(BASE + path, wait_until='networkidle', timeout=90000)
+            await page.wait_for_timeout(1000)
+        async def tab(label):
+            await page.get_by_text(label, exact=True).last.click()
+            await page.wait_for_timeout(1800)
+        try:
+            for width,height in ([] if os.environ.get('UI_AUDIT_SIGNED_ONLY') else [(320,568),(390,844),(768,1024),(1440,900)]):
+                await page.set_viewport_size({'width':width,'height':height})
+                for name,path in [('list','/'),('map','/map'),('login','/login'),('onboarding','/onboarding'),('tours','/tours'),('friends','/friends'),('profile','/profile')]:
+                    await open_page(path)
+                    if path == '/': await page.get_by_role('button',name='Stempel 1: Brocken',exact=False).wait_for(timeout=30000)
+                    if path == '/map': await page.wait_for_timeout(3500)
+                    await shot(f'guest-{name}-{width}')
+                    if name == 'onboarding':
+                        await page.get_by_role('button',name='Konto erstellen',exact=True).scroll_into_view_if_needed()
+                        await page.wait_for_timeout(500)
+                        await shot(f'guest-onboarding-end-{width}')
+                        checks.append({'flow':f'guest onboarding scroll {width}', 'passed':await page.get_by_role('button',name='Konto erstellen',exact=True).is_visible()})
+                    checks.append({'screen':name,'width':width,'horizontalOverflow':await page.evaluate('document.documentElement.scrollWidth > innerWidth')})
+                print('Guest captured:',width,flush=True)
+            await page.set_viewport_size({'width':390,'height':844})
+            await open_page('/')
+            search = page.get_by_role('textbox',name='Stempelstellen nach Nummer oder Ort suchen')
+            await search.fill('zzzz-empty')
+            await page.get_by_text('Keine passenden Stempelstellen',exact=True).wait_for()
+            await shot('search-empty')
+            await page.get_by_role('button',name='Suche leeren',exact=True).click()
+            await search.focus()
+            await shot('search-focus')
+            checks.append({'flow':'search, empty and clear','passed':True})
+            await open_page('/map')
+            await page.get_by_role('button',name='Kartenfilter öffnen').click()
+            await page.wait_for_timeout(600)
+            await shot('map-filter')
+            switch=page.get_by_role('switch',name='Parkplätze anzeigen')
+            await switch.click()
+            assert await switch.get_attribute('aria-checked') == 'false'
+            await switch.click()
+            await page.get_by_role('button',name='Kartenfilter schließen').click()
+            checks.append({'flow':'map switch checked state and close','passed':True})
+            await open_page('/login')
+            async with context.expect_page() as popup:
+                await page.get_by_role('button',name='Anmelden',exact=True).click()
+            auth = await popup.value
+            await auth.wait_for_load_state('domcontentloaded')
+            notes=(ROOT / 'AGENTS.md').read_text()
+            username=next(line.split(chr(96))[1] for line in notes.splitlines() if 'Nutzername:' in line)
+            password=next(line.split(chr(96))[1] for line in notes.splitlines() if 'Passwort:' in line)
+            await auth.locator('input[name="username"]').fill(username)
+            await auth.locator('input[name="password"]').fill(password)
+            await auth.get_by_role('button',name='Continue',exact=True).click()
+            await page.wait_for_function("location.pathname.endsWith('/onboarding') || (document.body.innerText.includes('Gruppe') && document.body.innerText.includes('Stempelstellen'))",timeout=90000)
+            await page.wait_for_timeout(1600)
+            if 'onboarding' in await page.evaluate('location.pathname'):
+                await shot('onboarding-0')
+                await page.get_by_role('button',name='Los geht’s',exact=True).click()
+                await page.get_by_role('textbox',name='Dein Anzeigename',exact=True).fill('Wanderbuddy Test')
+                await shot('onboarding-1')
+                await page.get_by_role('button',name='Weiter',exact=True).click()
+                await page.get_by_role('radio',name='Bär',exact=True).click()
+                await shot('onboarding-2')
+                await page.get_by_role('button',name='Weiter',exact=True).click()
+                await shot('onboarding-3')
+                await page.get_by_role('button',name='Ohne Standort weiter',exact=True).click()
+                await shot('onboarding-4')
+                await page.get_by_role('button',name='Zu den Stempelstellen',exact=True).click()
+            await page.get_by_text('Stempelstellen',exact=True).wait_for(timeout=45000)
+            checks.append({'flow':'SSO and onboarding through port 4004','passed':True})
+            for width,height in [(390,844),(1440,900)]:
+                await page.set_viewport_size({'width':width,'height':height})
+                for name,label in [('list','Stempel'),('map','Karte'),('tours','Touren'),('friends','Freunde'),('profile','Profil')]:
+                    await tab(label)
+                    if name == 'map': await page.wait_for_timeout(2500)
+                    await shot(f'signed-{name}-{width}')
+                    print('Signed captured:',name,width,flush=True)
+            await page.set_viewport_size({'width':390,'height':844})
+            await tab('Stempel')
+            async def group():
+                await page.get_by_test_id('stamps-header-group-selector').click()
+                await page.wait_for_timeout(600)
+                await shot('group-open')
+                member=page.get_by_test_id('group-selector-friend-ui-audit-nora')
+                await member.focus()
+                await page.keyboard.press('Space')
+                assert await member.get_attribute('aria-checked') == 'true'
+                await page.get_by_role('button',name='Gruppenauswahl übernehmen').focus()
+                await page.keyboard.press('Enter')
+                await page.wait_for_timeout(1000)
+                await shot('group-selected')
+                await page.get_by_test_id('stamps-header-group-selector').click()
+                await page.get_by_role('button',name='Wandergruppe leeren').click()
+                await page.get_by_role('button',name='Gruppenauswahl übernehmen').focus()
+                await page.keyboard.press('Enter')
+            await check('group choose and clear fictional local buddy',group)
+            async def multiple_selection():
+                await page.get_by_role('button',name='Stempelstellen auswählen',exact=True).click()
+                await page.get_by_test_id('stamp-list-item-00000000-0000-4000-8000-000000000001').click()
+                await page.get_by_test_id('stamp-list-item-00000000-0000-4000-8000-000000000002').click()
+                await shot('multiple-selected')
+                await page.get_by_role('button',name=re.compile('Abbrechen|Auswahl beenden')).first.click()
+            await check('multiple selection and cancel',multiple_selection)
+            await tab('Karte')
+            await tab('Stempel')
+            await page.get_by_role('button',name='Stempel 1: Brocken',exact=False).click()
+            await page.get_by_text('Brocken – Gipfelblick',exact=True).wait_for()
+            await page.wait_for_timeout(1800)
+            await shot('stamp-detail')
+            await page.mouse.wheel(0,1800)
+            await page.wait_for_timeout(500)
+            await shot('stamp-bottom')
+            stamp=page.get_by_text('Besuch stempeln',exact=True)
+            if await stamp.count():
+                await stamp.click()
+                await page.get_by_text('Stempel erfolgreich gesetzt.',exact=True).first.wait_for(timeout=15000)
+                await shot('stamp-success')
+                checks.append({'flow':'local visit write and immediate acknowledgement','passed':True})
+            # Continue in the same ephemeral signed-in context; local writes only.
+            await page.goto(BASE + '/profile')
+            await page.wait_for_timeout(2000)
+            await page.get_by_text('Profil bearbeiten',exact=True).click()
+            await page.wait_for_timeout(1000)
+            await shot('profile-edit')
+            await page.get_by_role('textbox',name='Dein Name').fill('Wanderbuddy Review')
+            await page.get_by_text('Speichern',exact=True).click()
+            await page.get_by_text('Wanderbuddy Review',exact=True).wait_for(timeout=15000)
+            await shot('profile-saved')
+            checks.append({'flow':'edit and save local profile name','passed':True})
+            await page.goto(BASE + '/friends')
+            await page.wait_for_timeout(1800)
+            await page.get_by_text(re.compile(r'^Anfragen \(1\)$')).click()
+            await shot('friends-request')
+            await page.get_by_text('Annehmen',exact=True).click()
+            await page.wait_for_timeout(1800)
+            await shot('friends-request-accepted')
+            checks.append({'flow':'accept fictional local buddy request','passed':True})
+            await page.get_by_role('button',name='Freunde suchen',exact=True).click()
+            await page.get_by_role('textbox').fill('UI-Test Ida')
+            await page.wait_for_timeout(2000)
+            await shot('friends-search')
+            await page.get_by_role('button',name='Suche schließen',exact=True).click()
+            await page.goto(BASE + '/tours')
+            await page.wait_for_timeout(1800)
+            await page.get_by_role('button',name='Neue Tour planen',exact=True).click()
+            await page.wait_for_timeout(2200)
+            await shot('tour-created')
+            checks.append({'flow':'create local tour','passed':True})
+            await page.mouse.wheel(0,650)
+            await page.wait_for_timeout(700)
+            await shot('tour-created-bottom')
+            await page.get_by_role('button',name='Ersten Stempel wählen').click()
+            await page.get_by_role('textbox',name='Tourpunkte suchen').last.fill('Brocken')
+            await page.wait_for_timeout(1000)
+            await shot('tour-search')
+            await page.get_by_text('#1 · Brocken – Gipfelblick',exact=True).last.click()
+            await page.wait_for_timeout(700)
+            await shot('tour-point-selected')
+            await page.get_by_text('Zur Tour hinzufügen',exact=True).last.click()
+            await page.wait_for_timeout(1500)
+            await shot('tour-point-added')
+            checks.append({'flow':'find and add first local tour point','passed':True})
+
+        except Exception as error:
+            checks.append({'flow':'capture continuation','passed':False,'errorType':type(error).__name__})
+            print('Capture stopped:',type(error).__name__,flush=True)
+        finally:
+            (OUT/'browser-checks.json').write_text(json.dumps({'checks':checks,'errors':errors,'sourceHead':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT).decode().strip()},ensure_ascii=False,indent=2))
+            await browser.close()
+    print(json.dumps({'checks':len(checks),'failed':[check for check in checks if check.get('passed') is False],'pageErrors':errors},ensure_ascii=False),flush=True)
+
+asyncio.run(main())
+

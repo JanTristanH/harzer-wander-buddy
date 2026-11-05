@@ -405,7 +405,7 @@ function StampDetailContent() {
   }, [isOffline, refetch]);
   const heroImageUri = detail?.stamp.heroImageUrl?.trim() || detail?.stamp.image?.trim() || '';
   const [heroImageSize, setHeroImageSize] = useState<{ uri: string; width: number; height: number } | null>(null);
-  const heroHeight = getStampHeroHeight(windowWidth, windowHeight,
+  const heroHeight = !heroImageUri ? 144 : getStampHeroHeight(windowWidth, windowHeight,
     heroImageSize?.uri === heroImageUri ? heroImageSize : undefined);
   const stretchyHeader = useStretchyHeader(heroHeight, handleRefresh, isFetching && !isPending);
   const promptSignIn = useCallback(
@@ -1849,7 +1849,7 @@ function StampDetailContent() {
           ref={stretchyHeader.scrollRef}
           alwaysBounceVertical
           bounces
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: 232 + bottomInset }]}
+          contentContainerStyle={styles.scrollContent}
           onScroll={stretchyHeader.onScroll}
           scrollEventThrottle={16}
           overScrollMode="never"
@@ -2365,6 +2365,9 @@ function StampDetailContent() {
       </View>
 
       <View pointerEvents="box-none" style={[styles.bottomDock, { paddingBottom: Math.max(12, bottomInset) }]}>
+        {isStampSuccessToastVisible ? (
+          <Text accessible={false} style={styles.stampSavedHint}>{stampSuccessMessage}</Text>
+        ) : null}
         <View style={styles.bottomActions}>
           <View style={styles.secondaryButtonRow}>
             <Pressable
@@ -3080,6 +3083,14 @@ const styles = StyleSheet.create({
   },
   emptyNearbyStampsText: {
     textAlign: 'center',
+  },
+  stampSavedHint: {
+    color: AppColors.primary,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingBottom: 8,
   },
   bottomDock: {
     paddingHorizontal: 18,

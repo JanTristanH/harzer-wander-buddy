@@ -1,0 +1,44 @@
+[
+  {
+    "use": "Body text",
+    "foreground": "#243326",
+    "background": "#ffffff",
+    "ratio": 13.32,
+    "passesNormalTextAA": true
+  },
+  {
+    "use": "Muted text on canvas",
+    "foreground": "#526351",
+    "background": "#f5f3ee",
+    "ratio": 5.8,
+    "passesNormalTextAA": true
+  },
+  {
+    "use": "Primary action",
+    "foreground": "#ffffff",
+    "background": "#2e6b4b",
+    "ratio": 6.32,
+    "passesNormalTextAA": true
+  },
+  {
+    "use": "Strong gradient endpoint",
+    "foreground": "#ffffff",
+    "background": "#24543c",
+    "ratio": 8.72,
+    "passesNormalTextAA": true
+  },
+  {
+    "use": "Secondary action",
+    "foreground": "#526351",
+    "background": "#edf2ec",
+    "ratio": 5.67,
+    "passesNormalTextAA": true
+  },
+  {
+    "use": "Warning text",
+    "foreground": "#71592f",
+    "background": "#fffaf0",
+    "ratio": 6.36,
+    "passesNormalTextAA": true
+  }
+]

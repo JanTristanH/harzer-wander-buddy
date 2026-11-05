@@ -416,6 +416,7 @@ function ProfileEditContent() {
                 autoCorrect={false}
                 editable={!isSaving && canPerformWrites}
                 onChangeText={setName}
+                accessibilityLabel="Dein Name"
                 placeholder="Dein Name"
                 placeholderTextColor="#8A968A"
                 style={styles.input}

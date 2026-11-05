@@ -270,23 +270,6 @@ function StampArtwork({
   return <LinearGradient colors={artworkGradient(index, visited)} style={style} />;
 }
 
-function chipToneStyle(tone?: StampChip['tone']) {
-  switch (tone) {
-    case 'success':
-      return [styles.countChipSuccess, styles.countChipLabelSuccess] as const;
-    case 'sand':
-      return [styles.countChipSand, styles.countChipLabelSand] as const;
-    case 'rose':
-      return [styles.countChipRose, styles.countChipLabelRose] as const;
-    case 'brown':
-      return [styles.countChipBrown, styles.countChipLabelBrown] as const;
-    case 'subtle':
-      return [styles.countChipSubtle, styles.countChipLabelSubtle] as const;
-    default:
-      return [styles.countChipSand, styles.countChipLabelSand] as const;
-  }
-}
-
 function normalizedText(value: unknown) {
   if (typeof value !== 'string') {
     return '';
@@ -890,7 +873,6 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
               horizontal
               showsHorizontalScrollIndicator={false}>
               {data.stampChips.map((chip) => {
-                const [backgroundStyle, labelToneStyle] = chipToneStyle(chip.tone);
                 const active = data.activeStampChip === chip.key;
                 return (
                   <Pressable
@@ -901,7 +883,6 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                     onPress={() => data.onSelectStampChip(chip.key)}
                     style={({ pressed }) => [
                       styles.countChip,
-                      backgroundStyle,
                       active && styles.countChipActive,
                       pressed && styles.pressed,
                     ]}>
@@ -909,7 +890,6 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                       numberOfLines={1}
                       style={[
                         styles.countChipLabel,
-                        labelToneStyle,
                         active && styles.countChipLabelActive,
                       ]}>
                       {chip.label}
@@ -1061,6 +1041,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    width: '100%',
+    maxWidth: Layout.contentWidth,
+    alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 22,
     paddingBottom: 220,
@@ -1081,6 +1064,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loadingContent: {
+    width: '100%',
+    maxWidth: Layout.contentWidth,
+    alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 22,
     paddingBottom: 220,
@@ -1516,6 +1502,7 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   countChip: {
+    backgroundColor: AppColors.subtle,
     minHeight: Layout.touchTarget,
     justifyContent: 'center',
     minWidth: 92,
@@ -1549,6 +1536,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f6f1e8',
   },
   countChipLabel: {
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },

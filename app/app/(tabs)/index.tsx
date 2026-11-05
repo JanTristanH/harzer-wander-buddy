@@ -500,7 +500,7 @@ export default function StampsScreen() {
       ? locationState === 'granted'
         ? `Im Umkreis von ${NEARBY_DISTANCE_KM} km wurden keine Stempelstellen gefunden.`
         : `Aktiviere deinen Standort, dann suchen wir im Umkreis von ${NEARBY_DISTANCE_KM} km.`
-      : 'Probier eine andere Suche oder waehle einen anderen Filter.';
+      : 'Probier eine andere Suche oder wähle einen anderen Filter.';
   const emptyStateIllustration = isVisitedEmptyState ? emptyVisitedIllustration : emptySearchIllustration;
 
   const listItems = useMemo<ListEntry[]>(() => {
@@ -828,7 +828,7 @@ export default function StampsScreen() {
           <Text style={styles.title}>Stempelstellen</Text>
           {isAuthenticated ? <GroupSelector testID="stamps-header-group-selector" /> : null}
         </View>
-        {renderSelectionButton()}
+        {!selectionMode ? renderSelectionButton() : null}
       </View>
 
       <View
@@ -846,7 +846,7 @@ export default function StampsScreen() {
         <LinearGradient colors={[Design.color.brandDeep, Design.color.brand]} style={styles.progressCard}>
           <Text style={styles.progressEyebrow}>{isAuthenticated ? 'Dein Fortschritt' : 'Dein digitaler Stempelpass'}</Text>
           <Text style={styles.progressTitle}>
-            {isAuthenticated ? `${animatedVisitedCount} von ${totalCount} Stempelstellen` : 'Der Harz wartet auf dich'}
+            {isAuthenticated ? `${animatedVisitedCount} von ${totalCount} Stempelstellen` : 'Harz entdecken'}
           </Text>
           {isAuthenticated ? <View accessible accessibilityLabel={`${visitedCount} von ${totalCount} besucht`} style={styles.progressRow}>
             <View
@@ -862,7 +862,7 @@ export default function StampsScreen() {
             <Text style={styles.progressPercent}>{progressPercent}%</Text>
           </View> : null}
           <Text style={styles.progressHint}>
-            {!isAuthenticated ? 'Anmelden und deine besuchten Stempel sammeln →' : lastVisited
+            {!isAuthenticated ? 'Anmelden und Stempel sammeln →' : lastVisited
               ? `Letzter Besuch: Stempel ${lastVisited.stampNumber || '--'} • ${lastVisited.stampName} • ${formatVisitDate(lastVisited.visitedAt)}`
               : 'Noch keine besuchten Stempelstellen'}
           </Text>
@@ -979,12 +979,13 @@ export default function StampsScreen() {
           <View style={styles.emptyStateWrap}>
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>{emptyStateTitle}</Text>
+              <Text style={styles.emptyCopy}>{emptyStateCopy}</Text>
               <Image
+                accessibilityLabel="" accessible={false}
                 contentFit="contain"
                 source={emptyStateIllustration}
                 style={styles.emptyIllustration}
               />
-              <Text style={styles.emptyCopy}>{emptyStateCopy}</Text>
             </View>
           </View>
         );
@@ -1293,7 +1294,7 @@ export default function StampsScreen() {
 const styles = StyleSheet.create({
   confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.35)' },
   confirmCard: { width: '100%', maxWidth: 420, padding: 24, borderRadius: 22, backgroundColor: '#f5f3ee', gap: 20 },
-  headerTitleGroup: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  headerTitleGroup: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   headerSelectionButton: { minHeight: 40, minWidth: 86, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderWidth: 1, borderColor: '#d9e2d9', borderRadius: 999 },
   headerSelectionLabel: { color: '#5c745f', fontSize: 12, fontWeight: '600' },
   selectionToolbar: { padding: 12, gap: 6, justifyContent: 'center', borderRadius: 22, backgroundColor: '#e2eee6', zIndex: 20 },
@@ -1312,6 +1313,9 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
+    width: '100%',
+    maxWidth: Design.contentWidth,
+    alignSelf: 'center',
     overflow: 'hidden',
   },
   list: {
@@ -1393,8 +1397,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: Design.color.ink,
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '700',
   },
   totalLabel: {
@@ -1595,8 +1599,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyIllustration: {
-    width: 120,
-    height: 120,
+    width: 80,
+    height: 80,
     alignSelf: 'center',
   },
   fastScrollerOverlay: {

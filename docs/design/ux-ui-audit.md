@@ -219,3 +219,157 @@ The user selected current develop as the PR base. The design work was transferre
 Integrated verification observed 278 passing tests in 53 suites and a passing TypeScript check. Lint had only the two existing map-primitives require-import warnings after integration cleanup. New screenshot evidence and browser-checks are under the workspace's `artifacts/ui-audit/current`: 21 guest viewport checks had no document overflow, and an actual local visit write produced a visited stamp state. The browser also logged six React hydration mismatch errors; these are unresolved and prevent treating that run as error-free.
 
 A further requested fetch found six more develop commits through `bf3a5c8`, including native offline visit/note synchronization. This update is being integrated before final review. Historical scores above remain attached to their original source/evidence; none are a final score for the new base.
+
+## Develop review 1 — 0c1b6f3 plus transferred changes
+
+The independent reviewer inspected all 36 PNGs in `screenshots/develop-round-1/` and the browser log. Later source corrections and the subsequent six develop commits are not credited to this image round.
+
+| Category | Score /10 | Concrete remaining issue |
+| --- | ---: | --- |
+| Icons | 8.5 | Coherent line icons and active navigation. |
+| Colors/contrast | 8.5 | Readable green actions; visual assessment, not a full WCAG measurement. |
+| Typography | 8.5 | Consistent functional Sans; distinct onboarding display type. |
+| Visual hierarchy | 8.0 | Guest onboarding action did not name the guest path. |
+| Spacing/layout | 7.5 | Desktop list stretched; image-free hero and detail-end whitespace. |
+| Radii/forms | 8.5 | Coherent component shapes. |
+| Buttons/interactions | 8.0 | Duplicate create/search actions; immediate stamp success not captured. |
+| Navigation | 8.0 | Desktop tab width changes across screenshots; group selector not opened. |
+| Map UX | 8.0 | Better overlay padding; narrow pins overlap and group/search compete. |
+| Forms/search | 8.0 | Readable inputs; current filter/multiple-selection interactions not evidenced. |
+| Feedback/system states | 7.5 | Good empty states, but six hydration errors and no captured immediate stamp acknowledgement. |
+| Accessibility | 7.5 (partial) | Visual readability; current keyboard, focus, native and screen-reader checks missing. |
+| Responsive design | 7.0 | 21 checks without document overflow; stretched list and inconsistent desktop tabs. |
+| Consistency | 8.0 | Stronger main screens; duplicate actions and navigation drift. |
+| Information quality | 8.0 | Clear permissions; guest action and Timeline terminology need work. |
+| Polish/brand | 8.0 | Strong identity; desktop stretching and empty detail hero remain. |
+
+| Guest screen | 320 px | 390 px | 1440 px |
+| --- | ---: | ---: | ---: |
+| List | 8.0 | 8.5 | 6.5 |
+| Map | 7.5 | 8.0 | 8.0 |
+| Login | 8.5 | 8.5 | 8.5 |
+| Onboarding | 7.5 | 7.5 | 7.5 |
+| Tours | 8.5 | 8.5 | 8.5 |
+| Friends | 8.5 | 8.5 | 7.5 |
+| Profile | 8.5 | 8.5 | 8.5 |
+
+| Signed-in screen/state, 390 px | Score /10 |
+| --- | ---: |
+| Onboarding 0 — welcome | 8.5 |
+| Onboarding 1 — name | 8.5 |
+| Onboarding 2 — avatar | 8.5 |
+| Onboarding 3 — optional location | 8.5 |
+| Onboarding 4 — optional friends | 8.5 |
+| List | 8.5 |
+| Map | 8.0 |
+| Tours, empty | 8.0 |
+| Friends, empty | 8.0 |
+| Profile | 8.0 |
+| Stamp detail | 7.5 |
+| Stamp detail, scroll 500 | 8.5 |
+| Stamp detail, scroll 1100 | 8.0 |
+| Stamp detail, scroll 1800 | 8.0 |
+| Stamp after visit | 7.5 |
+
+The local visit write changed the action to “Erneut stempeln”. The screenshot delay exceeded the existing 2400ms toast duration, so that image does not show the immediate acknowledgement. This is a capture limitation, not evidence that no toast was rendered. The reviewer also requested clearer nearby feedback, consistent desktop widths and loaded group/multiple-selection flows. No score was assigned to unseen flows.
+
+## Develop review 2 — guest matrix (bf3a5c8 + working tree)
+
+Independent reviewer inspected all 28 guest images and three search/filter states in `screenshots/develop-round-2`. Each value below is a separate recorded score. Signed-in review remains pending in this round.
+
+| Screen | 320 | 390 | 768 | 1440 |
+| --- | ---: | ---: | ---: | ---: |
+| Guest list | 8.0 | 8.5 | 8.5 | 8.5 |
+| Guest map | 8.0 | 8.5 | 8.5 | 8.5 |
+| Guest login | 8.5 | 8.5 | 8.5 | 8.5 |
+| Guest onboarding | 8.0 | 8.0 | 8.5 | 8.0 |
+| Guest tours | 8.5 | 8.5 | 8.5 | 8.5 |
+| Guest friends | 8.5 | 8.5 | 8.5 | 8.5 |
+| Guest profile | 8.5 | 8.5 | 8.5 | 8.5 |
+
+Search focus: **7.5**; search empty: **7.5**; map filter: **8.5**. Rest findings: double input focus outline, low clear icon, crowded 320px list/map, and onboarding content requiring a scroll/end proof. Guest guidance still describes authenticated profile setup. Desktop width and navigation consistency improved.
+
+Interaction capture: 28 viewport checks without horizontal document overflow; actual SSO/onboarding, search clear/empty, map switches, multiple selection/cancel and local visit acknowledgement passed. Group interaction timed out and must be diagnosed. One map `getZoom` exception remains; this run is not browser-error-free. See `develop-round-2-browser-checks.json`. Screenshots of signed-in states are evidence only until reviewed separately.
+
+### Develop review 2 — signed-in and category scores
+
+Reviewer inspected 20 additional images (51 total in this round), and the browser check file. These scores precede the subsequent focus, profile, group-avatar and layout corrections.
+
+| Signed-in image | Score /10 |
+| --- | ---: |
+| List 390 / 1440 | 8.0 / 8.5 |
+| Map 390 / 1440 | 8.5 / 8.5 |
+| Tours 390 / 1440 | 8.5 / 8.5 |
+| Friends 390 / 1440 | 8.5 / 8.0 |
+| Profile 390 / 1440 | 8.0 / 6.5 |
+| Onboarding 0 / 1 / 2 / 3 / 4 | 8.5 / 8.5 / 8.5 / 8.5 / 8.5 |
+| Group open | 8.0 visual only |
+| Multiple selected | 7.5 |
+| Stamp detail / bottom / success | 8.5 / 8.5 / 8.5 |
+
+| Category | Score /10 |
+| --- | ---: |
+| Icons | 8.5 |
+| Color/contrast | 8.5 |
+| Typography | 8.5 |
+| Visual hierarchy | 8.5 |
+| Spacing/layout | 8.0 |
+| Radii/forms | 8.5 |
+| Buttons/interactions | 8.0 |
+| Navigation | 8.5 |
+| Map UX | 8.0 |
+| Forms/search | 7.5 |
+| Feedback/system states | 8.5 |
+| Accessibility | 7.5 partial |
+| Responsive/adaptive | 7.5 |
+| Consistency | 8.0 |
+| Information quality | 8.0 |
+| Polish/brand | 8.0 |
+
+Remaining findings: stretched desktop profile; friends search action far outside its content column; redundant selection cancel actions; blank group avatar; high grouped rows; mixed profile filter colors and English Timeline copy. Native, screen-reader, offline/error and several secondary flows remain unevaluated. A visible state never substitutes for the failed group interaction check.
+
+## Develop review 4 — expanded flows
+
+All 41 PNGs in `screenshots/develop-round-4` inspected independently. No browser pageerrors. Real local writes demonstrated: visit, accepted fictional friend request, and created empty tour. Tour creation does not establish a complete route. Group confirmation still failed; root cause was a data-query transition unmounting the open selector. This round precedes the draft-selection and keyboard repairs.
+
+| Category | Score /10 |
+| --- | ---: |
+| Icons | 8.5 |
+| Color/contrast | 8.0 |
+| Typography | 8.5 |
+| Visual hierarchy | 8.0 |
+| Spacing/layout | 8.5 |
+| Radii/forms | 8.5 |
+| Buttons/interactions | 7.5 |
+| Navigation | 8.5 |
+| Map UX | 7.5 |
+| Forms/search | 8.0 |
+| Feedback/system states | 8.5 |
+| Accessibility | 7.5 partial |
+| Responsive/adaptive | 8.5 |
+| Consistency | 8.0 |
+| Information quality | 8.0 |
+| Polish/brand | 8.0 |
+
+| Image/state | Score /10 |
+| --- | ---: |
+| Guest list 320 | 8.5 |
+| Search focus 320 / 390 | 8.5 / 8.5 |
+| Search empty 320 / 390 | 8.0 / 8.5 |
+| Guest onboarding initial 320 / 390 / 768 / 1440 | 8.0 / 8.5 / 8.5 / 8.5 |
+| Guest onboarding end 320 / 390 / 768 / 1440 | 8.5 / 8.5 / 8.5 / 8.5 |
+| Signed list 390 / 1440 | 8.5 / 8.5 |
+| Signed map 390 / 1440 | 8.5 / 8.5 |
+| Signed tours 390 / 1440 | 8.5 / 8.5 |
+| Signed friends 390 / 1440 | 8.5 / 8.5 |
+| Signed profile 390 / 1440 | 8.5 / 8.5 |
+| Profile edit | 8.0 |
+| Friend request / accepted / search | 8.0 / 8.5 / 7.5 |
+| Group open | 8.0 visual; 5.0 flow |
+| Multiple selected | 8.0 |
+| Map filter / keyboard filter 320 | 8.5 / 8.5 visual |
+| Onboarding 0 / 1 / 2 / 3 / 4 | 8.5 / 8.5 / 8.5 / 8.5 / 8.5 |
+| Stamp detail / bottom / success | 8.5 / 8.5 / 8.5 |
+| Tour created / bottom | 6.5 / 6.5 |
+
+Findings: low-contrast tour-map hint, no clear empty-tour start action, technical metric placeholders; narrow focus inside friend search, small friend actions; group count ambiguous beside total including self; narrow empty-state guidance below illustration. Profile save/upload/validation, full route editing, native, screen readers and offline/error scenarios remained unverified. The next iteration addresses the specific findings without treating missing evidence as a pass.

@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 
 import { FriendAvatar } from '@/components/friends-list';
-import { AppColors, Fonts } from '@/constants/theme';
+import { AppColors, Fonts, Layout } from '@/constants/theme';
+import { checkableKeyboardProps } from '@/lib/checkable-keyboard';
 import { useAuth } from '@/lib/auth';
 import { useHikingGroup } from '@/lib/hiking-group';
 
@@ -26,8 +27,9 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
     isLoading,
     members,
     selectedFriendIds,
-    toggleFriend,
+    addFriend,
   } = useHikingGroup();
+  const [draftIds, setDraftIds] = useState<string[]>([]);
   const [isVisible, setIsVisible] = useState(false);
 
   const closeSelector = useCallback(() => {
@@ -52,14 +54,14 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
         accessibilityLabel={buttonAccessibilityLabel}
         accessibilityRole="button"
         accessibilityState={{ expanded: isVisible }}
-        onPress={() => setIsVisible(true)}
+        onPress={() => { setDraftIds([...selectedFriendIds]); setIsVisible(true); }}
         style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}
         testID={testID}>
         <Feather color={AppColors.primary} name="users" size={16} />
         <Text style={styles.triggerLabel}>Gruppe</Text>
         {selectionCount > 0 ? (
           <View style={styles.countBadge}>
-            <Text style={styles.countBadgeLabel}>{selectionCount}</Text>
+            <Text style={styles.countBadgeLabel}>{selectionCount + 1}</Text>
           </View>
         ) : null}
       </Pressable>
@@ -111,16 +113,18 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
                 showsVerticalScrollIndicator={false}
                 style={styles.membersScroll}>
                 {members.map((member, index) => {
-                  const isSelected = selectedFriendIds.includes(member.id);
+                  const isSelected = draftIds.includes(member.id);
                   return (
                     <Pressable
                       accessibilityLabel={`${member.name} ${
                         isSelected ? 'aus der Wandergruppe entfernen' : 'zur Wandergruppe hinzufügen'
                       }`}
+                      {...checkableKeyboardProps(() => setDraftIds((ids) => ids.includes(member.id) ? ids.filter((id) => id !== member.id) : [...ids, member.id]))}
                       accessibilityRole="checkbox"
+                      aria-checked={isSelected}
                       accessibilityState={{ checked: isSelected }}
                       key={member.id}
-                      onPress={() => toggleFriend(member.id)}
+                      onPress={() => setDraftIds((ids) => ids.includes(member.id) ? ids.filter((id) => id !== member.id) : [...ids, member.id])}
                       style={({ pressed }) => [
                         styles.memberRow,
                         isSelected && styles.memberRowSelected,
@@ -129,6 +133,7 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
                       testID={`group-selector-friend-${member.id}`}>
                       <FriendAvatar
                         image={member.picture}
+                        name={member.name}
                         index={index}
                         radius={18}
                         size={42}
@@ -158,18 +163,18 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
               <Pressable
                 accessibilityLabel="Wandergruppe leeren"
                 accessibilityRole="button"
-                disabled={selectionCount === 0}
-                onPress={clearGroup}
+                disabled={draftIds.length === 0}
+                onPress={() => setDraftIds([])}
                 style={({ pressed }) => [
                   styles.secondaryButton,
-                  selectionCount === 0 && styles.buttonDisabled,
-                  pressed && selectionCount > 0 && styles.pressed,
+                  draftIds.length === 0 && styles.buttonDisabled,
+                  pressed && draftIds.length > 0 && styles.pressed,
                 ]}
                 testID="group-selector-clear">
                 <Text
                   style={[
                     styles.secondaryButtonLabel,
-                    selectionCount === 0 && styles.buttonLabelDisabled,
+                    draftIds.length === 0 && styles.buttonLabelDisabled,
                   ]}>
                   Auswahl leeren
                 </Text>
@@ -177,7 +182,7 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
               <Pressable
                 accessibilityLabel="Gruppenauswahl übernehmen"
                 accessibilityRole="button"
-                onPress={closeSelector}
+                onPress={() => { clearGroup(); draftIds.forEach((id) => addFriend(id)); closeSelector(); }}
                 style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed]}
                 testID="group-selector-done">
                 <Text style={styles.primaryButtonLabel}>Fertig</Text>
@@ -200,8 +205,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 7,
-    minHeight: 36,
-    paddingHorizontal: 12,
+    minHeight: 48,
+    paddingHorizontal: 8,
     paddingVertical: 7,
   },
   triggerLabel: {
@@ -278,9 +283,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F0E9DD',
     borderRadius: 9,
-    height: 32,
+    height: Layout.touchTarget,
     justifyContent: 'center',
-    width: 32,
+    width: Layout.touchTarget,
   },
   statusWrap: {
     alignItems: 'center',

@@ -1,7 +1,7 @@
 import { AppColors, Layout } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
-import React, { forwardRef } from 'react';
-import { Pressable, StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
+import React, { forwardRef, useState } from 'react';
+import { Platform, Pressable, StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
 
 type ClearableSearchInputProps = TextInputProps & {
   /** Inputs outside an existing horizontal search shell keep their natural width. */
@@ -9,18 +9,21 @@ type ClearableSearchInputProps = TextInputProps & {
 };
 
 export const ClearableSearchInput = forwardRef<TextInput, ClearableSearchInputProps>(
-  function ClearableSearchInput({ standalone = false, style, value, onChangeText, editable, ...props }, ref) {
+  function ClearableSearchInput({ standalone = false, style, value, onChangeText, editable, onFocus, onBlur, ...props }, ref) {
+    const [focused, setFocused] = useState(false);
     const canClear = Boolean(value?.length) && editable !== false && Boolean(onChangeText);
 
     return (
-      <View style={standalone ? styles.standalone : styles.container}>
+      <View style={[standalone ? styles.standalone : styles.container, Platform.OS === 'web' && focused && !onFocus && styles.focused]}>
         <TextInput
           {...props}
           ref={ref}
+          onFocus={(event) => { setFocused(true); onFocus?.(event); }}
+          onBlur={(event) => { setFocused(false); onBlur?.(event); }}
           clearButtonMode="never"
           editable={editable}
           onChangeText={onChangeText}
-          style={[style, styles.input, canClear && styles.inputWithClearButton]}
+          style={[style, styles.input, Platform.OS === 'web' && { outlineStyle: 'solid', outlineWidth: 0, outlineColor: 'transparent' }, canClear && styles.inputWithClearButton]}
           value={value}
         />
         {canClear ? (
@@ -46,6 +49,12 @@ const styles = StyleSheet.create({
   standalone: {
     flexDirection: 'row',
   },
+  focused: {
+    outlineColor: AppColors.primary,
+    outlineWidth: 2,
+    outlineStyle: 'solid',
+    borderRadius: 4,
+  },
   input: {
     flex: 1,
     minWidth: 0,
@@ -56,8 +65,9 @@ const styles = StyleSheet.create({
   clearButton: {
     position: 'absolute',
     right: 0,
-    top: 0,
-    bottom: 0,
+    top: '50%',
+    marginTop: -Layout.touchTarget / 2,
+    height: Layout.touchTarget,
     width: Layout.touchTarget,
     minHeight: Layout.touchTarget,
     alignItems: 'center',

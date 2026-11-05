@@ -1,3 +1,4 @@
+import { AppColors, Fonts, Layout } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, usePreventRemove } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -2737,6 +2738,7 @@ export default function TourDetailScreen() {
 
                 setIsSearchFocused(true);
               }}
+              accessibilityLabel="Tourpunkte suchen"
               placeholder="Punkte auf der Karte suchen"
               placeholderTextColor="#7b8776"
               style={styles.mapSearchInput}
@@ -2797,7 +2799,7 @@ export default function TourDetailScreen() {
         ) : null}
         {isEditMode ? (
           <Text style={styles.externalSearchHint}>
-            Externe Orte sind nicht als Tourpunkt speicherbar.
+            {selectedExternalPlace ? 'Externe Orte dienen zur Orientierung. Füge Stempel oder Parkplätze als Tourpunkte hinzu.' : 'Stempel auswählen und „Zur Tour hinzufügen“ antippen.'}
           </Text>
         ) : null}
       </View>
@@ -2972,6 +2974,8 @@ export default function TourDetailScreen() {
         <View style={styles.headerWrap}>
           <View style={styles.headerTopRow}>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Zurück zu den Touren"
               onPress={handleBackPress}
               style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
               <Feather color="#1e2a1e" name="arrow-left" size={16} />
@@ -3011,6 +3015,7 @@ export default function TourDetailScreen() {
                 onBlur={() => void handleSubmitRename({ silent: true })}
                 onChangeText={handleTourNameChange}
                 onSubmitEditing={() => void handleSubmitRename()}
+                accessibilityLabel="Tourname"
                 placeholder="Tourname"
                 placeholderTextColor="#7b8776"
                 returnKeyType="done"
@@ -3032,6 +3037,7 @@ export default function TourDetailScreen() {
             <GroupSelector />
           </View>
 
+          {draftPoiIds.length === 0 ? <Text style={styles.cardLine}>Deine Tour beginnt mit einem Stempel. Wähle auf der Karte deinen Startpunkt.</Text> : <>
           <View style={styles.tourMetricsLineWrap}>
             <View style={styles.metricLineRow}>
               <Text style={styles.cardLine}>Distanz: </Text>
@@ -3116,6 +3122,7 @@ export default function TourDetailScreen() {
               </Text>
             </View>
           ) : null}
+          </>}
         </View>
 
         {blockingErrorCode === 403 ? (
@@ -3174,7 +3181,13 @@ export default function TourDetailScreen() {
               </View>
             </>
           ) : draftPoiIds.length === 0 ? (
-            <Text style={styles.cardLine}>Noch keine Punkte in der Tour.</Text>
+            <View style={styles.emptyTour}>
+              <Text style={styles.cardLine}>Füge deinen ersten Stempel hinzu. Danach kannst du weitere Ziele wählen und ihre Reihenfolge ändern.</Text>
+              {isEditMode ? <Pressable accessibilityRole="button" onPress={openMapFullscreen} style={styles.addFirstPoint}>
+                <Feather name="plus" size={20} color={AppColors.onPrimary} />
+                <Text style={styles.addFirstPointLabel}>Ersten Stempel wählen</Text>
+              </Pressable> : null}
+            </View>
           ) : (
             draftPoiIds.map((poiId, index) => {
               const item = mapItemById.get(poiId.toLowerCase());
@@ -3430,7 +3443,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f3ee',
   },
+  emptyTour: { gap: 12 },
+  addFirstPoint: { minHeight: Layout.touchTarget, backgroundColor: AppColors.primary, borderRadius: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  addFirstPointLabel: { color: AppColors.onPrimary, fontSize: 15, fontWeight: '700' },
   scrollContent: {
+    width: '100%', maxWidth: Layout.contentWidth, alignSelf: 'center',
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 40,
@@ -3518,7 +3535,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   backButton: {
-    minHeight: 32,
+    minWidth: Layout.touchTarget,
+    minHeight: Layout.touchTarget,
     borderRadius: 10,
     backgroundColor: '#ffffff',
     paddingHorizontal: 10,
@@ -3678,7 +3696,7 @@ const styles = StyleSheet.create({
     color: '#2e3a2e',
     fontSize: 23,
     lineHeight: 30,
-    fontFamily: 'serif',
+    fontFamily: Fonts.sans,
     paddingVertical: 0,
   },
   titleInputDisabled: {
@@ -3688,7 +3706,7 @@ const styles = StyleSheet.create({
     color: '#1e2a1e',
     fontSize: 24,
     lineHeight: 30,
-    fontFamily: 'serif',
+    fontFamily: Fonts.sans,
   },
   subtitle: {
     color: '#445244',
@@ -3843,8 +3861,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   mapFullscreenButton: {
-    width: 42,
-    height: 42,
+    width: Layout.touchTarget,
+    height: Layout.touchTarget,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -3896,9 +3914,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   searchResultMeta: {
-    color: '#6b7a6b',
-    fontSize: 11,
-    lineHeight: 14,
+    color: AppColors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
   },
   searchStatusText: {
     color: '#6b7a6b',
@@ -3908,11 +3926,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   externalSearchHint: {
+    backgroundColor: AppColors.surface,
+    borderRadius: 8,
+    padding: 8,
     marginTop: 6,
     marginLeft: 4,
-    color: '#6b7a6b',
-    fontSize: 11,
-    lineHeight: 14,
+    color: AppColors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
   },
   mapZoomControls: {
     position: 'absolute',
@@ -3921,8 +3942,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   zoomButton: {
-    width: 40,
-    height: 40,
+    width: Layout.touchTarget,
+    height: Layout.touchTarget,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

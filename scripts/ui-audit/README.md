@@ -28,3 +28,20 @@ Public stamp detail: `/app/rnweb/stamps/00000000-0000-4000-8000-000000000001`.
 Public parking detail: `/app/rnweb/parking/00000000-0000-4000-9000-000000000001`.
 
 Check search, clear search, no results, each filter, map switches (including `aria-checked`), zoom, marker selection, opening details, back navigation, guest onboarding and keyboard focus. Authenticated, admin and native behavior require separate authorized runtime evidence. Guest fixtures cannot certify those flows.
+
+## Approved Auth0 workflow on port 4004
+
+For signed-in review use the repository's web build served by CAP; ports 8081 and 8083 are not registered callbacks for this test client:
+
+```sh
+# Terminal 1, from backend/hwb; optionally include fictional buddies/requests:
+HWB_UI_RICH_FIXTURES=1 node --require ../../scripts/ui-audit/runtime-proxy.cjs ../../scripts/ui-audit/seed-memory-backend.cjs
+# Terminal 2, from app:
+EXPO_PUBLIC_BACKEND_URL=http://localhost:4004 npm run dev:sso:web:build
+# Terminal 3, from repository root (Python Playwright and Chromium required):
+python scripts/ui-audit/capture-web.py /workspace/artifacts/ui-audit/final
+```
+
+The capture reads only the approved test credentials from `AGENTS.md` and performs actual Auth0 login. Profile setup and visit writes go to the disposable local memory backend. It never exports cookies, tokens, storage state or emulator userdata. `runtime-proxy.cjs` enables Node fetch to use the configured environment proxy for Auth0, preserving local exclusions and TLS verification. Without an environment proxy it leaves fetch unchanged.
+
+The capture records source commit, viewport overflow, interaction outcomes and sanitized browser errors alongside PNGs. Run it against the built working tree and record any uncommitted UI changes in the review ledger. A failed capture or missing screen is not a passing check. Do not publish the runtime directory or test credentials.

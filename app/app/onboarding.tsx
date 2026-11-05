@@ -666,10 +666,10 @@ export default function OnboardingScreen() {
           </View>
           <ScrollView ref={scrollRef} style={styles.stepScroll} keyboardShouldPersistTaps="handled" bounces={false}
             contentContainerStyle={styles.flowContent} showsVerticalScrollIndicator={false}>
-            <View style={[styles.scene, step === 2 && styles.compactScene]}>
-              {step === 0 ? <Image contentFit="contain" source={bearIllustration} style={styles.welcomeIllustration} /> :
+            <View style={[styles.scene, step === 0 && !isAuthenticated && styles.guestScene, step === 2 && styles.compactScene]}>
+              {step === 0 ? <Image accessibilityLabel="" accessible={false} contentFit="contain" source={bearIllustration} style={[styles.welcomeIllustration, !isAuthenticated && styles.guestIllustration]} /> :
                 step === 1 || step === 2 ? <View style={[styles.avatarPreview, step === 2 && styles.compactAvatarPreview]}>
-                  {effectiveProfilePicture ? <Image contentFit="cover" source={selectedProfileImage ? { uri: selectedProfileImage.uri } : buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)} style={styles.previewImage} /> :
+                  {effectiveProfilePicture ? <Image accessibilityLabel="Dein Profilbild" contentFit="cover" source={selectedProfileImage ? { uri: selectedProfileImage.uri } : buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)} style={styles.previewImage} /> :
                     <Feather name="user" size={58} color="#496850" />}
                 </View> : <View style={styles.featureScene}>
                   <View style={styles.sceneOrbit} />
@@ -686,7 +686,7 @@ export default function OnboardingScreen() {
                 {[['map', 'Ziele entdecken'], ['award', 'Stempel sammeln'], ['users', 'Gemeinsam los']].map(([icon, label]) =>
                   <View key={label} style={styles.benefit}><Feather name={icon as 'map' | 'award' | 'users'} size={22} color="#315B43" /><Text style={styles.benefitText}>{label}</Text></View>)}
               </View>
-              <Text style={styles.guidance}>Vier kurze Schritte, dann geht’s los. Name und Avatar kannst du später im Profil ändern.</Text>
+              <Text style={styles.guidance}>{isAuthenticated ? 'Vier kurze Schritte, dann geht’s los. Name und Avatar kannst du später im Profil ändern.' : 'Entdecke Stempelstellen und die Karte auch ohne Konto. Deinen persönlichen Stempelpass kannst du später anlegen.'}</Text>
               {!isAuthenticated ? <View style={styles.card}>
                 <Text style={styles.cardTitle}>Deine Stempel bekommen ein Zuhause.</Text>
                 <Text style={styles.cardCopy}>Melde dich an, um deine Wandererfolge zu speichern.</Text>
@@ -713,7 +713,7 @@ export default function OnboardingScreen() {
                   return <Pressable key={avatar.id} accessibilityRole="radio" accessibilityLabel={avatar.label} aria-checked={selected}
                     accessibilityState={{ checked: selected, disabled: busy || !canPerformWrites }} disabled={busy || !canPerformWrites}
                     onPress={() => avatar.id === 'custom' ? void handlePickProfileImage() : selectAvatar(avatar.id)} style={[styles.avatarOption, selected && styles.avatarOptionSelected]}>
-                    {avatar.source ? <Image source={avatar.source} contentFit="cover" style={styles.choiceImage} /> :
+                    {avatar.source ? <Image accessibilityLabel="" accessible={false} source={avatar.source} contentFit="cover" style={styles.choiceImage} /> :
                       selected && effectiveProfilePicture ? <Image accessibilityLabel="Dein eigenes Foto" source={selectedProfileImage ? { uri: selectedProfileImage.uri } : buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)} contentFit="cover" style={styles.choiceImage} /> :
                       <View style={styles.noneAvatar}><Feather name="camera" size={35} color="#788779" /></View>}
                     <Text style={[styles.avatarLabel, selected && styles.avatarLabelSelected]}>{avatar.label}</Text>
@@ -771,6 +771,7 @@ export default function OnboardingScreen() {
                 <Text style={styles.modalTitle}>Freunde finden</Text>
                 <Pressable
                   accessibilityLabel="Suche schließen"
+                  accessibilityRole="button"
                   onPress={closeSearchModal}
                   style={({ pressed }) => [styles.modalCloseButton, pressed && styles.actionButtonPressed]}>
                   <Feather color="#1E2A1E" name="x" size={16} />
@@ -849,6 +850,8 @@ const styles = StyleSheet.create({
   progressActive: { backgroundColor: '#41664A' },
   flowContent: { paddingHorizontal: 28, paddingTop: 20, paddingBottom: 24, gap: 16 },
   scene: { height: 170, alignItems: 'center', justifyContent: 'center' },
+  guestScene: { height: 100 },
+  guestIllustration: { width: 120, height: 108 },
   compactScene: { height: 86 },
   compactAvatarPreview: { width: 80, height: 80, borderRadius: 40, borderWidth: 4 },
   compactTitle: { fontSize: 28, lineHeight: 34 },

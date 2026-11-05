@@ -1,3 +1,4 @@
+import { checkableKeyboardProps } from '@/lib/checkable-keyboard';
 import { Design } from '@/constants/theme';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
@@ -2498,6 +2499,7 @@ export default function MapScreen() {
                 accessibilityLabel="Stempelstellen anzeigen"
                 accessibilityState={{ checked: showStamps }}
                 aria-checked={showStamps}
+                {...checkableKeyboardProps(() => setShowStamps((current) => !current))}
                 onPress={() => setShowStamps((current) => !current)}
                 style={({ pressed }) => [styles.toggleRow, pressed && styles.pressed]}>
                 <Text style={styles.toggleLabel}>Stempel</Text>
@@ -2511,6 +2513,7 @@ export default function MapScreen() {
                 accessibilityLabel="Parkplätze anzeigen"
                 accessibilityState={{ checked: showParking }}
                 aria-checked={showParking}
+                {...checkableKeyboardProps(() => setShowParking((current) => !current))}
                 onPress={() => setShowParking((current) => !current)}
                 style={({ pressed }) => [styles.toggleRow, pressed && styles.pressed]}>
                 <Text style={styles.toggleLabel}>Parkplätze</Text>

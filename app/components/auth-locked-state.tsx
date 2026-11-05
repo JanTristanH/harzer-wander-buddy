@@ -50,7 +50,7 @@ export function SignInRequiredScreen({
     <SafeAreaView style={styles.screenSafeArea}>
       <View style={styles.screenContent}>
         <View style={styles.screenCard}>
-          <Image contentFit="contain" source={lockedIllustration} style={styles.illustration} />
+          <Image accessibilityLabel="" accessible={false} contentFit="contain" source={lockedIllustration} style={styles.illustration} />
           <Text style={styles.screenTitle}>{title}</Text>
           <Text style={styles.screenBody}>{body}</Text>
           <Pressable

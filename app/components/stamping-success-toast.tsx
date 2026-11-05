@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Platform, Animated, StyleSheet, Text, View } from 'react-native';
 
 type StampingSuccessToastProps = {
   message: string;
@@ -19,6 +19,10 @@ export function StampingSuccessToast({
   const progress = useRef(new Animated.Value(1)).current;
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onHideRef = useRef(onHide);
+
+  useEffect(() => {
+    if (visible && Platform.OS !== 'web') AccessibilityInfo.announceForAccessibility(message);
+  }, [message, visible]);
 
   useEffect(() => {
     onHideRef.current = onHide;
@@ -61,7 +65,7 @@ export function StampingSuccessToast({
   }
 
   return (
-    <View pointerEvents="none" style={[styles.container, { top: topOffset }]}>
+    <View accessibilityLiveRegion="polite" pointerEvents="none" style={[styles.container, { top: topOffset }]}>
       <View style={styles.toast}>
         <Text style={styles.message}>{message}</Text>
         <View style={styles.timerTrack}>

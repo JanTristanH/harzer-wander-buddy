@@ -1,0 +1,173 @@
+{
+  "checks": [
+    {
+      "screen": "list",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "flow": "search, empty and clear",
+      "passed": true
+    },
+    {
+      "flow": "map switch checked state and close",
+      "passed": true
+    },
+    {
+      "flow": "SSO and onboarding through port 4004",
+      "passed": true
+    },
+    {
+      "flow": "group choose and clear fictional local buddy",
+      "passed": false,
+      "errorType": "TimeoutError"
+    },
+    {
+      "flow": "multiple selection and cancel",
+      "passed": true
+    },
+    {
+      "flow": "local visit write and immediate acknowledgement",
+      "passed": true
+    }
+  ],
+  "errors": [
+    "Cannot read properties of null (reading 'getZoom')"
+  ],
+  "sourceHead": "b5f299f8eaec492c751e8c694f3b92535589cfce"
+}

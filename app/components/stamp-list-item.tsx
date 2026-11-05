@@ -130,7 +130,7 @@ function StampListItemComponent({
         ) : (
           <LinearGradient accessible={false} colors={cardGradient(index, !!item.hasVisited)} style={[styles.cardArtwork, styles.artworkFallback]}>
             <Feather color={Design.color.brandDeep} name="map-pin" size={24} />
-            <Text style={styles.artworkNumber}>{item.number || 'HWN'}</Text>
+            <Text selectable={false} style={styles.artworkNumber}>{item.number || 'HWN'}</Text>
           </LinearGradient>
         )}
 
