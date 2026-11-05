@@ -192,3 +192,22 @@ No new score was assigned to the three guest gates in this round; their earlier 
 ### Runtime clarification after round 3
 
 The user identified port 4004 as the intended local web entry point. Serving the exported app at the existing CAP `/app/rnweb` route accepts the Auth0 callback. The first authenticated attempt exposed missing issuer/audience in the memory-backend launch (500 bearer configuration error). The backend was restarted with the app's matching public Auth0 issuer and audience; JWT verification remains enabled. No production backend is substituted. Signed-in review is now in progress.
+
+## First signed-in review — intermediate source on the supplied baseline
+
+Actual Auth0 login was exercised through port 4004. JWT lookup used the environment's proxy; application data requests and profile/onboarding updates went only to the local memory backend. The six screenshots below were taken through SPA navigation after onboarding, with zero page errors. They show mostly empty account states at 390×844. No browser storage or tokens were exported.
+
+| Screen | Score /10 | Independent reviewer finding |
+| --- | ---: | --- |
+| Stamp list | 8.5 | Appropriate personal progress and clear hierarchy/group control. |
+| Map | 8.0 | Search too narrow beside group control; location state unexplained in this capture. |
+| Tours, empty account | 6.5 | Old light gradient/white text remains; Serif title, small controls, technical POI copy and competing create actions. |
+| Friends, empty account | 7.5 | Clear friendly invitation; older typography/chips and duplicate search actions. |
+| Profile, new account | 7.0 | Understandable metrics/timeline; oversized Serif heading/pink avatar, dense null-value cards and unclear active filter. |
+| Stamp detail, unvisited | 8.0 | Clearer compact hero and notes; four footer actions compete, note placeholder faint, lower scroll evidence needed. |
+
+These are additional original scores, not replacements for the guest scores. Tour creation, friend requests, profile/note edits, stamping, group writes, populated states, failure/offline and native interactions remain unverified by these images.
+
+## Upstream divergence discovered during PR preparation
+
+The supplied checkout began at `9a51605`. Fetching origin/develop revealed `0c1b6f3`, 77 commits ahead, including changes to onboarding, search, stamp details, preview builds, map styles and group-stamping actions. Consequently all evidence above applies to the supplied baseline plus the recorded intermediate design changes, **not to current develop**. The user has been asked whether to transfer this work onto current develop or continue on the supplied revision. Existing local Auth/SecureStore/onboarding source changes remain untouched and separately preserved. No assertion that the requested global 8.5 threshold is met is justified.
