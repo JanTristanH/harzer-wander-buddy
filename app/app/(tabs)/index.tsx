@@ -146,7 +146,7 @@ function isRelocatedStamp(validTo?: string) {
 
 export default function StampsScreen() {
   const router = useRouter();
-  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
+  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, isOffline, logout } = useAuth();
   const queryClient = useQueryClient();
   const offlineVisits = useOfflineVisits();
   const canRecordVisit = offlineVisits.isNative ? offlineVisits.canRecord : canPerformWrites || offlineVisits.canRecord;
@@ -285,14 +285,14 @@ export default function StampsScreen() {
         ? `${completed} erledigt. ${failedIds.length} fehlgeschlagen. Bitte erneut versuchen.`
         : remove
           ? `${removedVisits} ${removedVisits === 1 ? 'Besuch' : 'Besuche'} entfernt.`
-          : offlineVisits.canRecord
+          : offlineVisits.canRecord && isOffline
             ? `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} auf diesem Gerät gespeichert.`
             : `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} gestempelt.`);
     } finally {
       bulkBusyRef.current = false;
       setIsBulkBusy(false);
     }
-  }, [accessToken, canPerformWrites, canRecordVisit, hasPendingSelection, offlineVisits, stamps, currentUserProfile?.id, logout, queryClient, selectedIds, showBulkToast]);
+  }, [accessToken, canPerformWrites, canRecordVisit, hasPendingSelection, isOffline, offlineVisits, stamps, currentUserProfile?.id, logout, queryClient, selectedIds, showBulkToast]);
 
   const prepareRemoval = useCallback(async () => {
     if (!accessToken || !currentUserProfile?.id || !canPerformWrites || hasPendingSelection || bulkBusyRef.current) return;

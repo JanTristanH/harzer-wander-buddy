@@ -868,7 +868,7 @@ function StampDetailContent() {
       setIsStamping(true);
       try {
         await offlineVisits.record(localStamp);
-        setStampSuccessMessage('Besuch auf diesem Gerät gespeichert.');
+        setStampSuccessMessage(isOffline ? 'Besuch auf diesem Gerät gespeichert.' : 'Besuch gespeichert.');
         setIsStampSuccessToastVisible(true);
       } catch (error) {
         Alert.alert('Besuch nicht gespeichert', error instanceof Error ? error.message : 'Bitte erneut versuchen.');

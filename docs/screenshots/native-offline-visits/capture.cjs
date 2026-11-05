@@ -12,9 +12,11 @@ const { chromium } = toolingRequire('playwright');
   const bundle = await build({
     entryPoints: [path.join(__dirname, 'preview.tsx')], bundle: true, write: false, platform: 'browser',
     resolveExtensions: ['.web.tsx', '.web.ts', '.web.js', '.tsx', '.ts', '.jsx', '.js', '.json'],
-    format: 'iife', jsx: 'automatic', define: { 'process.env.NODE_ENV': '"production"', __DEV__: 'false' },
-    alias: { 'react-native': path.join(root, 'app/node_modules/react-native-web'),
+    loader: { '.js': 'jsx', '.ttf': 'dataurl', '.jpg': 'dataurl', '.png': 'dataurl' },
+    format: 'iife', jsx: 'automatic', define: { 'process.env': '{}', 'process.env.EXPO_OS': '"web"', 'process.env.NODE_ENV': '"production"', __DEV__: 'false' },
+    alias: { '@expo/vector-icons': path.join(root, 'app/node_modules/@expo/vector-icons'), 'react-native': path.join(root, 'app/node_modules/react-native-web'),
       react: path.join(root, 'app/node_modules/react'), 'react-dom': path.join(root, 'app/node_modules/react-dom'),
+      ...Object.fromEntries(['@/lib/auth', '@/lib/connectivity', '@/lib/offline-visits', '@/lib/offline-notes', 'expo-router'].map((name) => [name, path.join(__dirname, 'preview-services.ts')])),
       '@': path.join(root, 'app') },
     tsconfig: path.join(root, 'app/tsconfig.json'),
   });
@@ -31,17 +33,33 @@ const { chromium } = toolingRequire('playwright');
     page.on('pageerror', (error) => { throw error; });
     const origin = `http://127.0.0.1:${server.address().port}`;
     await page.goto(origin);
-    await page.getByRole('button', { name: 'Lokal gespeicherte Besuche anzeigen' }).waitFor();
+    await page.getByRole('button', { name: /Synchronisierungsstatus anzeigen/ }).waitFor();
+    const badge = await page.getByRole('button', { name: /Synchronisierungsstatus anzeigen/ }).boundingBox();
+    const heading = await page.getByText('Stempelstellen', { exact: true }).boundingBox();
+    if (!badge || !heading || badge.y + badge.height > heading.y) throw new Error('Status overlaps page heading');
     await page.screenshot({ path: path.join(__dirname, '01-pending-badge.png') });
-    await page.getByRole('button', { name: 'Lokal gespeicherte Besuche anzeigen' }).click();
-    await page.getByText('Deine gespeicherten Besuche').waitFor();
+    await page.getByRole('button', { name: /Synchronisierungsstatus anzeigen/ }).click();
+    await page.getByText('Synchronisierungsstatus', { exact: true }).waitFor();
     await page.waitForTimeout(350);
     await page.screenshot({ path: path.join(__dirname, '02-pending-visits.png') });
     await page.goto(`${origin}/?state=failed`);
-    await page.getByRole('button', { name: 'Lokal gespeicherte Besuche anzeigen' }).click();
-    await page.getByText('Deine gespeicherten Besuche').waitFor();
+    await page.getByRole('button', { name: /Synchronisierungsstatus anzeigen/ }).click();
+    await page.getByText('Synchronisierungsstatus', { exact: true }).waitFor();
     await page.waitForTimeout(350);
     await page.screenshot({ path: path.join(__dirname, '03-rejected-visit.png') });
-    console.log('Saved three screenshots of the production status component.');
+    await page.goto(origin);
+    await page.getByRole('button', { name: /Synchronisierungsstatus anzeigen/ }).click();
+    await page.getByText('Jetzt synchronisieren', { exact: true }).click();
+    await page.getByText(/Noch keine Internetverbindung/).waitFor();
+    await page.screenshot({ path: path.join(__dirname, '04-offline-retry.png') });
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto(origin);
+    await page.getByRole('button', { name: /Synchronisierungsstatus anzeigen/ }).click();
+    await page.waitForTimeout(350);
+    for (const label of ['Jetzt synchronisieren', 'Schließen']) {
+      const bounds = await page.getByRole('button', { name: label, exact: true }).boundingBox();
+      if (!bounds || bounds.y < 0 || bounds.y + bounds.height > 568) throw new Error(`${label} is outside the small viewport`);
+    }
+    console.log('Saved four screenshots of the production status component.');
   } finally { await browser.close(); server.close(); }
 })().catch((error) => { console.error(error); process.exitCode = 1; });

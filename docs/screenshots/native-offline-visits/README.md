@@ -1,6 +1,6 @@
 # Offline-Erfassung: Screenshots und Umfang
 
-Stand: 20.10.2026. Eigenständiger Feature-PR, abgezweigt von `develop`.
+Stand: 05.11.2026. Eigenständiger Feature-PR, abgezweigt von `develop`.
 
 ## Verhalten auf iOS und Android
 
@@ -32,7 +32,8 @@ Stempelstelle und denselben Zeitpunkt bestätigt. Einträge verschwinden erst na
 Bestätigung und dauerhaft gespeicherter Quittierung. Abgelehnte Besuche bleiben
 mit Prüfhinweis erhalten; erneutes Übertragen und bewusstes Verwerfen sind möglich.
 
-Gruppenstempeln, Notizen, Datumsänderungen und Löschen bleiben online. Die Web-App
+Gruppenstempeln, Datumsänderungen und Löschen bleiben online. Persönliche Notizen
+haben eine eigene persistente Offline-Warteschlange; siehe [Notizsynchronisierung](../../../native-offline-notes.md). Die Web-App
 erhält keine Offline-Schreibfunktion. Es werden keine Offline-Karten eingeführt.
 AsyncStorage übersteht normale Neustarts, ist aber kein Backup gegen Deinstallation,
 Geräteverlust oder manuelles Löschen der App-Daten. Ausstehende Besuche deshalb vor
@@ -44,20 +45,22 @@ kompatiblen nativen Build verwenden; keine manuelle Versionsnummer geändert.
 **Diese Bilder sind Browser-Renderings der echten produktiven React-Native-
 Statuskomponente mit React Native Web, 390 × 844 Pixel, und festen Beispieldaten.**
 Es sind keine iOS-/Android-Emulatoraufnahmen und kein Beleg für native
-Geräte-/Flugmodusabnahme. `preview.tsx` stellt ausschließlich diese Komponente dar;
+Geräte-/Flugmodusabnahme. `preview.tsx` bettet diese Komponente in eine feste Beispielliste ein;
+`preview-services.ts` ersetzt ausschließlich die Dienste der Vorschau;
 es gibt keinen zusätzlichen Preview-Screen in der App. Konten, Stempel und Zeiten
 sind lokale Testdaten, keine Produktionsdaten.
 
 | Zustand | Aufnahme |
 | --- | --- |
 | Lokal gespeichert, Übertragung ausstehend | ![Lokaler Status](01-pending-badge.png) |
-| Besuchsliste mit ursprünglichen Zeitpunkten | ![Lokale Besuche](02-pending-visits.png) |
+| Gemeinsamer Status für Besuche und Notizen | ![Lokale Besuche](02-pending-visits.png) |
 | Serverablehnung mit Wiederholen/Verwerfen | ![Abgelehnter Besuch](03-rejected-visit.png) |
+| Synchronisierungsversuch ohne Verbindung | ![Offline-Wiederholung](04-offline-retry.png) |
 
-Reproduktion vom Repository-Root, nach `npm ci --prefix app`:
+Reproduktion vom Repository-Root mit vorhandenen App-Abhängigkeiten:
 
 ```bash
-npm install --prefix /tmp/hwb-offline-preview esbuild playwright
+npm install --prefix /tmp/hwb-offline-preview esbuild@0.25.0 playwright@1.58.2
 OFFLINE_PREVIEW_TOOLS=/tmp/hwb-offline-preview CHROMIUM_PATH=/usr/bin/chromium \
   node docs/screenshots/native-offline-visits/capture.cjs
 ```
@@ -76,3 +79,23 @@ App-Abhängigkeiten. Aufnahme startet nur einen lokalen HTTP-Server.
 - TypeScript und ESLint für geänderte Implementierung.
 - Noch auf echten Geräten prüfen: Flugmodus mit anschließendem Kaltstart,
   abgelaufene Anmeldung, OS-Speicherdruck und Wiederverbindung nach längerer Pause.
+
+## Kompakter Status und Sitzungswiederherstellung
+
+Der eingerückte Status steht im normalen Layout oberhalb der Navigation; ein
+verschachtelter SafeAreaProvider misst den verbleibenden Bildschirmbereich. Der
+Zähler umfasst Besuche und Notizen. Die Details samt Konflikten und Fehlern werden
+erst beim Antippen geöffnet. Kurze erfolgreiche Online-Übertragungen bleiben ohne
+Statushinweis; ausstehende Online-Änderungen erscheinen nach 2,5 Sekunden, Fehler
+sofort. „Jetzt synchronisieren“ versucht beide Warteschlangen erneut und erklärt
+bei fehlender Verbindung, dass gespeicherte Änderungen erhalten bleiben.
+
+Beim Kaltstart gelten unbekannte Netz-/Erreichbarkeitswerte als nicht online.
+Die gespeicherte SSO-Sitzung einschließlich abgelaufenem Access-Token wird lokal
+wiederhergestellt. Offline werden weder Discovery noch Token-Erneuerung gestartet.
+Sobald Internet erreichbar ist, teilen sich Start und Warteschlangen eine einzige
+Token-Erneuerung. Test-Basic-Auth bleibt absichtlich nur im Arbeitsspeicher.
+
+Regressionen: `app/__tests__/auth-offline-startup.test.tsx` und
+`app/__tests__/offline-visit-status.test.tsx`. Geräteabnahme bleibt zusätzlich
+erforderlich; Browserbilder und gemockte Tests ersetzen sie nicht.

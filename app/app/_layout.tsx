@@ -14,7 +14,6 @@ import 'react-native-reanimated';
 
 import { NativeOfflineVisitsProvider } from '@/lib/native-offline-visits';
 import { OfflineVisitStatus } from '@/components/offline-visit-status';
-import { OfflineBanner } from '@/components/offline-banner';
 import { PreviewDiagnosticsBridge } from '@/components/preview-diagnostics-bridge';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth, useIdTokenClaims } from '@/lib/auth';
@@ -165,34 +164,34 @@ export default function RootLayout() {
             <NativeOfflineVisitsProvider>
               <NativeOfflineNotesProvider>
                 <HikingGroupProvider>
-                  <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                    <Stack screenOptions={{ headerShown: false }}>
-                      <Stack.Screen name="index" />
-                      <Stack.Screen name="onboarding" />
-                      <Stack.Screen name="login" />
-                      <Stack.Screen name="(tabs)" />
-                      <Stack.Screen name="profile/edit" />
-                      <Stack.Screen name="profile/[userId]" />
-                      <Stack.Screen name="profile/timeline/[userId]" />
-                      <Stack.Screen name="tours/[id]/index" />
-                      <Stack.Screen name="tours/[id]/edit" />
-                      <Stack.Screen name="stamps/[id]" />
-                      <Stack.Screen name="parking/[id]" />
-                      <Stack.Screen name="admin/index" />
-                      <Stack.Screen name="admin/stamps/index" />
-                      <Stack.Screen name="admin/stamps/[id]" />
-                      <Stack.Screen name="admin/parking/index" />
-                      <Stack.Screen name="admin/parking/[id]" />
-                    </Stack>
-                    <StatusBar style="dark" />
-                  </ThemeProvider>
-                  <WebDocumentBehavior />
-                  <PreviewDiagnosticsBridge />
-                  <QueryFocusBridge />
-                  <CoreOfflineSyncBridge />
-                  <OnboardingRouteSync />
-                  <OfflineBanner />
-                  <OfflineVisitStatus />
+                  <OfflineVisitStatus>
+                    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                      <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="index" />
+                        <Stack.Screen name="onboarding" />
+                        <Stack.Screen name="login" />
+                        <Stack.Screen name="(tabs)" />
+                        <Stack.Screen name="profile/edit" />
+                        <Stack.Screen name="profile/[userId]" />
+                        <Stack.Screen name="profile/timeline/[userId]" />
+                        <Stack.Screen name="tours/[id]/index" />
+                        <Stack.Screen name="tours/[id]/edit" />
+                        <Stack.Screen name="stamps/[id]" />
+                        <Stack.Screen name="parking/[id]" />
+                        <Stack.Screen name="admin/index" />
+                        <Stack.Screen name="admin/stamps/index" />
+                        <Stack.Screen name="admin/stamps/[id]" />
+                        <Stack.Screen name="admin/parking/index" />
+                        <Stack.Screen name="admin/parking/[id]" />
+                      </Stack>
+                      <StatusBar style="dark" />
+                    </ThemeProvider>
+                    <WebDocumentBehavior />
+                    <PreviewDiagnosticsBridge />
+                    <QueryFocusBridge />
+                    <CoreOfflineSyncBridge />
+                    <OnboardingRouteSync />
+                  </OfflineVisitStatus>
                 </HikingGroupProvider>
               </NativeOfflineNotesProvider>
             </NativeOfflineVisitsProvider>
