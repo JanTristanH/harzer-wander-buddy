@@ -324,3 +324,19 @@ weiterhin von `main`. Einrichtung und Ablauf: [Releases](../docs/releases.md).
 npx expo run:ios --configuration Release
 
 then in xcode -> run on the connected device
+
+## Native offline visits
+
+On iOS and Android, own visits from the list, map and stamp details are saved to an
+account-specific device outbox before confirmation and uploaded when connected.
+Group stamping, editing and deleting remain online. See the
+[implementation notes, tests and screenshot previews](../docs/screenshots/native-offline-visits/README.md)
+for persistence, retry behaviour and device-validation limits.
+
+## Native offline notes
+
+Personal stamp notes on iOS and Android are saved in an account-specific persistent
+outbox and synchronized on reconnect. Conflicting changes from other devices remain
+available for an explicit choice between the local and remote versions. See
+[offline note synchronization](../docs/native-offline-notes.md) for behavior,
+backend requirements, tests and limitations.

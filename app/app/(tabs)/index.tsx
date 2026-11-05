@@ -1,3 +1,4 @@
+import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
@@ -149,8 +150,10 @@ function isRelocatedStamp(validTo?: string) {
 export default function StampsScreen() {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
-  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
+  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, isOffline, logout } = useAuth();
   const queryClient = useQueryClient();
+  const offlineVisits = useOfflineVisits();
+  const canRecordVisit = offlineVisits.isNative ? offlineVisits.canRecord : canPerformWrites || offlineVisits.canRecord;
   const insets = useSafeAreaInsets();
   const [selectionMode, setSelectionMode] = useState(false);
   const [heroHeight, setHeroHeight] = useState<number>();
@@ -269,6 +272,7 @@ export default function StampsScreen() {
 
   const selectedStamps = stamps.filter((stamp) => selectedIds.includes(stamp.ID));
   const stampableCount = selectedStamps.length;
+  const hasPendingSelection = offlineVisits.entries.some((entry) => selectedIds.includes(entry.stamp.ID));
   const removableCount = selectedStamps.filter((stamp) => stamp.hasVisited).length;
   const removalVisitCount = removalPlan.reduce((count, place) => count + place.visitIds.length, 0);
 
@@ -279,7 +283,7 @@ export default function StampsScreen() {
   }, []);
 
   const applyBulkAction = useCallback(async (remove: boolean, plan?: RemovalPlan) => {
-    if (!accessToken || !currentUserProfile?.id || !canPerformWrites || bulkBusyRef.current) return;
+    if (!accessToken || (!offlineVisits.canRecord && !currentUserProfile?.id) || (remove ? (!canPerformWrites || hasPendingSelection) : !canRecordVisit) || bulkBusyRef.current) return;
     if (remove && !plan) return;
     bulkBusyRef.current = true;
     setIsBulkBusy(true);
@@ -298,7 +302,11 @@ export default function StampsScreen() {
               removedVisits++;
             }
           } else {
-            await createStamping(accessToken, stampId);
+            const stamp = stamps.find((item) => item.ID === stampId);
+            if (offlineVisits.canRecord) {
+              if (!stamp) throw new Error('Die Stempelstelle ist nicht lokal verfügbar.');
+              await offlineVisits.record(stamp);
+            } else await createStamping(accessToken, stampId);
           }
           completed++;
           if (!remove && mounted.current) setStampProgress(0.08 + 0.82 * completed / targetIds.length);
@@ -329,7 +337,9 @@ export default function StampsScreen() {
         ? `${completed} erledigt. ${failedIds.length} fehlgeschlagen. Bitte erneut versuchen.`
         : remove
           ? `${removedVisits} ${removedVisits === 1 ? 'Besuch' : 'Besuche'} entfernt.`
-          : `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} gestempelt.`);
+          : offlineVisits.canRecord && isOffline
+            ? `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} auf diesem Gerät gespeichert.`
+            : `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} gestempelt.`);
     } finally {
       bulkBusyRef.current = false;
       if (mounted.current) {
@@ -337,10 +347,10 @@ export default function StampsScreen() {
         setStampProgress(null);
       }
     }
-  }, [accessToken, canPerformWrites, currentUserProfile?.id, logout, queryClient, reducedMotion, selectedIds, showBulkToast]);
+  }, [accessToken, canPerformWrites, canRecordVisit, hasPendingSelection, isOffline, offlineVisits, stamps, currentUserProfile?.id, logout, queryClient, reducedMotion, selectedIds, showBulkToast]);
 
   const prepareRemoval = useCallback(async () => {
-    if (!accessToken || !currentUserProfile?.id || !canPerformWrites || bulkBusyRef.current) return;
+    if (!accessToken || !currentUserProfile?.id || !canPerformWrites || hasPendingSelection || bulkBusyRef.current) return;
     bulkBusyRef.current = true;
     setIsBulkBusy(true);
     setToastVisible(false);
@@ -369,7 +379,7 @@ export default function StampsScreen() {
       showBulkToast('Keine Besuche zum Entfernen vorhanden.');
       await queryClient.invalidateQueries();
     }
-  }, [accessToken, canPerformWrites, currentUserProfile?.id, selectedIds, logout, showBulkToast, queryClient]);
+  }, [accessToken, canPerformWrites, hasPendingSelection, currentUserProfile?.id, selectedIds, logout, showBulkToast, queryClient]);
 
   useEffect(() => {
     let isMounted = true;
@@ -780,19 +790,19 @@ export default function StampsScreen() {
               <Text style={styles.selectionButtonText}>Abbrechen</Text>
             </Pressable>
           </View>
-          <Text style={styles.totalLabel}>{isBulkBusy ? 'Wird gespeichert…' : !canPerformWrites ? 'Stempeln und Entfernen sind nur online möglich.' : 'Weitere Einträge antippen'}</Text>
+          <Text style={styles.totalLabel}>{isBulkBusy ? 'Wird gespeichert…' : !canPerformWrites ? (offlineVisits.canRecord ? 'Besuche werden auf diesem Gerät gespeichert. Entfernen ist nur online möglich.' : 'Stempeln und Entfernen sind nur online möglich.') : 'Weitere Einträge antippen'}</Text>
           <View style={styles.selectionActions}>
-            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || stampableCount === 0} onPress={() => { void applyBulkAction(false); }} style={[styles.selectionButton, styles.stampPrimary, (isBulkBusy || !canPerformWrites || stampableCount === 0) && styles.selectionDisabled]}>
+            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canRecordVisit || stampableCount === 0} onPress={() => { void applyBulkAction(false); }} style={[styles.selectionButton, styles.stampPrimary, (isBulkBusy || !canRecordVisit || stampableCount === 0) && styles.selectionDisabled]}>
               {stampProgress !== null ? <StampSelectionFill progress={stampProgress} /> : null}
               <Text style={[styles.selectionButtonText, styles.stampPrimaryText]}>Stempeln ({stampableCount})</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || removableCount === 0} onPress={() => { void prepareRemoval(); }} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || removableCount === 0) && styles.selectionDisabled]}>
+            <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || hasPendingSelection || removableCount === 0} onPress={() => { void prepareRemoval(); }} style={[styles.selectionButton, (isBulkBusy || !canPerformWrites || hasPendingSelection || removableCount === 0) && styles.selectionDisabled]}>
               <Text style={styles.selectionButtonText}>Entfernen ({removableCount})</Text>
             </Pressable>
           </View>
 
         </View>
-  ), [heroHeight, selectedIds.length, cancelSelection, isBulkBusy, canPerformWrites, stampableCount, removableCount, applyBulkAction, prepareRemoval, stampProgress]);
+  ), [heroHeight, selectedIds.length, cancelSelection, isBulkBusy, canPerformWrites, canRecordVisit, hasPendingSelection, offlineVisits.canRecord, stampableCount, removableCount, applyBulkAction, prepareRemoval, stampProgress]);
 
   const renderIntro = useCallback(() => (
     <View style={styles.introContent}>
@@ -1146,7 +1156,7 @@ export default function StampsScreen() {
               <Pressable accessibilityRole="button" onPress={() => setShowRemoveConfirmation(false)} style={styles.selectionButton}>
                 <Text style={styles.selectionButtonText}>Behalten</Text>
               </Pressable>
-              <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || removableCount === 0} onPress={() => {
+              <Pressable accessibilityRole="button" disabled={isBulkBusy || !canPerformWrites || hasPendingSelection || removableCount === 0} onPress={() => {
                 setShowRemoveConfirmation(false);
                 void applyBulkAction(true, removalPlan);
               }} style={styles.selectionButton}>
