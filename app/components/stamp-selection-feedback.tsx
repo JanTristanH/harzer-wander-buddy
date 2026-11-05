@@ -25,13 +25,15 @@ export function StampSelectionFill({ progress }: { progress: number }) {
 
 function FlyingStamp({ index, count, elapsed }: { index: number; count: number; elapsed: SharedValue<number> }) {
   const reduced = useReducedMotion();
+  const laneCount = Math.min(count, 3);
+  const startX = ((index % laneCount) - (laneCount - 1) / 2) * 88;
   const delay = count > 1 ? stampSelectionTiming(count).staggerWindowMs * index / (count - 1) : 0;
   const style = useAnimatedStyle(() => {
     const t = Math.max(0, Math.min(1, (elapsed.get() - delay) / STAMP_FLIGHT_MS));
     return {
       opacity: reduced || elapsed.get() < delay ? 0 : interpolate(t, [0, 0.8, 1], [1, 1, 0]),
       transform: [
-        { translateX: reduced ? 0 : ((index % 5) - 2) * 14 * (1 - t) },
+        { translateX: reduced ? 0 : startX * (1 - t) },
         { translateY: reduced ? 0 : 110 * (1 - t) },
       ],
     };
