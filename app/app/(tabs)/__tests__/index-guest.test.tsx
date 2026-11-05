@@ -23,6 +23,8 @@ const mockUseAuth = jest.fn();
 const mockUseFilteredStampsOverviewQuery = jest.fn();
 const mockUseGuestFilteredStampsOverviewQuery = jest.fn();
 
+jest.mock('@/hooks/use-reduce-motion', () => ({ useReduceMotion: () => true }));
+
 jest.mock('@/lib/auth', () => ({
   useAuth: () => mockUseAuth(),
   useIdTokenClaims: () => null,
@@ -216,7 +218,7 @@ describe('StampsScreen', () => {
     expect(screen.getByText('2 gesamt')).toBeOnTheScreen();
   });
 
-  it('reflects the visited progress percentage', async () => {
+  it('does not present personal visit progress to guests', async () => {
     mockGuestData([
       createStamp({ ID: 'stamp-1', hasVisited: true }),
       createStamp({ ID: 'stamp-2', hasVisited: false }),
@@ -224,8 +226,8 @@ describe('StampsScreen', () => {
 
     await renderScreen();
 
-    // 1 of 2 stamps visited -> 50%.
-    expect(screen.getByText('50%')).toBeOnTheScreen();
+    expect(screen.queryByText('50%')).not.toBeOnTheScreen();
+    expect(screen.getByText('Der Harz wartet auf dich')).toBeOnTheScreen();
   });
 
   it('uses the guest query and disables the authenticated query', async () => {

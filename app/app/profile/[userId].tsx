@@ -153,7 +153,7 @@ export default function FriendProfileScreen() {
           ? {
               type: 'friendship',
               statusLabel: 'Verbunden',
-              toggleLabel: 'Darf fuer mich stempeln',
+              toggleLabel: 'Darf für mich stempeln',
               value: data.isAllowedToStampForMe,
               busy: isMutating || !canPerformWrites,
               groupLabel: selectedFriendIds.includes(data.userId)
@@ -195,7 +195,7 @@ export default function FriendProfileScreen() {
 
                 Alert.alert(
                   'Freund entfernen?',
-                  'Diese Freundschaft wird getrennt. Du kannst spaeter erneut eine Anfrage senden.',
+                  'Diese Freundschaft wird getrennt. Du kannst später erneut eine Anfrage senden.',
                   [
                     {
                       text: 'Abbrechen',
@@ -253,7 +253,7 @@ export default function FriendProfileScreen() {
             : data.relationship === 'outgoing_request'
               ? {
                   type: 'button',
-                  label: 'Zurueckrufen',
+                  label: 'Zurückrufen',
                   muted: true,
                   busy: isMutating,
                   disabled: !canPerformWrites,
@@ -271,7 +271,7 @@ export default function FriendProfileScreen() {
                           style: 'cancel',
                         },
                         {
-                          text: 'Zurueckrufen',
+                          text: 'Zurückrufen',
                           style: 'destructive',
                           onPress: () => {
                             void (async () => {
@@ -298,7 +298,7 @@ export default function FriendProfileScreen() {
                 }
               : {
                   type: 'button',
-                  label: 'Als Freund hinzufuegen',
+                  label: 'Als Freund hinzufügen',
                   busy: isMutating,
                   disabled: !canPerformWrites,
                   onPress: () => {
@@ -357,7 +357,7 @@ export default function FriendProfileScreen() {
         otherVisited: item.userVisited,
       })),
       onStampPress: (stampId) => router.push(`/stamps/${stampId}` as never),
-      emptyStampText: 'Fuer diesen Vergleich gibt es gerade keine Stempelstellen.',
+      emptyStampText: 'Für diesen Vergleich gibt es gerade keine Stempelstellen.',
       onRefresh: () => {
         void (async () => {
           setIsPullRefreshing(true);
@@ -390,7 +390,7 @@ export default function FriendProfileScreen() {
   if (blockingError || !viewModel) {
     return (
       <ProfileErrorState
-        body={blockingError?.message || 'Keine Daten verfuegbar.'}
+        body={blockingError?.message || 'Keine Daten verfügbar.'}
         title="Freundesprofil konnte nicht geladen werden"
       />
     );

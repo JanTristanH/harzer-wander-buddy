@@ -193,27 +193,34 @@ const LEAFLET_RUNTIME_CSS = `
 .hwb-map-attribution {
   align-items: center;
   background: rgba(255, 255, 255, 0.92);
-  border: 2px solid #2f9bff;
+  border: 1px solid ${Design.color.border};
   border-radius: 999px;
   box-sizing: border-box;
   display: flex;
-  min-height: 42px;
+  min-height: 48px;
   overflow: hidden;
 }
 .hwb-map-attribution-toggle {
   align-items: center;
-  background: #171717;
+  background: ${Design.color.surface};
   border: 0;
   border-radius: 50%;
-  color: #fff;
+  color: ${Design.color.brand};
   cursor: pointer;
   display: inline-flex;
-  font: 700 25px/1 Arial, sans-serif;
-  height: 32px;
+  font: 700 20px/1 Arial, sans-serif;
+  height: 42px;
   justify-content: center;
   margin: 3px;
   padding: 0;
-  width: 32px;
+  width: 42px;
+}
+.hwb-map-attribution-toggle:focus-visible {
+  outline: 2px solid ${Design.color.brand};
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hwb-map-attribution-content { transition: none; }
 }
 .hwb-map-attribution-content {
   color: #333;
@@ -675,7 +682,7 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
 
       toggle.type = 'button';
       toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', 'Karten-Attribution anzeigen');
+      toggle.setAttribute('aria-label', 'Kartendaten und Lizenz anzeigen');
       toggle.textContent = 'i';
       content.innerHTML = styleId === 'raster' ? RASTER_MAP_ATTRIBUTION : OPEN_FREE_MAP_ATTRIBUTION;
       if (styleId === 'raster') {
@@ -691,7 +698,8 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
       L.DomEvent.on(toggle, 'click', () => {
         const expanded = container.classList.toggle('is-expanded');
         toggle.setAttribute('aria-expanded', String(expanded));
-        toggle.setAttribute('aria-label', expanded ? 'Karten-Attribution ausblenden' : 'Karten-Attribution anzeigen');
+        content.hidden = !expanded;
+        toggle.setAttribute('aria-label', expanded ? 'Kartendaten und Lizenz ausblenden' : 'Kartendaten und Lizenz anzeigen');
       });
 
       return container;

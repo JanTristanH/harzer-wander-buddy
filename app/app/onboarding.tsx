@@ -27,7 +27,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList, type FriendsListItem } from '@/components/friends-list';
-import { Fonts } from '@/constants/theme';
+import { Design, Fonts } from '@/constants/theme';
 import {
   createFriendRequest,
   searchUsers,
@@ -114,6 +114,7 @@ function ActionButton({
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
+      accessibilityState={{ disabled: !!disabled }}
       style={(state) => [
         styles.actionButton,
         variant === 'primary' ? styles.actionButtonPrimary : styles.actionButtonSecondary,
@@ -175,7 +176,7 @@ export default function OnboardingScreen() {
   const profileSavePromiseRef = useRef<Promise<boolean> | null>(null);
   const matchingCurrentUserProfile =
     claims?.sub && currentUserProfile?.id === claims.sub ? currentUserProfile : null;
-  const primaryDisabled = !isAuthenticated || !!configError || isLoading;
+  const primaryDisabled = isLoading || isProfileSaving || (isAuthenticated && !!configError);
   const errorMessage = configError || authError;
   const fallbackProfileName = getInitialProfileName(
     matchingCurrentUserProfile?.name || claims?.name || claims?.nickname || claims?.given_name || ''
@@ -348,15 +349,15 @@ export default function OnboardingScreen() {
 
   const handlePickProfileImage = useCallback(async () => {
     if (!canPerformWrites) {
-      Alert.alert('Offline', 'Profilbilder koennen nur online geaendert werden.');
+      Alert.alert('Offline', 'Profilbilder können nur online geändert werden.');
       return;
     }
 
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(
-        'Zugriff auf Fotos benoetigt',
-        'Bitte erlaube den Zugriff auf deine Fotos, um ein Profilbild auszuwaehlen.'
+        'Zugriff auf Fotos benötigt',
+        'Bitte erlaube den Zugriff auf deine Fotos, um ein Profilbild auszuwählen.'
       );
       return;
     }
@@ -769,7 +770,7 @@ export default function OnboardingScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Freunde finden</Text>
                 <Pressable
-                  accessibilityLabel="Suche schliessen"
+                  accessibilityLabel="Suche schließen"
                   onPress={closeSearchModal}
                   style={({ pressed }) => [styles.modalCloseButton, pressed && styles.actionButtonPressed]}>
                   <Feather color="#1E2A1E" name="x" size={16} />
@@ -823,7 +824,7 @@ export default function OnboardingScreen() {
 
               <View style={styles.modalHint}>
                 <Text style={styles.modalHintText}>
-                  Profile kannst du nach dem Onboarding in der Freunde-Ansicht oeffnen.
+                  Profile kannst du nach dem Onboarding in der Freunde-Ansicht öffnen.
                 </Text>
               </View>
             </View>
@@ -887,7 +888,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: 28,
+    borderRadius: Design.radius.card,
     padding: 18,
     gap: 12,
     shadowColor: '#bda981',
@@ -904,9 +905,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardCopy: {
-    color: '#778177',
-    fontSize: 12,
-    lineHeight: 18,
+    color: Design.color.muted,
+    fontSize: 14,
+    lineHeight: 21,
   },
   errorText: {
     color: '#8a2d1f',
@@ -930,7 +931,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8dfcf',
   },
   actionButtonDisabled: {
-    opacity: 0.48,
+    opacity: 0.7,
   },
   actionButtonPressed: {
     opacity: 0.88,
@@ -1067,7 +1068,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
   footerNote: {
-    color: '#798275',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 17,
     textAlign: 'center',

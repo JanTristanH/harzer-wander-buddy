@@ -458,7 +458,7 @@ function StampDetailContent() {
     const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId, groupUserIds);
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Notizen koennen nur online gespeichert werden.');
+      requireOnlineForWrite(canPerformWrites, 'Notizen können nur online gespeichert werden.');
       setIsSavingNote(true);
 
       const savedNote = await upsertStampNote(accessToken, stampId, normalizedNote);
@@ -875,7 +875,7 @@ function StampDetailContent() {
     setIsStamping(true);
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Stempeln ist nur online verfuegbar.');
+      requireOnlineForWrite(canPerformWrites, 'Stempeln ist nur online verfügbar.');
 
       await Promise.all([
         queryClient.cancelQueries({ queryKey: mapDataKey }),
@@ -1174,7 +1174,7 @@ function StampDetailContent() {
     }
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Besuche koennen nur online geloescht werden.');
+      requireOnlineForWrite(canPerformWrites, 'Besuche können nur online geloescht werden.');
       setBusyVisitId(stampingId);
       await deleteStamping(accessToken, stampingId);
       removeVisitFromCaches(stampingId);
@@ -1201,7 +1201,7 @@ function StampDetailContent() {
 
   function confirmDeleteVisit(stampingId: string) {
     if (!canPerformWrites) {
-      Alert.alert('Offline', 'Besuche koennen nur online geloescht werden.');
+      Alert.alert('Offline', 'Besuche können nur online geloescht werden.');
       return;
     }
 
@@ -1227,7 +1227,7 @@ function StampDetailContent() {
     }
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Besuche koennen nur online bearbeitet werden.');
+      requireOnlineForWrite(canPerformWrites, 'Besuche können nur online bearbeitet werden.');
       setBusyVisitId(stampingId);
       setVisitDrafts((current) => ({
         ...current,
@@ -1258,7 +1258,7 @@ function StampDetailContent() {
 
   function handleToggleVisitEditing() {
     if (!canPerformWrites && !isEditingVisits) {
-      Alert.alert('Offline', 'Besuche koennen nur online bearbeitet werden.');
+      Alert.alert('Offline', 'Besuche können nur online bearbeitet werden.');
       return;
     }
 
@@ -1650,8 +1650,8 @@ function StampDetailContent() {
 
   const showLeaveDialog = useCallback((onDiscard: () => void, onSave: () => void) => {
     Alert.alert(
-      'Aenderungen speichern?',
-      'Du hast ungespeicherte Aenderungen. Moechtest du speichern oder verwerfen?',
+      'Änderungen speichern?',
+      'Du hast ungespeicherte Änderungen. Moechtest du speichern oder verwerfen?',
       [
         { text: 'Abbrechen', style: 'cancel' },
         { text: 'Verwerfen', style: 'destructive', onPress: onDiscard },
@@ -2317,10 +2317,11 @@ function StampDetailContent() {
         ) : null}
       </View>
 
-      <View pointerEvents="box-none" style={[styles.bottomDock, { bottom: 18 + bottomInset }]}>
+      <View pointerEvents="box-none" style={[styles.bottomDock, { paddingBottom: Math.max(12, bottomInset) }]}>
         <View style={styles.bottomActions}>
           <View style={styles.secondaryButtonRow}>
             <Pressable
+              accessibilityRole="button"
               onPress={handleStartNavigation}
               style={({ pressed }) => [
                 styles.secondaryButton,
@@ -2332,6 +2333,7 @@ function StampDetailContent() {
               <Text style={styles.secondaryButtonLabel}>Navigation starten</Text>
             </Pressable>
             <Pressable
+              accessibilityRole="button"
               onPress={handleShowOnMap}
               style={({ pressed }) => [
                 styles.secondaryButton,
@@ -2658,7 +2660,10 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.background,
   },
   scrollContent: {
-    paddingBottom: 180,
+    paddingBottom: 24,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   scrollViewport: {
     flex: 1,
@@ -2683,6 +2688,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 18,
     paddingTop: 16,
+  },
+  heroWithoutImage: {
+    height: 144,
   },
   hero: {
     height: 240,
@@ -2771,7 +2779,7 @@ const styles = StyleSheet.create({
     color: AppColors.primary,
   },
   statusPillLabelOpen: {
-    color: '#7a6a4a',
+    color: '#71592f',
   },
   heroBadge: {
     position: 'absolute',
@@ -2823,7 +2831,7 @@ const styles = StyleSheet.create({
     color: AppColors.text,
     fontSize: 24,
     lineHeight: 30,
-    fontFamily: 'serif',
+    fontWeight: '700',
   },
   description: {
     color: '#445244',
@@ -3025,10 +3033,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   bottomDock: {
-    position: 'absolute',
-    left: 18,
-    right: 18,
-    bottom: 18,
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    backgroundColor: '#f5f3ee',
+    borderTopWidth: 1,
+    borderColor: '#d7dfd3',
     overflow: 'visible',
   },
   bottomActions: {
@@ -3040,7 +3049,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   secondaryButton: {
-    height: 45,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#e9e2d6',
     alignItems: 'center',

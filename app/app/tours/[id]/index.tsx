@@ -1489,7 +1489,7 @@ export default function TourDetailScreen() {
     }
 
     if (!canPerformWrites) {
-      Alert.alert('Offline', 'Touren koennen nur online bearbeitet werden.');
+      Alert.alert('Offline', 'Touren können nur online bearbeitet werden.');
       return;
     }
 
@@ -1561,8 +1561,8 @@ export default function TourDetailScreen() {
     }
 
     Alert.alert(
-      'Ungespeicherte Aenderungen',
-      'Du hast ungespeicherte Aenderungen an der Tour. Ohne Speichern verwerfen?',
+      'Ungespeicherte Änderungen',
+      'Du hast ungespeicherte Änderungen an der Tour. Ohne Speichern verwerfen?',
       [
         {
           text: 'Weiter bearbeiten',
@@ -1615,7 +1615,7 @@ export default function TourDetailScreen() {
   }, [data?.tour?.ID, data?.tour?.name]);
   const handleStartWholeTour = useCallback(async () => {
     if (!mapsDirectionsUrl) {
-      Alert.alert('Route kann nicht gestartet werden', 'Bitte mindestens zwei Punkte zur Tour hinzufuegen.');
+      Alert.alert('Route kann nicht gestartet werden', 'Bitte mindestens zwei Punkte zur Tour hinzufügen.');
       return;
     }
 
@@ -1645,8 +1645,8 @@ export default function TourDetailScreen() {
     }
 
     Alert.alert(
-      'Ungespeicherte Aenderungen',
-      'Du hast ungespeicherte Aenderungen an der Tour. Ohne Speichern verwerfen?',
+      'Ungespeicherte Änderungen',
+      'Du hast ungespeicherte Änderungen an der Tour. Ohne Speichern verwerfen?',
       [
         {
           text: 'Weiter bearbeiten',
@@ -1958,7 +1958,7 @@ export default function TourDetailScreen() {
         if (options?.manual) {
           Alert.alert(
             'Zu wenige Punkte',
-            'Mindestens zwei Punkte benoetigt (Start und Ziel), bevor gespeichert werden kann.'
+            'Mindestens zwei Punkte benötigt (Start und Ziel), bevor gespeichert werden kann.'
           );
         }
         return false;
@@ -1984,10 +1984,10 @@ export default function TourDetailScreen() {
         setLastPersistedPoiIds(poiIds);
         if (draftChangedSinceRequest) {
           setSaveStatus('pending');
-          setStatusMessage('Aenderungen ausstehend...');
+          setStatusMessage('Änderungen ausstehend...');
         } else {
           setSaveStatus('saved');
-          setStatusMessage('Alle Aenderungen gespeichert');
+          setStatusMessage('Alle Änderungen gespeichert');
         }
         setLastSaveErrorCode(null);
         const refreshed = await refetch();
@@ -2047,7 +2047,7 @@ export default function TourDetailScreen() {
       if (isAutoSaveRunningRef.current) {
         queuedPoiIdsRef.current = nextPoiIds;
         setSaveStatus((current) => (current === 'saving' ? current : 'pending'));
-        setStatusMessage('Aenderungen ausstehend...');
+        setStatusMessage('Änderungen ausstehend...');
         return;
       }
 
@@ -2074,7 +2074,7 @@ export default function TourDetailScreen() {
 
           poiIdsToSave = queuedPoiIds;
           setSaveStatus('pending');
-          setStatusMessage('Aenderungen ausstehend...');
+          setStatusMessage('Änderungen ausstehend...');
         }
       } finally {
         isAutoSaveRunningRef.current = false;
@@ -2282,8 +2282,8 @@ export default function TourDetailScreen() {
       }
 
       Alert.alert(
-        'Keine Detailseite verfuegbar',
-        'Fuer diesen Punkt ist aktuell keine separate Detailseite vorhanden.'
+        'Keine Detailseite verfügbar',
+        'Für diesen Punkt ist aktuell keine separate Detailseite vorhanden.'
       );
     },
     [router]
@@ -2362,7 +2362,7 @@ export default function TourDetailScreen() {
     }
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Touren koennen nur online geloescht werden.');
+      requireOnlineForWrite(canPerformWrites, 'Touren können nur online geloescht werden.');
     } catch (nextError) {
       if (isNetworkUnavailableError(nextError)) {
         Alert.alert('Offline', nextError.message);
@@ -2452,7 +2452,7 @@ export default function TourDetailScreen() {
         setTourNameDraft(data.tour.name);
         return;
       }
-      Alert.alert('Name fehlt', 'Bitte gib einen Namen fuer die Tour ein.');
+      Alert.alert('Name fehlt', 'Bitte gib einen Namen für die Tour ein.');
       return;
     }
 
@@ -2586,7 +2586,7 @@ export default function TourDetailScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
           <Text style={styles.errorTitle}>Tour konnte nicht geladen werden</Text>
-          <Text style={styles.errorBody}>{error?.message || 'Keine Daten verfuegbar.'}</Text>
+          <Text style={styles.errorBody}>{error?.message || 'Keine Daten verfügbar.'}</Text>
         </View>
       </SafeAreaView>
     );
@@ -2936,7 +2936,7 @@ export default function TourDetailScreen() {
           <Pressable
             onPress={() => void openExternalPlaceInGoogleMaps()}
             style={({ pressed }) => [styles.addButton, styles.mapBottomActionButton, pressed && styles.pressed]}>
-            <Text style={styles.addButtonLabel}>In Google Maps oeffnen</Text>
+            <Text style={styles.addButtonLabel}>In Google Maps öffnen</Text>
           </Pressable>
         </View>
       ) : null}
@@ -3128,7 +3128,7 @@ export default function TourDetailScreen() {
         {blockingErrorCode === 404 ? (
           <View style={styles.warningBanner}>
             <Text style={styles.warningTitle}>Tour nicht mehr vorhanden</Text>
-            <Text style={styles.warningBody}>Die Tour wurde entfernt oder ist nicht mehr verfuegbar.</Text>
+            <Text style={styles.warningBody}>Die Tour wurde entfernt oder ist nicht mehr verfügbar.</Text>
           </View>
         ) : null}
         {lastSaveErrorCode === 422 ? (
@@ -3144,7 +3144,7 @@ export default function TourDetailScreen() {
           <View style={styles.warningBanner}>
             <Text style={styles.warningTitle}>Speichern fehlgeschlagen</Text>
             <Text style={styles.warningBody}>
-              {statusMessage || 'Die Tour konnte nicht gespeichert werden. Bitte spaeter erneut versuchen.'}
+              {statusMessage || 'Die Tour konnte nicht gespeichert werden. Bitte später erneut versuchen.'}
             </Text>
           </View>
         ) : null}
@@ -3375,7 +3375,7 @@ export default function TourDetailScreen() {
                 </Text>
               </Pressable>
             ) : (
-              <Text style={styles.overflowEmptyHint}>Keine verfuegbaren Aktionen.</Text>
+              <Text style={styles.overflowEmptyHint}>Keine verfügbaren Aktionen.</Text>
             )}
           </View>
         </View>

@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Fonts } from '@/constants/theme';
+import { Design, Fonts } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { appConfig } from '@/lib/config';
 import { isStaticWebsite, openLiveAppLogin } from '@/lib/static-website';
@@ -41,6 +41,7 @@ function ActionButton({
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
+      accessibilityState={{ disabled: !!disabled }}
       style={(state) => [
         styles.actionButton,
         variant === 'primary' ? styles.actionButtonPrimary : styles.actionButtonSecondary,
@@ -91,13 +92,14 @@ function LiveLoginScreen() {
           bounces={false}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}>
-          <Text style={styles.eyebrow}>Login</Text>
+          <Link href="/(tabs)" accessibilityLabel="Zurück zu den Stempelstellen" style={styles.backLink}>← Stempelstellen</Link>
+          <Text style={styles.eyebrow}>Dein Stempelpass</Text>
 
           <View style={styles.heroCard}>
             <View style={styles.heroTextColumn}>
-              <Text style={styles.title}>Zurueck auf den Harzer Weg</Text>
+              <Text style={styles.title}>Willkommen zurück</Text>
               <Text style={styles.copy}>
-                Melde dich an und spring direkt zu deinen Stempelstellen, Freunden und Profilen.
+                Sammle deine Stempel, plane Touren und entdecke den Harz mit Freunden.
               </Text>
             </View>
             <Image contentFit="contain" source={bearIllustration} style={styles.heroImage} />
@@ -134,7 +136,7 @@ function LiveLoginScreen() {
             <View style={styles.noteCard}>
               <Text style={styles.noteTitle}>Neu hier?</Text>
               <Text style={styles.noteCopy}>
-                Schau dir zuerst das Onboarding mit Standortfreigabe und Freundesuche an.
+                Richte dein Profil ein und entdecke die App Schritt für Schritt.
               </Text>
               <Link href="/onboarding" style={styles.noteLink}>
                 Zum Onboarding
@@ -157,7 +159,17 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  backLink: {
+    color: Design.color.brand,
+    minHeight: Design.touch,
+    paddingVertical: 14,
+    fontSize: 15,
+    fontWeight: '600',
+  },
   scrollContent: {
+    width: '100%',
+    maxWidth: 600,
+    alignSelf: 'center',
     paddingHorizontal: 22,
     paddingTop: 18,
     paddingBottom: 32,
@@ -173,24 +185,25 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   heroCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.76)',
-    borderRadius: 28,
-    paddingHorizontal: 20,
-    paddingVertical: 22,
+    backgroundColor: 'transparent',
+    borderRadius: Design.radius.card,
+    paddingHorizontal: 0,
+    paddingVertical: 8,
     marginBottom: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    flexDirection: 'column-reverse',
+    alignItems: 'flex-start',
+    gap: 16,
   },
   heroTextColumn: {
-    flex: 1,
+    width: '100%',
     gap: 10,
   },
   title: {
     color: '#11100d',
     fontSize: 28,
     lineHeight: 36,
-    fontFamily: Fonts.serif,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
   },
   copy: {
     color: '#5a6655',
@@ -198,12 +211,12 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   heroImage: {
-    width: 120,
-    height: 120,
+    width: 72,
+    height: 72,
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 28,
+    backgroundColor: Design.color.surface,
+    borderRadius: Design.radius.card,
     padding: 20,
     gap: 14,
     shadowColor: '#bda981',
@@ -219,7 +232,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardCopy: {
-    color: '#778177',
+    color: Design.color.muted,
     fontSize: 13,
     lineHeight: 19,
   },
@@ -257,7 +270,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   actionButtonLabelPrimary: {
-    color: '#f5f3ee',
+    color: Design.color.canvas,
   },
   actionButtonLabelSecondary: {
     color: '#374337',
@@ -282,6 +295,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   noteLink: {
+    minHeight: Design.touch,
+    paddingVertical: 14,
     color: '#2f6d49',
     fontSize: 13,
     lineHeight: 18,

@@ -82,6 +82,13 @@ describe('StampListItem user interaction', () => {
     expect(screen.getByText('Besucht')).toBeTruthy();
   });
 
+  it('does not claim a personal visit state for guests', () => {
+    mockUseAuth.mockReturnValue({ accessToken: null, isAuthenticated: false });
+    render(<StampListItem index={0} item={makeStamp()} onPress={jest.fn()} />);
+    expect(screen.getByText('Entdecken')).toBeTruthy();
+    expect(screen.queryByText('Unbesucht')).toBeNull();
+  });
+
   it('shows the optional meta label when provided', () => {
     render(
       <StampListItem index={0} item={makeStamp()} metaLabel="2,4 km entfernt" onPress={jest.fn()} />

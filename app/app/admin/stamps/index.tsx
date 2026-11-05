@@ -174,7 +174,7 @@ export default function AdminStampListScreen() {
                     <Text style={styles.emptyTitle}>Keine Stempelstellen gefunden</Text>
                     <Text style={styles.emptyBody}>
                       {normalizedQuery
-                        ? `Keine Treffer fuer "${query.trim()}".`
+                        ? `Keine Treffer für "${query.trim()}".`
                         : validToFilter === 'validToday'
                           ? 'Heute ist kein Eintrag gueltig.'
                           : 'Lege die erste Stempelstelle an.'}

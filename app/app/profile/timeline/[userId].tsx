@@ -434,7 +434,7 @@ export default function ProfileTimelineScreen() {
   if (!activeData) {
     return (
       <ProfileErrorState
-        body={activeError?.message || 'Keine Daten verfuegbar.'}
+        body={activeError?.message || 'Keine Daten verfügbar.'}
         title="Timeline konnte nicht geladen werden"
       />
     );

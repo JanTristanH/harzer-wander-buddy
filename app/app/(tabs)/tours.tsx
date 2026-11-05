@@ -47,7 +47,7 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: 'newest', label: 'Neueste' },
-  { key: 'oldest', label: 'Aelteste' },
+  { key: 'oldest', label: 'Älteste' },
   { key: 'nameAsc', label: 'Name A-Z' },
   { key: 'nameDesc', label: 'Name Z-A' },
 ];
@@ -351,7 +351,7 @@ export default function ToursTabScreen() {
       <SignInRequiredScreen
         body="Melde dich an, um Touren zu planen, zu speichern und deine eigenen Routen zu verwalten."
         onSignIn={() => router.push('/login' as never)}
-        title="Touren sind mit Konto verfuegbar"
+        title="Touren sind mit Konto verfügbar"
       />
     );
   }
@@ -381,7 +381,7 @@ export default function ToursTabScreen() {
               <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.quickstartCard}>
                 <Text style={styles.quickstartEyebrow}>Schnellstart</Text>
                 <Text style={styles.quickstartTitle}>Neue Tour planen</Text>
-                <Text style={styles.quickstartBody}>Leere Tour erstellen und direkt POIs hinzufuegen.</Text>
+                <Text style={styles.quickstartBody}>Leere Tour erstellen und direkt POIs hinzufügen.</Text>
               </LinearGradient>
             </Pressable>
 
@@ -482,7 +482,7 @@ export default function ToursTabScreen() {
               <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.quickstartCard}>
                 <Text style={styles.quickstartEyebrow}>Schnellstart</Text>
                 <Text style={styles.quickstartTitle}>Neue Tour planen</Text>
-                <Text style={styles.quickstartBody}>Leere Tour erstellen und direkt POIs hinzufuegen.</Text>
+                <Text style={styles.quickstartBody}>Leere Tour erstellen und direkt POIs hinzufügen.</Text>
               </LinearGradient>
             </Pressable>
           </View>

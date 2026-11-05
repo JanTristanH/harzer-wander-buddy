@@ -291,7 +291,7 @@ export default function FriendsScreen() {
             style: 'cancel',
           },
           {
-            text: 'Zurueckrufen',
+            text: 'Zurückrufen',
             style: 'destructive',
             onPress: () => {
               void (async () => {
@@ -398,7 +398,7 @@ export default function FriendsScreen() {
       <SignInRequiredScreen
         body="Melde dich an, um Freunde zu suchen, Anfragen zu senden und gemeinsamen Fortschritt zu sehen."
         onSignIn={() => router.push('/login' as never)}
-        title="Freunde sind mit Konto verfuegbar"
+        title="Freunde sind mit Konto verfügbar"
       />
     );
   }
@@ -553,7 +553,7 @@ export default function FriendsScreen() {
                     name: request.name,
                     onPress: () => router.push(`/profile/${encodeURIComponent(request.userId)}` as never),
                     subtitle: 'Anfrage gesendet',
-                    actionLabel: isRecalling ? '...' : 'Zurueckrufen',
+                    actionLabel: isRecalling ? '...' : 'Zurückrufen',
                     actionMuted: true,
                     actionDisabled: !recallFriendshipId || isRecalling || !canPerformWrites,
                     onActionPress: () => {
@@ -602,7 +602,7 @@ export default function FriendsScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Freunde finden</Text>
                 <Pressable
-                  accessibilityLabel="Suche schliessen"
+                  accessibilityLabel="Suche schließen"
                   onPress={closeSearchModal}
                   style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]}>
                   <Feather color={AppColors.text} name="x" size={16} />

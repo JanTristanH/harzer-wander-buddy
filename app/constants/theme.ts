@@ -1,5 +1,26 @@
 import { Platform } from 'react-native';
 
+// Shared visual language for the existing warm, forest-green HWB interface.
+// Fixed light surfaces are intentional; dark appearance needs a separate audit.
+export const Design = {
+  color: {
+    canvas: '#f5f3ee',
+    surface: '#ffffff',
+    ink: '#1e2a1e',
+    muted: '#526351',
+    brand: '#2e6b4b',
+    brandDeep: '#24543c',
+    onBrand: '#ffffff',
+    subtle: '#edf2ec',
+    border: '#d7dfd3',
+    warning: '#71592f',
+  },
+  space: { xs: 4, sm: 8, md: 12, lg: 16, screen: 20, xl: 24, xxl: 32 },
+  radius: { small: 8, control: 12, card: 16, sheet: 24, pill: 999 },
+  touch: 48,
+  contentWidth: 720,
+} as const;
+
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#189726';
 

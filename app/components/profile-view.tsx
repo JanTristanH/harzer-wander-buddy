@@ -364,7 +364,7 @@ function StampComparisonRow({
           {item.stamp.number || '--'} {'\u2022'} {item.stamp.name}
         </Text>
         <Text numberOfLines={2} style={styles.rowSubtitle}>
-          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfuegbar.')}
+          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfügbar.')}
         </Text>
       </View>
       <View style={styles.stampCompareStatus}>
@@ -405,7 +405,7 @@ function SimpleStampRow({
           {item.stamp.number || '--'} {'\u2022'} {item.stamp.name}
         </Text>
         <Text numberOfLines={2} style={styles.rowSubtitle}>
-          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfuegbar.')}
+          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfügbar.')}
         </Text>
       </View>
       <Feather color="#2e6b4b" name="chevron-right" size={18} />

@@ -66,7 +66,7 @@ function ProfileEditContent() {
     try {
       const nextProfile = await preloadCurrentUserProfile();
       if (!nextProfile) {
-        setError('Keine Profildaten verfuegbar.');
+        setError('Keine Profildaten verfügbar.');
         return;
       }
 
@@ -121,15 +121,15 @@ function ProfileEditContent() {
 
   const handlePickImage = useCallback(async () => {
     if (!canPerformWrites) {
-      Alert.alert('Offline', 'Profilbilder koennen nur online geaendert werden.');
+      Alert.alert('Offline', 'Profilbilder können nur online geändert werden.');
       return;
     }
 
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(
-        'Zugriff auf Fotos benoetigt',
-        'Bitte erlaube den Zugriff auf deine Fotos, um ein Profilbild auszuwaehlen.'
+        'Zugriff auf Fotos benötigt',
+        'Bitte erlaube den Zugriff auf deine Fotos, um ein Profilbild auszuwählen.'
       );
       return;
     }
@@ -246,8 +246,8 @@ function ProfileEditContent() {
 
   const showLeaveDialog = useCallback((onDiscard: () => void, onSave: () => void) => {
     Alert.alert(
-      'Aenderungen speichern?',
-      'Du hast ungespeicherte Aenderungen. Moechtest du speichern oder verwerfen?',
+      'Änderungen speichern?',
+      'Du hast ungespeicherte Änderungen. Moechtest du speichern oder verwerfen?',
       [
         { text: 'Abbrechen', style: 'cancel' },
         { text: 'Verwerfen', style: 'destructive', onPress: onDiscard },
@@ -320,7 +320,7 @@ function ProfileEditContent() {
             <View style={styles.loadingAvatarSection}>
               <SkeletonCircle size={108} tone="muted" />
               <View style={[styles.secondaryButton, styles.primaryButtonDisabled]}>
-                <Text style={styles.secondaryButtonLabel}>Profilbild auswaehlen</Text>
+                <Text style={styles.secondaryButtonLabel}>Profilbild auswählen</Text>
               </View>
             </View>
 
@@ -351,7 +351,7 @@ function ProfileEditContent() {
 
           <View style={styles.card}>
             <Text style={styles.title}>Profil bearbeiten</Text>
-            <Text style={styles.copy}>{error || 'Keine Profildaten verfuegbar.'}</Text>
+            <Text style={styles.copy}>{error || 'Keine Profildaten verfügbar.'}</Text>
             <Pressable
               onPress={() => void loadProfile()}
               style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
@@ -404,7 +404,7 @@ function ProfileEditContent() {
                     disabled={isSaving || !canPerformWrites}
                     onPress={() => void handlePickImage()}
                     style={({ pressed }) => [styles.secondaryButton, pressed && styles.pressed]}>
-                <Text style={styles.secondaryButtonLabel}>Profilbild auswaehlen</Text>
+                <Text style={styles.secondaryButtonLabel}>Profilbild auswählen</Text>
               </Pressable>
             </View>
 

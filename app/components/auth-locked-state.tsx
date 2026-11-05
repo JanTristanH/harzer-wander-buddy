@@ -1,3 +1,4 @@
+import { Design } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import React from 'react';
@@ -20,32 +21,13 @@ export function LockedGuestRows({
 }) {
   return (
     <View style={styles.lockedRowsWrap}>
-      <View pointerEvents="none" style={styles.lockedRows}>
-        {[0, 1, 2].map((item) => (
-          <View key={item} style={styles.lockedRow}>
-            <SkeletonBlock height={42} radius={12} tone="strong" width={42} />
-            <View style={styles.lockedRowCopy}>
-              <SkeletonBlock
-                height={14}
-                radius={999}
-                tone="strong"
-                width={`${72 - item * 8}%` as `${number}%`}
-              />
-              <SkeletonBlock
-                height={12}
-                radius={999}
-                width={`${48 + item * 6}%` as `${number}%`}
-              />
-            </View>
-          </View>
-        ))}
-      </View>
       <View style={styles.lockedOverlay}>
         <View style={styles.lockIcon}>
           <Feather color={AppColors.primary} name="lock" size={15} />
         </View>
         <Text style={styles.lockedText}>{body}</Text>
         <Pressable
+          accessibilityRole="button"
           onPress={onSignIn}
           style={({ pressed }) => [styles.signInButton, pressed && styles.signInButtonPressed]}>
           <Text style={styles.signInButtonLabel}>{ctaLabel}</Text>
@@ -99,7 +81,7 @@ const styles = StyleSheet.create({
   lockedRow: {
     minHeight: 58,
     borderRadius: 14,
-    backgroundColor: '#f5f7f2',
+    backgroundColor: Design.color.subtle,
     paddingHorizontal: 10,
     paddingVertical: 8,
     flexDirection: 'row',
@@ -111,12 +93,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   lockedOverlay: {
-    ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 18,
-    backgroundColor: 'rgba(255,255,255,0.66)',
-    gap: 8,
+    paddingVertical: 8,
+    gap: 12,
   },
   lockIcon: {
     width: 30,
@@ -134,6 +115,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   signInButton: {
+    minHeight: Design.touch,
+    justifyContent: 'center',
     borderRadius: 999,
     backgroundColor: AppColors.primary,
     paddingHorizontal: 14,
@@ -157,7 +140,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
-    paddingBottom: 120,
+    paddingBottom: 112,
   },
   screenCard: {
     width: '100%',
@@ -192,7 +175,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   screenButton: {
-    minHeight: 44,
+    minHeight: Design.touch,
     borderRadius: 999,
     backgroundColor: AppColors.primary,
     paddingHorizontal: 18,

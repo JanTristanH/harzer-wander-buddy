@@ -304,7 +304,7 @@ function ParkingDetailContent() {
       <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
         <View style={styles.centered}>
           <Text style={styles.errorTitle}>Keine Detaildaten gefunden</Text>
-          <Text style={styles.helperText}>Fuer diesen Parkplatz liegen aktuell keine Daten vor.</Text>
+          <Text style={styles.helperText}>Für diesen Parkplatz liegen aktuell keine Daten vor.</Text>
         </View>
       </SafeAreaView>
     );
@@ -355,7 +355,7 @@ function ParkingDetailContent() {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 180 + bottomInset }]}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             onRefresh={() => {
@@ -366,7 +366,7 @@ function ParkingDetailContent() {
           />
         }
         showsVerticalScrollIndicator={false}>
-        <LinearGradient colors={['#4e88cc', '#78b2e8', '#ddeaf7']} style={styles.hero}>
+        <LinearGradient colors={['#4e88cc', '#78b2e8', '#ddeaf7']} style={[styles.hero, !heroImageUri && styles.heroWithoutImage]}>
           {heroImageUri ? (
             <>
               <Image
@@ -415,7 +415,7 @@ function ParkingDetailContent() {
               <SkeletonLine width="56%" />
             </View>
           ) : (
-            <Text style={styles.description}>Keine Beschreibung fuer diesen Parkplatz verfuegbar.</Text>
+            <Text style={styles.description}>Keine Beschreibung für diesen Parkplatz verfügbar.</Text>
           )}
 
           <SectionCard title="Stempel in der Nähe">
@@ -593,10 +593,11 @@ function ParkingDetailContent() {
         </View>
       </ScrollView>
 
-      <View pointerEvents="box-none" style={[styles.bottomDock, { bottom: 18 + bottomInset }]}>
+      <View pointerEvents="box-none" style={[styles.bottomDock, { paddingBottom: Math.max(12, bottomInset) }]}>
         <View style={styles.bottomActions}>
           <View style={styles.secondaryButtonRow}>
             <Pressable
+              accessibilityRole="button"
               onPress={handleStartNavigation}
               style={({ pressed }) => [
                 styles.secondaryButton,
@@ -608,6 +609,7 @@ function ParkingDetailContent() {
               <Text style={styles.secondaryButtonLabel}>Navigation starten</Text>
             </Pressable>
             <Pressable
+              accessibilityRole="button"
               onPress={handleShowOnMap}
               style={({ pressed }) => [
                 styles.secondaryButton,
@@ -645,7 +647,10 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.background,
   },
   scrollContent: {
-    paddingBottom: 180,
+    paddingBottom: 24,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   loadingContent: {
     paddingBottom: 40,
@@ -694,6 +699,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',
+  },
+  heroWithoutImage: {
+    height: 144,
   },
   hero: {
     height: 240,
@@ -755,7 +763,7 @@ const styles = StyleSheet.create({
     color: AppColors.text,
     fontSize: 24,
     lineHeight: 30,
-    fontFamily: 'serif',
+    fontWeight: '700',
   },
   description: {
     color: '#445244',
@@ -874,10 +882,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   bottomDock: {
-    position: 'absolute',
-    left: 18,
-    right: 18,
-    bottom: 18,
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    backgroundColor: '#f5f3ee',
+    borderTopWidth: 1,
+    borderColor: '#d7dfd3',
   },
   bottomActions: {
     gap: 8,
@@ -887,7 +896,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   secondaryButton: {
-    height: 45,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#e9e2d6',
     alignItems: 'center',
