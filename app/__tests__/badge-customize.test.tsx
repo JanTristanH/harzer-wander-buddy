@@ -126,7 +126,7 @@ test('selects and uploads a photo on the same screen as the name and badge contr
     } as any);
   jest.mocked(uploadProfileImage).mockResolvedValue({ url: '/new-photo.jpg' } as any);
   render(<Customize />);
-  fireEvent.press(screen.getByText('Profilbild auswählen'));
+  fireEvent.press(screen.getByLabelText('Profilbild ändern'));
   await waitFor(() => expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalled());
   await waitFor(() => expect(screen.getByText('Profilbild groß ansehen')).toBeTruthy());
   fireEvent.press(screen.getByText('Änderungen speichern'));
@@ -145,6 +145,7 @@ test('selects and uploads a photo on the same screen as the name and badge contr
     )
   );
   expect(mockRouter.push).not.toHaveBeenCalled();
+  expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalledWith(expect.objectContaining({ allowsEditing: true, aspect: [1, 1] }));
 });
 test('selects a badge through a plus slot and saves inline name with real profile and badge APIs', async () => {
   render(<Customize />);
@@ -212,7 +213,7 @@ test('failed uploads keep the draft and allow retry without saving badges premat
   jest.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValue({ canceled: false, assets: [{ uri: 'file:/retry.jpg' }] } as any);
   jest.mocked(uploadProfileImage).mockRejectedValueOnce(new Error('Upload fehlgeschlagen')).mockResolvedValue({ url: '/retry.jpg' } as any);
   render(<Customize />);
-  fireEvent.press(screen.getByText('Profilbild auswählen'));
+  fireEvent.press(screen.getByLabelText('Profilbild ändern'));
   await waitFor(() => expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalled());
   fireEvent.changeText(screen.getByLabelText('Anzeigename'), 'Neuer Name');
   fireEvent.press(screen.getByText('Änderungen speichern'));
@@ -242,4 +243,16 @@ test('warns before discarding changes from the unified editor', async () => {
   buttons.find(button => button.text === 'Verwerfen')!.onPress!();
   expect(mockNavigation.dispatch).toHaveBeenCalledWith(event.data.action);
   alert.mockRestore();
+});
+
+test('uses one photo action and marks the selected title explicitly', async () => {
+  render(<Customize />);
+  await screen.findByLabelText('Anzeigename');
+  expect(screen.queryByText('Profilbild auswählen')).toBeNull();
+  expect(screen.getAllByLabelText('Profilbild ändern')).toHaveLength(1);
+  expect(screen.getByRole('radio', { name: 'Wanderer' })).toBeChecked();
+  expect(screen.getByText('✓ Wanderer')).toBeTruthy();
+  fireEvent.press(screen.getByRole('radio', { name: 'Kein Titel' }));
+  expect(screen.getByRole('radio', { name: 'Kein Titel' })).toBeChecked();
+  expect(screen.getByText('✓ Kein Titel')).toBeTruthy();
 });

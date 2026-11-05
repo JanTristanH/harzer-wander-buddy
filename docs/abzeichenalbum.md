@@ -102,9 +102,14 @@ und der Footer bleiben erhalten.
 Name, Foto, drei Abzeichen, Titel und Rahmen werden auf einem gemeinsamen Screen
 bearbeitet. `/profile/edit`, `/profile/customize` und `/profile/badges/customize`
 verwenden dieselbe Implementierung. Die Fotoauswahl übernimmt Bildberechtigungen,
-1:1-Zuschnitt und echten Upload aus dem bisherigen Editor. Ein Speichern-Button
+1:1-Zuschnitt und echten Upload aus dem bisherigen Editor. Auf Android/iOS bleibt
+der native Zuschnitt aktiv; im Browser öffnet eine eigene Vorschau zum Zoomen
+und Verschieben. Der bestätigte quadratische Ausschnitt wird exportiert und hochgeladen. Ein Speichern-Button
 übernimmt Profil und Abzeichenauswahl; Teilfehler bleiben sichtbar und wiederholbar.
-Ungespeicherte Änderungen werden beim Verlassen abgefragt.
+Ungespeicherte Änderungen werden beim Verlassen abgefragt. „Änderungen speichern“
+ist die einzige Primäraktion auf der Bearbeitungsseite. Die Fotoauswahl sitzt
+ausschließlich am Vorschaubild. Titel und Vibrationsstärke kennzeichnen den
+gewählten Wert mit Haken und deutlich sichtbarem Rahmen.
 
 Profilbilder öffnen im Profil eine Großansicht mit Pinch-Zoom, Doppeltipp und
 Verschieben. Im Editor ist dafür „Profilbild groß ansehen“ vorhanden. Die über den
@@ -113,15 +118,17 @@ direkt zum Album. Auch im Profil führt eine grüne Album-Aktion dorthin.
 
 Aktuelle Browser-Screenshots aus der vollständigen App am lokalen Testbackend:
 
+![Gemeinsamer Editor mit markiertem Titel](screenshots/profile-unified/editor.png)
+![Web-Zuschnitt mit Zoom und Verschieben](screenshots/profile-unified/crop-editor.png)
 ![Eigene Profilansicht mit Demo-Abzeichen](screenshots/profile-unified/profile.png)
 ![Timeline hinter dem Listen-Hero](screenshots/profile-unified/timeline.png)
 ![Deutlich hervorgehobene Abzeichenauswahl](screenshots/profile-unified/badge-picker.png)
 ![Profilbild mit Zoom](screenshots/profile-unified/photo-zoom.png)
 
-36 fokussierte Tests, TypeScript, ESLint für die geänderten App-Dateien und der
+41 fokussierte Tests, TypeScript, ESLint für die geänderten App-Dateien und der
 vollständige Basic-Webexport sind erfolgreich. Fotoauswahl, Vorschau und Großansicht
-wurden im Browser mit einem lokalen Testkonto geprüft. Der Upload ist durch Tests
-mit API-Mocks abgedeckt; eine neue Android-Abnahme der Pinch-Geste steht aus.
+wurden im Browser mit einem lokalen Testkonto geprüft. Zuschnitt, tatsächlicher Foto-Upload und gemeinsames Speichern wurden am lokalen
+Testbackend zusätzlich im Browser durchlaufen; eine neue Android-Abnahme der Pinch-Geste steht aus.
 
 „Dein nächstes Ziel“ zeigt alle Fortschrittsbedingungen. Allgemeine
 Leistungsabzeichen verlinken zur Stempelstellenliste, statt alle 222 Stellen zu

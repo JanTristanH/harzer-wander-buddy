@@ -1012,6 +1012,10 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                 return (
                   <Pressable
                     key={option.key}
+                    accessibilityRole="radio"
+                    accessibilityLabel={option.label}
+                    accessibilityState={{ checked: isActive }}
+                    aria-checked={isActive}
                     onPress={() => hapticSettings.onChange(option.key)}
                     style={({ pressed }) => [
                       styles.hapticChip,
@@ -1019,7 +1023,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                       pressed && styles.pressed,
                     ]}>
                     <Text style={[styles.hapticChipLabel, isActive && styles.hapticChipLabelActive]}>
-                      {option.label}
+                      {isActive ? '✓ ' : ''}{option.label}
                     </Text>
                   </Pressable>
                 );
@@ -1580,15 +1584,15 @@ const styles = StyleSheet.create({
   },
   hapticChip: {
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#d7cfbb',
     backgroundColor: '#f2ebde',
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   hapticChipActive: {
-    backgroundColor: '#e3e6df',
-    borderColor: '#596252',
+    backgroundColor: '#e6eee4',
+    borderColor: '#2e6b4b',
   },
   hapticChipLabel: {
     color: '#3d4a3d',

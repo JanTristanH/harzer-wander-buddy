@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Platform, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { AuthGuard } from '@/components/auth-guard';
 import { BadgeArtwork } from '@/components/badge-artwork';
 import { BadgeProfilePreview } from '@/components/badge-profile-preview';
@@ -12,6 +12,7 @@ import { saveBadgeProfile, updateCurrentUserProfile, uploadProfileImage } from '
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useBadgeAlbum } from '@/lib/badges';
 import type { UploadableImage } from '@/lib/image-upload';
+import { ProfilePhotoEditor } from '@/components/profile-photo-editor';
 import { ProfileImageViewer } from '@/components/profile-image-viewer';
 import type { BadgeSelection } from '@/lib/badge-types';
 import { requireOnlineForWrite } from '@/lib/offline-write';
@@ -39,6 +40,7 @@ function Customize() {
   const sourceName = useRef(currentUserProfile?.name || '');
   const navigation = useNavigation();
   const allowLeave = useRef(false);
+  const [photoDraft, setPhotoDraft] = useState<UploadableImage | null>(null);
   const [selectedImage, setSelectedImage] = useState<UploadableImage | null>(null);
   async function pickImage() {
     try {
@@ -49,14 +51,15 @@ function Customize() {
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
+        allowsEditing: Platform.OS !== 'web',
         aspect: [1, 1],
         mediaTypes: ['images'],
         quality: 1,
       });
       if (result.canceled || !result.assets.length) return;
       const asset = result.assets[0];
-      setSelectedImage({
+      const applyImage = Platform.OS === 'web' ? setPhotoDraft : setSelectedImage;
+      applyImage({
         uri: asset.uri,
         fileName: asset.fileName || `profile-${Date.now()}.jpg`,
         mimeType: asset.mimeType || 'image/jpeg',
@@ -204,6 +207,7 @@ function Customize() {
         ) : undefined
       }
     >
+      <ProfilePhotoEditor image={photoDraft} onCancel={() => setPhotoDraft(null)} onApply={image => { setSelectedImage(image); setPhotoDraft(null); }} />
       {!data || !selection ? (
         <BadgeLoadState error={error} retry={() => void refetch()} />
       ) : (
@@ -224,9 +228,6 @@ function Customize() {
             onSlot={setPicker}
             onAvatar={() => void pickImage()}
           />
-          <BadgeButton secondary disabled={disabled} onPress={() => void pickImage()}>
-            Profilbild auswählen
-          </BadgeButton>
           <ProfileImageViewer uri={selectedImage?.uri || currentUserProfile?.picture}>
             <Text style={s.text}>Profilbild groß ansehen</Text>
           </ProfileImageViewer>
@@ -292,10 +293,12 @@ function Customize() {
                   disabled={disabled}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: selection.title === title.id }}
+                  aria-checked={selection.title === title.id}
                   onPress={() => change({ title: title.id })}
-                  style={[s.chip, selection.title === title.id && s.selected]}
+                  accessibilityLabel={title.label}
+                  style={[s.chip, { borderWidth: 2, borderColor: selection.title === title.id ? '#2e6b4b' : 'transparent' }, selection.title === title.id && { backgroundColor: '#e6eee4' }]}
                 >
-                  <Text style={s.text}>{title.label}</Text>
+                  <Text style={[s.text, selection.title === title.id && { color: '#214f36', fontWeight: '700' }]}>{selection.title === title.id ? '✓ ' : ''}{title.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -367,7 +370,7 @@ function Customize() {
                       <Text style={[s.text, { fontSize: 13, textAlign: 'center' }]}>
                         {entry.name}
                       </Text>
-                      <Text style={{ fontSize: 14, fontWeight: '700', color: entry.unlocked ? '#fff' : '#647064', backgroundColor: entry.unlocked ? '#2e6b4b' : '#eceae2', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 18, overflow: 'hidden' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: entry.unlocked ? '#214f36' : '#647064', backgroundColor: entry.unlocked ? '#e6eee4' : '#eceae2', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 18, overflow: 'hidden' }}>
                         {picker !== null && selection.featured[picker] === entry.id
                           ? '✓ Auf diesem Platz'
                           : entry.unlocked
