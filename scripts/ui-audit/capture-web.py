@@ -192,8 +192,20 @@ async def main():
             await page.wait_for_timeout(2200)
             await shot('tour-created')
             checks.append({'flow':'create local tour','passed':True})
+            tour_map=page.locator('.leaflet-container').last
+            pin=page.locator('.leaflet-marker-icon').first
+            map_before=await tour_map.bounding_box()
+            pin_before=await pin.bounding_box()
+            await tour_map.hover()
             await page.mouse.wheel(0,650)
             await page.wait_for_timeout(700)
+            map_after=await tour_map.bounding_box()
+            pin_after=await pin.bounding_box()
+            assert abs((pin_before['x']-map_before['x'])-(pin_after['x']-map_after['x'])) < 1
+            assert abs((pin_before['y']-map_before['y'])-(pin_after['y']-map_after['y'])) < 1
+            assert map_after['y'] < map_before['y'] - 50
+            checks.append({'flow':'wheel over inline tour map scrolls page without changing camera','passed':True})
+            await page.get_by_role('button',name='Ersten Stempel wählen').scroll_into_view_if_needed()
             await shot('tour-created-bottom')
             await page.get_by_role('button',name='Ersten Stempel wählen').click()
             await page.get_by_role('textbox',name='Tourpunkte suchen').last.fill('Brocken')
@@ -202,6 +214,10 @@ async def main():
             await page.get_by_text('#1 · Brocken – Gipfelblick',exact=True).last.click()
             await page.wait_for_timeout(700)
             await shot('tour-point-selected')
+            zoom=await page.get_by_role('button',name='Tourkarte vergrößern').bounding_box()
+            hint=await page.get_by_text('Stempel auswählen und „Zur Tour hinzufügen“ antippen.',exact=True).last.bounding_box()
+            assert zoom['y'] >= hint['y'] + hint['height']
+            checks.append({'flow':'tour zoom controls stay below the complete instruction','passed':True})
             await page.get_by_text('Zur Tour hinzufügen',exact=True).last.click()
             await page.wait_for_timeout(1500)
             await page.keyboard.press('Escape')
@@ -209,7 +225,11 @@ async def main():
             sequence=page.get_by_text('Aktuelle Reihenfolge',exact=True).locator('..')
             await sequence.scroll_into_view_if_needed()
             assert 'Brocken' in await sequence.inner_text()
+            await page.get_by_text('Startpunkt gewählt. Füge ein weiteres Ziel hinzu. Distanz, Dauer und Höhenprofil werden ab zwei Punkten berechnet.',exact=True).wait_for()
+            assert await page.get_by_text('Stempel gesamt:',exact=False).count() == 0
             await shot('tour-point-added')
+            await page.get_by_text('Tourprofil',exact=True).scroll_into_view_if_needed()
+            await shot('tour-first-point-summary')
             checks.append({'flow':'find and add first local tour point','passed':True})
 
         except Exception as error:

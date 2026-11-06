@@ -986,6 +986,7 @@ export default function TourDetailScreen() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [routeRegion, setRouteRegion] = useState(HARZ_REGION);
   const [routeMapHeight, setRouteMapHeight] = useState(350);
+  const [mapTopBarHeight, setMapTopBarHeight] = useState(112);
   const [mapCenter, setMapCenter] = useState<Coordinate>({
     latitude: HARZ_REGION.latitude,
     longitude: HARZ_REGION.longitude,
@@ -2605,6 +2606,7 @@ export default function TourDetailScreen() {
         attributionPlacement="bottom-right"
         ref={mapRef}
         initialRegion={routeRegion}
+        scrollWheelZoomEnabled={isFullscreen}
         onMapReady={() => setIsMapReady(true)}
         onPress={(event) => {
           if ('action' in event.nativeEvent && event.nativeEvent.action === 'marker-press') {
@@ -2717,7 +2719,12 @@ export default function TourDetailScreen() {
         ) : null}
       </MapView>
 
-      <View style={[styles.mapTopBar, isFullscreen && { top: insets.top + 10 }]}>
+      <View
+        onLayout={({ nativeEvent }) => {
+          const height = Math.ceil(nativeEvent.layout.height);
+          setMapTopBarHeight((current) => current === height ? current : height);
+        }}
+        style={[styles.mapTopBar, isFullscreen && { top: insets.top + 10 }]}>
         <View style={styles.mapTopControlsRow}>
           <View style={styles.mapSearchWrap}>
             <Feather color="#6d7d6e" name="search" size={14} />
@@ -2750,6 +2757,8 @@ export default function TourDetailScreen() {
           </View>
 
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={isFullscreen ? 'Tourkarte im Vollbild schließen' : 'Tourkarte im Vollbild öffnen'}
             onPress={isFullscreen ? closeMapFullscreen : openMapFullscreen}
             style={({ pressed }) => [styles.mapFullscreenButton, pressed && styles.pressed]}>
             <Feather color="#2e3a2e" name={isFullscreen ? 'minimize-2' : 'maximize-2'} size={16} />
@@ -2824,11 +2833,11 @@ export default function TourDetailScreen() {
         </View>
       ) : null}
 
-      <View style={[styles.mapZoomControls, isFullscreen && { top: insets.top + 72 }]}>
-        <Pressable onPress={() => handleZoomBy(0.65)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
+      <View style={[styles.mapZoomControls, { top: (isFullscreen ? insets.top + 10 : 12) + mapTopBarHeight + 12 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Tourkarte vergrößern" onPress={() => handleZoomBy(0.65)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
           <Text style={styles.zoomButtonLabel}>+</Text>
         </Pressable>
-        <Pressable onPress={() => handleZoomBy(1.55)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Tourkarte verkleinern" onPress={() => handleZoomBy(1.55)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
           <Text style={styles.zoomButtonLabel}>−</Text>
         </Pressable>
       </View>
@@ -3040,7 +3049,9 @@ export default function TourDetailScreen() {
             <GroupSelector />
           </View>
 
-          {draftPoiIds.length === 0 ? <Text style={styles.cardLine}>Deine Tour beginnt mit einem Stempel. Wähle auf der Karte deinen Startpunkt.</Text> : <>
+          {draftPoiIds.length < 2 ? <Text style={styles.cardLine}>{draftPoiIds.length === 0
+            ? 'Deine Tour beginnt mit einem Stempel. Wähle auf der Karte deinen Startpunkt.'
+            : 'Startpunkt gewählt. Füge ein weiteres Ziel hinzu. Distanz, Dauer und Höhenprofil werden ab zwei Punkten berechnet.'}</Text> : <>
           <View style={styles.tourMetricsLineWrap}>
             <View style={styles.metricLineRow}>
               <Text style={styles.cardLine}>Distanz: </Text>

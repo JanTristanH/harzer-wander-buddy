@@ -464,3 +464,50 @@ Actual partial reviewer findings before interruption:
 | Tour created | Not newly scored | Reviewer requested the lower scroll evidence because the first-point action starts below the footer in the initial view; `tour-created-bottom.png` is supplied. |
 
 The review agent then failed with **“Your workspace is out of credits. Add credits to continue.”** No complete new category or screen scores were returned. The last complete category table remains review 6; it must not be silently replaced with passing values after implementation fixes. The requested threshold of 8.5 everywhere is therefore **not yet independently established**. The PR remains a draft pending the remaining review and the user's Android test. Native, actual screen-reader, multileg routing/reordering, image-upload and offline/error coverage must not be inferred from these Web checks.
+
+## Repeated final review — 2026-11-06, source 6a6bf27
+
+The independent reviewer completed the previously interrupted review: all 35 PNGs in round 7, including the lower tour screenshot, plus all three ARIA trees and the browser, keyboard, axe and contrast records were newly inspected. No code changes were included in these scores.
+
+| Category | Score /10 | Main finding |
+| --- | ---: | --- |
+| Icons | 8.5 | Larger group status signs; consistent icon style. |
+| Color/contrast | 8.5 | Readable surfaces; measured central color combinations. |
+| Typography | 8.5 | Clear sizes and hierarchy. |
+| Visual hierarchy | 8.5 | Main tasks and tour entry explained. |
+| Spacing/layout | 8.0 | Tour instruction overlaps the plus control. |
+| Radii/forms | 8.5 | Consistent cards, dialogs and inputs. |
+| Buttons/interactions | 8.5 | Main interactions and writes demonstrated. |
+| Navigation | 8.5 | Consistent tabs and reachable content. |
+| Map UX | 7.5 | Tour scroll capture shifts away from Harz and clips pins. |
+| Forms/search | 8.5 | Clear focus, results and successful name save. |
+| Feedback/system states | 8.0 | Tour totals contradict the selected first point. |
+| Accessibility | 8.5 for evidenced Web scope | Named controls, dialog focus containment and return; no screen-reader certification. |
+| Responsive/adaptive | 8.5 | Bounded desktop and usable mobile content. |
+| Consistency | 8.0 | Tour totals do not match the visible point. |
+| Information quality | 8.0 | Tour zeros/placeholders insufficiently explained. |
+| Polish/brand | 8.0 | Tour overlap and camera movement remain. |
+
+| Newly inspected PNG | Score /10 |
+| --- | ---: |
+| signed-list-390 / signed-list-1440 | 8.5 / 8.5 |
+| signed-map-390 / signed-map-1440 | 8.5 / 8.5 |
+| signed-tours-390 / signed-tours-1440 | 8.5 / 8.5 |
+| signed-friends-390 / signed-friends-1440 | 8.5 / 8.5 |
+| signed-profile-390 / signed-profile-1440 | 8.5 / 8.5 |
+| profile-edit / profile-saved | 8.5 / 8.5 |
+| group-open / group-selected / multiple-selected | 8.5 / 8.5 / 8.5 |
+| map-overview-320 | 8.5 |
+| friends-request / friends-request-accepted / friends-search | 8.5 / 8.5 / 8.5 |
+| map-filter / search-focus / search-empty | 8.5 / 8.5 / 8.5 |
+| onboarding-0 / onboarding-1 / onboarding-2 / onboarding-3 / onboarding-4 | 8.5 / 8.5 / 8.5 / 8.5 / 8.5 |
+| stamp-detail / stamp-bottom / stamp-success | 8.5 / 8.5 / 8.5 |
+| tour-created | 8.0 |
+| tour-created-bottom | 7.0 |
+| tour-search | 7.5 |
+| tour-point-selected | 8.0 |
+| tour-point-added | 7.5 |
+
+Guest matrix carried forward (not newly inspected as a full matrix): list/login/tours/friends/profile and onboarding start/end at 320/390/768/1440 each 8.5; map at 390/768/1440 each 8.5. Map 320 is replaced only by the newly inspected round-7 overview, 8.5.
+
+The repetition uncovered that the former lower tour capture changed the camera rather than just scrolling the page, while the instruction overlapped zoom and a single draft point still showed zero server totals. Those concrete findings start the next correction round. Native testing remains with the user; screen-reader, offline/error, upload and multileg-route/reordering coverage is not implied.

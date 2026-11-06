@@ -76,6 +76,8 @@ type MapViewProps = {
   toolbarEnabled?: boolean;
   showsCompass?: boolean;
   showsMyLocationButton?: boolean;
+  /** Embedded maps leave mouse-wheel scrolling to the surrounding page. */
+  scrollWheelZoomEnabled?: boolean;
 };
 
 type MarkerProps = {
@@ -558,6 +560,7 @@ function MapEventBridge(props: {
   const moveStartAtRef = useRef<number | null>(null);
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
 
+
   useMapEvents({
     click(event) {
       onPress?.({
@@ -733,6 +736,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
     onRegionChangeComplete,
     onUserLocationChange,
     showsUserLocation,
+    scrollWheelZoomEnabled = true,
     style,
   } = props;
   const [map, setMap] = useState<LeafletMap | null>(null);
@@ -742,6 +746,12 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
   const lastUserLocationRef = useRef<LatLng | null>(null);
   const onUserLocationChangeRef = useRef(onUserLocationChange);
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
+
+  useEffect(() => {
+    if (!map) return;
+    if (scrollWheelZoomEnabled) map.scrollWheelZoom.enable();
+    else map.scrollWheelZoom.disable();
+  }, [map, scrollWheelZoomEnabled]);
 
   const effectiveRegion = initialRegion ?? DEFAULT_REGION;
   const centerTuple = useMemo(
@@ -936,6 +946,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
         zoom={initialZoom}
         zoomAnimation
         zoomSnap={1}
+        scrollWheelZoom={scrollWheelZoomEnabled}
         zoomControl={false}>
         <MapInstanceBridge
           onMapReady={(nextMap) => {
