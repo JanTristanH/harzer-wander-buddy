@@ -187,7 +187,8 @@ describe('StampsScreen', () => {
     await renderScreen();
 
     expect(screen.getByText('Stempelstellen')).toBeOnTheScreen();
-    expect(screen.getByText('1 gesamt')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Stempelstellen auswählen')).toBeOnTheScreen();
+    expect(screen.queryByText('1 gesamt')).toBeNull();
   });
 
   it('places the group selector in the header for authenticated users', async () => {
@@ -213,7 +214,7 @@ describe('StampsScreen', () => {
 
     expect(screen.getByText(/Rabenklippe/)).toBeOnTheScreen();
     expect(screen.getByText(/Brocken/)).toBeOnTheScreen();
-    expect(screen.getByText('2 gesamt')).toBeOnTheScreen();
+    expect(screen.getByText(/von 2 Stempelstellen/)).toBeOnTheScreen();
   });
 
   it('reflects the visited progress percentage', async () => {

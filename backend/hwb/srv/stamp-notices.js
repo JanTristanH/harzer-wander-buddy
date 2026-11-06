@@ -1,5 +1,5 @@
 const cds = require("@sap/cds");
-const fetch = require("node-fetch");
+const { fetchOfficialNoticePage } = require("./official-notice-fetch");
 const { randomUUID } = require("node:crypto");
 const { SOURCE_URL, parseOfficialNotices } = require("./official-notices");
 
@@ -128,11 +128,7 @@ function register(service) {
         );
     }
     try {
-      const response = await fetch(SOURCE_URL, {
-        timeout: 15000,
-        size: 2 * 1024 * 1024,
-        redirect: "error",
-      });
+      const response = await fetchOfficialNoticePage();
       if (
         !response.ok ||
         !response.headers.get("content-type")?.includes("text/html")

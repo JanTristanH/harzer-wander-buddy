@@ -47,3 +47,20 @@ test('server info returns the backend package version and current server time', 
   const serverTime = Date.parse(info.serverTime);
   assert.ok(serverTime >= before && serverTime <= Date.now());
 });
+
+test('local Basic admin account exposes its role and can access admin functions', async () => {
+  const endpoint = `${server.url}/odata/v4/api/getCurrentUser()`;
+  const headers = { Authorization: `Basic ${Buffer.from('admin@hwb.de:admin@hwb.deA').toString('base64')}` };
+  const rejected = await fetch(endpoint, {
+    headers: { Authorization: `Basic ${Buffer.from('admin@hwb.de:wrong').toString('base64')}` },
+  });
+  assert.equal(rejected.status, 401);
+  const response = await fetch(endpoint, { headers });
+  assert.equal(response.status, 200);
+  const profile = await response.json();
+  assert.equal(profile.ID, 'admin@hwb.de');
+  assert.ok(JSON.stringify(profile.roles).includes('authenticated-user'));
+  assert.ok(JSON.stringify(profile.roles).includes('admin'));
+  const adminResponse = await fetch(`${server.url}/odata/v4/api/getMissingTravelTimesCount(n=1)`, { headers });
+  assert.equal(adminResponse.status, 200);
+});

@@ -31,6 +31,23 @@ test('description includes real web and APK links, and does not claim a failed a
   assert.doesNotMatch(previewSection({ ...input, active: false }), /\[Live-Web-App\]/);
   assert.doesNotMatch(previewSection({ removed: true }), /https:/);
 });
+test('web link stays live while Android builds and after an APK failure', () => {
+  const input = { sha: 'current', url: 'https://preview.example', runUrl: 'https://github.com/run', active: true };
+  const pending = previewSection({ ...input, androidPending: true });
+  assert.match(pending, /\[Live-Web-App\]\(https:\/\/preview.example\/app\/rnweb\)/);
+  assert.match(pending, /Android-APK: Build läuft/);
+  assert.doesNotMatch(pending, /nicht erfolgreich/);
+  const failed = previewSection(input);
+  assert.match(failed, /\[Live-Web-App\]/);
+  assert.match(failed, /Android-APK: Build nicht erfolgreich/);
+  assert.doesNotMatch(failed, /Build läuft/);
+  const complete = previewSection({ ...input, apkUrl: 'https://github.com/artifact' });
+  assert.doesNotMatch(complete, /Build läuft|Build nicht erfolgreich/);
+  // The last report replaces the pending section, even if Android finished first.
+  const body = updateBody(updateBody('Notes', pending), complete);
+  assert.doesNotMatch(body, /Build läuft/);
+  assert.match(body, /https:\/\/github.com\/artifact/);
+});
 test('stale, closed or opted-out PRs cannot receive deployment links; manual runs can', async () => {
   let current = pr;
   const updates = [];
