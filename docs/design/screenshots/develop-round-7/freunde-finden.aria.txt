@@ -1,0 +1,8 @@
+- dialog "Freunde finden":
+  - text: Freunde finden
+  - button "Suche schließen": 
+  - text: 
+  - textbox "Name oder Nutzername suchen": UI-Test Ida
+  - button "Suche leeren": 
+  - text: UI UI-Test Ida 0 Stempel • 0%
+  - button "Anfrage"

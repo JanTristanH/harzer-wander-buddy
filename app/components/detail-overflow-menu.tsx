@@ -1,3 +1,4 @@
+import { Design } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text } from 'react-native';
@@ -45,6 +46,7 @@ export function DetailOverflowMenu({ actions, topOffset }: DetailOverflowMenuPro
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Aktionen"
+        accessibilityState={{ expanded: isVisible }}
         hitSlop={10}
         onPress={openMenu}
         style={({ pressed }) => [styles.overflowHeaderButton, pressed && styles.headerButtonPressed]}>
@@ -57,6 +59,8 @@ export function DetailOverflowMenu({ actions, topOffset }: DetailOverflowMenuPro
             <Text style={styles.overflowTitle}>Aktionen</Text>
             {enabledActions.map((action) => (
               <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !!action.disabled }}
                 key={action.key}
                 disabled={action.disabled}
                 onPress={() => handleActionPress(action)}
@@ -65,7 +69,7 @@ export function DetailOverflowMenu({ actions, topOffset }: DetailOverflowMenuPro
                   action.disabled && styles.overflowActionButtonDisabled,
                   pressed && !action.disabled && styles.headerButtonPressed,
                 ]}>
-                <Feather color={action.disabled ? '#98a398' : '#2e6b4b'} name={action.icon} size={15} />
+                <Feather color={action.disabled ? '#98a398' : Design.color.brand} name={action.icon} size={15} />
                 <Text
                   style={[
                     styles.overflowActionLabel,
@@ -84,8 +88,8 @@ export function DetailOverflowMenu({ actions, topOffset }: DetailOverflowMenuPro
 
 const styles = StyleSheet.create({
   overflowHeaderButton: {
-    width: 32,
-    height: 32,
+    width: Design.touch,
+    height: Design.touch,
     borderRadius: 10,
     backgroundColor: '#eef4ee',
     alignItems: 'center',
@@ -107,7 +111,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     width: 240,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     borderRadius: 18,
     paddingHorizontal: 14,
     paddingVertical: 14,
@@ -119,12 +123,13 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   overflowTitle: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },
   overflowActionButton: {
+    minHeight: Design.touch,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -137,7 +142,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f4f1',
   },
   overflowActionLabel: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',

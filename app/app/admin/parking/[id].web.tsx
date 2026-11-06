@@ -4,9 +4,9 @@ import { StyleSheet, Text, View } from 'react-native';
 export default function WebAdminParkingFallback() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Admin-Karte im Web nicht verfuegbar</Text>
+      <Text style={styles.title}>Admin-Karte im Web nicht verfügbar</Text>
       <Text style={styles.body}>
-        Das Bearbeiten von Parkplaetzen mit Karte ist aktuell nur in der mobilen App verfuegbar.
+        Das Bearbeiten von Parkplätzen mit Karte ist aktuell nur in der mobilen App verfügbar.
       </Text>
     </View>
   );

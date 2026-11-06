@@ -1,0 +1,22 @@
+[
+  {
+    "path": "/",
+    "violations": []
+  },
+  {
+    "path": "/map",
+    "violations": []
+  },
+  {
+    "path": "/login",
+    "violations": []
+  },
+  {
+    "path": "/onboarding",
+    "violations": []
+  },
+  {
+    "path": "/tours",
+    "violations": []
+  }
+]

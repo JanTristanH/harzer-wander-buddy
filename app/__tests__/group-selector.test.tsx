@@ -67,7 +67,7 @@ describe('GroupSelector', () => {
     expect(screen.queryByTestId('group-selector-button')).toBeNull();
   });
 
-  it('opens the German checklist and delegates selection changes', () => {
+  it('keeps selection local until the user confirms the group', () => {
     render(<GroupSelector />);
 
     fireEvent.press(screen.getByTestId('group-selector-button'));
@@ -82,9 +82,21 @@ describe('GroupSelector', () => {
     ).toEqual({ checked: false });
 
     fireEvent.press(screen.getByTestId('group-selector-friend-friend-2'));
-    fireEvent.press(screen.getByTestId('group-selector-clear'));
-
-    expect(mockGroupState.toggleFriend).toHaveBeenCalledWith('friend-2');
+    expect(mockGroupState.clearGroup).not.toHaveBeenCalled();
+    expect(mockGroupState.addFriend).not.toHaveBeenCalled();
+    expect(screen.getByTestId('group-selector-friend-friend-2').props.accessibilityState).toEqual({ checked: true });
+    fireEvent.press(screen.getByTestId('group-selector-done'));
     expect(mockGroupState.clearGroup).toHaveBeenCalledTimes(1);
+    expect(mockGroupState.addFriend).toHaveBeenCalledWith('friend-1');
+    expect(mockGroupState.addFriend).toHaveBeenCalledWith('friend-2');
   });
+  it('discards pending changes when dismissed', () => {
+    render(<GroupSelector />);
+    fireEvent.press(screen.getByTestId('group-selector-button'));
+    fireEvent.press(screen.getByTestId('group-selector-clear'));
+    fireEvent.press(screen.getAllByLabelText('Gruppenauswahl schließen')[0]);
+    expect(mockGroupState.clearGroup).not.toHaveBeenCalled();
+    expect(mockGroupState.addFriend).not.toHaveBeenCalled();
+  });
+
 });

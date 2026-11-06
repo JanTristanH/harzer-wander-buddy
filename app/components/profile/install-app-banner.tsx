@@ -29,7 +29,7 @@ export function InstallAppBanner({ visible }: { visible?: boolean }) {
       <Image contentFit="cover" source={appIcon} style={styles.icon} />
       <View style={styles.copy}>
         <Text style={styles.title}>App installieren</Text>
-        <Text style={styles.body}>Nutze die Android-App fuer die beste Erfahrung.</Text>
+        <Text style={styles.body}>Nutze die Android-App für die beste Erfahrung.</Text>
       </View>
       <View style={styles.cta}>
         <Feather color="#f5f3ee" name="external-link" size={16} />

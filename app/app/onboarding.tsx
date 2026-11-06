@@ -27,7 +27,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList, type FriendsListItem } from '@/components/friends-list';
-import { Fonts } from '@/constants/theme';
+import { Design, Fonts } from '@/constants/theme';
 import {
   createFriendRequest,
   searchUsers,
@@ -114,6 +114,7 @@ function ActionButton({
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
+      accessibilityState={{ disabled: !!disabled }}
       style={(state) => [
         styles.actionButton,
         variant === 'primary' ? styles.actionButtonPrimary : styles.actionButtonSecondary,
@@ -175,7 +176,7 @@ export default function OnboardingScreen() {
   const profileSavePromiseRef = useRef<Promise<boolean> | null>(null);
   const matchingCurrentUserProfile =
     claims?.sub && currentUserProfile?.id === claims.sub ? currentUserProfile : null;
-  const primaryDisabled = !isAuthenticated || !!configError || isLoading;
+  const primaryDisabled = isLoading || isProfileSaving || (isAuthenticated && !!configError);
   const errorMessage = configError || authError;
   const fallbackProfileName = getInitialProfileName(
     matchingCurrentUserProfile?.name || claims?.name || claims?.nickname || claims?.given_name || ''
@@ -348,15 +349,15 @@ export default function OnboardingScreen() {
 
   const handlePickProfileImage = useCallback(async () => {
     if (!canPerformWrites) {
-      Alert.alert('Offline', 'Profilbilder koennen nur online geaendert werden.');
+      Alert.alert('Offline', 'Profilbilder können nur online geändert werden.');
       return;
     }
 
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(
-        'Zugriff auf Fotos benoetigt',
-        'Bitte erlaube den Zugriff auf deine Fotos, um ein Profilbild auszuwaehlen.'
+        'Zugriff auf Fotos benötigt',
+        'Bitte erlaube den Zugriff auf deine Fotos, um ein Profilbild auszuwählen.'
       );
       return;
     }
@@ -665,10 +666,10 @@ export default function OnboardingScreen() {
           </View>
           <ScrollView ref={scrollRef} style={styles.stepScroll} keyboardShouldPersistTaps="handled" bounces={false}
             contentContainerStyle={styles.flowContent} showsVerticalScrollIndicator={false}>
-            <View style={[styles.scene, step === 2 && styles.compactScene]}>
-              {step === 0 ? <Image contentFit="contain" source={bearIllustration} style={styles.welcomeIllustration} /> :
+            <View style={[styles.scene, step === 0 && !isAuthenticated && styles.guestScene, step === 2 && styles.compactScene]}>
+              {step === 0 ? <Image accessibilityLabel="" accessible={false} contentFit="contain" source={bearIllustration} style={[styles.welcomeIllustration, !isAuthenticated && styles.guestIllustration]} /> :
                 step === 1 || step === 2 ? <View style={[styles.avatarPreview, step === 2 && styles.compactAvatarPreview]}>
-                  {effectiveProfilePicture ? <Image contentFit="cover" source={selectedProfileImage ? { uri: selectedProfileImage.uri } : buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)} style={styles.previewImage} /> :
+                  {effectiveProfilePicture ? <Image accessibilityLabel="Dein Profilbild" contentFit="cover" source={selectedProfileImage ? { uri: selectedProfileImage.uri } : buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)} style={styles.previewImage} /> :
                     <Feather name="user" size={58} color="#496850" />}
                 </View> : <View style={styles.featureScene}>
                   <View style={styles.sceneOrbit} />
@@ -685,7 +686,7 @@ export default function OnboardingScreen() {
                 {[['map', 'Ziele entdecken'], ['award', 'Stempel sammeln'], ['users', 'Gemeinsam los']].map(([icon, label]) =>
                   <View key={label} style={styles.benefit}><Feather name={icon as 'map' | 'award' | 'users'} size={22} color="#315B43" /><Text style={styles.benefitText}>{label}</Text></View>)}
               </View>
-              <Text style={styles.guidance}>Vier kurze Schritte, dann geht’s los. Name und Avatar kannst du später im Profil ändern.</Text>
+              <Text style={styles.guidance}>{isAuthenticated ? 'Vier kurze Schritte, dann geht’s los. Name und Avatar kannst du später im Profil ändern.' : 'Entdecke Stempelstellen und die Karte auch ohne Konto. Deinen persönlichen Stempelpass kannst du später anlegen.'}</Text>
               {!isAuthenticated ? <View style={styles.card}>
                 <Text style={styles.cardTitle}>Deine Stempel bekommen ein Zuhause.</Text>
                 <Text style={styles.cardCopy}>Melde dich an, um deine Wandererfolge zu speichern.</Text>
@@ -712,7 +713,7 @@ export default function OnboardingScreen() {
                   return <Pressable key={avatar.id} accessibilityRole="radio" accessibilityLabel={avatar.label} aria-checked={selected}
                     accessibilityState={{ checked: selected, disabled: busy || !canPerformWrites }} disabled={busy || !canPerformWrites}
                     onPress={() => avatar.id === 'custom' ? void handlePickProfileImage() : selectAvatar(avatar.id)} style={[styles.avatarOption, selected && styles.avatarOptionSelected]}>
-                    {avatar.source ? <Image source={avatar.source} contentFit="cover" style={styles.choiceImage} /> :
+                    {avatar.source ? <Image accessibilityLabel="" accessible={false} source={avatar.source} contentFit="cover" style={styles.choiceImage} /> :
                       selected && effectiveProfilePicture ? <Image accessibilityLabel="Dein eigenes Foto" source={selectedProfileImage ? { uri: selectedProfileImage.uri } : buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)} contentFit="cover" style={styles.choiceImage} /> :
                       <View style={styles.noneAvatar}><Feather name="camera" size={35} color="#788779" /></View>}
                     <Text style={[styles.avatarLabel, selected && styles.avatarLabelSelected]}>{avatar.label}</Text>
@@ -751,13 +752,13 @@ export default function OnboardingScreen() {
           </ScrollView>
           <View style={styles.flowDock}>
             <ActionButton disabled={primaryDisabled || busy || (step === 1 && !profileName.trim()) || locationPermission === 'checking'}
-              label={busy ? 'Wird gespeichert…' : step === 0 ? 'Los geht’s' : step === 4 ? 'Zu den Stempelstellen' : step === 3 && locationPermission !== 'granted' ? 'Ohne Standort weiter' : 'Weiter'}
-              onPress={() => void handleAdvance()} variant="primary" style={styles.bottomButton} />
+              label={busy ? 'Wird gespeichert…' : step === 0 ? isAuthenticated ? 'Los geht’s' : 'Ohne Konto entdecken' : step === 4 ? 'Zu den Stempelstellen' : step === 3 && locationPermission !== 'granted' ? 'Ohne Standort weiter' : 'Weiter'}
+              onPress={() => isAuthenticated ? void handleAdvance() : router.replace('/(tabs)')} variant="primary" style={styles.bottomButton} />
             <Text style={styles.footerNote}>{step === 4 ? 'Bereit für deinen ersten Stempel?' : step === 3 ? 'Du entscheidest, was du freigibst.' : 'Dein Abenteuer. Dein Tempo.'}</Text>
           </View>
         </KeyboardAvoidingView>
 
-        <Modal
+        <Modal accessibilityLabel="Freunde finden"
           animationType="fade"
           transparent
           visible={isSearchModalVisible}
@@ -769,7 +770,8 @@ export default function OnboardingScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Freunde finden</Text>
                 <Pressable
-                  accessibilityLabel="Suche schliessen"
+                  accessibilityLabel="Suche schließen"
+                  accessibilityRole="button"
                   onPress={closeSearchModal}
                   style={({ pressed }) => [styles.modalCloseButton, pressed && styles.actionButtonPressed]}>
                   <Feather color="#1E2A1E" name="x" size={16} />
@@ -823,7 +825,7 @@ export default function OnboardingScreen() {
 
               <View style={styles.modalHint}>
                 <Text style={styles.modalHintText}>
-                  Profile kannst du nach dem Onboarding in der Freunde-Ansicht oeffnen.
+                  Profile kannst du nach dem Onboarding in der Freunde-Ansicht öffnen.
                 </Text>
               </View>
             </View>
@@ -848,6 +850,8 @@ const styles = StyleSheet.create({
   progressActive: { backgroundColor: '#41664A' },
   flowContent: { paddingHorizontal: 28, paddingTop: 20, paddingBottom: 24, gap: 16 },
   scene: { height: 170, alignItems: 'center', justifyContent: 'center' },
+  guestScene: { height: 100 },
+  guestIllustration: { width: 120, height: 108 },
   compactScene: { height: 86 },
   compactAvatarPreview: { width: 80, height: 80, borderRadius: 40, borderWidth: 4 },
   compactTitle: { fontSize: 28, lineHeight: 34 },
@@ -887,7 +891,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#ffffff',
-    borderRadius: 28,
+    borderRadius: Design.radius.card,
     padding: 18,
     gap: 12,
     shadowColor: '#bda981',
@@ -904,9 +908,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   cardCopy: {
-    color: '#778177',
-    fontSize: 12,
-    lineHeight: 18,
+    color: Design.color.muted,
+    fontSize: 14,
+    lineHeight: 21,
   },
   errorText: {
     color: '#8a2d1f',
@@ -930,7 +934,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e8dfcf',
   },
   actionButtonDisabled: {
-    opacity: 0.48,
+    opacity: 0.7,
   },
   actionButtonPressed: {
     opacity: 0.88,
@@ -1067,7 +1071,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
   footerNote: {
-    color: '#798275',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 17,
     textAlign: 'center',

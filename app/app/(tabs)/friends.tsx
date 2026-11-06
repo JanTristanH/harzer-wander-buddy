@@ -24,7 +24,7 @@ import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import { FriendsList } from '@/components/friends-list';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
-import { AppColors, Fonts } from '@/constants/theme';
+import { AppColors, Fonts, Layout, Radii } from '@/constants/theme';
 import {
   acceptPendingFriendshipRequest,
   createFriendRequest,
@@ -87,6 +87,7 @@ export default function FriendsScreen() {
   const [acceptingPendingRequestId, setAcceptingPendingRequestId] = useState<string | null>(null);
   const [recallingFriendshipId, setRecallingFriendshipId] = useState<string | null>(null);
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
   const [isSearchLoading, setIsSearchLoading] = useState(false);
@@ -291,7 +292,7 @@ export default function FriendsScreen() {
             style: 'cancel',
           },
           {
-            text: 'Zurueckrufen',
+            text: 'Zurückrufen',
             style: 'destructive',
             onPress: () => {
               void (async () => {
@@ -398,7 +399,7 @@ export default function FriendsScreen() {
       <SignInRequiredScreen
         body="Melde dich an, um Freunde zu suchen, Anfragen zu senden und gemeinsamen Fortschritt zu sehen."
         onSignIn={() => router.push('/login' as never)}
-        title="Freunde sind mit Konto verfuegbar"
+        title="Freunde sind mit Konto verfügbar"
       />
     );
   }
@@ -553,7 +554,7 @@ export default function FriendsScreen() {
                     name: request.name,
                     onPress: () => router.push(`/profile/${encodeURIComponent(request.userId)}` as never),
                     subtitle: 'Anfrage gesendet',
-                    actionLabel: isRecalling ? '...' : 'Zurueckrufen',
+                    actionLabel: isRecalling ? '...' : 'Zurückrufen',
                     actionMuted: true,
                     actionDisabled: !recallFriendshipId || isRecalling || !canPerformWrites,
                     onActionPress: () => {
@@ -576,8 +577,11 @@ export default function FriendsScreen() {
           ) : null}
         </ScrollView>
 
-        <Pressable
+        {!(activeFilter === 'friends' && data && data.friends.length === 0) ? (
+        <View pointerEvents="box-none" style={{ position: 'absolute', width: '100%', maxWidth: Layout.contentWidth, alignSelf: 'center', bottom: 0 }}>
+      <Pressable
           accessibilityLabel="Freunde suchen"
+                  accessibilityRole="button"
           disabled={!canPerformWrites}
           onPress={() => setIsSearchModalVisible(true)}
           style={({ pressed }) => [
@@ -588,8 +592,10 @@ export default function FriendsScreen() {
           ]}>
           <Feather color={AppColors.background} name="search" size={24} />
         </Pressable>
+        </View>
+      ) : null}
 
-        <Modal
+        <Modal accessibilityLabel="Freunde finden"
           animationType="fade"
           onShow={handleSearchModalShow}
           transparent
@@ -602,14 +608,15 @@ export default function FriendsScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Freunde finden</Text>
                 <Pressable
-                  accessibilityLabel="Suche schliessen"
+                  accessibilityLabel="Suche schließen"
+                  accessibilityRole="button"
                   onPress={closeSearchModal}
                   style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]}>
                   <Feather color={AppColors.text} name="x" size={16} />
                 </Pressable>
               </View>
 
-              <View style={styles.searchInputShell}>
+              <View style={[styles.searchInputShell, isSearchFocused && styles.searchInputShellFocused]}>
                 <View style={styles.searchInputIconWrap}>
                   <Feather color={AppColors.textMuted} name="search" size={14} />
                 </View>
@@ -618,6 +625,8 @@ export default function FriendsScreen() {
                   autoCorrect={false}
                   autoFocus
                   ref={searchInputRef}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
                   onChangeText={setSearchQuery}
                   placeholder="Name oder Nutzername suchen"
                   placeholderTextColor={AppColors.textMuted}
@@ -674,13 +683,17 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.background,
   },
   content: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 160,
   },
   title: {
     color: AppColors.text,
-    fontFamily: Fonts.serif,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
     fontSize: 24,
     lineHeight: 30,
     marginBottom: 12,
@@ -691,6 +704,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   filterChip: {
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     backgroundColor: AppColors.surface,
     borderRadius: 999,
     paddingHorizontal: 12,
@@ -785,7 +800,7 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: AppColors.surface,
-    borderRadius: 22,
+    borderRadius: Radii.card,
     marginHorizontal: 20,
     maxHeight: '100%',
     flexShrink: 1,
@@ -805,7 +820,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     color: AppColors.text,
-    fontFamily: Fonts.serif,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
     fontSize: 20,
     lineHeight: 24,
   },
@@ -813,10 +829,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F0E9DD',
     borderRadius: 8,
-    height: 28,
+    height: Layout.touchTarget,
     justifyContent: 'center',
-    width: 28,
+    width: Layout.touchTarget,
   },
+  searchInputShellFocused: { outlineColor: AppColors.primary, outlineWidth: 2, outlineStyle: 'solid' },
   searchInputShell: {
     alignItems: 'center',
     backgroundColor: '#F6F2EA',

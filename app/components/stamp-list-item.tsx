@@ -1,8 +1,9 @@
+import { Design } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 import { GroupStampStatus, getGroupStampStatus } from '@/components/group-stamp-status';
 import { UncollectedStampArtwork } from '@/components/uncollected-stamp-artwork';
@@ -11,7 +12,7 @@ import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 
 // Safari owns long presses unless text selection and its native callout are disabled.
-const webCardInteractionStyle = Platform.OS === 'web' ? {
+const webCardInteractionStyle: (ViewStyle & React.CSSProperties) | undefined = Platform.OS === 'web' ? {
   userSelect: 'none' as const, WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
 } : undefined;
 const webCardInteractionProps = Platform.OS === 'web' ? {
@@ -88,7 +89,7 @@ function StampListItemComponent({
   return (
     <Pressable
       {...webCardInteractionProps}
-      accessibilityLabel={groupAccessibilityLabel ?? `Stempel ${item.number || '--'}: ${item.name}. ${item.hasVisited ? 'Besucht' : 'Unbesucht'}`}
+      accessibilityLabel={groupAccessibilityLabel ?? `Stempel ${item.number || '--'}: ${item.name}. ${isAuthenticated ? item.hasVisited ? 'Besucht' : 'Unbesucht' : 'Entdecken'}`}
       accessibilityRole={selectionMode ? 'checkbox' : 'button'}
       accessibilityState={{ disabled, ...(selectionMode ? { checked: selected } : {}) }}
       aria-checked={selectionMode ? selected : undefined}
@@ -127,22 +128,25 @@ function StampListItemComponent({
             />
           )
         ) : (
-          <LinearGradient colors={cardGradient(index, !!item.hasVisited)} style={styles.cardArtwork} />
+          <LinearGradient accessible={false} colors={cardGradient(index, !!item.hasVisited)} style={[styles.cardArtwork, styles.artworkFallback]}>
+            <Feather color={Design.color.brandDeep} name="map-pin" size={24} />
+            <Text selectable={false} style={styles.artworkNumber}>{item.number || 'HWN'}</Text>
+          </LinearGradient>
         )}
 
         <View style={styles.cardBody}>
-          <Text selectable={false} numberOfLines={1} style={styles.cardTitle}>
+          <Text selectable={false} numberOfLines={2} style={styles.cardTitle}>
             {item.number || '--'} {'\u2022'} {item.name}
           </Text>
-          <Text selectable={false} numberOfLines={groupActive ? 1 : 2} style={styles.cardDescription}>
+          <Text selectable={false} numberOfLines={1} style={styles.cardDescription}>
             {item.description?.trim() || 'Keine Beschreibung verfügbar.'}
           </Text>
 
           <View style={styles.cardMetaRow}>
             <View style={[styles.statePill, item.hasVisited ? styles.statePillVisited : styles.statePillOpen]}>
               <Feather
-                color={item.hasVisited ? '#2e6b4b' : '#7a6a4a'}
-                name={item.hasVisited ? 'check' : 'x'}
+                color={item.hasVisited ? Design.color.brand : Design.color.warning}
+                name={item.hasVisited ? 'check' : 'circle'}
                 size={11}
               />
               <Text
@@ -151,7 +155,7 @@ function StampListItemComponent({
                   styles.statePillLabel,
                   item.hasVisited ? styles.statePillLabelVisited : styles.statePillLabelOpen,
                 ]}>
-                {item.hasVisited ? 'Besucht' : 'Unbesucht'}
+                {isAuthenticated ? item.hasVisited ? 'Besucht' : 'Unbesucht' : 'Entdecken'}
               </Text>
             </View>
             {metaLabel ? <Text selectable={false} style={styles.distanceLabel}>{metaLabel}</Text> : null}
@@ -185,26 +189,33 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: '#ffffff',
     borderRadius: 18,
-    borderWidth: 2,
-    borderColor: 'transparent',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    shadowColor: '#141e14',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 18,
-    elevation: 2,
+    borderWidth: 2,
+    borderColor: Design.color.border,
   },
   cardWithGroup: {
     minHeight: 152,
   },
   cardMainRow: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
   cardPressed: {
     opacity: 0.85,
+  },
+  artworkFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  artworkNumber: {
+    color: Design.color.brandDeep,
+    fontSize: 13,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   cardArtwork: {
     width: 64,
@@ -216,14 +227,14 @@ const styles = StyleSheet.create({
     minWidth: 1,
   },
   cardTitle: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '600',
   },
   cardDescription: {
-    color: '#6b7a6b',
-    fontSize: 12,
+    color: Design.color.muted,
+    fontSize: 13,
     lineHeight: 16,
   },
   cardMetaRow: {
@@ -252,13 +263,13 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   statePillLabelVisited: {
-    color: '#2e6b4b',
+    color: Design.color.brand,
   },
   statePillLabelOpen: {
-    color: '#7a6a4a',
+    color: Design.color.warning,
   },
   distanceLabel: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 16,
   },

@@ -1,0 +1,104 @@
+{
+  "checks": [
+    {
+      "screen": "list",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 768,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "flow": "search, clear, open stamp detail",
+      "url": "http://localhost:8084/app/rnweb/stamps/00000000-0000-4000-8000-000000000001"
+    },
+    {
+      "flow": "parking switch toggles",
+      "checked": "false"
+    },
+    {
+      "flow": "guest onboarding completes to list",
+      "url": "http://localhost:8084/app/rnweb/"
+    },
+    {
+      "flow": "login back returns to list",
+      "url": "http://localhost:8084/app/rnweb/"
+    },
+    {
+      "keyboardFocus": "Stempelstellen nach Nummer oder Ort suchen"
+    }
+  ],
+  "pageErrors": []
+}

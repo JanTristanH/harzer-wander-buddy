@@ -1,0 +1,9 @@
+- dialog "Kartenfilter":
+  - heading "Kartenfilter" [level=1]
+  - text: Status
+  - button "Alle" [pressed]
+  - text: Inhalt
+  - switch "Stempelstellen anzeigen" [checked]: Stempel
+  - switch "Parkplätze anzeigen" [checked]: Parkplätze
+  - text: "Nummer: Stempelstelle · P: Parkplatz"
+  - button "Kartenfilter schließen": Fertig

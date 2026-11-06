@@ -1,3 +1,4 @@
+import { Design } from '@/constants/theme';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
@@ -49,7 +50,7 @@ export function MapSelectionSheet({
   onToggleExpand?: () => void;
   onHeightChange?: (height: number) => void;
 }) {
-  const { accessToken } = useAuth();
+  const { accessToken, isAuthenticated } = useAuth();
   const isCompact = mode === 'compact';
   const isInteractive = Boolean(onDetailsPress);
   const imageSource = item.imageUrl
@@ -67,6 +68,9 @@ export function MapSelectionSheet({
       onLayout={(event: LayoutChangeEvent) => onHeightChange?.(event.nativeEvent.layout.height)}
       style={[styles.bottomSheet, { bottom: bottomOffset }]}>
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${item.title}. ${isCompact ? "Auswahl erweitern" : "Details öffnen"}`}
+        accessibilityState={{ disabled: !handleSheetPress, expanded: !isCompact }}
         disabled={!handleSheetPress}
         onPress={handleSheetPress}
         style={({ pressed }) => [
@@ -120,7 +124,7 @@ export function MapSelectionSheet({
               {item.kind === 'visited-stamp'
                 ? 'Besucht'
                 : item.kind === 'open-stamp'
-                  ? 'Unbesucht'
+                  ? isAuthenticated ? 'Unbesucht' : 'Stempelstelle'
                   : 'Parkplatz'}
             </Text>
           </View>
@@ -160,6 +164,8 @@ export function MapSelectionSheet({
               {({ buttonAnimatedStyle, onPressIn, onPressOut }) => (
                 <Animated.View style={[styles.primaryActionAnimated, buttonAnimatedStyle]}>
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: !!primaryActionDisabled }}
                     disabled={primaryActionDisabled}
                     onPress={onPrimaryActionPress}
                     onPressIn={onPressIn}
@@ -177,9 +183,10 @@ export function MapSelectionSheet({
           ) : null}
           {onDetailsPress ? (
             <Pressable
+              accessibilityRole="button"
               onPress={onDetailsPress}
               style={({ pressed }) => [styles.detailAction, pressed && styles.pressed]}>
-              <Text style={styles.detailActionLabel}>Details oeffnen</Text>
+              <Text style={styles.detailActionLabel}>Details öffnen</Text>
             </Pressable>
           ) : null}
         </View>
@@ -193,7 +200,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     borderRadius: 22,
     paddingHorizontal: 14,
     paddingTop: 12,
@@ -233,13 +240,13 @@ const styles = StyleSheet.create({
     minWidth: 1,
   },
   detailTitle: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },
   detailDescription: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -263,7 +270,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   detailBadgeTextVisited: {
-    color: '#2e6b4b',
+    color: Design.color.brand,
   },
   detailBadgeTextOpen: {
     color: '#7d5f52',
@@ -277,7 +284,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   detailMeta: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -296,7 +303,7 @@ const styles = StyleSheet.create({
   },
   primaryAction: {
     flex: 1,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: Design.color.brand,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 10,
@@ -307,7 +314,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#b8c7bb',
   },
   primaryActionLabel: {
-    color: '#f5f3ee',
+    color: Design.color.canvas,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',
@@ -342,7 +349,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   detailActionLabel: {
-    color: '#2e6b4b',
+    color: Design.color.brand,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '600',

@@ -599,7 +599,22 @@ export class HttpStatusError extends Error {
   body: string;
 
   constructor(status: number, message: string, body = '') {
-    super(message);
+    let readableMessage = message;
+    if (status >= 500) {
+      readableMessage = 'Der Dienst ist gerade nicht erreichbar. Bitte versuche es später erneut.';
+    } else if (status === 403) {
+      readableMessage = 'Für diese Aktion fehlt dir die Berechtigung.';
+    } else {
+      try {
+        const payload = JSON.parse(message);
+        const detail = payload?.error?.message;
+        if (typeof detail === 'string' && detail.trim()) readableMessage = detail;
+        else if (typeof detail?.value === 'string') readableMessage = detail.value;
+      } catch {
+        // Plain-text validation messages remain useful to the person editing.
+      }
+    }
+    super(readableMessage);
     this.name = 'HttpStatusError';
     this.status = status;
     this.body = body;

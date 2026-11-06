@@ -1,0 +1,121 @@
+{
+  "checks": [
+    {
+      "screen": "list",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 390,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 320,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "list",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "map",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "login",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "onboarding",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "tours",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "friends",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "screen": "profile",
+      "width": 1440,
+      "horizontalOverflow": false
+    },
+    {
+      "flow": "local visit stamp",
+      "visibleVisited": true
+    }
+  ],
+  "errors": [
+    "Minified React error #418; visit <url> for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "Minified React error #418; visit <url> for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "Minified React error #418; visit <url> for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "Minified React error #418; visit <url> for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "Minified React error #418; visit <url> for the full message or use the non-minified dev environment for full errors and additional helpful warnings.",
+    "Minified React error #418; visit <url> for the full message or use the non-minified dev environment for full errors and additional helpful warnings."
+  ]
+}

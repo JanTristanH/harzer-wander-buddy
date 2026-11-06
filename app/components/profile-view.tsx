@@ -1,3 +1,4 @@
+import { AppColors, Layout, Radii } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -231,9 +232,10 @@ function HeaderAvatar({
     <View
       style={[
         compact ? styles.avatarCompact : styles.avatarPlaceholder,
-        { backgroundColor: color },
-      ]}
-    />
+        { backgroundColor: color, alignItems: 'center', justifyContent: 'center' },
+      ]}>
+      <Feather name="user" size={compact ? 26 : 40} color={AppColors.primary} />
+    </View>
   );
 }
 
@@ -266,23 +268,6 @@ function StampArtwork({
   }
 
   return <LinearGradient colors={artworkGradient(index, visited)} style={style} />;
-}
-
-function chipToneStyle(tone?: StampChip['tone']) {
-  switch (tone) {
-    case 'success':
-      return [styles.countChipSuccess, styles.countChipLabelSuccess] as const;
-    case 'sand':
-      return [styles.countChipSand, styles.countChipLabelSand] as const;
-    case 'rose':
-      return [styles.countChipRose, styles.countChipLabelRose] as const;
-    case 'brown':
-      return [styles.countChipBrown, styles.countChipLabelBrown] as const;
-    case 'subtle':
-      return [styles.countChipSubtle, styles.countChipLabelSubtle] as const;
-    default:
-      return [styles.countChipSand, styles.countChipLabelSand] as const;
-  }
 }
 
 function normalizedText(value: unknown) {
@@ -364,7 +349,7 @@ function StampComparisonRow({
           {item.stamp.number || '--'} {'\u2022'} {item.stamp.name}
         </Text>
         <Text numberOfLines={2} style={styles.rowSubtitle}>
-          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfuegbar.')}
+          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfügbar.')}
         </Text>
       </View>
       <View style={styles.stampCompareStatus}>
@@ -405,7 +390,7 @@ function SimpleStampRow({
           {item.stamp.number || '--'} {'\u2022'} {item.stamp.name}
         </Text>
         <Text numberOfLines={2} style={styles.rowSubtitle}>
-          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfuegbar.')}
+          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfügbar.')}
         </Text>
       </View>
       <Feather color="#2e6b4b" name="chevron-right" size={18} />
@@ -888,15 +873,16 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
               horizontal
               showsHorizontalScrollIndicator={false}>
               {data.stampChips.map((chip) => {
-                const [backgroundStyle, labelToneStyle] = chipToneStyle(chip.tone);
                 const active = data.activeStampChip === chip.key;
                 return (
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    aria-pressed={active}
                     key={chip.key}
                     onPress={() => data.onSelectStampChip(chip.key)}
                     style={({ pressed }) => [
                       styles.countChip,
-                      backgroundStyle,
                       active && styles.countChipActive,
                       pressed && styles.pressed,
                     ]}>
@@ -904,7 +890,6 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                       numberOfLines={1}
                       style={[
                         styles.countChipLabel,
-                        labelToneStyle,
                         active && styles.countChipLabelActive,
                       ]}>
                       {chip.label}
@@ -1056,6 +1041,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    width: '100%',
+    maxWidth: Layout.contentWidth,
+    alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 22,
     paddingBottom: 220,
@@ -1076,6 +1064,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loadingContent: {
+    width: '100%',
+    maxWidth: Layout.contentWidth,
+    alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 22,
     paddingBottom: 220,
@@ -1098,7 +1089,7 @@ const styles = StyleSheet.create({
   loadingStatCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 8,
@@ -1134,8 +1125,8 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   backButton: {
-    width: 28,
-    height: 28,
+    width: Layout.touchTarget,
+    height: Layout.touchTarget,
     borderRadius: 8,
     backgroundColor: '#f0e9dd',
     alignItems: 'center',
@@ -1162,17 +1153,18 @@ const styles = StyleSheet.create({
   },
   headerName: {
     color: '#1e2a1e',
-    fontSize: 31,
-    lineHeight: 38,
-    fontFamily: 'serif',
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: '700',
   },
   headerMeta: {
-    color: '#788777',
+    color: AppColors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
   editButton: {
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     alignSelf: 'flex-start',
     marginTop: 4,
     backgroundColor: '#2e6b4b',
@@ -1211,7 +1203,7 @@ const styles = StyleSheet.create({
   },
   statsCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 14,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -1241,7 +1233,7 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 12,
     paddingVertical: 12,
     flexDirection: 'column',
@@ -1377,7 +1369,7 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 8,
@@ -1510,12 +1502,16 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   countChip: {
+    backgroundColor: AppColors.subtle,
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     minWidth: 92,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 11,
   },
   countChipActive: {
+    backgroundColor: AppColors.primary,
     shadowColor: '#141e14',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -1540,10 +1536,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#f6f1e8',
   },
   countChipLabel: {
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
   countChipLabelActive: {
+    color: AppColors.onPrimary,
     fontWeight: '700',
   },
   countChipLabelSuccess: {
