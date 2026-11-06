@@ -239,8 +239,15 @@ async def main():
             labels=await page.locator('.leaflet-marker-icon').evaluate_all('(elements) => elements.map(el => el.getAttribute("aria-label") || "")')
             assert any('Brocken' in label for label in labels), 'Search hid an existing route point'
             assert any('Froschfelsen' in label for label in labels), 'Matching new destination is missing'
+            assert await page.get_by_role('button',name='Tourkarte im Vollbild schließen').count() == 1
+            assert await page.get_by_text('Aus Tour entfernen',exact=True).count() == 0, 'Previous point detail still covers the search'
+            hint_box=await page.get_by_test_id('tour-map-instruction').last.bounding_box()
+            map_box=await page.locator('.leaflet-container').last.bounding_box()
+            pin_boxes=await page.locator('.leaflet-marker-icon').evaluate_all('(elements) => elements.filter(el => /Brocken|Froschfelsen/.test(el.getAttribute("aria-label") || "")).map(el => {const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right};})')
+            assert len(pin_boxes) >= 2
+            assert all(box['top'] >= hint_box['y']+hint_box['height'] and box['bottom'] <= map_box['y']+map_box['height'] and box['left'] >= map_box['x'] and box['right'] <= map_box['x']+map_box['width'] for box in pin_boxes), 'Route or target pin is obscured/outside the search viewport'
             await shot('tour-search-route-context')
-            checks.append({'flow':'tour search keeps the existing route point beside a different matching target','passed':True})
+            checks.append({'flow':'fullscreen tour search keeps route and new target pins visible below the search overlay without the previous detail card','passed':True})
 
         except Exception as error:
             checks.append({'flow':'capture continuation','passed':False,'errorType':type(error).__name__})

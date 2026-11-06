@@ -1015,6 +1015,7 @@ export default function TourDetailScreen() {
   const poiAutosaveDebounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didFitEmptyEditorRef = useRef(false);
+  const searchFitSignatureRef = useRef('');
   useEffect(() => { didFitEmptyEditorRef.current = false; }, [tourId]);
   const isAutoSaveRunningRef = useRef(false);
   const wasEditModeRef = useRef(false);
@@ -1855,6 +1856,26 @@ export default function TourDetailScreen() {
       animated: true,
     });
   }, [allMapItems, draftPoiIds.length, isEditMode, isMapReady, routeCoordinates, stopCoordinates]);
+
+  useEffect(() => {
+    if (!isMapFullscreen || !isMapReady || !isSearchFocused || !poiSearchQuery.trim() || mapItemsForRendering.length < 2) {
+      searchFitSignatureRef.current = '';
+      return;
+    }
+    const coordinates = mapItemsForRendering.map(({ latitude, longitude }) => ({ latitude, longitude }));
+    const signature = `${poiSearchQuery}:${mapTopBarHeight}:${coordinates.map((point) => `${point.latitude},${point.longitude}`).join('|')}`;
+    if (searchFitSignatureRef.current === signature) return;
+
+    const timeout = setTimeout(() => {
+      if (!mapRef.current) return;
+      searchFitSignatureRef.current = signature;
+      mapRef.current.fitToCoordinates(coordinates, {
+        edgePadding: { top: insets.top + 10 + mapTopBarHeight + 56, right: 80, bottom: insets.bottom + 64, left: 48 },
+        animated: true,
+      });
+    }, 180);
+    return () => clearTimeout(timeout);
+  }, [insets.bottom, insets.top, isMapFullscreen, isMapReady, isSearchFocused, mapItemsForRendering, mapTopBarHeight, poiSearchQuery]);
 
   const handleZoomBy = useCallback((factor: number) => {
     const map = mapRef.current;
@@ -2735,6 +2756,7 @@ export default function TourDetailScreen() {
           <View style={styles.mapSearchWrap}>
             <Feather color="#6d7d6e" name="search" size={14} />
             <ClearableSearchInput
+              autoFocus={isFullscreen}
               onBlur={() => {
                 if (searchBlurTimeoutRef.current) {
                   clearTimeout(searchBlurTimeoutRef.current);
@@ -2753,6 +2775,9 @@ export default function TourDetailScreen() {
                 }
 
                 setIsSearchFocused(true);
+                setSelectedMapItemId(null);
+                setSelectedExternalPlace(null);
+                if (!isFullscreen) openMapFullscreen();
               }}
               accessibilityLabel="Tourpunkte suchen"
               placeholder="Punkte auf der Karte suchen"
@@ -2816,7 +2841,7 @@ export default function TourDetailScreen() {
           </View>
         ) : null}
         {isEditMode ? (
-          <Text style={styles.externalSearchHint}>
+          <Text testID="tour-map-instruction" style={styles.externalSearchHint}>
             {selectedExternalPlace ? 'Externe Orte dienen zur Orientierung. Füge Stempel oder Parkplätze als Tourpunkte hinzu.' : 'Stempel auswählen und „Zur Tour hinzufügen“ antippen.'}
           </Text>
         ) : null}

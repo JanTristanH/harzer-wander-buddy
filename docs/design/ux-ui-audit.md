@@ -554,3 +554,40 @@ The reviewer newly inspected six tour states and seven other changed images; unc
 Explicitly carried forward at 8.5 each: friend request before/after acceptance; friend search; group dialog/selection; multiple selection; onboarding 0–4; search focus/empty; friends 390/1440; list 390/1440; map 1440; profile 390/1440; tours 1440; lower stamp detail. The previously recorded guest matrix and 320 map overview also remain carried forward.
 
 Remaining finding: in `tour-search`, many unrelated pins still overlap even though the text result is clear. The next change limits the map to matching targets while text search is focused, retaining already selected route points. Native, screen-reader, offline/error, upload and multileg-routing coverage remains unverified.
+
+## Correction review 11 — source c252f69
+
+Seven tour PNGs were newly inspected. Seventeen browser checks passed without pageerrors. `tour-search` now shows one matching Brocken pin and receives 8.5. The new search-with-existing-route state is functionally correct but visually crowded: the previous Brocken detail card, result list, instruction and tools cover most of the inline map. The reviewer kept this visible weakness separate from the successful route-preservation assertion.
+
+| Newly inspected image | Score /10 |
+| --- | ---: |
+| tour-search | 8.5 |
+| tour-search-route-context | 8.0 |
+| tour-created | 8.5 |
+| tour-created-bottom | 8.5 |
+| tour-point-selected | 8.5 |
+| tour-point-added | 8.5 |
+| tour-first-point-summary | 8.5 |
+
+| Category | Score /10 |
+| --- | ---: |
+| Icons | 8.5 |
+| Color/contrast | 8.5 |
+| Typography | 8.5 |
+| Visual hierarchy | 8.5 |
+| Spacing/layout | 8.0 |
+| Radii/forms | 8.5 |
+| Buttons/interactions | 8.5 |
+| Navigation | 8.5 |
+| Map UX | 8.0 |
+| Forms/search | 8.5 |
+| Feedback/system states | 8.5 |
+| Accessibility | 8.5 for evidenced Web scope |
+| Responsive/adaptive | 8.5 |
+| Consistency | 8.5 |
+| Information quality | 8.5 |
+| Polish/brand | 8.5 |
+
+All other round-10 scores are explicitly carried forward, not newly visually certified. Next correction: dismiss the previous point detail when search begins, use the fullscreen search view and fit the matching target plus existing route points below the measured search overlay. Native and other unverified coverage remains unchanged.
+
+Validation note: the search-filter test run passed 375/376 tests; an unchanged onboarding cache-refresh test exceeded its 5-second timeout during concurrent building. Its isolated repeat passed all nine onboarding tests in 4.641s. No timeout was increased and no onboarding code was changed. TypeScript passed and lint retained zero errors/two existing warnings.
