@@ -162,6 +162,10 @@ Der Browser-Smoke-Test prüft die echte Anmeldung, Auswahl, Speicherung und
 erneute Anmeldung. Physische native Geräte sind zusätzlich vor einer Veröffentlichung
 zu prüfen; der Web-Smoke-Test ersetzt keinen iOS-/Android-Gerätetest.
 
+## Erweiterung um Themenhefte
+
+Der auf diesem Badge-PR aufbauende Folge-PR ergänzt [Themenhefte, Sonderstempel und Admin-Endpunkte](theme-booklets-special-stamps.md). Er verwendet denselben Regelprüfer und übernimmt die bestätigte Grenzweg-Regel ausdrücklich als Ausgabe „Badge-Katalog PR 65 – 20+3“. Abweichende neuere Quellen und unvollständige zusätzliche Heftlisten werden als redaktionelle Entwürfe geführt; sie ändern bestehende Freischaltungen nicht stillschweigend.
+
 ## Prüfung der PR-Aktualisierung
 
 - 24 fokussierte App-Tests: Inline-Name, Plus-Auswahl, alter Editor-Einstieg,

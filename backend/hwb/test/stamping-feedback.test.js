@@ -36,3 +36,14 @@ test('unconfirmed and unknown IDs cannot fabricate a reward', () => {
   assert.equal(result.newPlaces, 0);
   assert.deepEqual(result.newBadges, []);
 });
+
+test('published theme rules and explicit special identities also govern feedback', () => {
+  const special = { ID: 'special', number: '8', name: 'Sonderstelle', stampKind: 'special' };
+  const visit = { ID: 'special-visit', stamp_ID: special.ID, visitedAt: '2026-11-06' };
+  const result = buildStampingFeedback([special], [visit], [visit.ID], {
+    bronze: { threshold: 0, required: ['stamp:special'] },
+  });
+  assert.equal(result.afterCount, 0);
+  assert.equal(result.newPlaces, 1);
+  assert.deepEqual(result.newBadges.map(badge => badge.id), ['bronze']);
+});

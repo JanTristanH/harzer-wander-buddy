@@ -1,19 +1,19 @@
-const { buildAlbum, normalizeNumber } = require('./badge-catalog');
+const { buildAlbum, stampIdentity } = require('./badge-catalog');
 
 // Both sides are derived from one server snapshot. Repeated visits and special
 // stamps therefore cannot inflate regular HWN progress or unlock a badge twice.
-function buildStampingFeedback(stamps, visits, requestedIds) {
+function buildStampingFeedback(stamps, visits, requestedIds, overrides = {}) {
   const ids = new Set(requestedIds);
   const confirmed = visits.filter(visit => ids.has(visit.ID));
   const previous = visits.filter(visit => !ids.has(visit.ID));
   const stampById = new Map(stamps.map(stamp => [stamp.ID, stamp]));
   const numbers = rows => new Set(rows.map(visit => stampById.get(visit.stamp_ID))
-    .filter(Boolean).map(stamp => normalizeNumber(stamp.number)));
+    .filter(Boolean).map(stamp => stampIdentity(stamp)));
   const before = numbers(previous), after = numbers(visits);
   const regularCount = values => [...values].filter(number =>
     /^\d+$/.test(number) && Number(number) >= 1 && Number(number) <= 222).length;
-  const oldAlbum = buildAlbum(stamps, previous);
-  const album = buildAlbum(stamps, visits);
+  const oldAlbum = buildAlbum(stamps, previous, overrides);
+  const album = buildAlbum(stamps, visits, overrides);
   const newBadges = album.filter(entry => entry.unlocked &&
     !oldAlbum.find(old => old.id === entry.id)?.unlocked);
   const nextGoal = album.find(entry => !entry.unlocked) ?? null;

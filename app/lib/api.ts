@@ -1,3 +1,4 @@
+import { isRegularStamp } from './stamp-kind';
 import { normalizeRoleTokens } from '@/lib/admin-access';
 import { appConfig } from '@/lib/config';
 import { assertLiveBackend, isStaticWebsite, loadStaticCatalogue, staticStampboxes } from '@/lib/static-website';
@@ -45,6 +46,7 @@ export type StampedUser = {
 };
 
 export type Stampbox = {
+  stampKind?: 'regular' | 'special';
   ID: string;
   number: string;
   orderBy?: string;
@@ -1254,7 +1256,7 @@ async function fetchUsersProgressFromAction(
 
 async function fetchSingleUserProgress(accessToken: string, userId: string, totalCount: number) {
   const stampboxes = await fetchComparisonStampboxes(accessToken, [userId]);
-  const visitedCount = stampboxes.filter((stamp) => Number(stamp.totalGroupStampings || 0) > 0).length;
+  const visitedCount = stampboxes.filter(isRegularStamp).filter((stamp) => Number(stamp.totalGroupStampings || 0) > 0).length;
 
   return {
     visitedCount,
@@ -1377,6 +1379,7 @@ async function fetchComparisonStampboxes(accessToken: string, groupUserIds: stri
     select: [
       'ID',
       'number',
+      'stampKind',
       'orderBy',
       'name',
       'description',
@@ -2089,6 +2092,7 @@ export async function fetchStampboxes(
     select: [
       'ID',
       'number',
+      'stampKind',
       'orderBy',
       'name',
       'description',
@@ -2184,6 +2188,7 @@ export async function fetchPublicStampboxes(mode: StampboxFetchMode = 'default')
     select: [
       'ID',
       'number',
+      'stampKind',
       'orderBy',
       'name',
       'description',
@@ -3330,8 +3335,9 @@ export async function fetchProfileOverview(
   const latestVisits = timelineVisits.slice(0, 3);
 
   const earliestVisit = sortedVisits[sortedVisits.length - 1];
-  const visitedCount = stamps.filter((stamp) => stamp.hasVisited).length;
-  const totalCount = stamps.length;
+  const regularStamps = stamps.filter(isRegularStamp);
+  const visitedCount = regularStamps.filter((stamp) => stamp.hasVisited).length;
+  const totalCount = regularStamps.length;
   const openCount = Math.max(0, totalCount - visitedCount);
   const completionPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
   const mappedFriends = await buildFriendProgress(accessToken, friends, totalCount);
@@ -3458,15 +3464,16 @@ export async function fetchUserProfileOverview(
   const friendshipId = friendMatch?.FriendshipID || outgoingPendingMatch?.FriendshipID || null;
   const pendingRequestId = incomingPendingMatch?.ID || null;
 
-  const targetVisitedCount = stamps.reduce(
+  const regularStamps = stamps.filter(isRegularStamp);
+  const targetVisitedCount = regularStamps.reduce(
     (count, stamp) => count + (stampContainsUser(stamp, targetUser) ? 1 : 0),
     0
   );
-  const sharedVisitedCount = stamps.reduce(
+  const sharedVisitedCount = regularStamps.reduce(
     (count, stamp) => count + (Boolean(stamp.hasVisited) && stampContainsUser(stamp, targetUser) ? 1 : 0),
     0
   );
-  const totalCount = stamps.length;
+  const totalCount = regularStamps.length;
   const sortedTargetStampings = targetStampings
     .slice()
     .sort(
@@ -4045,6 +4052,19 @@ export async function fetchOwnStampings(accessToken: string, stampId: string, cu
     stampings.push(...page);
     if (page.length < pageSize) return stampings;
   }
+}
+
+
+export type ThemeCatalogItem = {
+  ID: string; code: string; edition: string; name: string; kind: 'booklet' | 'trail'; badgeId?: string;
+  sourceUrl: string; rulesNote: string; expectedStampCount: number; collectedCount: number;
+  requiredCount: number; requiredCollected: number; optionalCollected: number; minimumOptionalCount: number;
+  regularVisitTarget: number; regularVisited: number; complete: boolean;
+  stamps: { stampId: string; number: string; name: string; stampKind: string; required: boolean; visited: boolean }[];
+};
+
+export async function fetchThemeCatalog(accessToken: string) {
+  return fetchCollection<ThemeCatalogItem>(accessToken, 'getThemeCatalog()');
 }
 
 // Stable client IDs make a retried POST safe even if its first response was lost.

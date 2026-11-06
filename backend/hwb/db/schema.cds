@@ -46,8 +46,12 @@ entity Attachments_local : Attachments {
     
 }
 
+@assert.unique.catalogKey: [catalogKey]
 @assert.integrity: false
 entity Stampboxes : cuid, PointOfInterest {
+    stampKind              : String(20) enum { regular; special; } default 'regular';
+    catalogKey             : String(160);
+    sourceUrl              : String(2048);
     number                 : String(40); // to allow Sonderstempel via name
     validFrom              : Timestamp;
     validTo                : Timestamp;
@@ -191,3 +195,32 @@ entity PendingFriendshipRequests : cuid {
 
 // Input start any poi -> gps guess & Max driving time
 // Check adjecent stamps -> could also be generic -> load eg 20 km radius/box -> salesman trump
+
+// Curated editions of booklets and named trails, separate from users' Tours.
+@assert.unique.catalogEdition: [code, edition]
+@assert.unique.activeBadge: [activeBadgeId]
+entity ThemeCollections : cuid, managed {
+    code                  : String(100) not null;
+    edition               : String(80) not null;
+    name                  : String(255) not null;
+    kind                  : String(20) enum { booklet; trail; };
+    sourceUrl             : String(2048);
+    reviewedAt            : Date;
+    rulesNote             : String(2048);
+    badgeId               : String(40);
+    activeBadgeId         : String(40);
+    expectedStampCount    : Integer;
+    minimumOptionalCount  : Integer default 0;
+    regularVisitTarget    : Integer default 0;
+    published             : Boolean default false;
+    revision              : Integer default 1;
+    entries               : Association to many ThemeStampLinks on entries.collection = $self;
+}
+
+@assert.integrity: true
+entity ThemeStampLinks {
+    key collection : Association to ThemeCollections;
+    key stamp      : Association to Stampboxes;
+    position       : Integer;
+    required       : Boolean default true;
+}

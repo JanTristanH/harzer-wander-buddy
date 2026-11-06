@@ -1,0 +1,1129 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-20",
+  "specialStamps": [
+    {
+      "catalogKey": "hwn:special:luther-kalte-stelle",
+      "number": "S-LUTHER-KALTE-STELLE",
+      "name": "Kalte Stelle Unterrißdorf",
+      "latitude": 51.51741,
+      "longitude": 11.61293,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/"
+    },
+    {
+      "catalogKey": "hwn:special:luther-moellendorf",
+      "number": "S-LUTHER-MOELLENDORF",
+      "name": "Naturerlebnisstation Möllendorf – Am Brandberg",
+      "latitude": 51.58723,
+      "longitude": 11.42797,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/"
+    },
+    {
+      "catalogKey": "hwn:special:luther-baumrode",
+      "number": "S-LUTHER-BAUMRODE",
+      "name": "Schutzhütte Baumrode",
+      "latitude": 51.5767,
+      "longitude": 11.38214,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/"
+    },
+    {
+      "catalogKey": "hwn:special:luther-wippra",
+      "number": "S-LUTHER-WIPPRA",
+      "name": "Naturerlebnisstation Wippra – Am Kleebeck",
+      "latitude": 51.56015,
+      "longitude": 11.28365,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/"
+    },
+    {
+      "catalogKey": "hwn:special:luther-dankerode",
+      "number": "S-LUTHER-DANKERODE",
+      "name": "Naturerlebnisstation Dankerode – Am Heuweg",
+      "latitude": 51.57382,
+      "longitude": 11.15658,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/"
+    },
+    {
+      "catalogKey": "hwn:special:luther-hayn",
+      "number": "S-LUTHER-HAYN",
+      "name": "Feldflur Hayn",
+      "latitude": 51.57989,
+      "longitude": 11.0632,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/"
+    },
+    {
+      "catalogKey": "hwn:special:luther-rodishain",
+      "number": "S-LUTHER-RODISHAIN",
+      "name": "Wolfsmühle Rodishain",
+      "latitude": 51.53735,
+      "longitude": 10.9285,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-koenigsstein",
+      "number": "S-KARST-KOENIGSSTEIN",
+      "name": "Badenhäuser Königsstein, Oberhütte",
+      "latitude": 51.7578,
+      "longitude": 10.1978,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-lichtenstein",
+      "number": "S-KARST-LICHTENSTEIN",
+      "name": "Burgruine Lichtenstein, Dorste",
+      "latitude": 51.7211667,
+      "longitude": 10.17575,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-feldherrenhuegel",
+      "number": "S-KARST-FELDHERRENHUEGEL",
+      "name": "Osteroder Feldherrenhügel",
+      "latitude": 51.7004167,
+      "longitude": 10.2318833,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-roetzelkamm",
+      "number": "S-KARST-ROETZELKAMM",
+      "name": "Dünaer Rötzelkamm",
+      "latitude": 51.6969833,
+      "longitude": 10.2636667,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-westersteine",
+      "number": "S-KARST-WESTERSTEINE",
+      "name": "Westersteine, Bartolfelde",
+      "latitude": 51.6004,
+      "longitude": 10.444,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-muehlberg",
+      "number": "S-KARST-MUEHLBERG",
+      "name": "Wache auf dem Mühlberg, Niedersachswerfen",
+      "latitude": 51.5552667,
+      "longitude": 10.7608833,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-kelle",
+      "number": "S-KARST-KELLE",
+      "name": "Kelle, Appenrode",
+      "latitude": 51.5671333,
+      "longitude": 10.7180333,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-salzaspring",
+      "number": "S-KARST-SALZASPRING",
+      "name": "Salzaspring, Nordhausen",
+      "latitude": 51.5304667,
+      "longitude": 10.7616667,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-ankenberg",
+      "number": "S-KARST-ANKENBERG",
+      "name": "Ankenberg, Großleinungen",
+      "latitude": 51.4956167,
+      "longitude": 11.1847667,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:karst-poelsfeld",
+      "number": "S-KARST-POELSFELD",
+      "name": "Pölsfeld",
+      "latitude": 51.5254833,
+      "longitude": 11.3586333,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-schloss-quedlinburg",
+      "number": "S-GESCHICHTE-SCHLOSS-QUEDLINBURG",
+      "name": "Schloss Quedlinburg",
+      "latitude": 51.7858,
+      "longitude": 11.1375,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-hausneindorf",
+      "number": "S-GESCHICHTE-HAUSNEINDORF",
+      "name": "Burgruine Hausneindorf",
+      "latitude": 51.83993,
+      "longitude": 11.27182,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-erichsburg",
+      "number": "S-GESCHICHTE-ERICHSBURG",
+      "name": "Erichsburg",
+      "latitude": 51.67172,
+      "longitude": 11.06138,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-schloss-blankenburg",
+      "number": "S-GESCHICHTE-SCHLOSS-BLANKENBURG",
+      "name": "Großes Schloss Blankenburg",
+      "latitude": 51.7867,
+      "longitude": 10.95407,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-guentersburg",
+      "number": "S-GESCHICHTE-GUENTERSBURG",
+      "name": "Güntersburg",
+      "latitude": 51.636,
+      "longitude": 10.9723,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-heinrichsburg",
+      "number": "S-GESCHICHTE-HEINRICHSBURG",
+      "name": "Heinrichsburg",
+      "latitude": 51.67643,
+      "longitude": 11.1345,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-huysburg",
+      "number": "S-GESCHICHTE-HUYSBURG",
+      "name": "Huysburg",
+      "latitude": 51.959,
+      "longitude": 11.001,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-kleines-schloss",
+      "number": "S-GESCHICHTE-KLEINES-SCHLOSS",
+      "name": "Kleines Schloss Blankenburg",
+      "latitude": 51.78838,
+      "longitude": 10.96008,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-bodfeld",
+      "number": "S-GESCHICHTE-BODFELD",
+      "name": "Königspfalz Bodfeld",
+      "latitude": 51.7882,
+      "longitude": 10.8398,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-derenburg",
+      "number": "S-GESCHICHTE-DERENBURG",
+      "name": "Königspfalz Derenburg",
+      "latitude": 51.8741,
+      "longitude": 10.914,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-roseburg",
+      "number": "S-GESCHICHTE-ROSEBURG",
+      "name": "Roseburg",
+      "latitude": 51.7271,
+      "longitude": 11.197,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-domburg",
+      "number": "S-GESCHICHTE-DOMBURG",
+      "name": "Ruine Domburg im Hakel bei Heteborn",
+      "latitude": 51.8767,
+      "longitude": 11.3169,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-schlanstedt",
+      "number": "S-GESCHICHTE-SCHLANSTEDT",
+      "name": "Burg Schlanstedt",
+      "latitude": 52.01044,
+      "longitude": 11.02971,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-ballenstedt",
+      "number": "S-GESCHICHTE-BALLENSTEDT",
+      "name": "Schloss Ballenstedt",
+      "latitude": 51.7181,
+      "longitude": 11.2199,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-hessen",
+      "number": "S-GESCHICHTE-HESSEN",
+      "name": "Schloss Hessen",
+      "latitude": 52.0187,
+      "longitude": 10.7818,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-wernigerode",
+      "number": "S-GESCHICHTE-WERNIGERODE",
+      "name": "Schloss Wernigerode",
+      "latitude": 51.8313,
+      "longitude": 10.7949,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-harzgerode",
+      "number": "S-GESCHICHTE-HARZGERODE",
+      "name": "Schloss zu Harzgerode",
+      "latitude": 51.64272,
+      "longitude": 11.14168,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-selkenfelder-schanze",
+      "number": "S-GESCHICHTE-SELKENFELDER-SCHANZE",
+      "name": "Selkenfelder Schanze",
+      "latitude": 51.6507,
+      "longitude": 10.9267,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-seweckenberge",
+      "number": "S-GESCHICHTE-SEWECKENBERGE",
+      "name": "Seweckenberge (-warte) bei Quedlinburg",
+      "latitude": 51.7699,
+      "longitude": 11.2072,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-st-wiperti",
+      "number": "S-GESCHICHTE-ST-WIPERTI",
+      "name": "St. Wiperti",
+      "latitude": 51.7852,
+      "longitude": 11.1298,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-stapelburg",
+      "number": "S-GESCHICHTE-STAPELBURG",
+      "name": "Stapelburg",
+      "latitude": 51.9036,
+      "longitude": 10.6697,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-stecklenburg",
+      "number": "S-GESCHICHTE-STECKLENBURG",
+      "name": "Stecklenburg",
+      "latitude": 51.7309,
+      "longitude": 11.0883,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-treseburg",
+      "number": "S-GESCHICHTE-TRESEBURG",
+      "name": "Treseburg",
+      "latitude": 51.7182,
+      "longitude": 10.9716,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-westerburg",
+      "number": "S-GESCHICHTE-WESTERBURG",
+      "name": "Westerburg",
+      "latitude": 52.0153,
+      "longitude": 10.8664,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-winzenburg",
+      "number": "S-GESCHICHTE-WINZENBURG",
+      "name": "Winzenburg",
+      "latitude": 51.7406,
+      "longitude": 11.0118,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:geschichte-zilly",
+      "number": "S-GESCHICHTE-ZILLY",
+      "name": "Wasserburg Zilly",
+      "latitude": 51.9431,
+      "longitude": 10.8252,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/"
+    },
+    {
+      "catalogKey": "hwn:special:jungborn",
+      "number": "9901",
+      "name": "Jungborn",
+      "latitude": 51.88569444444445,
+      "longitude": 10.646277777777778,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/"
+    },
+    {
+      "catalogKey": "hwn:special:zweilaendereiche",
+      "number": "9902",
+      "name": "Zweiländereiche",
+      "latitude": 51.61686111111111,
+      "longitude": 10.63886111111111,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/"
+    },
+    {
+      "catalogKey": "hwn:special:dreilaenderstein",
+      "number": "9903",
+      "name": "Dreiländerstein",
+      "latitude": 51.641527777777775,
+      "longitude": 10.702333333333332,
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/"
+    }
+  ],
+  "collections": [
+    {
+      "code": "lutherweg",
+      "edition": "Quellenstand 2026-10-20",
+      "name": "Natur erleben am Lutherweg",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "reviewedAt": "2026-10-20",
+      "published": true,
+      "expectedStampCount": 10,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "Alle zehn Stellen der offiziellen Tabelle. HWN 219, 215 und 216 referenzieren bestehende reguläre Stempelstellen; keine Verdopplung nach Koordinaten.",
+      "entries": [
+        {
+          "catalogKey": "hwn:special:luther-kalte-stelle"
+        },
+        {
+          "catalogKey": "hwn:special:luther-moellendorf"
+        },
+        {
+          "catalogKey": "hwn:special:luther-baumrode"
+        },
+        {
+          "catalogKey": "hwn:special:luther-wippra"
+        },
+        {
+          "regularNumber": "219"
+        },
+        {
+          "catalogKey": "hwn:special:luther-dankerode"
+        },
+        {
+          "catalogKey": "hwn:special:luther-hayn"
+        },
+        {
+          "regularNumber": "215"
+        },
+        {
+          "regularNumber": "216"
+        },
+        {
+          "catalogKey": "hwn:special:luther-rodishain"
+        }
+      ]
+    },
+    {
+      "code": "karstwanderweg",
+      "edition": "Quellenstand 2026-10-20",
+      "name": "Karstwanderweg Südharz",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "reviewedAt": "2026-10-20",
+      "published": true,
+      "expectedStampCount": 24,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "",
+      "entries": [
+        {
+          "regularNumber": "130"
+        },
+        {
+          "regularNumber": "129"
+        },
+        {
+          "catalogKey": "hwn:special:karst-koenigsstein"
+        },
+        {
+          "catalogKey": "hwn:special:karst-lichtenstein"
+        },
+        {
+          "catalogKey": "hwn:special:karst-feldherrenhuegel"
+        },
+        {
+          "catalogKey": "hwn:special:karst-roetzelkamm"
+        },
+        {
+          "regularNumber": "101"
+        },
+        {
+          "regularNumber": "151"
+        },
+        {
+          "catalogKey": "hwn:special:karst-westersteine"
+        },
+        {
+          "regularNumber": "192"
+        },
+        {
+          "regularNumber": "166"
+        },
+        {
+          "regularNumber": "167"
+        },
+        {
+          "catalogKey": "hwn:special:karst-muehlberg"
+        },
+        {
+          "catalogKey": "hwn:special:karst-kelle"
+        },
+        {
+          "catalogKey": "hwn:special:karst-salzaspring"
+        },
+        {
+          "regularNumber": "99"
+        },
+        {
+          "regularNumber": "198"
+        },
+        {
+          "regularNumber": "214"
+        },
+        {
+          "regularNumber": "213"
+        },
+        {
+          "regularNumber": "212"
+        },
+        {
+          "regularNumber": "210"
+        },
+        {
+          "catalogKey": "hwn:special:karst-ankenberg"
+        },
+        {
+          "regularNumber": "222"
+        },
+        {
+          "catalogKey": "hwn:special:karst-poelsfeld"
+        }
+      ]
+    },
+    {
+      "code": "geschichtsorte",
+      "edition": "Quellenstand 2026-10-20",
+      "name": "Harzer Geschichtsorte – Burgen und Schlösser",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "reviewedAt": "2026-10-20",
+      "published": true,
+      "expectedStampCount": 32,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "",
+      "entries": [
+        {
+          "catalogKey": "hwn:special:geschichte-schloss-quedlinburg"
+        },
+        {
+          "regularNumber": "200"
+        },
+        {
+          "regularNumber": "197"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-hausneindorf"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-erichsburg"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-schloss-blankenburg"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-guentersburg"
+        },
+        {
+          "regularNumber": "84"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-heinrichsburg"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-huysburg"
+        },
+        {
+          "regularNumber": "187"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-kleines-schloss"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-bodfeld"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-derenburg"
+        },
+        {
+          "regularNumber": "201"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-roseburg"
+        },
+        {
+          "regularNumber": "80"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-domburg"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-schlanstedt"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-ballenstedt"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-hessen"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-wernigerode"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-harzgerode"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-selkenfelder-schanze"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-seweckenberge"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-st-wiperti"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-stapelburg"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-stecklenburg"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-treseburg"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-westerburg"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-winzenburg"
+        },
+        {
+          "catalogKey": "hwn:special:geschichte-zilly"
+        }
+      ]
+    },
+    {
+      "code": "grenzweg",
+      "edition": "Quellenstand 2026-10-20",
+      "name": "Harzer Grenzweg",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "reviewedAt": "2026-10-20",
+      "published": false,
+      "expectedStampCount": null,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "Klärung erforderlich: Themenheftseite 20 + 3; Sonderstempelseite nennt 9900–9903 als vier Pflichtstellen. Bestehende UI5-Beschreibung 22 + 3 ist veraltet. Keine automatische Vergabe.",
+      "entries": []
+    },
+    {
+      "code": "hexen-stieg",
+      "edition": "Badge-Katalog PR 65",
+      "name": "Harzer Hexen-Stieg",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/die-wandernadel/themenhefte/",
+      "reviewedAt": "2026-10-20",
+      "published": true,
+      "expectedStampCount": 20,
+      "minimumOptionalCount": 9,
+      "regularVisitTarget": 0,
+      "rulesNote": "Regeln und vollständige Pflicht-/Wahlliste aus dem bestehenden Badge-PR #65. Digitaler Fortschritt; keine neue Bestätigung offizieller Heftausgaben.",
+      "entries": [
+        {
+          "regularNumber": "69",
+          "required": true
+        },
+        {
+          "regularNumber": "140",
+          "required": true
+        },
+        {
+          "regularNumber": "9",
+          "required": false
+        },
+        {
+          "regularNumber": "13",
+          "required": false
+        },
+        {
+          "regularNumber": "17",
+          "required": false
+        },
+        {
+          "regularNumber": "22",
+          "required": false
+        },
+        {
+          "regularNumber": "40",
+          "required": false
+        },
+        {
+          "regularNumber": "41",
+          "required": false
+        },
+        {
+          "regularNumber": "42",
+          "required": false
+        },
+        {
+          "regularNumber": "52",
+          "required": false
+        },
+        {
+          "regularNumber": "60",
+          "required": false
+        },
+        {
+          "regularNumber": "62",
+          "required": false
+        },
+        {
+          "regularNumber": "63",
+          "required": false
+        },
+        {
+          "regularNumber": "123",
+          "required": false
+        },
+        {
+          "regularNumber": "128",
+          "required": false
+        },
+        {
+          "regularNumber": "133",
+          "required": false
+        },
+        {
+          "regularNumber": "136",
+          "required": false
+        },
+        {
+          "regularNumber": "137",
+          "required": false
+        },
+        {
+          "regularNumber": "155",
+          "required": false
+        },
+        {
+          "regularNumber": "178",
+          "required": false
+        }
+      ],
+      "badgeId": "witch"
+    },
+    {
+      "code": "harzer-steiger",
+      "edition": "Badge-Katalog PR 65",
+      "name": "Harzer Steiger",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/die-wandernadel/themenhefte/",
+      "reviewedAt": "2026-10-20",
+      "published": true,
+      "expectedStampCount": 23,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 111,
+      "rulesNote": "Regeln und vollständige Pflicht-/Wahlliste aus dem bestehenden Badge-PR #65. Digitaler Fortschritt; keine neue Bestätigung offizieller Heftausgaben.",
+      "entries": [
+        {
+          "regularNumber": "37",
+          "required": true
+        },
+        {
+          "regularNumber": "39",
+          "required": true
+        },
+        {
+          "regularNumber": "60",
+          "required": true
+        },
+        {
+          "regularNumber": "61",
+          "required": true
+        },
+        {
+          "regularNumber": "85",
+          "required": true
+        },
+        {
+          "regularNumber": "91",
+          "required": true
+        },
+        {
+          "regularNumber": "107",
+          "required": true
+        },
+        {
+          "regularNumber": "113",
+          "required": true
+        },
+        {
+          "regularNumber": "126",
+          "required": true
+        },
+        {
+          "regularNumber": "127",
+          "required": true
+        },
+        {
+          "regularNumber": "128",
+          "required": true
+        },
+        {
+          "regularNumber": "133",
+          "required": true
+        },
+        {
+          "regularNumber": "137",
+          "required": true
+        },
+        {
+          "regularNumber": "146",
+          "required": true
+        },
+        {
+          "regularNumber": "155",
+          "required": true
+        },
+        {
+          "regularNumber": "172",
+          "required": true
+        },
+        {
+          "regularNumber": "175",
+          "required": true
+        },
+        {
+          "regularNumber": "179",
+          "required": true
+        },
+        {
+          "regularNumber": "190",
+          "required": true
+        },
+        {
+          "regularNumber": "193",
+          "required": true
+        },
+        {
+          "regularNumber": "194",
+          "required": true
+        },
+        {
+          "regularNumber": "217",
+          "required": true
+        },
+        {
+          "regularNumber": "222",
+          "required": true
+        }
+      ],
+      "badgeId": "steiger"
+    },
+    {
+      "code": "goethe",
+      "edition": "Badge-Katalog PR 65",
+      "name": "Goethe im Harz",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/die-wandernadel/themenhefte/",
+      "reviewedAt": "2026-10-20",
+      "published": true,
+      "expectedStampCount": 28,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "Regeln und vollständige Pflicht-/Wahlliste aus dem bestehenden Badge-PR #65. Digitaler Fortschritt; keine neue Bestätigung offizieller Heftausgaben.",
+      "entries": [
+        {
+          "regularNumber": "9",
+          "required": true
+        },
+        {
+          "regularNumber": "13",
+          "required": true
+        },
+        {
+          "regularNumber": "14",
+          "required": true
+        },
+        {
+          "regularNumber": "31",
+          "required": true
+        },
+        {
+          "regularNumber": "38",
+          "required": true
+        },
+        {
+          "regularNumber": "41",
+          "required": true
+        },
+        {
+          "regularNumber": "42",
+          "required": true
+        },
+        {
+          "regularNumber": "62",
+          "required": true
+        },
+        {
+          "regularNumber": "69",
+          "required": true
+        },
+        {
+          "regularNumber": "71",
+          "required": true
+        },
+        {
+          "regularNumber": "78",
+          "required": true
+        },
+        {
+          "regularNumber": "80",
+          "required": true
+        },
+        {
+          "regularNumber": "85",
+          "required": true
+        },
+        {
+          "regularNumber": "88",
+          "required": true
+        },
+        {
+          "regularNumber": "91",
+          "required": true
+        },
+        {
+          "regularNumber": "95",
+          "required": true
+        },
+        {
+          "regularNumber": "99",
+          "required": true
+        },
+        {
+          "regularNumber": "101",
+          "required": true
+        },
+        {
+          "regularNumber": "105",
+          "required": true
+        },
+        {
+          "regularNumber": "116",
+          "required": true
+        },
+        {
+          "regularNumber": "117",
+          "required": true
+        },
+        {
+          "regularNumber": "129",
+          "required": true
+        },
+        {
+          "regularNumber": "132",
+          "required": true
+        },
+        {
+          "regularNumber": "136",
+          "required": true
+        },
+        {
+          "regularNumber": "140",
+          "required": true
+        },
+        {
+          "regularNumber": "144",
+          "required": true
+        },
+        {
+          "regularNumber": "155",
+          "required": true
+        },
+        {
+          "regularNumber": "188",
+          "required": true
+        }
+      ],
+      "badgeId": "goethe"
+    },
+    {
+      "code": "klosterwanderweg",
+      "edition": "Quellenstand 2026-10-20",
+      "name": "Harzer Klosterwanderweg",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/die-wandernadel/themenhefte/",
+      "reviewedAt": "2026-10-20",
+      "published": false,
+      "expectedStampCount": 16,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "Themenheftseite nennt 15, Wegseite 16 Stellen. Liste und Heftausgabe abgleichen.",
+      "entries": []
+    },
+    {
+      "code": "quedlinburg",
+      "edition": "Quellenstand 2026-10-20",
+      "name": "Festjahr Quedlinburg",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/die-wandernadel/themenhefte/",
+      "reviewedAt": "2026-10-20",
+      "published": false,
+      "expectedStampCount": null,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "Vollständige offizielle Stellenliste und Zählregel fehlen; Anzahl noch nicht freigegeben.",
+      "entries": []
+    },
+    {
+      "code": "selketal-stieg",
+      "edition": "Quellenstand 2026-10-20",
+      "name": "Selketal-Stieg",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/die-wandernadel/themenhefte/",
+      "reviewedAt": "2026-10-20",
+      "published": false,
+      "expectedStampCount": 17,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "17 Stellen, vollständige aktuelle Zuordnung noch offen.",
+      "entries": []
+    },
+    {
+      "code": "jubilaeum-2026",
+      "edition": "Quellenstand 2026-10-20",
+      "name": "Jubiläumsheft 2026",
+      "kind": "booklet",
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "reviewedAt": "2026-10-20",
+      "published": false,
+      "expectedStampCount": 20,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "Seite nennt 20 Stempel; Abstimmungstabelle enthält 19 Standorte. Aufstellzeit bis Ende März 2027 ist keine automatisch bestätigte Einlösefrist.",
+      "entries": []
+    },
+    {
+      "code": "grenzweg",
+      "edition": "Badge-Katalog PR 65 – 20+3",
+      "name": "Harzer Grenzweg",
+      "kind": "booklet",
+      "badgeId": "border",
+      "sourceUrl": "https://www.harzer-wandernadel.de/die-wandernadel/themenhefte/",
+      "reviewedAt": "2026-10-20",
+      "published": true,
+      "expectedStampCount": 23,
+      "minimumOptionalCount": 0,
+      "regularVisitTarget": 0,
+      "rulesNote": "Bisher bestätigte digitale Badge-Regel aus PR #65: 20 reguläre Stellen plus Jungborn, Zweiländereiche und Dreiländerstein. Die aktuelle Sonderstempelseite nennt zusätzlich 9900 Grenzturm Rhoden; diese Ausgabe berücksichtigt ihn nicht.",
+      "entries": [
+        {
+          "regularNumber": "1",
+          "required": true
+        },
+        {
+          "regularNumber": "2",
+          "required": true
+        },
+        {
+          "regularNumber": "3",
+          "required": true
+        },
+        {
+          "regularNumber": "4",
+          "required": true
+        },
+        {
+          "regularNumber": "9",
+          "required": true
+        },
+        {
+          "regularNumber": "10",
+          "required": true
+        },
+        {
+          "regularNumber": "11",
+          "required": true
+        },
+        {
+          "regularNumber": "18",
+          "required": true
+        },
+        {
+          "regularNumber": "19",
+          "required": true
+        },
+        {
+          "regularNumber": "46",
+          "required": true
+        },
+        {
+          "regularNumber": "90",
+          "required": true
+        },
+        {
+          "regularNumber": "136",
+          "required": true
+        },
+        {
+          "regularNumber": "156",
+          "required": true
+        },
+        {
+          "regularNumber": "159",
+          "required": true
+        },
+        {
+          "regularNumber": "164",
+          "required": true
+        },
+        {
+          "regularNumber": "165",
+          "required": true
+        },
+        {
+          "regularNumber": "166",
+          "required": true
+        },
+        {
+          "regularNumber": "167",
+          "required": true
+        },
+        {
+          "regularNumber": "168",
+          "required": true
+        },
+        {
+          "regularNumber": "170",
+          "required": true
+        },
+        {
+          "catalogKey": "hwn:special:zweilaendereiche",
+          "required": true
+        },
+        {
+          "catalogKey": "hwn:special:jungborn",
+          "required": true
+        },
+        {
+          "catalogKey": "hwn:special:dreilaenderstein",
+          "required": true
+        }
+      ]
+    }
+  ]
+}
