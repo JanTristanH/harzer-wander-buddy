@@ -2,6 +2,8 @@
 
 Started: 2026-11-05. Baseline: `9a51605`. Review scale: 1–10.
 
+**Latest result (2026-11-06): 8.5/10 in all 16 categories for the documented Web scope.** See the [completed final review](#final-web-review) for independently assigned scores, evidence and coverage limits. Android testing remains with the user.
+
 ## Acceptance and evidence
 
 The requested acceptance criterion is **at least 8.5 in every category and every reviewed flow**, not an average. An independent reviewer records each round. Missing evidence is recorded as **not evaluated**, never as a passing score. Visual review does not establish screen-reader support, offline reliability, native rendering, or successful writes. These require separate interaction checks. Scores are professional judgment, not measurements or a claim of user testing.
@@ -591,3 +593,46 @@ Seven tour PNGs were newly inspected. Seventeen browser checks passed without pa
 All other round-10 scores are explicitly carried forward, not newly visually certified. Next correction: dismiss the previous point detail when search begins, use the fullscreen search view and fit the matching target plus existing route points below the measured search overlay. Native and other unverified coverage remains unchanged.
 
 Validation note: the search-filter test run passed 375/376 tests; an unchanged onboarding cache-refresh test exceeded its 5-second timeout during concurrent building. Its isolated repeat passed all nine onboarding tests in 4.641s. No timeout was increased and no onboarding code was changed. TypeScript passed and lint retained zero errors/two existing warnings.
+
+<a id="final-web-review"></a>
+
+## Final Web review — 2026-11-06, source 6ab4576
+
+The independent reviewer newly inspected all seven tour PNGs in `screenshots/develop-round-13` and the complete browser record. **All 16 categories now score 8.5/10 for the documented Web scope.** The final context image shows the existing Brocken route point and new Froschfelsen target below the search overlay, without the previous detail card. Screenshot and geometry assertions agree.
+
+| Category | Final score /10 | Evidence basis |
+| --- | ---: | --- |
+| Icons | 8.5 | Unchanged, explicitly carried forward from completed review. |
+| Color/contrast | 8.5 | Carried forward; readable search overlays. |
+| Typography | 8.5 | Carried forward. |
+| Visual hierarchy | 8.5 | Carried forward; existing route/new target distinguished. |
+| Spacing/layout | 8.5 | Fullscreen search resolves the crowded inline context state. |
+| Radii/forms | 8.5 | Carried forward. |
+| Buttons/interactions | 8.5 | Carried forward plus successful search/context transition. |
+| Navigation | 8.5 | Carried forward. |
+| Map UX | 8.5 | Matching target and route point visible within the available map area. |
+| Forms/search | 8.5 | Carried forward plus new context evidence. |
+| Feedback/system states | 8.5 | Carried forward, including explicit one-point explanation. |
+| Accessibility | 8.5 for evidenced Web scope | Keyboard/ARIA/axe/contrast evidence carried forward; three dialog checks passed again. |
+| Responsive/adaptive | 8.5 | Carried forward; mobile search uses the larger viewport. |
+| Consistency | 8.5 | Carried forward. |
+| Information quality | 8.5 | Existing route point remains understandable while finding a new target. |
+| Polish/brand | 8.5 | Carried forward, with previously crowded context corrected. |
+
+| Newly inspected image | Final score /10 |
+| --- | ---: |
+| tour-search | 8.5 |
+| tour-search-route-context | 8.5 |
+| tour-created | 8.5 |
+| tour-created-bottom | 8.5 |
+| tour-point-selected | 8.5 |
+| tour-point-added | 8.5 |
+| tour-first-point-summary | 8.5 |
+
+All unchanged screen scores and the guest matrix are **explicitly carried forward** from the previous complete reviews. They are not described as newly re-inspected in round 13. Historical lower scores remain intact above.
+
+Validation: `develop-round-13-browser-checks.json` records **17/17 successful checks, zero pageerrors**. It includes matching-pin filtering, existing-route preservation, fullscreen search, closed previous detail and unobscured pin rectangles. Current code passes **376 tests in 68 suites**, TypeScript and Web export; lint has zero errors/two existing warnings. Code CI for this source passed App Jest, backend CAP, Docker, static Expo, release automation and PR-title checks.
+
+Diagnostic trace: the initial round-12 capture lost its scripted entry during inline-to-fullscreen focus transition; the retry focuses, waits for the new view and then fills the visible field. The first round-13 launch preceded backend readiness and got connection refused; capture now waits for local health. Both failed records are retained separately. No scores were invented for the missing context image. Before that missing context, six round-12 images were independently inspected at 8.5 each: tour-created, tour-created-bottom, tour-search, tour-point-selected, tour-point-added and tour-first-point-summary. Neither failed capture is retroactively marked passed.
+
+**Scope boundary:** this is not a general application certification. Native UI is tested by the user. Actual screen-reader operation, offline/error scenarios, image upload, multileg route calculation/reordering, outdoor navigation and completion of external place search remain untested. Minor non-blocking observations remain: a dense initial pin sequence in the empty editor, scroll-dependent access to some content, and transient external-search loading text. The supplied text search/fullscreen alternatives worked in the tested flow. The PR stays draft for the user's Android test and remaining uncovered flows.

@@ -1,5 +1,6 @@
 """Local visual regression capture. Never exports browser storage or tokens."""
 import asyncio, json, os, re, subprocess, sys
+from urllib.request import urlopen
 from pathlib import Path
 from playwright.async_api import async_playwright
 
@@ -11,6 +12,15 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 async def main():
     checks, errors = [], []
+    for attempt in range(30):
+        try:
+            with urlopen('http://localhost:4004/health',timeout=1) as response:
+                if response.status == 200: break
+        except OSError:
+            pass
+        await asyncio.sleep(0.25)
+    else:
+        raise RuntimeError('Local audit backend did not become ready')
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True, executable_path=str(CHROME) if CHROME.exists() else None,
             args=['--no-sandbox', '--disable-dev-shm-usage'])
@@ -234,8 +244,11 @@ async def main():
             await page.get_by_text('Tourprofil',exact=True).scroll_into_view_if_needed()
             await shot('tour-first-point-summary')
             checks.append({'flow':'find and add first local tour point','passed':True})
+            await page.get_by_role('textbox',name='Tourpunkte suchen').last.focus()
+            await page.get_by_role('button',name='Tourkarte im Vollbild schließen').wait_for()
             await page.get_by_role('textbox',name='Tourpunkte suchen').last.fill('Froschfelsen')
             await page.wait_for_timeout(1000)
+            await shot('tour-search-route-context')
             labels=await page.locator('.leaflet-marker-icon').evaluate_all('(elements) => elements.map(el => el.getAttribute("aria-label") || "")')
             assert any('Brocken' in label for label in labels), 'Search hid an existing route point'
             assert any('Froschfelsen' in label for label in labels), 'Matching new destination is missing'
