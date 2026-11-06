@@ -296,9 +296,9 @@ function Customize() {
                   aria-checked={selection.title === title.id}
                   onPress={() => change({ title: title.id })}
                   accessibilityLabel={title.label}
-                  style={[s.chip, { borderWidth: 2, borderColor: selection.title === title.id ? '#2e6b4b' : 'transparent' }, selection.title === title.id && { backgroundColor: '#e6eee4' }]}
+                  style={[s.chip, { maxWidth: '100%', borderWidth: 2, borderColor: selection.title === title.id ? '#2e6b4b' : 'transparent' }, selection.title === title.id && { backgroundColor: '#e6eee4' }]}
                 >
-                  <Text style={[s.text, selection.title === title.id && { color: '#214f36', fontWeight: '700' }]}>{selection.title === title.id ? '✓ ' : ''}{title.label}</Text>
+                  <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[s.text, selection.title === title.id && { color: '#214f36', fontWeight: '700' }]}>{selection.title === title.id ? '✓ ' : ''}{title.label}</Text>
                 </Pressable>
               ))}
             </View>

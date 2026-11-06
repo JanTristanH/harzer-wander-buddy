@@ -1210,8 +1210,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     alignItems: 'center',
-    left: 0,
-    right: 0,
+    left: -12,
+    right: -12,
   },
   profileBadgeLabel: {
     color: '#2e3a2e',

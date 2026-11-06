@@ -185,3 +185,11 @@ Die aktuelle Demo-Vorbereitung versieht Testnutzer mit regulär freigeschalteten
 Abzeichen. Der Profilabruf übergibt denselben persönlichen Nutzerfilter wie die
 Stempelliste; der Browsercheck prüft einen Nutzer mit acht Besuchen in beiden Ansichten.
 Die grüne Auswahlaktion im Abzeichen-Picker ist von gesperrten Erfolgen unterscheidbar.
+
+Titel-Badges und Titelauswahl bleiben einzeilig; am Profilbild steht dafür mehr
+Breite zur Verfügung, auf nativen Geräten passt sich die Schrift bei Bedarf an.
+Layoutprüfung bei 320 Pixeln mit simuliertem Titel „Wanderprinzessin“ (keine
+serverseitige Freischaltung oder Änderung einer gespeicherten Auswahl):
+
+![Einzeiliger Titel am Profilbild](screenshots/profile-unified/title-one-line.png)
+![Einzeilige Titelauswahl](screenshots/profile-unified/title-choice-one-line.png)
