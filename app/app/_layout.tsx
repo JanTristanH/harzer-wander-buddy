@@ -1,17 +1,21 @@
+import { NativeOfflineNotesProvider } from '@/lib/offline-notes';
+import { StampingSuccessHost } from '@/components/stamping-success-host';
 import {
   focusManager,
   useQueryClient,
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { ErrorBoundary as RouterErrorBoundary, type ErrorBoundaryProps, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef } from 'react';
 import { AppState, type AppStateStatus, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
-import { OfflineBanner } from '@/components/offline-banner';
+import { NativeOfflineVisitsProvider } from '@/lib/native-offline-visits';
+import { OfflineVisitStatus } from '@/components/offline-visit-status';
+import { PreviewDiagnosticsBridge } from '@/components/preview-diagnostics-bridge';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth, useIdTokenClaims } from '@/lib/auth';
 import { ConnectivityProvider, configureQueryOnlineManager, useConnectivity } from '@/lib/connectivity';
@@ -19,6 +23,14 @@ import { runCoreOfflineSync } from '@/lib/core-offline-sync';
 import { HikingGroupProvider } from '@/lib/hiking-group';
 import { queryPersistOptions } from '@/lib/query-persistence';
 import { queryClient } from '@/lib/query-client';
+import { recordPreviewEvent } from '@/lib/preview-diagnostics';
+
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  useEffect(() => {
+    void recordPreviewEvent('react.render_error', props.error.stack || props.error.message, 'error');
+  }, [props.error]);
+  return <RouterErrorBoundary {...props} />;
+}
 
 const WEB_DOCUMENT_STYLE_TAG_ID = 'hwb-web-document-behavior';
 const WEB_DOCUMENT_CSS = `
@@ -150,34 +162,41 @@ export default function RootLayout() {
       <ConnectivityProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <AuthProvider>
-            <HikingGroupProvider>
-              <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="onboarding" />
-                  <Stack.Screen name="login" />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="profile/edit" />
-                  <Stack.Screen name="profile/[userId]" />
-                  <Stack.Screen name="profile/timeline/[userId]" />
-                  <Stack.Screen name="tours/[id]/index" />
-                  <Stack.Screen name="tours/[id]/edit" />
-                  <Stack.Screen name="stamps/[id]" />
-                  <Stack.Screen name="parking/[id]" />
-                  <Stack.Screen name="admin/index" />
-                  <Stack.Screen name="admin/stamps/index" />
-                  <Stack.Screen name="admin/stamps/[id]" />
-                  <Stack.Screen name="admin/parking/index" />
-                  <Stack.Screen name="admin/parking/[id]" />
-                </Stack>
-                <StatusBar style="light" />
-              </ThemeProvider>
-              <WebDocumentBehavior />
-              <QueryFocusBridge />
-              <CoreOfflineSyncBridge />
-              <OnboardingRouteSync />
-              <OfflineBanner />
-            </HikingGroupProvider>
+            <NativeOfflineVisitsProvider>
+              <NativeOfflineNotesProvider>
+                <HikingGroupProvider>
+                  <OfflineVisitStatus>
+                    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+                      <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="index" />
+                        <Stack.Screen name="onboarding" />
+                        <Stack.Screen name="login" />
+                        <Stack.Screen name="(tabs)" />
+                        <Stack.Screen name="profile/edit" />
+                        <Stack.Screen name="profile/[userId]" />
+                        <Stack.Screen name="profile/timeline/[userId]" />
+                        <Stack.Screen name="tours/[id]/index" />
+                        <Stack.Screen name="tours/[id]/edit" />
+                        <Stack.Screen name="stamps/[id]" />
+                        <Stack.Screen name="parking/[id]" />
+                        <Stack.Screen name="admin/index" />
+                        <Stack.Screen name="admin/stamps/index" />
+                        <Stack.Screen name="admin/stamps/[id]" />
+                        <Stack.Screen name="admin/parking/index" />
+                        <Stack.Screen name="admin/parking/[id]" />
+                      </Stack>
+                      <StatusBar style="dark" />
+                    </ThemeProvider>
+                    <WebDocumentBehavior />
+                    <PreviewDiagnosticsBridge />
+                    <QueryFocusBridge />
+                    <CoreOfflineSyncBridge />
+                    <OnboardingRouteSync />
+                  </OfflineVisitStatus>
+                </HikingGroupProvider>
+              </NativeOfflineNotesProvider>
+            </NativeOfflineVisitsProvider>
+            <StampingSuccessHost />
           </AuthProvider>
         </GestureHandlerRootView>
       </ConnectivityProvider>

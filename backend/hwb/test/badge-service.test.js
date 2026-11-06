@@ -36,6 +36,24 @@ test('authenticated album persists selection, rejects locked options and revokes
   }));
   await INSERT.into(Stampings).entries(visitRows);
   let album = await read();
+  const feedbackResponse = await request('getStampingFeedback', 'POST', { visitIds: [visitRows[0].ID] });
+  assert.equal(feedbackResponse.status, 200);
+  const feedback = JSON.parse((await feedbackResponse.json()).value);
+  assert.equal(feedback.visitCount, 1);
+  assert.equal(feedback.beforeCount, 49);
+  assert.equal(feedback.afterCount, 50);
+  assert.deepEqual(feedback.newBadges.map(badge => badge.id), ['king']);
+  const foreignId = cds.utils.uuid();
+  await INSERT.into(Stampings).entries({ ID: foreignId, stamp_ID: stampRows[0].ID, createdBy: 'other-person' });
+  const foreignResponse = await request('getStampingFeedback', 'POST', { visitIds: [foreignId] });
+  const foreignFeedback = JSON.parse((await foreignResponse.json()).value);
+  assert.equal(foreignFeedback.visitCount, 0);
+  assert.deepEqual(foreignFeedback.visitIds, []);
+  assert.equal((await request('getStampingFeedback', 'POST', { visitIds: [] })).status, 400);
+  const guestResponse = await fetch(`${server.url}/odata/v4/api/getStampingFeedback`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visitIds: [visitRows[0].ID] }),
+  });
+  assert.equal(guestResponse.status, 401);
   assert.equal(album.entries.find((e) => e.id === 'king').unlocked, true);
   assert.equal(
     (

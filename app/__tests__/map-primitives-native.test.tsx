@@ -2,7 +2,15 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { View } from 'react-native';
 
-import { Marker } from '@/components/maps/map-primitives.native';
+import MapView, { Marker } from '@/components/maps/map-primitives.native';
+
+let mockMapsBlocked = false;
+const mockRecord = jest.fn();
+jest.mock('@/lib/preview-diagnostics', () => ({
+  get isPreviewMapBlocked() { return mockMapsBlocked; },
+  recordPreviewEvent: (...args: unknown[]) => mockRecord(...args),
+}));
+beforeEach(() => { mockMapsBlocked = false; mockRecord.mockClear(); });
 
 // Jest factories load these inside the hoisted mock.
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -55,4 +63,22 @@ it('uses tour accessibility selection and hides its badge until the stop is dese
   expect(view.getByTestId('tour-order')).toBeTruthy();
   view.rerender(<Marker coordinate={coordinate} image={baseImage} accessibilityState={{ selected: true }} />);
   expect(view.getByTestId('native-marker').props.image).not.toEqual(baseImage);
+});
+
+it('does not create the native map or its markers when a preview Maps key is missing', () => {
+  mockMapsBlocked = true;
+  const screen = render(<MapView testID="native-map"><Marker coordinate={coordinate} /></MapView>);
+  expect(screen.getByText('Karte in dieser Preview nicht verfügbar')).toBeTruthy();
+  expect(screen.queryByTestId('native-map')).toBeNull();
+  expect(screen.queryByTestId('native-marker')).toBeNull();
+  expect(mockRecord).toHaveBeenCalledWith('map.blocked_missing_key');
+});
+
+it('renders a configured map, records readiness and preserves the original callback', () => {
+  const ready = jest.fn();
+  const screen = render(<MapView testID="native-map" onMapReady={ready} />);
+  fireEvent(screen.getByTestId('native-map'), 'mapReady', { nativeEvent: {} });
+  expect(mockRecord).toHaveBeenCalledWith('map.opened');
+  expect(mockRecord).toHaveBeenCalledWith('map.ready');
+  expect(ready).toHaveBeenCalledTimes(1);
 });

@@ -46,8 +46,9 @@ async function postGroupStamp({
   groupUserIds,
   includeCurrentUser,
   userId = 'alice',
+  feedback = false,
 }) {
-  return fetch(`${server.url}/odata/v4/api/stampForGroup`, {
+  return fetch(`${server.url}/odata/v4/api/${feedback ? 'stampForGroupWithFeedback' : 'stampForGroup'}`, {
     method: 'POST',
     headers: {
       accept: 'application/json',
@@ -61,6 +62,20 @@ async function postGroupStamp({
     }),
   });
 }
+
+test('feedback group action returns only own visit IDs and the confirmed friend count', async () => {
+  const feedbackStamp = cds.utils.uuid();
+  await db.run(INSERT.into(Stampboxes).entries({ ID: feedbackStamp, number: '200', name: 'Feedback-Test' }));
+  const response = await postGroupStamp({ stampId: feedbackStamp, groupUserIds: 'bob,bob', includeCurrentUser: true, feedback: true });
+  assert.equal(response.status, 200);
+  const result = JSON.parse((await response.json()).value);
+  assert.equal(result.ownVisitIds.length, 1);
+  assert.equal(result.friendVisitCount, 1);
+  const [visit] = await db.run(SELECT.from(Stampings).where({ ID: result.ownVisitIds[0] }));
+  assert.equal(visit.createdBy, 'alice');
+  const denied = await postGroupStamp({ stampId: feedbackStamp, groupUserIds: 'charlie', includeCurrentUser: true, feedback: true });
+  assert.equal(denied.status, 403);
+});
 
 async function readStampings(stampId) {
   return db.run(

@@ -7,6 +7,7 @@ import {
   type QueryKey,
 } from '@tanstack/react-query';
 import { Platform } from 'react-native';
+import { useOfflineVisitData } from '@/lib/offline-visit-overlay';
 
 import {
   createTour,
@@ -107,7 +108,7 @@ export type TourDetailData = {
 export async function fetchStampsOverviewData(
   accessToken: string,
   userId?: string,
-  stampboxFetchMode: StampboxFetchMode = 'default',
+  stampboxFetchMode: StampboxFetchMode = 'validToday',
   groupUserIds?: string[]
 ): Promise<StampsOverviewData> {
   const effectiveGroupUserIds = canonicalGroupUserIds(userId, groupUserIds);
@@ -438,12 +439,14 @@ export function useStampsOverviewQuery() {
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
 
-  return useQuery<StampsOverviewData>({
+  const query = useQuery<StampsOverviewData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampsOverview(claims?.sub),
     enabled: Boolean(accessToken && isAuthenticated),
     queryFn: () => authorizedRequest((token) => fetchStampsOverviewData(token, claims?.sub)),
   });
+  const data = useOfflineVisitData(query.data, 'stamps', { userId: claims?.sub });
+  return { ...query, data };
 }
 
 export function useAdminStampsOverviewQuery(filter: 'validToday' | 'all') {
@@ -471,7 +474,7 @@ export function useFilteredStampsOverviewQuery(
   const stampboxFetchMode: StampboxFetchMode = filter;
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
-  return useQuery<StampsOverviewData>({
+  const query = useQuery<StampsOverviewData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter, groupUserIds),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
@@ -481,6 +484,8 @@ export function useFilteredStampsOverviewQuery(
         fetchStampsOverviewData(token, claims?.sub, stampboxFetchMode, groupUserIds)
       ),
   });
+  const data = useOfflineVisitData(query.data, 'stamps', { userId: claims?.sub, filter });
+  return { ...query, data };
 }
 
 export function useGuestFilteredStampsOverviewQuery(
@@ -509,7 +514,7 @@ export function useMapDataQuery(options?: {
   const queryClient = useQueryClient();
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
-  return useQuery<MapData>({
+  const query = useQuery<MapData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.mapData(claims?.sub, groupUserIds),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
@@ -535,6 +540,8 @@ export function useMapDataQuery(options?: {
         );
       }),
   });
+  const data = useOfflineVisitData(query.data, 'map', { userId: claims?.sub });
+  return { ...query, data };
 }
 
 export function useGuestMapDataQuery(options?: {
@@ -583,7 +590,7 @@ export function useProfileOverviewQuery() {
   const matchingCurrentUserProfile =
     claims?.sub && currentUserProfile?.id === claims.sub ? currentUserProfile : null;
 
-  return useQuery<ProfileOverviewData>({
+  const query = useQuery<ProfileOverviewData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.profileOverview(claims?.sub),
     enabled: Boolean(accessToken && isAuthenticated),
@@ -591,9 +598,6 @@ export function useProfileOverviewQuery() {
       getCachedSelfProfileOverview(queryClient, claims, matchingCurrentUserProfile),
     queryFn: () =>
       authorizedRequest((token) => {
-        const cachedStampsOverview = queryClient.getQueryData<StampsOverviewData>(
-          queryKeys.stampsOverview(claims?.sub)
-        );
         const prefetchedCurrentUser = matchingCurrentUserProfile
           ? {
               id: matchingCurrentUserProfile.id,
@@ -611,11 +615,12 @@ export function useProfileOverviewQuery() {
         return fetchProfileOverview(
           token,
           claims?.sub,
-          prefetchedCurrentUser,
-          cachedStampsOverview?.stamps
+          prefetchedCurrentUser
         );
       }),
   });
+  const data = useOfflineVisitData(query.data, 'profile', { userId: claims?.sub });
+  return { ...query, data };
 }
 
 export function useStampDetailQuery(
@@ -630,7 +635,7 @@ export function useStampDetailQuery(
   const queryClient = useQueryClient();
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
-  return useQuery<StampDetailData>({
+  const query = useQuery<StampDetailData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampDetail(claims?.sub, stampId, groupUserIds),
     enabled: Boolean(stampId && (isAuthenticated ? accessToken : true)),
@@ -661,6 +666,8 @@ export function useStampDetailQuery(
           )
         : fetchPublicStampDetail(stampId!),
   });
+  const data = useOfflineVisitData(query.data, 'detail', { userId: isAuthenticated ? claims?.sub : undefined });
+  return { ...query, data };
 }
 
 export function useParkingDetailQuery(parkingId?: string) {
@@ -732,7 +739,7 @@ export function useUserProfileOverviewQuery(targetUserId?: string) {
   const authorizedRequest = useAuthorizedRequest();
   const queryClient = useQueryClient();
 
-  return useQuery<UserProfileOverviewData>({
+  const query = useQuery<UserProfileOverviewData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.userProfileOverview(claims?.sub, targetUserId),
     enabled: Boolean(accessToken && isAuthenticated && targetUserId),
@@ -773,6 +780,8 @@ export function useUserProfileOverviewQuery(targetUserId?: string) {
     },
     queryFn: () => authorizedRequest((token) => fetchUserProfileOverview(token, targetUserId!, claims?.sub)),
   });
+  const data = useOfflineVisitData(query.data, 'user-profile', { userId: claims?.sub });
+  return { ...query, data };
 }
 
 export function useToursOverviewQuery(options?: {

@@ -91,22 +91,44 @@ Verwendeter Prompt:
 
 ## Profilansicht und Anpassung
 
-Der Einstieg **Profil anpassen** öffnet die Bearbeitung mit der Vorschau oben.
+Der Einstieg **Profil bearbeiten** öffnet die Bearbeitung mit der Vorschau oben.
 Name und drei Abzeichenplätze werden direkt dort bearbeitet. Avatarrahmen stehen
 als erster Auswahlbereich darunter und sind zunächst eingeklappt. Titel bleiben
 unabhängig wählbar. Auswahlzustände sind neutral; Speichern ist die Primäraktion.
-Das eigene Profil zeigt die drei Plätze mit Stift oder Plus, fremde Profile zeigen
-weiterhin nur die ausgewählten Abzeichen. Die vorhandenen übrigen Profilbereiche
+Die Profilansicht zeigt die ausgewählten Abzeichen als Ansicht; Antippen öffnet
+die Abzeichendetails. Leere Plus-Plätze und Auswahlaktionen bleiben im Editor. Die vorhandenen übrigen Profilbereiche
 und der Footer bleiben erhalten.
 
-Der bisherige Editor [`app/app/profile/edit.tsx`](../app/app/profile/edit.tsx)
-wird nicht ersetzt oder entfernt. Sowohl der Avatar als auch **Name und Profilbild
-bearbeiten** öffnen ihn unter `/profile/edit`, mit den bestehenden Bildrechten,
-der 1:1-Auswahl, dem echten Upload, Fehlerbehandlung und Schutz ungespeicherter
-Änderungen. `/profile/customize` bleibt als alternativer Einstieg vorhanden.
-Inline-Namen verwenden `updateCurrentUserProfile`, die Abzeichenauswahl verwendet
-`saveBadgeProfile`. Falls nach dem Namen die zweite Anfrage scheitert, weist die
-Oberfläche ausdrücklich auf diesen Teilstand hin und bleibt zur Wiederholung offen.
+Name, Foto, drei Abzeichen, Titel und Rahmen werden auf einem gemeinsamen Screen
+bearbeitet. `/profile/edit`, `/profile/customize` und `/profile/badges/customize`
+verwenden dieselbe Implementierung. Die Fotoauswahl übernimmt Bildberechtigungen,
+1:1-Zuschnitt und echten Upload aus dem bisherigen Editor. Auf Android/iOS bleibt
+der native Zuschnitt aktiv; im Browser öffnet eine eigene Vorschau zum Zoomen
+und Verschieben. Der bestätigte quadratische Ausschnitt wird exportiert und hochgeladen. Ein Speichern-Button
+übernimmt Profil und Abzeichenauswahl; Teilfehler bleiben sichtbar und wiederholbar.
+Ungespeicherte Änderungen werden beim Verlassen abgefragt. „Änderungen speichern“
+ist die einzige Primäraktion auf der Bearbeitungsseite. Die Fotoauswahl sitzt
+ausschließlich am Vorschaubild. Titel und Vibrationsstärke kennzeichnen den
+gewählten Wert mit Haken und deutlich sichtbarem Rahmen.
+
+Profilbilder öffnen im Profil eine Großansicht mit Pinch-Zoom, Doppeltipp und
+Verschieben. Im Editor ist dafür „Profilbild groß ansehen“ vorhanden. Die über den
+Listen-Hero erreichbare Timeline führt mit „Alle Abzeichen entdecken“
+direkt zum Album. Auch im Profil führt eine grüne Album-Aktion dorthin.
+
+Aktuelle Browser-Screenshots aus der vollständigen App am lokalen Testbackend:
+
+![Gemeinsamer Editor mit markiertem Titel](screenshots/profile-unified/editor.png)
+![Web-Zuschnitt mit Zoom und Verschieben](screenshots/profile-unified/crop-editor.png)
+![Eigene Profilansicht mit Demo-Abzeichen](screenshots/profile-unified/profile.png)
+![Timeline hinter dem Listen-Hero](screenshots/profile-unified/timeline.png)
+![Deutlich hervorgehobene Abzeichenauswahl](screenshots/profile-unified/badge-picker.png)
+![Profilbild mit Zoom](screenshots/profile-unified/photo-zoom.png)
+
+41 fokussierte Tests, TypeScript, ESLint für die geänderten App-Dateien und der
+vollständige Basic-Webexport sind erfolgreich. Fotoauswahl, Vorschau und Großansicht
+wurden im Browser mit einem lokalen Testkonto geprüft. Zuschnitt, tatsächlicher Foto-Upload und gemeinsames Speichern wurden am lokalen
+Testbackend zusätzlich im Browser durchlaufen; eine neue Android-Abnahme der Pinch-Geste steht aus.
 
 „Dein nächstes Ziel“ zeigt alle Fortschrittsbedingungen. Allgemeine
 Leistungsabzeichen verlinken zur Stempelstellenliste, statt alle 222 Stellen zu
@@ -160,3 +182,18 @@ Der auf diesem Badge-PR aufbauende Folge-PR ergänzt [Themenhefte, Sonderstempel
 - Kein Produktionslogin oder Live-Upload und keine neue native Geräteprüfung.
   Frühere Screenshots weiter unten bzw. im Screenshotverzeichnis dokumentieren den
   vorherigen UI-Stand, nicht die neue Inline-Bearbeitung.
+
+Elf Backend-Tests für Abzeichenregeln und Demo-Seeding sind erfolgreich.
+
+Die aktuelle Demo-Vorbereitung versieht Testnutzer mit regulär freigeschalteten
+Abzeichen. Der Profilabruf übergibt denselben persönlichen Nutzerfilter wie die
+Stempelliste; der Browsercheck prüft einen Nutzer mit acht Besuchen in beiden Ansichten.
+Die grüne Auswahlaktion im Abzeichen-Picker ist von gesperrten Erfolgen unterscheidbar.
+
+Titel-Badges und Titelauswahl bleiben einzeilig; am Profilbild steht dafür mehr
+Breite zur Verfügung, auf nativen Geräten passt sich die Schrift bei Bedarf an.
+Layoutprüfung bei 320 Pixeln mit simuliertem Titel „Wanderprinzessin“ (keine
+serverseitige Freischaltung oder Änderung einer gespeicherten Auswahl):
+
+![Einzeiliger Titel am Profilbild](screenshots/profile-unified/title-one-line.png)
+![Einzeilige Titelauswahl](screenshots/profile-unified/title-choice-one-line.png)

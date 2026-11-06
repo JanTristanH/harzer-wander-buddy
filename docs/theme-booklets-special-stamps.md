@@ -129,3 +129,9 @@ Das Skript liest paginierte bestehende Stellen inklusive abgelaufener Stellen, p
 ## Nachweise
 
 Automatisiert geprüft: Admin-/Leserechte, CRUD-Sperre, stabile Sonderstempel, Grenzweg-Altkennungen, Pflicht-/Wahl-/Gesamtschwellen, eindeutige Besuche, private Fortschritte, Ausgabe-Revision, vollständige Veröffentlichung, gemeinsamer Status in Album und Heft, Import über echte lokale HTTP-Endpunkte und wiederholter Import mit erhaltenen redaktionellen Änderungen. UI-Tests prüfen fehlende Sonderstempel, Filter, Navigation und Fehler mit vorhandenen Cachedaten. Komponentenscreenshots sind unter [screenshots/theme-booklets](screenshots/theme-booklets/README.md) dokumentiert. Native Gerätetests und die fünf redaktionellen Klärungen sind offen.
+
+## Integration mit dem aktuellen Abzeichenstand
+
+#65 einschließlich serverbestätigtem Stempelerfolg integriert. API-Erweiterungen für Themenhefte und Offline-Besuche/-Notizen bleiben gemeinsam erhalten. Album und Erfolgskarte laden dieselben veröffentlichten Themenregeln; explizite Sonderstempel-Kennungen verhindern, dass numerische Anzeigenummern regulären HWN-Fortschritt erhöhen. Ein Regressionstest deckt diese Kombination ab.
+
+414 App-Tests in 79 Suites und 65 Backend-Tests erfolgreich. TypeScript, gezieltes ESLint, PostgreSQL-Schemakompilierung und vollständiger Basic-Webexport erfolgreich. Die offiziellen Seiten für Themenhefte, Sonderstempel und Jubiläumsheft wurden erneut anonym gelesen. Die Themenübersicht nennt weiterhin 15 Klosterwanderweg-Stempel und 17 Selketal-Stieg-Stellen; die Sonderstempelseite nennt Grenzturm Rhoden. Ein vollständiger, widerspruchsfreier Regel- und Zuordnungsnachweis für die fünf Entwürfe liegt damit weiterhin nicht vor. Die Entwürfe bleiben unveröffentlicht; es wurde kein produktiver Import durchgeführt.

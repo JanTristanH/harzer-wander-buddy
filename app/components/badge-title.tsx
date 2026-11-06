@@ -3,11 +3,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 export function BadgeTitle({ title }: { title?: string }) {
   if (!title) return null;
-  return <View style={styles.badge}><Text style={styles.label}>{title}</Text></View>;
+  return <View style={styles.badge}><Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={styles.label}>{title}</Text></View>;
 }
 const styles = StyleSheet.create({
   badge: {
-    alignSelf: 'flex-start', maxWidth: '100%', borderRadius: 16,
+    alignSelf: 'center', maxWidth: '100%', borderRadius: 16,
     paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#e8eee2',
     borderColor: '#c4d4bd', borderWidth: 1,
   },

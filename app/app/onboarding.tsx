@@ -6,12 +6,10 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Redirect, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  ActivityIndicator,
   Alert,
-  Modal,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -23,18 +21,16 @@ import {
   type PressableProps,
   type PressableStateCallbackType,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ClearableSearchInput } from '@/components/clearable-search-input';
-import { FriendsList, type FriendsListItem } from '@/components/friends-list';
+import { FriendsList } from '@/components/friends-list';
+import { FriendSearchModal } from '@/components/friend-search-modal';
+import { useFriendSearch } from '@/lib/use-friend-search';
 import { Fonts } from '@/constants/theme';
 import {
-  createFriendRequest,
-  searchUsers,
   updateCurrentUserProfile,
   uploadProfileImage,
   type ProfileOverviewData,
-  type SearchUserResult,
 } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { appConfig } from '@/lib/config';
@@ -45,7 +41,7 @@ import {
   OFFLINE_REFRESH_MESSAGE,
   requireOnlineForWrite,
 } from '@/lib/offline-write';
-import { fetchStampsOverviewData, queryKeys } from '@/lib/queries';
+import { fetchStampsOverviewData, queryKeys, useFriendsOverviewQuery } from '@/lib/queries';
 
 const bearIllustration = require('@/assets/images/onboarding-bear.png');
 const DEFAULT_AVATARS = [
@@ -66,12 +62,6 @@ type LoginClaims = {
   given_name?: string;
   name?: string;
   nickname?: string;
-  picture?: string;
-};
-
-type SentRequestPreview = {
-  key: string;
-  name: string;
   picture?: string;
 };
 
@@ -135,7 +125,6 @@ function ActionButton({
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const {
     accessToken,
@@ -144,7 +133,6 @@ export default function OnboardingScreen() {
     configError,
     currentUserProfile,
     hasCompletedOnboarding,
-    isOffline,
     isAuthenticated,
     login,
     signup,
@@ -160,13 +148,9 @@ export default function OnboardingScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const [locationPermission, setLocationPermission] = useState<LocationPermissionState>('unknown');
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
-  const [isSearchLoading, setIsSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [submittingUserId, setSubmittingUserId] = useState<string | null>(null);
-  const [sentRequests, setSentRequests] = useState<SentRequestPreview[]>([]);
+  const { data: friendsOverview } = useFriendsOverviewQuery();
+  const friendSearch = useFriendSearch(friendsOverview);
+  const { setIsSearchModalVisible, sentRequestItems } = friendSearch;
   const [profileName, setProfileName] = useState('');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [selectedProfileImage, setSelectedProfileImage] = useState<SelectedImage | null>(null);
@@ -182,27 +166,12 @@ export default function OnboardingScreen() {
     matchingCurrentUserProfile?.name || claims?.name || claims?.nickname || claims?.given_name || ''
   );
   const effectiveProfilePicture = selectedProfileImage?.uri || profilePicture || null;
-  const bottomDockPadding = Math.max(insets.bottom, 16);
   const currentStep = STEPS[step];
   const busy = isProfileSaving || isAdvancing;
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [step]);
-
-  const sentRequestIdSet = useMemo(
-    () => new Set(sentRequests.map((request) => request.key)),
-    [sentRequests]
-  );
-
-  const closeSearchModal = useCallback(() => {
-    setIsSearchModalVisible(false);
-    setSearchQuery('');
-    setSearchResults([]);
-    setSearchError(null);
-    setIsSearchLoading(false);
-    setSubmittingUserId(null);
-  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -257,65 +226,6 @@ export default function OnboardingScreen() {
       isMounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (!isSearchModalVisible) {
-      return;
-    }
-
-    const normalizedQuery = searchQuery.trim();
-    if (normalizedQuery.length < 2) {
-      setSearchResults([]);
-      setSearchError(null);
-      setIsSearchLoading(false);
-      return;
-    }
-
-    if (!accessToken || isOffline) {
-      setSearchResults([]);
-      setSearchError(null);
-      setIsSearchLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setIsSearchLoading(true);
-
-    const timer = setTimeout(() => {
-      void (async () => {
-        try {
-          const results = await searchUsers(accessToken, normalizedQuery);
-          if (cancelled) {
-            return;
-          }
-
-          setSearchResults(results);
-          setSearchError(null);
-        } catch (error) {
-          if (cancelled) {
-            return;
-          }
-
-          if (error instanceof Error && error.name === 'UnauthorizedError') {
-            await logout();
-            return;
-          }
-
-          setSearchError(error instanceof Error ? error.message : 'Unknown error');
-          setSearchResults([]);
-        } finally {
-          if (!cancelled) {
-            setIsSearchLoading(false);
-          }
-        }
-      })();
-    }, 250);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [accessToken, isOffline, isSearchModalVisible, logout, searchQuery]);
 
   useEffect(() => {
     if (!accessToken || !isAuthenticated || hasPrefetchedListRef.current) {
@@ -376,7 +286,7 @@ export default function OnboardingScreen() {
 
     const asset = result.assets[0];
     setProfileSaveError(null);
-    setSelectedAvatar(null);
+    setSelectedAvatar('custom');
     setSelectedProfileImage({
       uri: asset.uri,
       fileName: asset.fileName || `profile-${Date.now()}.jpg`,
@@ -546,85 +456,6 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleCreateRequest = useCallback(
-    async (userId: string) => {
-      if (!accessToken) {
-        return;
-      }
-
-      try {
-        requireOnlineForWrite(canPerformWrites);
-        setSubmittingUserId(userId);
-        await createFriendRequest(accessToken, userId);
-        const matchedUser = searchResults.find((result) => result.id === userId);
-        setSentRequests((current) => {
-          if (current.some((request) => request.key === userId)) {
-            return current;
-          }
-
-          return [
-            ...current,
-            {
-              key: userId,
-              name: matchedUser?.name || userId,
-              picture: matchedUser?.picture,
-            },
-          ];
-        });
-      } catch (error) {
-        if (isNetworkUnavailableError(error)) {
-          Alert.alert('Offline', error.message);
-          return;
-        }
-
-        if (error instanceof Error && error.name === 'UnauthorizedError') {
-          await logout();
-          return;
-        }
-
-        Alert.alert(
-          'Anfrage konnte nicht gesendet werden',
-          error instanceof Error ? error.message : 'Unknown error'
-        );
-      } finally {
-        setSubmittingUserId(null);
-      }
-    },
-    [accessToken, canPerformWrites, logout, searchResults]
-  );
-  const searchListItems = useMemo<FriendsListItem[]>(
-    () =>
-      searchResults.map((result) => {
-        const status: 'request' | 'sent' | 'friend' =
-          result.isFriend || sentRequestIdSet.has(result.id)
-            ? (result.isFriend ? 'friend' : 'sent')
-            : 'request';
-
-        return {
-          id: result.id,
-          name: result.name,
-          image: result.picture,
-          subtitle: `${result.visitedCount} Stempel • ${result.completionPercent}%`,
-          actionLabel:
-            status === 'sent' ? 'Gesendet' : status === 'friend' ? 'Verbunden' : 'Anfrage',
-          actionMuted: status !== 'request',
-          actionDisabled: status !== 'request' || submittingUserId === result.id || !canPerformWrites,
-          onActionPress: () => void handleCreateRequest(result.id),
-        };
-      }),
-    [canPerformWrites, handleCreateRequest, searchResults, sentRequestIdSet, submittingUserId]
-  );
-  const sentRequestItems = useMemo<FriendsListItem[]>(
-    () =>
-      sentRequests.map((request) => ({
-        id: request.key,
-        name: request.name,
-        image: request.picture,
-        subtitle: 'Anfrage gesendet',
-      })),
-    [sentRequests]
-  );
-
   async function requestLocationPermission() {
     setLocationError(null);
     setLocationPermission('checking');
@@ -647,7 +478,7 @@ export default function OnboardingScreen() {
   return (
     <LinearGradient colors={['#f7f5ef', '#f3efe6', '#f0ebe1']} style={styles.gradient}>
       <StatusBar style="dark" />
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+      <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={styles.safeArea}>
         <KeyboardAvoidingView style={styles.flow} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.navigation}>
             <Pressable accessibilityRole="button" accessibilityLabel="Vorheriger Schritt" disabled={step === 0 || busy}
@@ -662,7 +493,7 @@ export default function OnboardingScreen() {
             accessibilityLabel="Onboarding-Fortschritt" style={styles.progressRow}>
             {STEPS.map((item, index) => <View key={item.label} style={[styles.progressSegment, index <= step && styles.progressActive]} />)}
           </View>
-          <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" bounces={false}
+          <ScrollView ref={scrollRef} style={styles.stepScroll} keyboardShouldPersistTaps="handled" bounces={false}
             contentContainerStyle={styles.flowContent} showsVerticalScrollIndicator={false}>
             <View style={[styles.scene, step === 2 && styles.compactScene]}>
               {step === 0 ? <Image contentFit="contain" source={bearIllustration} style={styles.welcomeIllustration} /> :
@@ -706,19 +537,26 @@ export default function OnboardingScreen() {
 
             {step === 2 ? <>
               <View style={styles.avatarGrid}>
-                {[...DEFAULT_AVATARS, { id: 'none', label: 'Kein Avatar', source: null }].map((avatar) => {
-                  const selected = selectedAvatar === avatar.id || (avatar.id === 'none' && !effectiveProfilePicture);
-                  return <Pressable key={avatar.id} accessibilityRole="radio" accessibilityLabel={avatar.label}
+                {[...DEFAULT_AVATARS, { id: 'custom', label: 'Eigenes Foto', source: null }].map((avatar) => {
+                  const selected = selectedAvatar === avatar.id || (avatar.id === 'custom' && selectedAvatar === null && !!effectiveProfilePicture);
+                  return <Pressable key={avatar.id} accessibilityRole="radio" accessibilityLabel={avatar.label} aria-checked={selected}
                     accessibilityState={{ checked: selected, disabled: busy || !canPerformWrites }} disabled={busy || !canPerformWrites}
-                    onPress={() => selectAvatar(avatar.id)} style={[styles.avatarOption, selected && styles.avatarOptionSelected]}>
+                    onPress={() => avatar.id === 'custom' ? void handlePickProfileImage() : selectAvatar(avatar.id)} style={[styles.avatarOption, selected && styles.avatarOptionSelected]}>
                     {avatar.source ? <Image source={avatar.source} contentFit="cover" style={styles.choiceImage} /> :
-                      <View style={styles.noneAvatar}><Feather name="user" size={35} color="#788779" /></View>}
+                      selected && effectiveProfilePicture ? <Image accessibilityLabel="Dein eigenes Foto" source={selectedProfileImage ? { uri: selectedProfileImage.uri } : buildAuthenticatedImageSource(effectiveProfilePicture, accessToken)} contentFit="cover" style={styles.choiceImage} /> :
+                      <View style={styles.noneAvatar}><Feather name="camera" size={35} color="#788779" /></View>}
                     <Text style={[styles.avatarLabel, selected && styles.avatarLabelSelected]}>{avatar.label}</Text>
                     {selected ? <View style={styles.selectionCheck}><Feather name="check" size={14} color="white" /></View> : null}
                   </Pressable>;
                 })}
               </View>
-              <ActionButton disabled={busy || !canPerformWrites} label="Eigenes Foto hochladen" onPress={() => void handlePickProfileImage()} />
+              <Pressable accessibilityRole="radio" accessibilityLabel="Kein Avatar" aria-checked={selectedAvatar === 'none' || !effectiveProfilePicture}
+                accessibilityState={{ checked: selectedAvatar === 'none' || !effectiveProfilePicture, disabled: busy || !canPerformWrites }}
+                disabled={busy || !canPerformWrites} onPress={() => selectAvatar('none')}
+                style={[styles.noAvatarButton, (selectedAvatar === 'none' || !effectiveProfilePicture) && styles.avatarOptionSelected]}>
+                <Text style={styles.avatarLabel}>Kein Avatar</Text>
+                {selectedAvatar === 'none' || !effectiveProfilePicture ? <Feather name="check" size={18} color="#41664A" /> : null}
+              </Pressable>
               <Text style={styles.guidance}>Dein Avatar ist für deine Wanderbuddies sichtbar.</Text>
             </> : null}
 
@@ -736,12 +574,12 @@ export default function OnboardingScreen() {
 
             {step === 4 ? <View style={styles.inputCard}>
               <ActionButton disabled={!accessToken || !canPerformWrites || busy} label="Wanderbuddies finden" onPress={() => setIsSearchModalVisible(true)} variant="secondary" />
-              {sentRequests.length > 0 ? <View style={styles.sentRequestsBox}><Text style={styles.sentRequestsTitle}>Deine Anfragen sind unterwegs</Text><FriendsList items={sentRequestItems} /></View> :
+              {sentRequestItems.length > 0 ? <View style={styles.sentRequestsBox}><Text style={styles.sentRequestsTitle}>Deine Anfragen sind unterwegs</Text><FriendsList items={sentRequestItems} /></View> :
                 <Text style={styles.guidance}>Auch allein beginnt ein gutes Abenteuer. Freunde kannst du jederzeit später hinzufügen.</Text>}
             </View> : null}
             {profileSaveError && step > 0 ? <Text accessibilityRole="alert" style={styles.errorText}>{profileSaveError}</Text> : null}
           </ScrollView>
-          <View style={[styles.flowDock, { paddingBottom: bottomDockPadding }]}>
+          <View style={styles.flowDock}>
             <ActionButton disabled={primaryDisabled || busy || (step === 1 && !profileName.trim()) || locationPermission === 'checking'}
               label={busy ? 'Wird gespeichert…' : step === 0 ? 'Los geht’s' : step === 4 ? 'Zu den Stempelstellen' : step === 3 && locationPermission !== 'granted' ? 'Ohne Standort weiter' : 'Weiter'}
               onPress={() => void handleAdvance()} variant="primary" style={styles.bottomButton} />
@@ -749,83 +587,15 @@ export default function OnboardingScreen() {
           </View>
         </KeyboardAvoidingView>
 
-        <Modal
-          animationType="fade"
-          transparent
-          visible={isSearchModalVisible}
-          onRequestClose={closeSearchModal}>
-          <View style={styles.modalOverlay}>
-            <Pressable style={styles.modalBackdrop} onPress={closeSearchModal} />
-            <View style={styles.modalCard}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Freunde finden</Text>
-                <Pressable
-                  accessibilityLabel="Suche schliessen"
-                  onPress={closeSearchModal}
-                  style={({ pressed }) => [styles.modalCloseButton, pressed && styles.actionButtonPressed]}>
-                  <Feather color="#1E2A1E" name="x" size={16} />
-                </Pressable>
-              </View>
-
-              <View style={styles.searchInputShell}>
-                <View style={styles.searchInputIconWrap}>
-                  <Feather color="#6B7A6B" name="search" size={14} />
-                </View>
-                <ClearableSearchInput
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoFocus
-                  onChangeText={setSearchQuery}
-                  placeholder="Name oder Nutzername suchen"
-                  placeholderTextColor="#6B7A6B"
-                  style={styles.searchInput}
-                  value={searchQuery}
-                />
-              </View>
-
-              <View style={styles.searchResultsColumn}>
-                {isSearchLoading ? (
-                  <View style={styles.searchStatusWrap}>
-                    <ActivityIndicator color="#2E6B4B" size="small" />
-                  </View>
-                ) : null}
-
-                {!isSearchLoading && searchError ? (
-                  <Text style={styles.searchStatusText}>{searchError}</Text>
-                ) : null}
-
-                {!isSearchLoading && !searchError && searchQuery.trim().length < 2 ? (
-                  <Text style={styles.searchStatusText}>
-                    Gib mindestens zwei Zeichen ein, um nach Freunden zu suchen.
-                  </Text>
-                ) : null}
-
-                {!isSearchLoading &&
-                !searchError &&
-                searchQuery.trim().length >= 2 &&
-                searchResults.length === 0 ? (
-                  <Text style={styles.searchStatusText}>Keine passenden Nutzer gefunden.</Text>
-                ) : null}
-
-                {!isSearchLoading && !searchError && searchResults.length > 0 ? (
-                  <FriendsList items={searchListItems} />
-                ) : null}
-              </View>
-
-              <View style={styles.modalHint}>
-                <Text style={styles.modalHintText}>
-                  Profile kannst du nach dem Onboarding in der Freunde-Ansicht oeffnen.
-                </Text>
-              </View>
-            </View>
-          </View>
-        </Modal>
+        <FriendSearchModal search={friendSearch} hint="Profile kannst du nach dem Onboarding in der Freunde-Ansicht oeffnen." />
       </SafeAreaView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  stepScroll: { flex: 1, minHeight: 0 },
+  noAvatarButton: { minHeight: 52, borderWidth: 2, borderColor: '#E1E4D8', borderRadius: 18, backgroundColor: '#e8dfcf', padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
   flow: { flex: 1, width: '100%', maxWidth: 560, alignSelf: 'center' },
   navigation: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 12 },
   backButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 22, backgroundColor: '#E7EBDD' },
@@ -866,7 +636,7 @@ const styles = StyleSheet.create({
   avatarLabelSelected: { color: '#315B43', fontWeight: '700' },
   selectionCheck: { position: 'absolute', top: 10, right: 10, backgroundColor: '#41664A', width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   infoRow: { flexDirection: 'row', gap: 14, alignItems: 'center' },
-  flowDock: { paddingHorizontal: 28, paddingTop: 12, gap: 10, backgroundColor: '#F3EFE6' },
+  flowDock: { flexShrink: 0, paddingHorizontal: 28, paddingTop: 12, paddingBottom: 16, gap: 10, backgroundColor: '#F3EFE6' },
   gradient: {
     flex: 1,
   },
@@ -908,7 +678,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   actionButtonPrimary: {
     backgroundColor: '#397b52',
@@ -950,100 +721,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-  },
-  modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-start',
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(46,58,46,0.35)',
-  },
-  modalCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    marginHorizontal: 20,
-    marginTop: 120,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    shadowColor: '#141E14',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 28,
-    elevation: 10,
-  },
-  modalHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  modalTitle: {
-    color: '#1E2A1E',
-    fontFamily: Fonts.serif,
-    fontSize: 20,
-    lineHeight: 24,
-  },
-  modalCloseButton: {
-    alignItems: 'center',
-    backgroundColor: '#F0E9DD',
-    borderRadius: 8,
-    height: 28,
-    justifyContent: 'center',
-    width: 28,
-  },
-  searchInputShell: {
-    alignItems: 'center',
-    backgroundColor: '#F6F2EA',
-    borderRadius: 14,
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  searchInputIconWrap: {
-    alignItems: 'center',
-    height: 14,
-    justifyContent: 'center',
-    width: 14,
-  },
-  searchInput: {
-    color: '#1E2A1E',
-    flex: 1,
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    lineHeight: 16,
-    padding: 0,
-  },
-  searchResultsColumn: {
-    gap: 10,
-    minHeight: 120,
-  },
-  searchStatusWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
-  searchStatusText: {
-    color: '#6B7A6B',
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    lineHeight: 16,
-    paddingVertical: 8,
-  },
-  modalHint: {
-    backgroundColor: '#F8F6F1',
-    borderRadius: 14,
-    marginTop: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  modalHintText: {
-    color: '#6B7A6B',
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    lineHeight: 16,
   },
   bottomButton: {
     width: '100%',

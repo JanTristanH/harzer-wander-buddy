@@ -1,10 +1,12 @@
 import React from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import OnboardingScreen from '@/app/onboarding';
-import { updateCurrentUserProfile, uploadProfileImage } from '@/lib/api';
+import { createFriendRequest, removeFriendship, searchUsers, type FriendsOverviewData, updateCurrentUserProfile, uploadProfileImage } from '@/lib/api';
 
+const mockOverview: FriendsOverviewData = { currentUserId: 'test-user', friends: [], incomingRequests: [], outgoingRequests: [], friendCount: 0, incomingRequestCount: 0, outgoingRequestCount: 0 };
 const mockReplace = jest.fn();
 const mockComplete = jest.fn();
 const mockSetProfile = jest.fn();
@@ -15,19 +17,20 @@ const mockAuth = { accessToken: 'token', isAuthenticated: true, canPerformWrites
   currentUserProfile: mockProfile, completeOnboarding: mockComplete, setCurrentUserProfile: mockSetProfile, logout: jest.fn() };
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn() }), Redirect: () => null }));
-jest.mock('expo-asset', () => ({ Asset: { fromModule: () => ({ uri: 'asset:/avatar.png' }) } }));
-jest.mock('expo-image-picker', () => ({}));
+jest.mock('expo-asset', () => ({ Asset: Object.assign(class Asset {}, { fromModule: () => ({ uri: 'asset:/avatar.png' }) }) }));
+jest.mock('expo-image-picker', () => ({ requestMediaLibraryPermissionsAsync: jest.fn(), launchImageLibraryAsync: jest.fn() }));
 jest.mock('expo-location', () => ({ getForegroundPermissionsAsync: jest.fn(), requestForegroundPermissionsAsync: jest.fn() }));
 jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => mockQueryClient }));
 jest.mock('@/lib/auth', () => ({ useIdTokenClaims: () => mockClaims, useAuth: () => mockAuth }));
-jest.mock('@/lib/api', () => ({ updateCurrentUserProfile: jest.fn(), uploadProfileImage: jest.fn(), searchUsers: jest.fn(), createFriendRequest: jest.fn() }));
-jest.mock('@/lib/queries', () => ({ queryKeys: { stampsOverview: () => ['stamps'], profileOverview: () => ['profile'] }, fetchStampsOverviewData: jest.fn() }));
+jest.mock('@/lib/api', () => ({ updateCurrentUserProfile: jest.fn(), uploadProfileImage: jest.fn(), searchUsers: jest.fn(), createFriendRequest: jest.fn(), removeFriendship: jest.fn() }));
+jest.mock('@/lib/queries', () => ({ useFriendsOverviewQuery: () => ({ data: mockOverview }), queryKeys: { stampsOverview: () => ['stamps'], profileOverview: () => ['profile'], friendsOverview: (id: string) => ['friends', id] }, fetchStampsOverviewData: jest.fn() }));
 jest.mock('@/lib/images', () => ({ buildAuthenticatedImageSource: (uri: string) => ({ uri }) }));
 jest.mock('@/lib/config', () => ({ appConfig: { authMode: 'basic' } }));
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockAuth.canPerformWrites = true;
+  mockOverview.outgoingRequests = [];
   (Location.getForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ granted: false, status: 'undetermined' });
   (updateCurrentUserProfile as jest.Mock).mockImplementation(async (_token, updates) => updates);
   (uploadProfileImage as jest.Mock).mockResolvedValue({ url: 'https://example.com/new.png' });
@@ -58,7 +61,7 @@ test('guides through separate steps, validates the name and retains edits when g
 
 test('none explicitly removes a provider picture without uploading', async () => {
   await openAvatarStep();
-  expect(screen.getAllByRole('radio')).toHaveLength(4);
+  expect(screen.getAllByRole('radio')).toHaveLength(5);
   fireEvent.press(screen.getByRole('radio', { name: 'Kein Avatar' }));
   expect(screen.getByRole('radio', { name: 'Kein Avatar' })).toBeChecked();
   await advance();
@@ -107,4 +110,70 @@ test('denied location permission still allows completing onboarding', async () =
   await advance('Ohne Standort weiter');
   await advance('Zu den Stempelstellen');
   expect(mockComplete).toHaveBeenCalledTimes(1);
+});
+
+
+test('selects a personal photo and shows it in its tile before and after saving', async () => {
+  (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
+  (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({ canceled: false, assets: [{ uri: 'file:/personal.jpg', fileName: 'personal.jpg', mimeType: 'image/jpeg' }] });
+  await openAvatarStep();
+  fireEvent.press(screen.getByRole('radio', { name: 'Kein Avatar' }));
+  await act(async () => { fireEvent.press(screen.getByRole('radio', { name: 'Eigenes Foto' })); });
+  expect(screen.getByRole('radio', { name: 'Eigenes Foto' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: 'Kein Avatar' })).not.toBeChecked();
+  expect(screen.getByLabelText('Dein eigenes Foto').props.source).toEqual({ uri: 'file:/personal.jpg' });
+  await advance();
+  fireEvent.press(screen.getByRole('button', { name: 'Vorheriger Schritt' }));
+  expect(screen.getByRole('radio', { name: 'Eigenes Foto' })).toBeChecked();
+  expect(screen.getByLabelText('Dein eigenes Foto').props.source).toEqual({ uri: 'https://example.com/new.png' });
+});
+
+test('canceling the photo picker preserves the selected avatar', async () => {
+  (ImagePicker.requestMediaLibraryPermissionsAsync as jest.Mock).mockResolvedValue({ granted: true });
+  (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({ canceled: true });
+  await openAvatarStep();
+  fireEvent.press(screen.getByRole('radio', { name: 'Fuchs' }));
+  await act(async () => { fireEvent.press(screen.getByRole('radio', { name: 'Eigenes Foto' })); });
+  expect(screen.getByRole('radio', { name: 'Fuchs' })).toBeChecked();
+});
+
+test('refreshes inactive friends and profile caches after sending an onboarding request', async () => {
+  (searchUsers as jest.Mock).mockResolvedValue([{ id: 'buddy', name: 'Wanderbuddy', visitedCount: 0, completionPercent: 0 }]);
+  (createFriendRequest as jest.Mock).mockResolvedValue(undefined);
+  await openAvatarStep();
+  await advance();
+  await advance('Ohne Standort weiter');
+  await advance('Wanderbuddies finden');
+  fireEvent.changeText(screen.getByPlaceholderText('Name oder Nutzername suchen'), 'buddy');
+  await screen.findByText('Wanderbuddy');
+  await act(async () => { fireEvent.press(screen.getByText('Anfrage')); });
+  expect(createFriendRequest).toHaveBeenCalledWith('token', 'buddy');
+  expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['friends', 'test-user'], refetchType: 'all' });
+  expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['profile'], refetchType: 'all' });
+});
+
+
+test('onboarding marks the current user as Du and prevents self requests', async () => {
+  (searchUsers as jest.Mock).mockResolvedValue([{ id: 'test-user', name: 'Alex', visitedCount: 0, completionPercent: 0 }]);
+  await openAvatarStep();
+  await advance();
+  await advance('Ohne Standort weiter');
+  await advance('Wanderbuddies finden');
+  fireEvent.changeText(screen.getByPlaceholderText('Name oder Nutzername suchen'), 'Alex');
+  await screen.findByText('Du');
+  fireEvent.press(screen.getByText('Du'));
+  expect(createFriendRequest).not.toHaveBeenCalled();
+});
+
+test('onboarding shows persisted requests with the shared recall action', async () => {
+  mockOverview.outgoingRequests = [{ id: 'request', userId: 'buddy', friendshipId: 'friendship', name: 'Wanderbuddy' }];
+  (removeFriendship as jest.Mock).mockResolvedValue(undefined);
+  await openAvatarStep();
+  await advance();
+  await advance('Ohne Standort weiter');
+  expect(screen.getByText('Wanderbuddy')).toBeTruthy();
+  fireEvent.press(screen.getByText('Zurueckrufen'));
+  const confirmation = jest.mocked(Alert.alert).mock.calls.find((call) => call[0] === 'Anfrage zurueckrufen?');
+  await act(async () => { confirmation![2]!.find((button) => button.text === 'Zurueckrufen')!.onPress!(); });
+  expect(removeFriendship).toHaveBeenCalledWith('token', 'friendship');
 });

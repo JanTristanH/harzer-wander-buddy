@@ -1,3 +1,6 @@
+import { publishStampingSuccess } from '@/lib/stamping-feedback';
+import { useOfflineNotes } from '@/lib/offline-notes';
+import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import DateTimePicker, {
   type DateTimePickerEvent,
@@ -59,6 +62,7 @@ import {
   type StampDetailData,
   updateStamping,
   upsertStampNote,
+  type StampNote,
   type VisitStamping,
 } from '@/lib/api';
 import { useAdminAccess, useAuth, useIdTokenClaims } from '@/lib/auth';
@@ -341,6 +345,9 @@ function StampDetailContent() {
     logout,
   } = useAuth();
   const requireSignIn = useRequireSignInAction();
+  const offlineVisits = useOfflineVisits();
+  const offlineNotes = useOfflineNotes();
+  const canRecordVisit = offlineVisits.isNative ? offlineVisits.canRecord : canPerformWrites || offlineVisits.canRecord;
   const claims = useIdTokenClaims<IdClaims>();
   const queryClient = useQueryClient();
   const { groupUserIds, selectedFriendIds, selectedMembers } = useHikingGroup();
@@ -357,7 +364,10 @@ function StampDetailContent() {
   const [isEditingVisits, setIsEditingVisits] = useState(false);
   const [visitDrafts, setVisitDrafts] = useState<Record<string, string>>({});
   const [busyVisitId, setBusyVisitId] = useState<string | null>(null);
+  const localNote = offlineNotes.entries.find((entry) => entry.stampId === stampId);
+  const savedNoteText = localNote?.note ?? detail?.myNote?.note ?? '';
   const [noteDraft, setNoteDraft] = useState('');
+  const editBaseRef = useRef<{ base: StampNote | null } | null>(null);
   const persistedNoteRef = useRef('');
   const recentNoteSaveAtRef = useRef<number | null>(null);
   const [isSavingNote, setIsSavingNote] = useState(false);
@@ -414,7 +424,7 @@ function StampDetailContent() {
     setVisitDrafts(
       Object.fromEntries(detail.myVisits.map((visit) => [visit.ID, getVisitTimestamp(visit) ?? '']))
     );
-    const nextPersistedNote = detail.myNote?.note ?? '';
+    const nextPersistedNote = savedNoteText;
     setNoteDraft((currentDraft) => {
       const previousPersistedNote = persistedNoteRef.current;
       const hasUnsavedLocalChanges = currentDraft.trim() !== previousPersistedNote.trim();
@@ -432,7 +442,7 @@ function StampDetailContent() {
 
       return nextPersistedNote;
     });
-  }, [detail]);
+  }, [detail, savedNoteText]);
 
   const handleSaveNote = useCallback(async (): Promise<boolean> => {
     if (!isAuthenticated) {
@@ -440,12 +450,12 @@ function StampDetailContent() {
       return false;
     }
 
-    if (!accessToken || !stampId || isSavingNote) {
+    if ((!accessToken && !offlineNotes.isNative) || !stampId || isSavingNote) {
       return false;
     }
 
     const normalizedNote = noteDraft.trim();
-    const persistedNote = detail?.myNote?.note ?? '';
+    const persistedNote = savedNoteText;
     if (normalizedNote === persistedNote.trim()) {
       return true;
     }
@@ -458,10 +468,17 @@ function StampDetailContent() {
     const stampDetailKey = queryKeys.stampDetail(claims?.sub, stampId, groupUserIds);
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Notizen koennen nur online gespeichert werden.');
       setIsSavingNote(true);
+      if (offlineNotes.isNative) {
+        await offlineNotes.save(stampId, normalizedNote, editBaseRef.current ? editBaseRef.current.base : detail?.myNote ?? null);
+        editBaseRef.current = null;
+        persistedNoteRef.current = normalizedNote;
+        setNoteDraft(normalizedNote);
+        return true;
+      }
+      requireOnlineForWrite(canPerformWrites, 'Notizen koennen nur online gespeichert werden.');
 
-      const savedNote = await upsertStampNote(accessToken, stampId, normalizedNote);
+      const savedNote = await upsertStampNote(accessToken!, stampId, normalizedNote);
       const persistedNote = {
         ID: savedNote.ID || detail?.myNote?.ID || `note-${stampId}`,
         stamp_ID: savedNote.stamp_ID || stampId,
@@ -505,11 +522,11 @@ function StampDetailContent() {
     }
   }, [
     accessToken,
+    offlineNotes,
+    savedNoteText,
+    detail?.myNote,
     canPerformWrites,
     claims?.sub,
-    detail?.myNote?.ID,
-    detail?.myNote?.createdAt,
-    detail?.myNote?.note,
     groupUserIds,
     isSavingNote,
     isAuthenticated,
@@ -846,6 +863,20 @@ function StampDetailContent() {
       return;
     }
 
+    if (offlineVisits.canRecord) {
+      const localStamp = detail?.stamp;
+      if (!localStamp) return;
+      setIsStamping(true);
+      try {
+        await offlineVisits.record(localStamp);
+        setStampSuccessMessage('Besuch auf diesem Gerät gespeichert.');
+        setIsStampSuccessToastVisible(true);
+      } catch (error) {
+        Alert.alert('Besuch nicht gespeichert', error instanceof Error ? error.message : 'Bitte erneut versuchen.');
+      } finally { setIsStamping(false); }
+      return;
+    }
+
     const nowIsoTimestamp = new Date().toISOString();
     const optimisticVisitId = `optimistic-${stampId}-${Date.now()}`;
     const stampSnapshot = detail?.stamp ?? null;
@@ -1038,6 +1069,7 @@ function StampDetailContent() {
       });
 
       const createdStamping = await createStamping(accessToken, stampId);
+      if (createdStamping.ID && claims?.sub) publishStampingSuccess({ owner: claims.sub, visitIds: [createdStamping.ID] });
       const persistedVisitTimestamp =
         createdStamping.visitedAt || createdStamping.createdAt || nowIsoTimestamp;
       const persistedVisit: VisitStamping = {
@@ -1136,8 +1168,7 @@ function StampDetailContent() {
 
       await queryClient.invalidateQueries();
       queryClient.removeQueries({ type: 'inactive' });
-      setStampSuccessMessage('Stempel erfolgreich gesetzt.');
-      setIsStampSuccessToastVisible(true);
+
     } catch (nextError) {
       rollbackOptimisticUpdates();
       if (isNetworkUnavailableError(nextError)) {
@@ -1314,7 +1345,7 @@ function StampDetailContent() {
   }
 
   const selectedStamp = detail?.stamp;
-  const persistedNote = detail?.myNote?.note ?? '';
+  const persistedNote = savedNoteText;
   const normalizedNoteDraft = noteDraft.trim();
   const isNoteTooLong = normalizedNoteDraft.length > STAMP_NOTE_MAX_LENGTH;
   const isNoteDirty = normalizedNoteDraft !== persistedNote.trim();
@@ -2037,7 +2068,7 @@ function StampDetailContent() {
                         {isEditingVisits ? (
                           <View style={styles.visitInlineRow}>
                             <Pressable
-                              disabled={busyVisitId === visit.ID || !canPerformWrites}
+                              disabled={busyVisitId === visit.ID || !canPerformWrites || visit.pendingSync}
                               onPress={() => openVisitPicker(visit.ID, visitDrafts[visit.ID])}
                               style={({ pressed }) => [
                                 styles.visitPickerButton,
@@ -2055,7 +2086,7 @@ function StampDetailContent() {
                               <Feather color="#637062" name="calendar" size={16} />
                             </Pressable>
                             <Pressable
-                              disabled={busyVisitId === visit.ID || !canPerformWrites}
+                              disabled={busyVisitId === visit.ID || !canPerformWrites || visit.pendingSync}
                               onPress={() => confirmDeleteVisit(visit.ID)}
                               style={({ pressed }) => [
                                 styles.visitActionButton,
@@ -2090,13 +2121,30 @@ function StampDetailContent() {
                 </SectionCard>
               ) : (
                 <StampNoteSection
+                  syncStatus={offlineNotes.isNative ? offlineNotes.storageError ?? (!offlineNotes.ready
+                    ? 'Lokaler Notizspeicher wird geladen.'
+                    : localNote?.status === 'conflict' ? 'Konflikt: Die Notiz wurde auf einem anderen Gerät geändert.'
+                    : localNote?.status === 'error' ? 'Übertragung fehlgeschlagen. Notiz bleibt auf diesem Gerät; erneuter Versuch folgt.'
+                    : localNote ? (offlineNotes.syncing ? 'Notiz wird synchronisiert …' : 'Auf Gerät gespeichert · Synchronisierung ausstehend')
+                    : 'Notiz synchronisiert') : undefined}
+                  remoteNote={localNote?.status === 'conflict' ? localNote.remote?.note ?? '' : undefined}
+                  onResolve={localNote?.status === 'conflict' ? (choice) => {
+                    const remoteText = localNote.remote?.note ?? '';
+                    void offlineNotes.resolve(stampId!, choice).then(() => {
+                      if (choice === 'remote') { persistedNoteRef.current = remoteText; setNoteDraft(remoteText); }
+                    }).catch((e) => Alert.alert('Speichern fehlgeschlagen', e.message));
+                  } : undefined}
+                  onRetry={offlineNotes.storageError || localNote?.status === 'error' ? () => { void offlineNotes.retry(); } : undefined}
                   isDirty={isNoteDirty}
                   isSaving={isSavingNote}
                   isTooLong={isNoteTooLong}
                   maxLength={STAMP_NOTE_MAX_LENGTH}
                   noteDraft={noteDraft}
                   noteLength={normalizedNoteDraft.length}
-                  onChangeNote={setNoteDraft}
+                  onChangeNote={(value) => {
+                    if (!editBaseRef.current) editBaseRef.current = { base: detail?.myNote ?? null };
+                    setNoteDraft(value);
+                  }}
                   onSave={() => {
                     void handleSaveNote();
                   }}
@@ -2343,7 +2391,7 @@ function StampDetailContent() {
               <Text style={styles.secondaryButtonLabel}>Auf Karte anzeigen</Text>
             </Pressable>
           </View>
-          {!isGuest ? (
+          {!isGuest && selectedFriendIds.length > 0 ? (
             <Pressable
               accessibilityRole="button"
               disabled={!accessToken || !canPerformWrites}
@@ -2357,7 +2405,7 @@ function StampDetailContent() {
               <Text style={styles.groupStampButtonLabel}>Für Gruppe stempeln</Text>
             </Pressable>
           ) : null}
-          <StampPressStage enabled={!isStamping && (isGuest || canPerformWrites)} style={styles.primaryStampStage}>
+          <StampPressStage enabled={!isStamping && (isGuest || canRecordVisit)} style={styles.primaryStampStage}>
             {({ buttonAnimatedStyle, isTouchActive, onPressIn, onPressOut }) => (
               <Animated.View
                 style={[
@@ -2366,15 +2414,15 @@ function StampDetailContent() {
                   buttonAnimatedStyle,
                 ]}>
                 <Pressable
-                  disabled={isStamping || (!isGuest && !canPerformWrites)}
+                  disabled={isStamping || (!isGuest && !canRecordVisit)}
                   onPress={handlePrimaryStampButtonPress}
                   onPressIn={onPressIn}
                   onPressOut={onPressOut}
                   style={({ pressed }) => [
                     styles.primaryButton,
                     styles.primaryButtonWithIcon,
-                    (isStamping || (!isGuest && !canPerformWrites)) && styles.primaryButtonDisabled,
-                    pressed && !isStamping && (isGuest || canPerformWrites) && styles.primaryButtonPressed,
+                    (isStamping || (!isGuest && !canRecordVisit)) && styles.primaryButtonDisabled,
+                    pressed && !isStamping && (isGuest || canRecordVisit) && styles.primaryButtonPressed,
                   ]}>
                   <Feather color={AppColors.background} name={visited ? 'refresh-cw' : 'check-circle'} size={16} />
                   <Text style={styles.primaryButtonLabel}>
@@ -2399,8 +2447,7 @@ function StampDetailContent() {
         onClose={() => setIsGroupStampDialogVisible(false)}
         onSuccess={() => {
           setIsGroupStampDialogVisible(false);
-          setStampSuccessMessage('Gruppenstempel erfolgreich gesetzt.');
-          setIsStampSuccessToastVisible(true);
+
           void refetch();
         }}
         stampId={stamp.ID}
@@ -2649,7 +2696,9 @@ function StampDetailContent() {
 }
 
 export default function StampDetailScreen() {
-  return <StampDetailContent />;
+  const claims = useIdTokenClaims<IdClaims>();
+  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  return <StampDetailContent key={`${claims?.sub ?? 'guest'}:${params.id}`} />;
 }
 
 const styles = StyleSheet.create({

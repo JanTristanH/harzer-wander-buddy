@@ -1,0 +1,365 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, closed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Open PR number (head must be in this repository)
+        required: true
+        type: string
+      action:
+        description: Deploy a preview or remove every preview service of this PR
+        type: choice
+        default: deploy
+        options: [deploy, remove]
+      live_check:
+        description: Run HTTP smoke checks against the deployed preview (starts a Cloud Run instance)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+# Let an active deployment finish before cleanup. A close event replaces any
+# pending build, and then removes every revision of this PR.
+concurrency:
+  group: pr-preview-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PREVIEW_PROJECT_ID }}
+  REGION: ${{ vars.GCP_PREVIEW_REGION || 'europe-west3' }}
+  REPOSITORY: hwb-previews
+
+jobs:
+  source:
+    if: >-
+      vars.GCP_PREVIEW_PROJECT_ID != '' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.pull_request.head.repo.full_name == github.repository &&
+        (github.event.action != 'labeled' && github.event.action != 'unlabeled' ||
+         github.event.label.name == 'preview')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      pr: ${{ steps.source.outputs.pr }}
+      sha: ${{ steps.source.outputs.sha }}
+      service: ${{ steps.source.outputs.service }}
+      action: ${{ steps.source.outputs.action }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - uses: actions/github-script@v7
+        id: source
+        env:
+          REQUESTED_PR: ${{ github.event.pull_request.number || inputs.pr }}
+          REQUESTED_ACTION: ${{ inputs.action || 'deploy' }}
+        with:
+          script: |
+            const number = process.env.REQUESTED_PR;
+            if (!/^[1-9]\d*$/.test(number)) throw new Error('Invalid PR number');
+            const { data: pr } = await github.rest.pulls.get({ ...context.repo, pull_number: Number(number) });
+            if (pr.head.repo?.full_name !== context.payload.repository.full_name) throw new Error('Fork previews are disabled');
+            if (context.eventName === 'workflow_dispatch' && pr.state !== 'open' && process.env.REQUESTED_ACTION !== 'remove') throw new Error('Choose an open PR');
+            const { previewAction, previewServiceName } = require('./scripts/pr-preview-policy.cjs');
+            const action = previewAction({ pr, eventName: context.eventName,
+              action: context.payload.action, label: context.payload.label?.name,
+              requestedAction: process.env.REQUESTED_ACTION });
+            core.setOutput('action', action);
+            core.notice(`Preview action: ${action}. Automatic deploys require the preview label.`);
+            // Fetch the current head instead of building a superseded event SHA.
+            core.setOutput('pr', number);
+            core.setOutput('sha', pr.head.sha);
+            core.setOutput('service', previewServiceName(number));
+
+  deploy:
+    needs: source
+    if: needs.source.outputs.action == 'deploy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: pr-preview
+      url: ${{ steps.deploy.outputs.url }}/app/rnweb
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+      image: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+    env:
+      PREVIEW_PR: ${{ needs.source.outputs.pr }}
+      PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+      SERVICE: ${{ needs.source.outputs.service }}
+      RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_PREVIEW_RUNTIME_SERVICE_ACCOUNT }}
+    steps:
+      - name: Check preview configuration
+        env:
+          WIF_PROVIDER: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
+          DEPLOY_ACCOUNT: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
+          PREVIEW_KEYSTORE: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_BASE64 }}
+          PREVIEW_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          for setting in WIF_PROVIDER DEPLOY_ACCOUNT RUNTIME_SERVICE_ACCOUNT PREVIEW_KEYSTORE PREVIEW_PASSWORD; do
+            if [ -z "${!setting}" ]; then
+              echo "::error::Missing $setting. See docs/pr-previews.md."
+              exit 1
+            fi
+          done
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Remove legacy commit services and retain only the stable PR service
+        run: node scripts/manage-pr-preview-services.cjs migrate
+      - run: gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+      - id: image
+        run: echo "name=$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/pr-$PREVIEW_PR" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          file: deploy/preview/Dockerfile
+          push: true
+          tags: ${{ steps.image.outputs.name }}:${{ needs.source.outputs.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          build-args: |
+            PREVIEW_PR=${{ needs.source.outputs.pr }}
+            PREVIEW_SHA=${{ needs.source.outputs.sha }}
+          cache-from: type=gha,scope=pr-preview
+          cache-to: type=gha,mode=max,scope=pr-preview
+      - name: Check container cold start under Cloud Run memory and CPU limits
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+        run: bash scripts/check-pr-preview-container.sh
+      - id: deploy
+        env:
+          IMAGE: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --image "$IMAGE" --service-account "$RUNTIME_SERVICE_ACCOUNT" \
+            --port 8080 --memory 1Gi --cpu 1 --concurrency 20 \
+            --scaling 0 --min-instances 0 --max-instances 1 \
+            --cpu-throttling --no-cpu-boost --no-deploy-health-check --timeout 300 \
+            --allow-unauthenticated --ingress all \
+            --labels "managed-by=hwb-pr-preview,pr=$PREVIEW_PR" --quiet
+          node scripts/manage-pr-preview-services.cjs verify
+          url=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          {
+            echo "## PR #$PREVIEW_PR preview"
+            echo "- Web: $url/app/rnweb"
+            echo "- API: $url/odata/v4/api"
+            echo "- Commit: $PREVIEW_SHA"
+            echo "- Image: $IMAGE"
+            echo '- Activation runs independently of the Android APK build; live HTTP checks are opt-in.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  android:
+    needs: [source, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      apk_url: ${{ steps.apk.outputs.artifact-url }}
+    environment:
+      name: pr-preview
+      url: ${{ needs.deploy.outputs.url }}/app/rnweb
+    env:
+      CI: '1'
+      EXPO_NO_DOTENV: '1'
+      EXPO_NO_TELEMETRY: '1'
+      HWB_PREVIEW_PR: ${{ needs.source.outputs.pr }}
+      HWB_PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+      EXPO_PUBLIC_AUTH_MODE: basic
+      EXPO_PUBLIC_BACKEND_URL: ${{ needs.deploy.outputs.url }}
+      EXPO_PUBLIC_GOOGLE_MAPS_API_KEY: ${{ secrets.PREVIEW_GOOGLE_MAPS_API_KEY || vars.PREVIEW_GOOGLE_MAPS_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+        with:
+          # The legacy "tools" package in the action's default is no longer available.
+          packages: platform-tools
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+        working-directory: app
+      - name: Build standalone APK (no EAS, no Metro server)
+        env:
+          PREVIEW_ANDROID_KEYSTORE_BASE64: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_BASE64 }}
+          PREVIEW_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.PREVIEW_ANDROID_KEYSTORE_PASSWORD }}
+        run: bash scripts/build-pr-preview-apk.sh
+      - name: Record backend and APK provenance
+        env:
+          PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+          PREVIEW_IMAGE: ${{ needs.deploy.outputs.image }}
+        run: |
+          node -e 'const fs=require("fs"),crypto=require("crypto"); fs.writeFileSync("preview-artifacts/preview.json",JSON.stringify({pr:process.env.HWB_PREVIEW_PR,sha:process.env.PREVIEW_SHA,url:process.env.EXPO_PUBLIC_BACKEND_URL,image:process.env.PREVIEW_IMAGE,apkSha256:crypto.createHash("sha256").update(fs.readFileSync("preview-artifacts/preview.apk")).digest("hex")},null,2))'
+      - uses: actions/upload-artifact@v4
+        id: apk
+        with:
+          name: hwb-pr-${{ needs.source.outputs.pr }}-${{ needs.source.outputs.sha }}-android
+          path: preview-artifacts/
+          if-no-files-found: error
+          retention-days: 14
+      - env:
+          ARTIFACT_URL: ${{ steps.apk.outputs.artifact-url }}
+        run: |
+          echo "APK + backend manifest (GitHub login required): $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+
+  activate:
+    needs: [source, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: pr-preview
+      url: ${{ needs.deploy.outputs.url }}/app/rnweb
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      SERVICE: ${{ needs.source.outputs.service }}
+      PREVIEW_PR: ${{ needs.source.outputs.pr }}
+      PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+      PREVIEW_URL: ${{ needs.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.source.outputs.sha }}
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Enable request-based autoscaling from zero to one instance
+        id: enable
+        run: |
+          gcloud run services update "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --scaling auto --min 0 --max 1 --quiet
+      - name: Check live web app, commit and SQLite login
+        # Keep normal deployments cold. The same smoke check already runs in
+        # the local CI container before deployment.
+        if: github.event_name == 'workflow_dispatch' && inputs.live_check
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            if node scripts/smoke-pr-preview.cjs; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Disable service again if the live check fails
+        if: failure() && steps.enable.outcome == 'success'
+        run: |
+          gcloud run services update "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --scaling 0 --quiet
+
+  report-web:
+    needs: [source, deploy, activate]
+    if: >-
+      always() && needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Update preview section in PR description
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_PR: ${{ needs.source.outputs.pr }}
+          PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+          PREVIEW_URL: ${{ needs.deploy.outputs.url }}
+          ACTIVE: ${{ needs.activate.result == 'success' }}
+        with:
+          script: |
+            const { previewSection, publish } = require('./scripts/pr-preview-policy.cjs');
+            const removed = false;
+            const sha = process.env.PREVIEW_SHA;
+            const section = previewSection({ sha, url: process.env.PREVIEW_URL,
+              androidPending: true, active: process.env.ACTIVE === 'true', removed,
+              runUrl: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}` });
+            await publish({ github, ...context.repo, number: Number(process.env.PREVIEW_PR),
+              sha, section, removed, manual: context.eventName === 'workflow_dispatch' });
+
+  report:
+    needs: [source, deploy, android, activate, cleanup, report-web]
+    if: >-
+      always() && (needs.deploy.result == 'success' || needs.cleanup.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Update preview section in PR description
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_PR: ${{ needs.source.outputs.pr }}
+          PREVIEW_SHA: ${{ needs.source.outputs.sha }}
+          PREVIEW_URL: ${{ needs.deploy.outputs.url }}
+          APK_URL: ${{ needs.android.outputs.apk_url }}
+          ACTIVE: ${{ needs.activate.result == 'success' }}
+          REMOVED: ${{ needs.cleanup.result == 'success' }}
+        with:
+          script: |
+            const { previewSection, publish } = require('./scripts/pr-preview-policy.cjs');
+            const removed = process.env.REMOVED === 'true';
+            const sha = process.env.PREVIEW_SHA;
+            const section = previewSection({ sha, url: process.env.PREVIEW_URL,
+              apkUrl: process.env.APK_URL, active: process.env.ACTIVE === 'true', removed,
+              runUrl: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}` });
+            await publish({ github, ...context.repo, number: Number(process.env.PREVIEW_PR),
+              sha, section, removed, manual: context.eventName === 'workflow_dispatch' });
+
+  cleanup:
+    needs: source
+    if: needs.source.outputs.action == 'remove'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: pr-preview
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PREVIEW_PR: ${{ needs.source.outputs.pr }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_PREVIEW_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_PREVIEW_DEPLOY_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Delete stable and legacy Cloud Run services for this PR
+        run: node scripts/manage-pr-preview-services.cjs remove

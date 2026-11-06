@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList } from '@/components/friends-list';
+import { ProfileImageViewer } from '@/components/profile-image-viewer';
 import { BadgeTitle } from '@/components/badge-title';
 import { BadgeArtwork } from '@/components/badge-artwork';
 import { BadgeProfileSection } from '@/components/badge-profile-section';
@@ -618,17 +619,17 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             </Pressable>
           ) : null}
           <View style={styles.heroRow}>
-            <View style={styles.avatarBadgeWrap}>
+            <ProfileImageViewer uri={data.avatarImage}><View style={styles.avatarBadgeWrap}>
               {selectedFrame ? <BadgeArtwork frame={selectedFrame} image={data.avatarImage} initials={data.name.slice(0,2).toUpperCase()} size={118} /> : <HeaderAvatar
                 color={data.avatarColor || avatarColor()}
                 compact={false}
                 image={data.avatarImage}
               />}
-            </View>
+              {selectedTitle ? <View style={styles.profileBadge}><BadgeTitle title={selectedTitle} /></View> : null}
+            </View></ProfileImageViewer>
             <View style={styles.headerBody}>
               <Text style={styles.headerName}>{data.name}</Text>
-              <BadgeTitle title={selectedTitle} />
-              <Text style={styles.headerMeta}>{data.subtitle}</Text>
+              {data.subtitle ? <Text style={styles.headerMeta}>{data.subtitle}</Text> : null}
               {data.headerAction?.type === 'edit' ? (
                 <Pressable
                   onPress={data.headerAction.onPress}
@@ -1011,6 +1012,10 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                 return (
                   <Pressable
                     key={option.key}
+                    accessibilityRole="radio"
+                    accessibilityLabel={option.label}
+                    accessibilityState={{ checked: isActive }}
+                    aria-checked={isActive}
                     onPress={() => hapticSettings.onChange(option.key)}
                     style={({ pressed }) => [
                       styles.hapticChip,
@@ -1018,7 +1023,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                       pressed && styles.pressed,
                     ]}>
                     <Text style={[styles.hapticChipLabel, isActive && styles.hapticChipLabelActive]}>
-                      {option.label}
+                      {isActive ? '✓ ' : ''}{option.label}
                     </Text>
                   </Pressable>
                 );
@@ -1203,12 +1208,10 @@ const styles = StyleSheet.create({
   },
   profileBadge: {
     position: 'absolute',
-    right: -10,
     bottom: 0,
-    backgroundColor: '#e9e2d6',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    alignItems: 'center',
+    left: -12,
+    right: -12,
   },
   profileBadgeLabel: {
     color: '#2e3a2e',
@@ -1581,15 +1584,15 @@ const styles = StyleSheet.create({
   },
   hapticChip: {
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#d7cfbb',
     backgroundColor: '#f2ebde',
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   hapticChipActive: {
-    backgroundColor: '#e3e6df',
-    borderColor: '#596252',
+    backgroundColor: '#e6eee4',
+    borderColor: '#2e6b4b',
   },
   hapticChipLabel: {
     color: '#3d4a3d',

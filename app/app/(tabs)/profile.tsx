@@ -85,9 +85,6 @@ export default function ProfileScreen() {
       return null;
     }
 
-    const collectorSinceText = data.collectorSinceYear
-      ? `Stempel-Sammler seit ${data.collectorSinceYear}`
-      : 'Stempel-Sammler';
     const profileName =
       matchingCurrentUserProfile?.name || data.name || claims?.name || claims?.sub || 'Profil';
     const profilePicture = matchingCurrentUserProfile?.picture || data.picture || claims?.picture;
@@ -110,11 +107,11 @@ export default function ProfileScreen() {
     return {
       mode: 'self',
       name: profileName,
-      subtitle: collectorSinceText,
+      subtitle: '',
       headerAction: {
         type: 'edit',
-        label: 'Profil anpassen',
-        onPress: () => router.push('/profile/badges/customize' as never),
+        label: 'Profil bearbeiten',
+        onPress: () => router.push('/profile/edit' as never),
       },
       avatarColor: '#dde9df',
       avatarImage: profilePicture,
