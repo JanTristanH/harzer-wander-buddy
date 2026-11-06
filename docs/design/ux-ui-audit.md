@@ -444,3 +444,23 @@ Independent reviewer inspected all 66 main PNGs and 13 keyboard PNGs (nine byte-
 | Keyboard map filter 320 / map zoomed 320 | 8.5 / 8.5 |
 
 Specific remaining findings: profile shows one visit in history but zero visited/completion after name save; dense pin overlap in 320 overview and tour map; small group status signs/high group cards. Accessibility has measured Web evidence but lacks complete dialog-focus and screen-reader verification. Multileg route calculation/reordering, navigation outdoors, image upload, offline/errors and native UI remain unverified. Android compilation alone does not pass those flows.
+
+## Develop review 7 — 6a6bf27 (independent review interrupted)
+
+New runtime evidence is in `screenshots/develop-round-7`, with `develop-round-7-browser-checks.json` and `develop-round-7-keyboard-checks.json`.
+
+- **13/13 browser interaction checks passed**, no pageerrors. Includes profile save with visited count 1, first tour point present in the sequence after leaving fullscreen, and 24 Tab/Shift+Tab steps inside each of three named dialogs (map filters, group selection, friend search). Their actual accessibility trees are saved as `.aria.txt`.
+- **8/8 additional checks passed**, including Escape returning focus to the map-filter trigger.
+- All **376 tests in 68 suites passed**; TypeScript passed. Lint: zero errors, two existing require-import warnings. New fit tests check fractional fitting while retaining whole-step gesture zoom, including the failure path.
+- Android local x86 release build succeeded; the repeat build succeeded in **1m 28s**, with 959/982 tasks up-to-date. Native UI was not validated: the emulator showed a System UI ANR. On 2026-11-06 the user took ownership of Android runtime testing; the agent stopped its emulator attempt and retained build caches.
+
+Actual partial reviewer findings before interruption:
+
+| Screen/state | New independent score /10 | Finding |
+| --- | ---: | --- |
+| Map overview 320 | **8.5** | Better fit, all numbers recognizable, less overlap. |
+| Profile saved | Not newly scored | Reviewer confirmed visited 1, completion 13%, latest visit and history 1/1 agree. |
+| Group selected | Not newly scored | Reviewer confirmed larger status symbols. |
+| Tour created | Not newly scored | Reviewer requested the lower scroll evidence because the first-point action starts below the footer in the initial view; `tour-created-bottom.png` is supplied. |
+
+The review agent then failed with **“Your workspace is out of credits. Add credits to continue.”** No complete new category or screen scores were returned. The last complete category table remains review 6; it must not be silently replaced with passing values after implementation fixes. The requested threshold of 8.5 everywhere is therefore **not yet independently established**. The PR remains a draft pending the remaining review and the user's Android test. Native, actual screen-reader, multileg routing/reordering, image-upload and offline/error coverage must not be inferred from these Web checks.

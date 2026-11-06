@@ -37,6 +37,7 @@ async def main():
             for key in ['Tab']*12 + ['Shift+Tab']*12:
                 await page.keyboard.press(key)
                 assert await dialog.evaluate('(el) => el.contains(document.activeElement)')
+            (OUT / (name.replace(' ', '-').lower() + '.aria.txt')).write_text(await dialog.aria_snapshot())
             checks.append({'flow':f'{name}: focus remains in dialog through 24 Tab steps','passed':True})
 
         async def open_page(path):
