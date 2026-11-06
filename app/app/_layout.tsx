@@ -133,18 +133,18 @@ function CoreOfflineSyncBridge() {
 }
 
 function OnboardingRouteSync() {
-  const { hasCompletedOnboarding, isAuthenticated, isLoading } = useAuth();
+  const { hasCompletedOnboarding, isAuthenticated, isLoading, passwordRecovery } = useAuth();
   const router = useRouter();
   const segments = useSegments();
   const rootSegment = segments[0];
 
   useEffect(() => {
-    if (isLoading || !isAuthenticated || hasCompletedOnboarding || ['onboarding', 'legal', 'account-privacy', 'community-safety'].includes(rootSegment || '')) {
+    if (passwordRecovery || isLoading || !isAuthenticated || hasCompletedOnboarding || ['onboarding', 'legal', 'account-privacy', 'community-safety'].includes(rootSegment || '')) {
       return;
     }
 
     router.replace('/onboarding' as never);
-  }, [hasCompletedOnboarding, isAuthenticated, isLoading, rootSegment, router]);
+  }, [passwordRecovery, hasCompletedOnboarding, isAuthenticated, isLoading, rootSegment, router]);
 
   return null;
 }

@@ -1,26 +1,22 @@
 const cds = require("@sap/cds");
-const fetch = require("node-fetch");
 
-const DEBUG = cds.debug("cds-auth0");
+const DEBUG = cds.debug("cds-supabase");
 const EXTERNAL_USER_CACHE_TTL_MS = Number(process.env.EXTERNAL_USER_CACHE_TTL_MS || 5 * 60 * 1000);
 const EXTERNAL_USER_SYNC_TTL_MS = Number(process.env.EXTERNAL_USER_SYNC_TTL_MS || 24 * 60 * 60 * 1000);
 const externalUserClaimsCache = new Map();
 const externalUserSyncCache = new Map();
 
-class Auth0User extends cds.User {
+class SupabaseUser extends cds.User {
   is(role) {
     DEBUG && DEBUG(`Requested role: ${role}`);
     return role === "any" || this._roles.includes(role);
   }
 }
 
-function getRoleClaimKey() {
-  return process.env.AUTH0_ROLES_CLAIM || `${process.env.AUDIENCE}roles`;
-}
-
+function getRoleClaimKey() { return 'app_metadata'; }
 function getRolesFromClaims(claims = {}) {
-  const roleClaim = claims[getRoleClaimKey()];
-  return Array.isArray(roleClaim) ? roleClaim : [];
+  const roles = claims.app_metadata?.roles;
+  return Array.isArray(roles) ? roles.filter(role => ['admin', 'moderator'].includes(role)) : [];
 }
 
 function buildCapUserFromClaims(claims = {}) {
@@ -33,24 +29,13 @@ function buildCapUserFromClaims(claims = {}) {
     _roles: ["authenticated-user", ...getRolesFromClaims(claims)],
   };
 
-  const user = new Auth0User(capUser);
+  const user = new SupabaseUser(capUser);
   user.roles = capUser._roles.reduce((acc, role) => {
     acc[role] = true;
     return acc;
   }, {});
 
   return user;
-}
-
-function hasProfileClaims(claims = {}) {
-  return Boolean(
-    claims.email ||
-      claims.family_name ||
-      claims.given_name ||
-      claims.name ||
-      claims.nickname ||
-      claims.picture
-  );
 }
 
 function pickProfileClaimsFromExternalUser(externalUser = {}) {
@@ -72,16 +57,6 @@ function pickProfileClaimsFromExternalUser(externalUser = {}) {
   };
 }
 
-function getCachedExternalUserClaims(userId) {
-  const cached = externalUserClaimsCache.get(userId);
-  if (!cached || cached.expiresAt <= Date.now()) {
-    externalUserClaimsCache.delete(userId);
-    return null;
-  }
-
-  return cached.claims;
-}
-
 function setCachedExternalUserClaims(userId, claims = {}) {
   if (!userId) {
     return;
@@ -91,92 +66,6 @@ function setCachedExternalUserClaims(userId, claims = {}) {
     claims,
     expiresAt: Date.now() + EXTERNAL_USER_CACHE_TTL_MS,
   });
-}
-
-async function enrichClaimsFromExternalUser(claims = {}) {
-  if (!claims.sub) {
-    return claims;
-  }
-
-  const cachedClaims = getCachedExternalUserClaims(claims.sub);
-  if (cachedClaims) {
-    return {
-      ...cachedClaims,
-      ...claims,
-    };
-  }
-
-  try {
-    const db = await cds.connect.to("db");
-    const { ExternalUsers } = db.entities;
-    const [externalUser] = await db.read(ExternalUsers).where({ ID: claims.sub });
-    if (!externalUser) {
-      return claims;
-    }
-
-    const dbClaims = pickProfileClaimsFromExternalUser(externalUser);
-    setCachedExternalUserClaims(claims.sub, dbClaims);
-    return {
-      ...dbClaims,
-      ...claims,
-    };
-  } catch (error) {
-    DEBUG && DEBUG(`ExternalUsers lookup failed: ${error.message}`);
-    return claims;
-  }
-}
-
-async function enrichClaimsWithUserInfo(accessToken, claims = {}) {
-  if (!accessToken || !claims.sub) {
-    return claims;
-  }
-
-  if (hasProfileClaims(claims)) {
-    return claims;
-  }
-
-  let enrichedClaims = await enrichClaimsFromExternalUser(claims);
-  if (hasProfileClaims(enrichedClaims)) {
-    return enrichedClaims;
-  }
-
-  const issuerBaseUrl = process.env.ISSUER_BASE_URL?.replace(/\/$/, "");
-  if (!issuerBaseUrl) {
-    return enrichedClaims;
-  }
-
-  try {
-    const response = await fetch(`${issuerBaseUrl}/userinfo`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      DEBUG && DEBUG(`userinfo lookup failed with status ${response.status}`);
-      return enrichedClaims;
-    }
-
-    const userInfo = await response.json();
-    const userInfoClaims = {
-      ...enrichedClaims,
-      email: enrichedClaims.email ?? userInfo.email,
-      email_verified: enrichedClaims.email_verified ?? userInfo.email_verified,
-      family_name: enrichedClaims.family_name ?? userInfo.family_name,
-      given_name: enrichedClaims.given_name ?? userInfo.given_name,
-      name: enrichedClaims.name ?? userInfo.name,
-      nickname: enrichedClaims.nickname ?? userInfo.nickname,
-      picture: enrichedClaims.picture ?? userInfo.picture,
-      sid: enrichedClaims.sid ?? userInfo.sid,
-      sub: enrichedClaims.sub ?? userInfo.sub,
-      updated_at: enrichedClaims.updated_at ?? userInfo.updated_at,
-    };
-    setCachedExternalUserClaims(claims.sub, userInfoClaims);
-    return userInfoClaims;
-  } catch (error) {
-    DEBUG && DEBUG(`userinfo lookup failed: ${error.message}`);
-    return enrichedClaims;
-  }
 }
 
 async function upsertExternalUser(claims = {}) {
@@ -241,9 +130,8 @@ function clearExternalUserCaches(id) {
 
 module.exports = {
   clearExternalUserCaches,
-  Auth0User,
+  SupabaseUser,
   buildCapUserFromClaims,
-  enrichClaimsWithUserInfo,
   getRoleClaimKey,
   getRolesFromClaims,
   syncExternalUserIfNeeded,

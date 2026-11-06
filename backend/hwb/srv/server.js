@@ -1,50 +1,15 @@
 const cds = require("@sap/cds");
-const { auth, requiresAuth } = require("express-openid-connect");
+const { bearerAuth } = require("./supabase-auth");
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const {
-  buildCapUserFromClaims,
-  enrichClaimsWithUserInfo,
-  syncExternalUserIfNeeded,
-  upsertExternalUser,
-} = require("./auth-utils");
 require("dotenv").config();
 
 
 const isLocalBasic = cds.env.profiles.includes('dev-basic');
-const isLocalSso = cds.env.profiles.includes('dev-sso') && !cds.env.profiles.includes('production');
 if (isLocalBasic && cds.env.profiles.includes('production')) {
   throw new Error('dev-basic cannot be combined with production');
 }
-if (isLocalSso) {
-  const appConfig = require('../../../app/app.json').expo.extra;
-  process.env.ISSUER_BASE_URL ||= `https://${appConfig.auth0Domain}/`;
-  process.env.AUDIENCE ||= appConfig.auth0Audience;
-  process.env.BASE_URL = 'http://localhost:4004/';
-}
-
-const config = {
-  authRequired: false,
-  auth0Logout: true,
-  session: { absoluteDuration: 86400 },
-  secret: process.env.SECRET,
-  baseURL: process.env.BASE_URL,
-  clientID: process.env.CLIENT_ID,
-  issuerBaseURL: process.env.ISSUER_BASE_URL,
-  authorizationParams: {
-    response_type: "code",
-    scope: "openid profile email permissions",
-    audience: process.env.AUDIENCE,
-  },
-  afterCallback: async (req, tokenSet, userInfo) => {
-    const jsonwebtoken = require("jsonwebtoken");
-    // save / update user in our database after login
-    let userFromToken = jsonwebtoken.decode(userInfo.id_token);
-    await upsertExternalUser(userFromToken);
-    return userInfo;
-  },
-};
 
 const mobileCorsOrigins = (process.env.MOBILE_CORS_ORIGINS || "")
   .split(",")
@@ -85,28 +50,10 @@ const mobileCors = cors({
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 });
 
-function normalizeIssuer(rawIssuer) {
-  if (!rawIssuer) {
-    return "";
-  }
-
-  return rawIssuer.endsWith("/") ? rawIssuer : `${rawIssuer}/`;
-}
-
 function sendODataError(res, statusCode, message) {
-  res.status(statusCode).json({
-    error: {
-      code: String(statusCode),
-      message,
-    },
-  });
+  res.status(statusCode).json({ error: { code: String(statusCode), message } });
 }
 
-const issuer = normalizeIssuer(process.env.ISSUER_BASE_URL);
-const audience = process.env.AUDIENCE;
-const jwksUrl = issuer ? new URL(".well-known/jwks.json", issuer) : null;
-let joseModulePromise;
-let jwks;
 const exportableEntities = [
   "AdjacentStamps",
   "Attachments_local",
@@ -121,63 +68,6 @@ const exportableEntities = [
   "Tours",
   "TravelTimes",
 ];
-
-function getJoseModule() {
-  if (!joseModulePromise) {
-    joseModulePromise = import("jose");
-  }
-  return joseModulePromise;
-}
-
-async function getJwks() {
-  if (!jwksUrl) {
-    return null;
-  }
-
-  if (!jwks) {
-    const { createRemoteJWKSet } = await getJoseModule();
-    jwks = createRemoteJWKSet(jwksUrl);
-  }
-
-  return jwks;
-}
-
-async function bearerAuth(req, res, next) {
-  const authHeader = req.headers.authorization || "";
-  if (!authHeader.startsWith("Bearer ")) {
-    next();
-    return;
-  }
-
-  const jwks = await getJwks();
-  if (!jwks || !issuer || !audience) {
-    sendODataError(res, 500, "Bearer auth is not configured correctly");
-    return;
-  }
-
-  try {
-    const { jwtVerify } = await getJoseModule();
-    const token = authHeader.slice("Bearer ".length);
-
-    const { payload } = await jwtVerify(token, jwks, {
-      issuer,
-      audience,
-      maxTokenAge: '24h',
-    });
-
-    if (await require('./account-privacy').isAccountDeleted(payload.sub)) {
-      return sendODataError(res, 401, "Dieses Konto wurde gelöscht.");
-    }
-    const enrichedPayload = await enrichClaimsWithUserInfo(token, payload);
-
-    req.auth0TokenPayload = enrichedPayload;
-    req.user = buildCapUserFromClaims(enrichedPayload);
-    await syncExternalUserIfNeeded(enrichedPayload);
-    next();
-  } catch (error) {
-    sendODataError(res, 401, "Unauthorized");
-  }
-}
 
 function toCsvValue(value) {
   if (value === null || value === undefined) {
@@ -213,13 +103,13 @@ function sanitizeEntityName(rawName) {
 
 async function requireExportAuth(req, res, next) {
   await bearerAuth(req, res, async () => {
-    const user = req.user || buildCapUserFromClaims(req.oidc?.user);
+    const user = req.user;
     if (user?.is('admin')) {
       next();
       return;
     }
 
-    sendODataError(res, req.user || req.oidc?.isAuthenticated() ? 403 : 401, "Administrator access required");
+    sendODataError(res, req.user ? 403 : 401, "Administrator access required");
   });
 }
 
@@ -280,12 +170,7 @@ function isHtmlNavigationRequest(req) {
   return accept.includes("text/html");
 }
 
-function isMockedCapAuth() {
-  return cds.env.requires?.auth?.kind === "mocked";
-}
-
-function skipOidcAuth(req, res, next) {
-  req.oidc = req.oidc || { isAuthenticated: () => false };
+function skipBearerAuth(req, res, next) {
   next();
 }
 
@@ -301,11 +186,10 @@ cds.on("bootstrap", (app) => {
   // ✅ Serve manifest.json publicly before authentication middleware
   app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));
 
-  const useOidcAuth = !isMockedCapAuth() && !isLocalBasic;
-  const requireStaticAuth = useOidcAuth ? requiresAuth() : skipOidcAuth;
-
-  app.use(useOidcAuth ? auth(config) : skipOidcAuth);
-  const apiAuth = isLocalBasic ? skipOidcAuth : bearerAuth;
+  app.get(['/login', '/logout', '/callback'], (_req, res) => res.redirect(302, '/app/rnweb/login'));
+  // UI5's cookie/OIDC path is retired. The maintained RN web client uses bearer auth.
+  const requireStaticAuth = (req, res) => res.redirect(302, '/app/rnweb/login');
+  const apiAuth = isLocalBasic ? skipBearerAuth : bearerAuth;
   if (isLocalBasic) {
     app.use('/export/csv', require('./basic-auth')(cds.env.requires.auth));
   }
@@ -314,7 +198,7 @@ cds.on("bootstrap", (app) => {
   app.use("/odata/v4/public", mobileCors);
 
   app.use("/app/frontendhwb", requireStaticAuth, express.static(__dirname + "/../app/frontendhwb"));
-  // RN web owns its Auth0 flow and calls CAP APIs with bearer tokens.
+  // RN web owns its Supabase flow and calls CAP APIs with bearer tokens.
   app.use(RN_WEB_MOUNT_PATH, express.static(RN_WEB_DIST_PATH, { extensions: ["html"] }));
   app.get(/^\/app\/rnweb(?:\/.*)?$/, (req, res, next) => {
     if (req.path.includes(".") || !isHtmlNavigationRequest(req)) {

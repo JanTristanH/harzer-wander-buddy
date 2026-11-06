@@ -31,8 +31,8 @@ test('environment values cannot declare the unimplemented Auth migration ready',
   assert.match(result.documents.privacy.text, /Configured Supabase retention/);
   assert.doesNotMatch(result.documents.privacy.text, /Obsolete Auth0 retention/);
   for (const key of ['privacy', 'deletion']) {
-    assert.match(result.documents[key].text, /Entwurf für die geplante Umstellung/);
-    assert.match(result.documents[key].text, /Anmeldung verwendet derzeit noch Auth0/);
+    assert.match(result.documents[key].text, /Entwurf für die Umstellung/);
+    assert.match(result.documents[key].text, /Staging-Abnahme stehen noch aus/);
     assert.match(result.documents[key].text, /Supabase-Auth-Anmeldekontos/);
   }
 });
@@ -45,6 +45,6 @@ test('public privacy and deletion HTML show the migration warning', () => {
     const res = { set() { return this; }, type() { return this; }, send(body) { html = body; } };
     routes.get(path)({}, res);
     assert.match(html, /role="status">Entwurf: Supabase-Auth-Umstellung/);
-    assert.match(html, /Anmeldung verwendet derzeit noch Auth0/);
+    assert.match(html, /Staging-Abnahme stehen noch aus/);
   }
 });

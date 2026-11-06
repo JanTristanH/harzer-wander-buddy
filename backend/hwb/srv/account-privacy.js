@@ -15,6 +15,7 @@ async function collectMyData(tx, id) {
   const { SELECT } = cds.ql;
   const result = { exportedAt: new Date().toISOString(), profile: null };
   result.profile = await tx.run(SELECT.one.from('hwb.db.ExternalUsers').where({ ID: id }));
+  result.AuthIdentities = await tx.run(SELECT.from('hwb.db.AuthIdentities').where({ internalId: id }));
   for (const name of ['Stampings', 'StampNotes', 'Tours', 'Attachments_local', 'RouteCalculationRequest', 'PlaceSearchCache']) {
     result[name] = await tx.run(SELECT.from(`hwb.db.${name}`).where({ createdBy: id }));
   }
@@ -46,8 +47,12 @@ async function eraseMyData(tx, id, externalIdentity = true) {
   await tx.run(SELECT.one.from('hwb.db.ExternalUsers').where({ ID: id }).forUpdate());
   const existing = await tx.run(SELECT.one.from('hwb.db.AccountDeletions')
     .where({ subjectHash: subjectHash(id) }));
+  const link = externalIdentity ? await tx.run(SELECT.one.from('hwb.db.AuthIdentities').where({ internalId: id })) : null;
+  const provider = link || id.startsWith('supabase|') ? 'supabase' : 'auth0';
+  const providerSubject = link?.subject || (provider === 'supabase' ? id.slice(9) : id);
+  if (link) await tx.run(UPDATE('hwb.db.AuthIdentities').set({ revokedAt: new Date().toISOString() }).where({ subject: link.subject }));
   if (!existing) await tx.run(INSERT.into('hwb.db.AccountDeletions').entries({
-    subjectHash: subjectHash(id), pendingSubject: externalIdentity ? id : null,
+    subjectHash: subjectHash(id), pendingSubject: externalIdentity ? providerSubject : null, provider,
     requestedAt: new Date().toISOString(), completedAt: externalIdentity ? null : new Date().toISOString()
   }));
   const tours = await tx.run(SELECT.from('hwb.db.Tours').columns('ID').where({ createdBy: id }));
@@ -68,14 +73,14 @@ async function eraseMyData(tx, id, externalIdentity = true) {
   await tx.run(DELETE.from('hwb.db.ExternalUsers').where({ ID: id }));
 }
 
-function deletionConfigured() {
+function legacyDeletionConfigured() {
   return Boolean(process.env.AUTH0_ACCOUNT_DELETION_MODE === 'dedicated-tenant' &&
     process.env.ISSUER_BASE_URL?.startsWith('https://') &&
     process.env.AUTH0_MANAGEMENT_CLIENT_ID && process.env.AUTH0_MANAGEMENT_CLIENT_SECRET);
 }
 
 async function deleteAuth0Identity(id) {
-  if (!deletionConfigured()) throw new Error('Auth0 account deletion is not configured');
+  if (!legacyDeletionConfigured()) throw new Error('Auth0 account deletion is not configured');
   const issuer = new URL(process.env.ISSUER_BASE_URL).origin;
   const tokenResponse = await fetch(`${issuer}/oauth/token`, {
     method: 'POST', timeout: 15000, headers: { 'Content-Type': 'application/json' },
@@ -93,8 +98,28 @@ async function deleteAuth0Identity(id) {
   if (!response.ok && response.status !== 404) throw new Error(`Auth0 deletion failed (${response.status})`);
 }
 
+function deletionConfigured() {
+  try {
+    require('./supabase-auth').projectUrl();
+    return process.env.SUPABASE_ACCOUNT_DELETION_MODE === 'dedicated-project' &&
+      !!process.env.SUPABASE_SECRET_KEY;
+  } catch { return false; }
+}
+async function deleteSupabaseIdentity(id) {
+  if (!deletionConfigured() || !require('./supabase-auth').UUID.test(id)) throw new Error('Supabase deletion not configured');
+  // Hard delete removes refresh sessions. Strict backend auth.sessions checks also reject existing JWTs.
+  const { error } = await require('./supabase-auth').adminClient().auth.admin.deleteUser(id, false);
+  if (error && error.status !== 404) throw new Error('Supabase deletion pending');
+}
+async function deleteProviderIdentity(id, provider) {
+  if (provider === 'supabase') return deleteSupabaseIdentity(id);
+  // Rows created before this migration have NULL provider and remain Auth0 jobs.
+  if (!provider || provider === 'auth0') return deleteAuth0Identity(id);
+  throw new Error('Unknown deletion provider');
+}
+
 let processing = false;
-async function processAccountDeletions(deleteIdentity = deleteAuth0Identity) {
+async function processAccountDeletions(deleteIdentity = deleteProviderIdentity) {
   if (processing) return { skipped: true, processed: 0, failed: 0, remaining: null };
   processing = true;
   try {
@@ -114,7 +139,7 @@ async function processAccountDeletions(deleteIdentity = deleteAuth0Identity) {
       try {
         await db.run(UPDATE('hwb.db.AccountDeletions')
           .set({ lastAttemptAt: new Date().toISOString() }).where({ subjectHash: entry.subjectHash }));
-        await deleteIdentity(entry.pendingSubject);
+        await deleteIdentity(entry.pendingSubject, entry.provider);
         await db.run(UPDATE('hwb.db.AccountDeletions').set({ pendingSubject: null,
           completedAt: new Date().toISOString() }).where({ subjectHash: entry.subjectHash }));
       } catch {
@@ -125,10 +150,15 @@ async function processAccountDeletions(deleteIdentity = deleteAuth0Identity) {
     }
     await db.run(DELETE.from('hwb.db.RouteCalculationRequest').where('createdAt <',
       new Date(Date.now() - 86400000).toISOString()));
-    // Accepted access tokens and OIDC sessions are limited to 24 hours.
+    // Supabase access token age is limited to one hour and sessions are checked online.
     // Keep replay protection 30 days AFTER completion; never expire pending jobs.
     await db.run(DELETE.from('hwb.db.AccountDeletions').where('completedAt <',
       new Date(Date.now() - 30 * 86400000).toISOString()));
+    const revoked = await db.run(SELECT.from('hwb.db.AuthIdentities').where('revokedAt <',
+      new Date(Date.now() - 30 * 86400000).toISOString()));
+    for (const link of revoked) {
+      if (!await isAccountDeleted(link.internalId)) await db.run(DELETE.from('hwb.db.AuthIdentities').where({ subject: link.subject }));
+    }
     const remaining = await db.run(SELECT.one.from('hwb.db.AccountDeletions')
       .columns('count(*) as total').where('pendingSubject is not null'));
     return { processed: pending.length - failed, failed, remaining: Number(remaining?.total || 0) };
@@ -137,7 +167,12 @@ async function processAccountDeletions(deleteIdentity = deleteAuth0Identity) {
 
 function registerAccountPrivacy(service) {
   service.before('*', async req => {
-    if (req.user?.id && await isAccountDeleted(req.user.id)) req.reject(401, 'Dieses Konto wurde gelöscht.');
+    if (!req.user?.id) return;
+    const tx = cds.tx(req);
+    // Serialize writes with deletion so a pre-authenticated in-flight write cannot recreate orphaned data.
+    if (req.event !== 'READ') await tx.run(cds.ql.SELECT.one.from('hwb.db.ExternalUsers').where({ ID: req.user.id }).forUpdate());
+    const deleted = await tx.run(cds.ql.SELECT.one.from('hwb.db.AccountDeletions').where({ subjectHash: subjectHash(req.user.id) }));
+    if (deleted) req.reject(401, 'Dieses Konto wurde gelöscht.');
   });
   service.on('exportMyData', async req => JSON.stringify(await collectMyData(cds.tx(req), req.user.id)));
   service.on('deleteMyAccount', async req => {
@@ -165,4 +200,4 @@ function startAccountDeletionWorker() {
   interval.unref();
 }
 module.exports = { subjectHash, isAccountDeleted, collectMyData, eraseMyData,
-  deletionConfigured, deleteAuth0Identity, processAccountDeletions, registerAccountPrivacy, startAccountDeletionWorker };
+  deletionConfigured, legacyDeletionConfigured, deleteAuth0Identity, deleteSupabaseIdentity, deleteProviderIdentity, processAccountDeletions, registerAccountPrivacy, startAccountDeletionWorker };

@@ -1,3 +1,4 @@
+import { registerOfflineCache } from '@/lib/offline-cache-registry';
 import type { Stampbox } from '@/lib/api';
 
 export type OfflineVisit = {
@@ -19,7 +20,9 @@ export class OfflineVisitQueue {
   private writes: Promise<unknown> = Promise.resolve();
   private listeners = new Set<() => void>();
 
-  constructor(private storage: Storage, private key: string) {}
+  constructor(private storage: Storage, private key: string) { registerOfflineCache(this); }
+
+  clear() { return this.serialize(() => this.save([])); }
 
   subscribe(listener: () => void) {
     this.listeners.add(listener);

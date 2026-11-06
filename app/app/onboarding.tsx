@@ -146,8 +146,6 @@ export default function OnboardingScreen() {
     hasCompletedOnboarding,
     isOffline,
     isAuthenticated,
-    login,
-    signup,
     completeOnboarding,
     isLoading,
     logout,
@@ -682,8 +680,8 @@ export default function OnboardingScreen() {
                 <Text style={styles.cardTitle}>Deine Stempel bekommen ein Zuhause.</Text>
                 <Text style={styles.cardCopy}>Melde dich an, um deine Wandererfolge zu speichern.</Text>
                 <ActionButton disabled={!!configError || isLoading} label={isLoading ? 'Wird vorbereitet…' : 'Anmelden'}
-                  onPress={() => appConfig.authMode === 'basic' ? router.push('/login') : void login()} variant="primary" />
-                {appConfig.authMode !== 'basic' ? <ActionButton disabled={!!configError || isLoading} label="Konto erstellen" onPress={signup} /> : null}
+                  onPress={() => router.push('/login')} variant="primary" />
+                {appConfig.authMode !== 'basic' ? <ActionButton disabled={!!configError || isLoading} label="Konto erstellen" onPress={() => router.push('/login')} /> : null}
               </View> : null}
               {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
             </> : null}

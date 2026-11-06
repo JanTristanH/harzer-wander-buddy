@@ -93,17 +93,13 @@
       "reactCompiler": true
     },
     "extra": {
-      "auth0Domain": "dev-ijucl08spdudaszc.us.auth0.com",
-      "auth0ClientId": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh",
-      "auth0ClientIdNative": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh",
-      "auth0ClientIdWeb": "yfhEmRby71tcIEgrwCpqN6SH6o5ue4Ow",
-      "auth0Audience": "https://app.harzer-wander-buddy.de/api/v2/",
-      "auth0Scope": "openid profile email offline_access",
-      "auth0LogoutReturnPath": "auth/logout",
       "router": {},
       "eas": {
         "projectId": "1511f3e0-0255-4c5b-97a4-43e285483bc2"
-      }
+      },
+      "supabaseUrl": "",
+      "supabasePublishableKey": "",
+      "supabaseOAuthProviders": ""
     },
     "runtimeVersion": {
       "policy": "fingerprint"

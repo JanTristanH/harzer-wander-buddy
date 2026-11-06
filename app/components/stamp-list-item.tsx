@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 import { GroupStampStatus, getGroupStampStatus } from '@/components/group-stamp-status';
 import { UncollectedStampArtwork } from '@/components/uncollected-stamp-artwork';
@@ -11,8 +11,8 @@ import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 
 // Safari owns long presses unless text selection and its native callout are disabled.
-const webCardInteractionStyle = Platform.OS === 'web' ? {
-  userSelect: 'none' as const, WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
+const webCardInteractionStyle: (ViewStyle & { userSelect: string; WebkitUserSelect: string; WebkitTouchCallout: string }) | undefined = Platform.OS === 'web' ? {
+  userSelect: 'none' as const, WebkitUserSelect: 'none' as const, WebkitTouchCallout: 'none' as const,
 } : undefined;
 const webCardInteractionProps = Platform.OS === 'web' ? {
   onContextMenu: (event: { preventDefault: () => void }) => event.preventDefault(),

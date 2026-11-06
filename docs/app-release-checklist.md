@@ -1,5 +1,13 @@
 # App-Draft-PR: Einrichtung und Abnahmetests
 
+> Stand dieses Implementierungsbranches: Supabase Auth ist im Code umgesetzt,
+> reale Dashboard-/SMTP-/Staging-Abnahme bleibt offen. Die folgenden Abschnitte
+> dokumentieren auch den vorherigen PR-63-Vorbereitungsstand. Aktuelle Architektur,
+> Migration, Rollback und konkrete Betreiberaufgaben: [Auth-Runbook](supabase-auth-migration.md).
+> SUPABASE_AUTH_MIGRATION bleibt bis zur echten Abnahme fest gesperrt;
+> LEGAL_TRANSFER_DETAILS und die Mailanbieter-Vertragszuordnung bleiben erforderlich.
+
+
 Stand: 6. November 2026. Diese Liste gilt ausschließlich für App und Backend. Website-PR und Website-Verträge sind davon getrennt. Die Implementierung ist vorbereitet; produktive Anbieter-/Cloud-Einstellungen und Store-Einreichungen wurden nicht vorgenommen. Offene Punkte bleiben bis zum tatsächlichen Nachweis offen.
 
 ## Aktuelle Entscheidung: Supabase Auth im separaten PR

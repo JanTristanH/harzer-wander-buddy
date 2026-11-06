@@ -3,7 +3,7 @@
 Die öffentliche Website baut dieselbe Expo-App mit statischem Datenprofil:
 [Buildprofil und Datenadapter](../docs/public-stamp-catalogue.md).
 
-This is the React Native app for Harzer Wanderbuddy. Basic development uses a separate Expo Web server; Auth0 web development is served by CAP; see [Local web development and Auth0](#local-web-development-and-auth0).
+This is the React Native app for Harzer Wanderbuddy. Basic development uses a separate Expo Web server; Supabase Auth web development is served by CAP; see [Local web development and Supabase Auth](#local-web-development-and-supabase-auth).
 
 ## Local development profiles
 
@@ -16,7 +16,7 @@ overwritten. Visits and profile edits remain local and keep the Git checkout cle
 From the repository root:
 
 ```bash
-# Terminal 1: CAP, SQLite and local test users; no Auth0 configuration needed
+# Terminal 1: CAP, SQLite and local test users; no Supabase Auth configuration needed
 npm run watch:basic --prefix backend/hwb
 
 # Terminal 2: Expo Web with hot reload
@@ -27,7 +27,7 @@ Open `http://localhost:8081/login`. Enter the test credentials documented in `..
 The app sends HTTP Basic credentials to CAP at `http://localhost:4004` and creates the
 local user profile on first login. In the browser, credentials stay in memory: logout
 or a page reload requires a new login. Local accounts are configured under `[dev-basic]` in CAP's
-`package.json`; registration and Auth0 are not used in this mode.
+`package.json`; registration and Supabase Auth are not used in this mode.
 
 Onboarding is controlled by the user's `onboardingCompleted` field in CAP's
 `ExternalUsers` table, not by the authentication method. A new user starts with
@@ -49,7 +49,7 @@ For native Basic development, use `npm run start:basic`. On a physical device, o
 `EXPO_PUBLIC_BACKEND_URL` with the CAP host's LAN address instead of localhost; start
 Expo with `EXPO_PUBLIC_AUTH_MODE=basic EXPO_PUBLIC_BACKEND_URL=http://<host>:4004 npx expo start`.
 
-### SSO: Auth0 and CAP-served web export
+### SSO: Supabase Auth and CAP-served web export
 
 ```bash
 ./scripts/build-and-copy-rnweb.sh
@@ -60,7 +60,7 @@ Open `http://localhost:4004/app/rnweb`. SSO web login continues to use the regis
 CAP callbacks below. The build script explicitly selects SSO and keeps the CAP mount
 path even after a Basic Expo session. Run the script after changes to `app/` and reload
 the browser. `npm run web:basic` is the separate Expo Web workflow; it does not require
-Auth0 callback changes.
+Supabase Auth callback changes.
 
 ## Get started
 
@@ -87,7 +87,7 @@ Auth0 callback changes.
    npx expo start
    ```
 
-Use this Expo server for iOS/Android development. Do not press `w` or add `--web` for local Auth0 login; use the CAP-served web workflow below.
+Use this Expo server for iOS/Android development. Do not press `w` or add `--web` for local Supabase Auth login; use the CAP-served web workflow below.
 
 You can open the native app in a
 
@@ -140,9 +140,10 @@ Join our community of developers creating universal apps.
 In particular:
 
 - local development: `EXPO_PUBLIC_BACKEND_URL=http://localhost:4004`
-- preview and production builds: `EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de`
+- preview: explicit isolated staging HTTPS backend via the EAS `preview` environment
+- production: `EXPO_PUBLIC_BACKEND_URL=https://app.harzer-wander-buddy.de`
 
-The EAS profiles define both values in `eas.json`. The root `Dockerfile` defaults
+Production defines the backend in `eas.json`; preview reads isolated backend and Supabase values from its named EAS environment. Preview rejects the production backend. The root `Dockerfile` defaults
 to the production backend so Google's existing container trigger can build without
 arguments. Set the `EXPO_PUBLIC_BACKEND_URL` build argument to override it for
 another environment. GitHub Actions validates the Docker build without publishing
@@ -151,21 +152,15 @@ an image; Google continues to build and deploy from `main`.
 Android emulators automatically map the local hostname to `10.0.2.2`. A physical
 device needs an explicit LAN URL or HTTPS tunnel via `EXPO_PUBLIC_BACKEND_URL`.
 
-The remaining public Auth0 configuration is stored in `app.json`:
+Supabase Auth uses `EXPO_PUBLIC_SUPABASE_URL` and
+`EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; see `sample.env`. Never include a server
+secret in Expo configuration. The full setup, callbacks, identity mapping,
+SMTP requirements and acceptance checklist are in
+[the migration runbook](../docs/supabase-auth-migration.md).
 
-```
-      "auth0Domain": "dev-ijucl08spdudaszc.us.auth0.com",
-      "auth0ClientId": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh", => legacy fallback
-      "auth0ClientIdNative": "Pf0WY4b3Q2yu6CllOGaZC4RIlolcd4xh", => needs to be a native app
-      "auth0ClientIdWeb": "YOUR_WEB_CLIENT_ID", => needs to be a SPA app
-      "auth0Audience": "https://app.harzer-wander-buddy.de/api/v2/",
-      "auth0Scope": "openid profile email offline_access",
-      "auth0LogoutReturnPath": "auth/logout",
-```
+### Local web development and Supabase Auth
 
-### Local web development and Auth0
-
-For web login, serve the static Expo export through CAP. Do not use `npx expo start --web` for this flow: Auth0's local callback is registered for the CAP URL, not Expo's development-server URL. Follow the [CAP React Native Web instructions](../backend/hwb/README.md#react-native-web-via-cap).
+Serve the exported web app through CAP and allowlist its exact callback URL.
 
 After editing files under `app/`, rebuild and copy the web export again:
 
@@ -211,7 +206,7 @@ For `eas build --local`, EAS cannot read variables with `secret` visibility. Exp
 eas build --platform android --profile preview
 ```
 
-npx eas update --channel preview --platform android --message "Message"
+npx eas update --channel preview --environment preview --platform android --message "Message"
 
 ## OTA-Pipeline mit GitHub Actions
 
@@ -247,11 +242,11 @@ Lege den Backend-Endpunkt in der EAS-Umgebung `preview` an, falls er dort fehlt:
 ```bash
 npx eas-cli@latest env:create --environment preview \
   --name EXPO_PUBLIC_BACKEND_URL \
-  --value https://app.harzer-wander-buddy.de --visibility plaintext
+  --value https://YOUR-STAGING-BACKEND.example --visibility plaintext
 ```
 
 Für eine bereits vorhandene Variable verwende `env:update` statt `env:create`.
-Weitere öffentliche Konfigurationswerte, etwa Auth0-Overrides oder der Google
+Weitere öffentliche Konfigurationswerte, etwa Supabase Auth-Overrides oder der Google
 Maps Key, müssen zum installierten Build passen. Für OTA benötigte Variablen
 brauchen `plaintext` oder `sensitive` Sichtbarkeit; EAS-Variablen mit `secret`
 Sichtbarkeit können auf dem GitHub-Runner nicht geladen werden.

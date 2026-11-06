@@ -1,5 +1,13 @@
 # Öffentliche Anbieterbedingungen für die Free-Nutzung
 
+> Stand dieses Implementierungsbranches: Supabase Auth ist im Code umgesetzt,
+> reale Dashboard-/SMTP-/Staging-Abnahme bleibt offen. Die folgenden Abschnitte
+> dokumentieren auch den vorherigen PR-63-Vorbereitungsstand. Aktuelle Architektur,
+> Migration, Rollback und konkrete Betreiberaufgaben: [Auth-Runbook](supabase-auth-migration.md).
+> SUPABASE_AUTH_MIGRATION bleibt bis zur echten Abnahme fest gesperrt;
+> LEGAL_TRANSFER_DETAILS und die Mailanbieter-Vertragszuordnung bleiben erforderlich.
+
+
 Aktualisierung: **6. November 2026**; öffentliche Supabase-Unterlagen erneut geprüft. Grundrecherche: **30. Oktober 2026**. Grundrecherche: PR 63, `06e3ff7`; vertiefter Codeabgleich: `e8c4149`. Der Betreiber hat am 30. Oktober die Nutzung der Free-Tarife bestätigt. Die zuvor bestätigten Betriebsorte bleiben Grundlage: Auth0 US-4, Supabase eu-west-2/London, Cloud Run europe-west1/Belgien. Kontodashboards, individuell angenommene Vertragsversionen und Rechnungs-/Billing-Einstellungen wurden nicht eingesehen.
 
 Die öffentliche Recherche und der Abgleich mit dem Quellcode sind erledigt. Diese Dokumentation ersetzt die bisherige pauschale Aufgabe „Anbieterverträge suchen“. Sie unterscheidet **veröffentlichte Standardbedingungen**, **deren Anwendung auf die Nutzung im Projekt** und **verbleibende individuelle Nachweise**. Es wurden durch diesen Agenten keine Verträge angenommen oder unterzeichnet und keine Anbieter kontaktiert. Der Betreiber hat inzwischen eine Antwort des Okta Privacy Teams eingeholt; siehe Entscheidung unten.

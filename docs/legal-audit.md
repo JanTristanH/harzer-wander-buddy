@@ -1,5 +1,13 @@
 # EU Anforderungen und App Store Prüfung
 
+> Stand dieses Implementierungsbranches: Supabase Auth ist im Code umgesetzt,
+> reale Dashboard-/SMTP-/Staging-Abnahme bleibt offen. Die folgenden Abschnitte
+> dokumentieren auch den vorherigen PR-63-Vorbereitungsstand. Aktuelle Architektur,
+> Migration, Rollback und konkrete Betreiberaufgaben: [Auth-Runbook](supabase-auth-migration.md).
+> SUPABASE_AUTH_MIGRATION bleibt bis zur echten Abnahme fest gesperrt;
+> LEGAL_TRANSFER_DETAILS und die Mailanbieter-Vertragszuordnung bleiben erforderlich.
+
+
 Stand: 6. November 2026. Die abhakbare Betreiber-Anleitung mit konkreten Einrichtungsschritten und Abnahmetests steht in [app-release-checklist.md](app-release-checklist.md). Anbieter, Regionen und aktuelle Aufbewahrungsfristen sind bestätigt und ergänzt. Die technischen Lücken bei Kontolöschung, Datenexport, Rechtstextzugang, Berechtigungen und Nutzerinhalten sind im Quellcode bearbeitet. Eine Veröffentlichung benötigt zusätzlich den separaten Supabase-Auth-Migrations-PR, die bestätigte Betriebskonfiguration und Store-Einstellungen. Die Datenschutztexte bleiben ausdrücklich ein Entwurf, solange diese Angaben fehlen. Diese Prüfung ersetzt keine verbindliche rechtliche Bewertung des konkreten Betriebs.
 
 ## Entscheidung vom 6. November 2026

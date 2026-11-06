@@ -189,6 +189,7 @@ entity PendingFriendshipRequests : cuid {
 entity AccountDeletions {
     key subjectHash : String(64);
     pendingSubject  : String(255);
+    provider : String(20);
     requestedAt     : Timestamp;
     lastAttemptAt   : Timestamp;
     completedAt     : Timestamp;
@@ -203,4 +204,14 @@ entity ContentReports : cuid, managed {
     targetUser : User;
     reason     : String(2000);
     status     : String(20) default 'open';
+}
+
+// Private CAP-only identity mapping. Never grant Data API access.
+@assert.unique.internalIdentity: [internalId]
+entity AuthIdentities {
+    key subject : String(36);
+    internalId  : String(255) not null;
+    proofReference : String(500) not null;
+    linkedAt : Timestamp;
+    revokedAt : Timestamp;
 }

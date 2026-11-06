@@ -34,7 +34,7 @@ test('framing protection covers static files, SPA fallback, CAP and errors', asy
     }
     // Release web assets are optional in a source-only checkout; error responses
     // must retain X-Frame-Options too (Express owns the CSP on error pages).
-    if (!path.startsWith('/app/rnweb/') && path !== '/does-not-exist.html') {
+    if (!path.startsWith('/app/rnweb/') && !path.startsWith('/app/frontendhwb/') && path !== '/does-not-exist.html') {
       assert.equal(response.status, 200, path);
     }
     await response.arrayBuffer();

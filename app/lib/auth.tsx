@@ -1,75 +1,24 @@
+import type { Provider, Session } from '@supabase/supabase-js';
 import * as AuthSession from 'expo-auth-session';
 import Constants from 'expo-constants';
-import * as SecureStore from 'expo-secure-store';
+import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
-import { jwtDecode } from 'jwt-decode';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, type AppStateStatus, Platform } from 'react-native';
-
-import { extractRolesFromClaims, hasAdminRole } from '@/lib/admin-access';
-import {
-  fetchCurrentUserProfile,
-  updateCurrentUserOnboardingCompleted,
-  type CurrentUserProfileData,
-} from '@/lib/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { AppState, Platform } from 'react-native';
+import { hasAdminRole } from '@/lib/admin-access';
+import { fetchCurrentUserProfile, updateCurrentUserOnboardingCompleted, type CurrentUserProfileData } from '@/lib/api';
 import { clearBasicAuthSession, loadBasicAuthSession, saveBasicAuthSession } from '@/lib/basic-auth-session';
-import { appConfig, getAuth0ClientIdForPlatform, getMissingConfig } from '@/lib/config';
+import { appConfig, getMissingConfig } from '@/lib/config';
 import { useConnectivity } from '@/lib/connectivity';
 import { clearPersistedQueryCache } from '@/lib/query-persistence';
 import { queryClient } from '@/lib/query-client';
 import { isStaticWebsite, openLiveAppLogin } from '@/lib/static-website';
-
-if (typeof WebBrowser.maybeCompleteAuthSession === 'function') {
-  WebBrowser.maybeCompleteAuthSession();
-}
-
-const TOKEN_STORAGE_KEY = 'hwb-auth-token-response';
-const TOKEN_METADATA_STORAGE_KEY = 'hwb-auth-token-response-metadata';
-const TOKEN_ACCESS_TOKEN_STORAGE_KEY = 'hwb-auth-token-response-access-token';
-const TOKEN_ID_TOKEN_STORAGE_KEY = 'hwb-auth-token-response-id-token';
-const TOKEN_REFRESH_TOKEN_STORAGE_KEY = 'hwb-auth-token-response-refresh-token';
-const ONBOARDING_STORAGE_KEY = 'hwb-auth-onboarding-complete';
-const ONBOARDING_STORAGE_KEY_PREFIX = 'hwb-auth-onboarding-complete-user';
-const WEB_AUTH_PENDING_KEY = 'hwb-auth-pending-web-request';
-const CURRENT_USER_PROFILE_QUERY_KEY_PREFIX = 'current-user-profile';
-const inMemoryStorage = new Map<string, string>();
-const AUTH_DEBUG_ENABLED = false;
-
-type AuthState = {
-  accessToken: string;
-  idToken?: string;
-  refreshToken?: string;
-  issuedAt?: number;
-  expiresIn?: number;
-};
-
-type StoredTokenState = {
-  accessToken: string;
-  tokenType?: AuthSession.TokenType;
-  scope?: string;
-  idToken?: string;
-  refreshToken?: string;
-  issuedAt?: number;
-  expiresIn?: number;
-};
-
-type StoredTokenMetadata = Omit<StoredTokenState, 'accessToken' | 'idToken' | 'refreshToken'> & {
-  storageVersion: 2;
-};
-
+import { authStorage, clearLegacyAuthStorage } from '@/lib/auth-storage';
+import { clearOfflineCaches } from '@/lib/offline-cache-registry';
+import { getSupabase, supabaseStorageKey } from '@/lib/supabase';
+if (typeof WebBrowser.maybeCompleteAuthSession === 'function') WebBrowser.maybeCompleteAuthSession();
 type SessionMode = 'online' | 'offline_grace';
-
-type ResolveValidTokenResponseResult = {
-  tokenResponse: AuthSession.TokenResponse | null;
-  sessionMode: SessionMode;
-};
-
-type PendingWebAuthState = {
-  codeVerifier: string;
-  redirectUri: string;
-  state: string;
-};
-
 type AuthContextValue = {
   accessToken: string | null;
   idToken: string | null;
@@ -86,7 +35,12 @@ type AuthContextValue = {
   authError: string | null;
   configError: string | null;
   login: (username?: string, password?: string) => Promise<void>;
-  signup: () => Promise<void>;
+  signup: (email?: string, password?: string) => Promise<void>;
+  resetPassword?: (email: string) => Promise<void>;
+  updatePassword?: (password: string) => Promise<void>;
+  loginWithProvider?: (provider: string) => Promise<void>;
+  authNotice?: string | null;
+  passwordRecovery?: boolean;
   completeWebRedirectAuth: () => Promise<boolean>;
   getValidAccessToken: () => Promise<string | null>;
   completeOnboarding: () => Promise<void>;
@@ -98,454 +52,6 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-function getIssuer() {
-  const domain = appConfig.auth0Domain.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return `https://${domain}`;
-}
-
-function normalizePath(path?: string | null) {
-  if (typeof path !== 'string') {
-    return 'auth/logout';
-  }
-
-  const normalizedPath = path.trim();
-  return normalizedPath.length > 0 ? normalizedPath : 'auth/logout';
-}
-
-function getWebBasePath() {
-  const configuredBasePath = (
-    Constants.expoConfig as
-      | {
-          experiments?: {
-            baseUrl?: string;
-          };
-        }
-      | undefined
-  )?.experiments?.baseUrl;
-
-  if (typeof configuredBasePath !== 'string') {
-    return '';
-  }
-
-  const trimmed = configuredBasePath.trim();
-  if (!trimmed) {
-    return '';
-  }
-
-  return `/${trimmed.replace(/^\/+|\/+$/g, '')}`;
-}
-
-function joinUrlPath(basePath: string, path: string) {
-  const normalizedPath = path.replace(/^\/+/, '');
-
-  if (!basePath) {
-    return `/${normalizedPath}`;
-  }
-
-  return `${basePath}/${normalizedPath}`;
-}
-
-function getRedirectUri(path?: string | null) {
-  const configScheme = Constants.expoConfig?.scheme;
-  const scheme = Array.isArray(configScheme) ? configScheme[0] : configScheme;
-
-  if (Platform.OS === 'web') {
-    const webPath = joinUrlPath(getWebBasePath(), normalizePath(path));
-    const origin = globalThis.location?.origin;
-    if (typeof origin === 'string' && origin.length > 0) {
-      return `${origin}${webPath}`;
-    }
-
-    return AuthSession.makeRedirectUri({
-      path: webPath.replace(/^\//, ''),
-    });
-  }
-
-  return AuthSession.makeRedirectUri({
-    scheme: scheme ?? 'harzerwanderbuddyapp',
-    path: normalizePath(path),
-  });
-}
-
-function decodeJwt<T>(token: string | undefined): T | null {
-  if (!token) {
-    return null;
-  }
-
-  try {
-    return jwtDecode<T>(token);
-  } catch {
-    return null;
-  }
-}
-
-function hasSecureStoreApi() {
-  return (
-    typeof SecureStore.getItemAsync === 'function' &&
-    typeof SecureStore.setItemAsync === 'function' &&
-    typeof SecureStore.deleteItemAsync === 'function'
-  );
-}
-
-function getLocalStorageOrNull() {
-  if (typeof globalThis === 'undefined' || !('localStorage' in globalThis)) {
-    return null;
-  }
-
-  try {
-    return globalThis.localStorage;
-  } catch {
-    return null;
-  }
-}
-
-function getWebStorageOrNull() {
-  const storage = getLocalStorageOrNull();
-  if (!storage) {
-    return null;
-  }
-
-  try {
-    const probeKey = '__hwb_storage_probe__';
-    storage.setItem(probeKey, '1');
-    storage.removeItem(probeKey);
-    return storage;
-  } catch {
-    return null;
-  }
-}
-
-function shouldUseWebRedirectAuth() {
-  if (Platform.OS !== 'web' || typeof globalThis.navigator?.userAgent !== 'string') {
-    return false;
-  }
-
-  return /android|iphone|ipad|ipod|mobile/i.test(globalThis.navigator.userAgent);
-}
-
-async function setStoredValue(key: string, value: string) {
-  if (Platform.OS !== 'web' && hasSecureStoreApi()) {
-    try {
-      await SecureStore.setItemAsync(key, value);
-      return;
-    } catch (error) {
-      console.warn('Failed to write to SecureStore. Falling back to web/in-memory storage.', error);
-    }
-  }
-
-  const webStorage = getWebStorageOrNull();
-  if (webStorage) {
-    webStorage.setItem(key, value);
-    return;
-  }
-
-  inMemoryStorage.set(key, value);
-}
-
-async function getStoredValue(key: string) {
-  if (Platform.OS !== 'web' && hasSecureStoreApi()) {
-    try {
-      return await SecureStore.getItemAsync(key);
-    } catch (error) {
-      console.warn('Failed to read from SecureStore. Falling back to web/in-memory storage.', error);
-    }
-  }
-
-  const webStorage = getWebStorageOrNull();
-  if (webStorage) {
-    return webStorage.getItem(key);
-  }
-
-  return inMemoryStorage.get(key) ?? null;
-}
-
-async function deleteStoredValue(key: string) {
-  if (Platform.OS !== 'web' && hasSecureStoreApi()) {
-    try {
-      await SecureStore.deleteItemAsync(key);
-      return;
-    } catch (error) {
-      console.warn('Failed to delete from SecureStore. Falling back to web/in-memory storage.', error);
-    }
-  }
-
-  const webStorage = getWebStorageOrNull();
-  if (webStorage) {
-    webStorage.removeItem(key);
-    return;
-  }
-
-  inMemoryStorage.delete(key);
-}
-
-async function setOptionalStoredValue(key: string, value: string | undefined) {
-  if (value) {
-    await setStoredValue(key, value);
-    return;
-  }
-
-  await deleteStoredValue(key);
-}
-
-function toTokenResponse(storedToken: StoredTokenState) {
-  return new AuthSession.TokenResponse({
-    accessToken: storedToken.accessToken,
-    tokenType: storedToken.tokenType,
-    scope: storedToken.scope,
-    idToken: storedToken.idToken,
-    refreshToken: storedToken.refreshToken,
-    issuedAt: storedToken.issuedAt,
-    expiresIn: storedToken.expiresIn,
-  });
-}
-
-async function saveTokenResponse(tokenResponse: AuthSession.TokenResponse) {
-  const metadata: StoredTokenMetadata = {
-    storageVersion: 2,
-    tokenType: tokenResponse.tokenType,
-    scope: tokenResponse.scope,
-    issuedAt: tokenResponse.issuedAt,
-    expiresIn: tokenResponse.expiresIn,
-  };
-
-  await Promise.all([
-    setStoredValue(TOKEN_METADATA_STORAGE_KEY, JSON.stringify(metadata)),
-    setOptionalStoredValue(TOKEN_ACCESS_TOKEN_STORAGE_KEY, tokenResponse.accessToken),
-    setOptionalStoredValue(TOKEN_ID_TOKEN_STORAGE_KEY, tokenResponse.idToken),
-    setOptionalStoredValue(TOKEN_REFRESH_TOKEN_STORAGE_KEY, tokenResponse.refreshToken),
-    deleteStoredValue(TOKEN_STORAGE_KEY),
-  ]);
-}
-
-async function loadTokenResponse() {
-  const [metadataValue, accessToken, idToken, refreshToken] = await Promise.all([
-    getStoredValue(TOKEN_METADATA_STORAGE_KEY),
-    getStoredValue(TOKEN_ACCESS_TOKEN_STORAGE_KEY),
-    getStoredValue(TOKEN_ID_TOKEN_STORAGE_KEY),
-    getStoredValue(TOKEN_REFRESH_TOKEN_STORAGE_KEY),
-  ]);
-
-  if (metadataValue || accessToken || idToken || refreshToken) {
-    try {
-      if (!metadataValue || (!accessToken && !refreshToken)) {
-        throw new Error('Incomplete token storage state.');
-      }
-
-      const metadata = JSON.parse(metadataValue) as StoredTokenMetadata;
-      return toTokenResponse({
-        accessToken: accessToken ?? '',
-        tokenType: metadata.tokenType,
-        scope: metadata.scope,
-        idToken: idToken ?? undefined,
-        refreshToken: refreshToken ?? undefined,
-        issuedAt: accessToken ? metadata.issuedAt : 0,
-        expiresIn: accessToken ? metadata.expiresIn : 1,
-      });
-    } catch (error) {
-      console.warn('Failed to parse split token response. Clearing persisted token state.', error);
-      await clearTokenResponse();
-      return null;
-    }
-  }
-
-  const storedValue = await getStoredValue(TOKEN_STORAGE_KEY);
-  if (!storedValue) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(storedValue) as StoredTokenState;
-    const tokenResponse = toTokenResponse(parsed);
-    await saveTokenResponse(tokenResponse);
-    return tokenResponse;
-  } catch (error) {
-    console.warn('Failed to parse stored token response. Clearing persisted token state.', error);
-    await clearTokenResponse();
-    return null;
-  }
-}
-
-async function clearTokenResponse() {
-  await Promise.all([
-    deleteStoredValue(TOKEN_STORAGE_KEY),
-    deleteStoredValue(TOKEN_METADATA_STORAGE_KEY),
-    deleteStoredValue(TOKEN_ACCESS_TOKEN_STORAGE_KEY),
-    deleteStoredValue(TOKEN_ID_TOKEN_STORAGE_KEY),
-    deleteStoredValue(TOKEN_REFRESH_TOKEN_STORAGE_KEY),
-  ]);
-}
-
-function parseStoredOnboardingState(storedValue: string | null) {
-  if (storedValue === 'true') {
-    return true;
-  }
-
-  if (storedValue === 'false') {
-    return false;
-  }
-
-  return null;
-}
-
-function getOnboardingStorageKeyForUser(userId: string) {
-  return `${ONBOARDING_STORAGE_KEY_PREFIX}:${encodeURIComponent(userId)}`;
-}
-
-async function saveOnboardingState(hasCompletedOnboarding: boolean, userId?: string | null) {
-  const storageKey = userId ? getOnboardingStorageKeyForUser(userId) : ONBOARDING_STORAGE_KEY;
-  await setStoredValue(storageKey, hasCompletedOnboarding ? 'true' : 'false');
-}
-
-async function loadOnboardingState(userId?: string | null) {
-  if (userId) {
-    const userStoredValue = await getStoredValue(getOnboardingStorageKeyForUser(userId));
-    const userState = parseStoredOnboardingState(userStoredValue);
-    if (userState !== null) {
-      return userState;
-    }
-  }
-
-  return parseStoredOnboardingState(await getStoredValue(ONBOARDING_STORAGE_KEY));
-}
-
-function getTokenSubject(accessToken: string | null) {
-  if (!accessToken) {
-    return null;
-  }
-
-  return decodeJwt<{ sub?: string }>(accessToken)?.sub ?? null;
-}
-
-function isMissingCurrentUserProfile(error: unknown) {
-  return (
-    error instanceof Error &&
-    /not found/i.test(error.message) &&
-    /Users/i.test(error.message)
-  );
-}
-
-function getCurrentUserProfileQueryKey(accessToken: string) {
-  const claims = decodeJwt<{ sub?: string }>(accessToken);
-  return [CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, claims?.sub ?? accessToken.slice(-16)] as const;
-}
-
-async function loadInitialOnboardingState(accessToken: string | null) {
-  if (!accessToken) {
-    return (await loadOnboardingState()) ?? false;
-  }
-
-  const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(
-    getCurrentUserProfileQueryKey(accessToken)
-  );
-  if (typeof cachedProfile?.onboardingCompleted === 'boolean') {
-    return cachedProfile.onboardingCompleted;
-  }
-
-  const storedAccountState = await loadOnboardingState(getTokenSubject(accessToken));
-  return storedAccountState ?? true;
-}
-
-function toAuthState(tokenResponse: AuthSession.TokenResponse): AuthState {
-  return {
-    accessToken: tokenResponse.accessToken,
-    idToken: tokenResponse.idToken,
-    refreshToken: tokenResponse.refreshToken,
-    issuedAt: tokenResponse.issuedAt,
-    expiresIn: tokenResponse.expiresIn,
-  };
-}
-
-function logTokenResponseMetadata(event: string, tokenResponse: AuthSession.TokenResponse | null) {
-  if (!AUTH_DEBUG_ENABLED) {
-    return;
-  }
-
-  console.info(`[auth] ${event}`, {
-    hasAccessToken: Boolean(tokenResponse?.accessToken),
-    hasIdToken: Boolean(tokenResponse?.idToken),
-    hasRefreshToken: Boolean(tokenResponse?.refreshToken),
-    issuedAt: tokenResponse?.issuedAt ?? null,
-    expiresIn: tokenResponse?.expiresIn ?? null,
-    scope: tokenResponse?.scope ?? null,
-  });
-}
-
-function logAuthMetadata(event: string, metadata: Record<string, unknown>) {
-  if (!AUTH_DEBUG_ENABLED) {
-    return;
-  }
-
-  console.info(`[auth] ${event}`, metadata);
-}
-
-function isTokenFresh(tokenResponse: AuthSession.TokenResponse | null) {
-  return tokenResponse !== null && AuthSession.TokenResponse.isTokenFresh(tokenResponse);
-}
-
-function isUnauthorizedError(error: unknown) {
-  return error instanceof Error && error.name === 'UnauthorizedError';
-}
-
-function isInvalidGrantRefreshError(error: unknown) {
-  if (!error || typeof error !== 'object') {
-    return false;
-  }
-
-  const errorRecord = error as {
-    error?: unknown;
-    message?: unknown;
-    params?: {
-      error?: unknown;
-      error_description?: unknown;
-    };
-  };
-  const errorCode = typeof errorRecord.error === 'string' ? errorRecord.error : '';
-  const paramsErrorCode =
-    typeof errorRecord.params?.error === 'string' ? errorRecord.params.error : '';
-  const errorDescription =
-    typeof errorRecord.params?.error_description === 'string'
-      ? errorRecord.params.error_description
-      : '';
-  const message = typeof errorRecord.message === 'string' ? errorRecord.message : '';
-  const normalizedText = `${errorCode} ${paramsErrorCode} ${errorDescription} ${message}`.toLowerCase();
-
-  return normalizedText.includes('invalid_grant');
-}
-
-function mergeTokenResponse(
-  previousTokenResponse: AuthSession.TokenResponse,
-  nextTokenResponse: AuthSession.TokenResponse
-) {
-  return new AuthSession.TokenResponse({
-    accessToken: nextTokenResponse.accessToken,
-    tokenType: nextTokenResponse.tokenType ?? previousTokenResponse.tokenType,
-    scope: nextTokenResponse.scope ?? previousTokenResponse.scope,
-    idToken: nextTokenResponse.idToken ?? previousTokenResponse.idToken,
-    refreshToken: nextTokenResponse.refreshToken ?? previousTokenResponse.refreshToken,
-    issuedAt: nextTokenResponse.issuedAt ?? previousTokenResponse.issuedAt,
-    expiresIn: nextTokenResponse.expiresIn ?? previousTokenResponse.expiresIn,
-  });
-}
-
-function isNetworkRefreshError(error: unknown) {
-  if (error instanceof TypeError) {
-    return true;
-  }
-
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  const message = error.message.toLowerCase();
-  return (
-    message.includes('network') ||
-    message.includes('offline') ||
-    message.includes('timed out') ||
-    message.includes('fetch')
-  );
-}
-
 export function AuthProvider({ children }: React.PropsWithChildren) {
   if (isStaticWebsite) return <StaticWebsiteAuthProvider>{children}</StaticWebsiteAuthProvider>;
   return appConfig.authMode === 'basic'
@@ -619,6 +125,7 @@ function BasicAuthProvider({ children }: React.PropsWithChildren) {
     setAuthError(null);
     queryClient.clear();
     await clearBasicAuthSession();
+    await clearOfflineCaches();
     await clearPersistedQueryCache();
   }, []);
   const login = useCallback(async (username = '', password = '') => {
@@ -668,749 +175,201 @@ function BasicAuthProvider({ children }: React.PropsWithChildren) {
 
 function SsoAuthProvider({ children }: React.PropsWithChildren) {
   const { isOffline } = useConnectivity();
-  const [authState, setAuthState] = useState<AuthState | null>(null);
-  const [sessionMode, setSessionMode] = useState<SessionMode>('online');
-  const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfileData | null>(null);
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const refreshPromiseRef = useRef<Promise<ResolveValidTokenResponseResult> | null>(null);
-  const discoveryRef = useRef<AuthSession.DiscoveryDocument | null>(null);
-  const discoveryPromiseRef = useRef<Promise<AuthSession.DiscoveryDocument | null> | null>(null);
-
-  const missingConfig = getMissingConfig().filter(
-    (key) => key !== 'auth0LogoutReturnPath' && !(Platform.OS === 'web' && key === 'backendUrl')
-  );
-  const configError =
-    missingConfig.length > 0 ? `Missing Expo config: ${missingConfig.join(', ')}` : null;
-  const auth0ClientId = getAuth0ClientIdForPlatform();
-
-  const resolveDiscovery = useCallback(async () => {
-    if (configError) {
-      return null;
-    }
-
-    if (discoveryRef.current) {
-      return discoveryRef.current;
-    }
-
-    if (!discoveryPromiseRef.current) {
-      discoveryPromiseRef.current = AuthSession.fetchDiscoveryAsync(getIssuer())
-        .then((discovery) => {
-          discoveryRef.current = discovery;
-          return discovery;
-        })
-        .finally(() => {
-          discoveryPromiseRef.current = null;
-        });
-    }
-
-    return discoveryPromiseRef.current;
-  }, [configError]);
-
-  useEffect(() => {
-    if (configError || isOffline) {
-      discoveryRef.current = null;
-      discoveryPromiseRef.current = null;
-      return;
-    }
-
-    void resolveDiscovery().catch((error) => {
-      console.warn('Failed to preload Auth0 discovery document.', error);
-    });
-  }, [configError, isOffline, resolveDiscovery]);
-
-  const applyCurrentUserProfileState = useCallback(
-    (profile: CurrentUserProfileData | null, accessToken?: string | null) => {
-      if (!profile) {
-        setCurrentUserProfile(null);
-        return;
-      }
-
-      const existingProfile = queryClient.getQueryData<CurrentUserProfileData>([
-        CURRENT_USER_PROFILE_QUERY_KEY_PREFIX,
-        profile.id,
-      ]);
-      const resolvedProfile =
-        typeof profile.onboardingCompleted === 'boolean' ||
-        typeof existingProfile?.onboardingCompleted !== 'boolean'
-          ? profile
-          : {
-              ...profile,
-              onboardingCompleted: existingProfile.onboardingCompleted,
-            };
-
-      setCurrentUserProfile(resolvedProfile);
-      queryClient.setQueryData([CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, resolvedProfile.id], resolvedProfile);
-      if (accessToken) {
-        queryClient.setQueryData(getCurrentUserProfileQueryKey(accessToken), resolvedProfile);
-      }
-
-      if (typeof resolvedProfile.onboardingCompleted === 'boolean') {
-        setHasCompletedOnboarding(resolvedProfile.onboardingCompleted);
-        void saveOnboardingState(resolvedProfile.onboardingCompleted, resolvedProfile.id);
-      }
-    },
-    []
-  );
-
-  const preloadCurrentUserProfileForToken = useCallback(async (accessToken: string | null) => {
-    if (!accessToken) {
-      setCurrentUserProfile(null);
-      return null;
-    }
-
-    const queryKey = getCurrentUserProfileQueryKey(accessToken);
-    const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(queryKey);
-    if (cachedProfile) {
-      applyCurrentUserProfileState(cachedProfile, accessToken);
-      return cachedProfile;
-    }
-
-    try {
-      const profile = await queryClient.fetchQuery({
-        queryKey,
-        queryFn: () => fetchCurrentUserProfile(accessToken),
-        staleTime: Number.POSITIVE_INFINITY,
-        gcTime: 14 * 24 * 60 * 60 * 1000,
-      });
-      applyCurrentUserProfileState(profile, accessToken);
-      return profile;
-    } catch (error) {
-      if (error instanceof Error && error.name === 'UnauthorizedError') {
-        throw error;
-      }
-
-      if (isMissingCurrentUserProfile(error)) {
-        queryClient.removeQueries({ queryKey, exact: true });
-        setCurrentUserProfile(null);
-        setHasCompletedOnboarding(false);
-        await saveOnboardingState(false, getTokenSubject(accessToken));
-        return null;
-      }
-
-      throw error;
-    }
-  }, [applyCurrentUserProfileState]);
-
-  const preloadCurrentUserProfile = useCallback(async () => {
-    return preloadCurrentUserProfileForToken(authState?.accessToken ?? null);
-  }, [authState?.accessToken, preloadCurrentUserProfileForToken]);
-
-  const updateCurrentUserProfileState = useCallback(
-    (profile: CurrentUserProfileData | null) => {
-      applyCurrentUserProfileState(profile, authState?.accessToken ?? null);
-    },
-    [applyCurrentUserProfileState, authState?.accessToken]
-  );
-
-  const resolveValidTokenResponse = useCallback(
-    async (options?: { forceRefresh?: boolean }) => {
-      const forceRefresh = options?.forceRefresh ?? false;
-      const tokenResponse = await loadTokenResponse();
-      if (!tokenResponse) {
-        return {
-          tokenResponse: null,
-          sessionMode: 'online',
-        } satisfies ResolveValidTokenResponseResult;
-      }
-
-      if (isOffline) {
-        return { tokenResponse, sessionMode: 'offline_grace' } satisfies ResolveValidTokenResponseResult;
-      }
-
-      if (!isTokenFresh(tokenResponse) && !tokenResponse.refreshToken) {
-        logTokenResponseMetadata('expired cached token cannot refresh', tokenResponse);
-        await clearTokenResponse();
-        return {
-          tokenResponse: null,
-          sessionMode: 'online',
-        } satisfies ResolveValidTokenResponseResult;
-      }
-
-      if (!forceRefresh && !tokenResponse.shouldRefresh()) {
-        return {
-          tokenResponse,
-          sessionMode: 'online',
-        } satisfies ResolveValidTokenResponseResult;
-      }
-
-      if (!tokenResponse.refreshToken || !auth0ClientId) {
-        return {
-          tokenResponse,
-          sessionMode: isOffline ? 'offline_grace' : 'online',
-        } satisfies ResolveValidTokenResponseResult;
-      }
-
-      try {
-        const discovery = await resolveDiscovery();
-        if (!discovery?.tokenEndpoint) {
-          throw new Error('Could not load Auth0 discovery.');
-        }
-
-        const refreshedTokenResponse = await AuthSession.refreshAsync(
-          {
-            clientId: auth0ClientId,
-            refreshToken: tokenResponse.refreshToken,
-          },
-          discovery
-        );
-        const mergedTokenResponse = mergeTokenResponse(tokenResponse, refreshedTokenResponse);
-        await saveTokenResponse(mergedTokenResponse);
-        logTokenResponseMetadata('refresh succeeded', mergedTokenResponse);
-        return {
-          tokenResponse: mergedTokenResponse,
-          sessionMode: 'online',
-        } satisfies ResolveValidTokenResponseResult;
-      } catch (error) {
-        if (isOffline || isNetworkRefreshError(error)) {
-          return {
-            tokenResponse,
-            sessionMode: 'offline_grace',
-          } satisfies ResolveValidTokenResponseResult;
-        }
-
-        throw error;
-      }
-    },
-    [auth0ClientId, isOffline, resolveDiscovery]
-  );
-
-  // Startup and outbox consumers share one refresh, including token rotation.
-  const resolveSession = useCallback(() => {
-    if (!refreshPromiseRef.current) {
-      refreshPromiseRef.current = resolveValidTokenResponse().finally(() => {
-        refreshPromiseRef.current = null;
-      });
-    }
-    return refreshPromiseRef.current;
-  }, [resolveValidTokenResponse]);
-
-  const getValidAccessToken = useCallback(async () => {
-    if (configError) {
-      return null;
-    }
-
-    try {
-      const resolved = await resolveSession();
-      if (resolved.tokenResponse) {
-        setAuthState(toAuthState(resolved.tokenResponse));
-        setSessionMode(resolved.sessionMode);
-        return resolved.tokenResponse.accessToken;
-      }
-
-      setAuthState(null);
-      setSessionMode('online');
-      return null;
-    } catch (error) {
-      const shouldInvalidateSession = isUnauthorizedError(error);
-
-      if (shouldInvalidateSession) {
-        await clearTokenResponse();
-        setAuthState(null);
-        setSessionMode('online');
-        setCurrentUserProfile(null);
-        return null;
-      }
-
-      if (isInvalidGrantRefreshError(error)) {
-        console.warn('Auth0 refresh returned invalid_grant. Keeping cached session.', error);
-        const cachedTokenResponse = await loadTokenResponse();
-        if (cachedTokenResponse) {
-          setAuthState(toAuthState(cachedTokenResponse));
-          setSessionMode('offline_grace');
-          return cachedTokenResponse.accessToken;
-        }
-        return null;
-      }
-
-      throw error;
-    }
-  }, [configError, resolveSession]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function restoreSession() {
-      if (configError) {
-        setIsLoading(false);
-        return;
-      }
-
-      const applySessionFromToken = (tokenResponse: AuthSession.TokenResponse | null, mode: SessionMode) => {
-        if (!isMounted) {
-          return;
-        }
-
-        if (!tokenResponse) {
-          setAuthState(null);
-          setSessionMode('online');
-          setCurrentUserProfile(null);
-          return;
-        }
-
-        setAuthState(toAuthState(tokenResponse));
-        setSessionMode(mode);
-      };
-
-      const invalidateSession = async () => {
-        await clearTokenResponse();
-        if (!isMounted) {
-          return;
-        }
-
-        setAuthState(null);
-        setSessionMode('online');
-        setCurrentUserProfile(null);
-      };
-
-      try {
-        const cachedTokenResponse = await loadTokenResponse();
-        if (!cachedTokenResponse) {
-          const storedOnboardingState = await loadInitialOnboardingState(null);
-          if (isMounted) {
-            setHasCompletedOnboarding(storedOnboardingState);
-          }
-          logTokenResponseMetadata('startup restore no cached token', null);
-          applySessionFromToken(null, 'online');
-          return;
-        }
-
-        logTokenResponseMetadata('startup restored cached token', cachedTokenResponse);
-        // Local restoration must not depend on discovery, refresh or profile requests.
-        applySessionFromToken(cachedTokenResponse, isOffline ? 'offline_grace' : 'online');
-        if (isMounted) {
-          setHasCompletedOnboarding(await loadInitialOnboardingState(cachedTokenResponse.accessToken));
-          const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(
-            getCurrentUserProfileQueryKey(cachedTokenResponse.accessToken)
-          );
-          if (isMounted && cachedProfile) applyCurrentUserProfileState(cachedProfile, cachedTokenResponse.accessToken);
-        }
-      } catch (error) {
-        const shouldInvalidateSession = isUnauthorizedError(error);
-
-        console.error('Failed to restore auth session', error);
-        if (isMounted) {
-          setAuthError(error instanceof Error ? error.message : 'Failed to restore auth session');
-        }
-
-        if (shouldInvalidateSession) {
-          await invalidateSession();
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-
-      try {
-        const resolved = await resolveSession();
-        if (!resolved.tokenResponse) {
-          applySessionFromToken(null, 'online');
-          return;
-        }
-
-        applySessionFromToken(resolved.tokenResponse, resolved.sessionMode);
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (resolved.sessionMode === 'offline_grace') {
-          return;
-        }
-
-        await preloadCurrentUserProfileForToken(resolved.tokenResponse.accessToken);
-        if (!isMounted) {
-          return;
-        }
-      } catch (error) {
-        const shouldKeepCachedSession =
-          isUnauthorizedError(error) || isInvalidGrantRefreshError(error);
-
-        if (shouldKeepCachedSession) {
-          console.warn('Auth session refresh failed. Keeping cached session state.', error);
-          if (isMounted) {
-            setSessionMode('offline_grace');
-          }
-          return;
-        }
-
-        if (isOffline || isNetworkRefreshError(error)) {
-          if (isMounted) {
-            setSessionMode('offline_grace');
-          }
-          return;
-        }
-
-        console.warn('Failed to refresh startup auth session in background', error);
-      }
-    }
-
-    restoreSession();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [applyCurrentUserProfileState, configError, isOffline, preloadCurrentUserProfileForToken, resolveSession]);
-
-  useEffect(() => {
-    if (Platform.OS === 'web' || typeof AppState.addEventListener !== 'function') {
-      return undefined;
-    }
-
-    const subscription = AppState.addEventListener('change', (status: AppStateStatus) => {
-      if (status !== 'active') {
-        return;
-      }
-
-      void getValidAccessToken().catch((error) => {
-        console.error('Failed to refresh auth token on foreground', error);
-      });
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [getValidAccessToken]);
-
-  const authenticate = useCallback(async (mode: 'login' | 'signup') => {
-    if (configError) {
-      return;
-    }
-
-    setAuthError(null);
-    setIsLoading(true);
-
-    try {
-      const discovery = await resolveDiscovery();
-      if (!discovery) {
-        setAuthError('Could not load Auth0 discovery.');
-        return;
-      }
-
-      const scopes = appConfig.auth0Scope.split(' ');
-      const redirectUri = getRedirectUri('auth/callback');
-      logAuthMetadata(`interactive ${mode} request`, {
-        audience: appConfig.auth0Audience,
-        platform: Platform.OS,
-        scopes,
-      });
-      const request = new AuthSession.AuthRequest({
-        clientId: auth0ClientId,
-        scopes,
-        redirectUri,
-        responseType: AuthSession.ResponseType.Code,
-        usePKCE: true,
-        extraParams: {
-          audience: appConfig.auth0Audience,
-          ...(mode === 'signup' ? { screen_hint: 'signup' } : {}),
-        },
-      });
-
-      await request.makeAuthUrlAsync(discovery);
-      console.log(`Auth0 ${mode} redirect URI:`, redirectUri);
-
-      if (shouldUseWebRedirectAuth()) {
-        if (!request.url || !request.codeVerifier || !request.state) {
-          setAuthError(`Auth0 ${mode} request could not be prepared.`);
-          return;
-        }
-
-        const pendingState: PendingWebAuthState = {
-          codeVerifier: request.codeVerifier,
-          redirectUri,
-          state: request.state,
-        };
-
-        await setStoredValue(WEB_AUTH_PENDING_KEY, JSON.stringify(pendingState));
-
-        if (typeof globalThis.location?.assign === 'function') {
-          globalThis.location.assign(request.url);
-          return;
-        }
-
-        throw new Error('This browser cannot perform redirect-based authentication.');
-      }
-
-      const result = await request.promptAsync(discovery);
-      console.log(`Auth0 ${mode} prompt result type:`, result.type);
-
-      if (result.type !== 'success' || !result.params.code) {
-        if (result.type !== 'dismiss' && result.type !== 'cancel') {
-          setAuthError(`Auth0 ${mode} did not return an authorization code.`);
-        }
-        return;
-      }
-
-      const tokenResponse = await AuthSession.exchangeCodeAsync(
-        {
-          clientId: auth0ClientId,
-          code: result.params.code,
-          redirectUri,
-          extraParams: {
-            code_verifier: request.codeVerifier ?? '',
-          },
-        },
-        discovery
-      );
-
-      await saveTokenResponse(tokenResponse);
-      logTokenResponseMetadata(`interactive ${mode} exchange succeeded`, tokenResponse);
-      setCurrentUserProfile(null);
-      setSessionMode('online');
-      setAuthState({
-        accessToken: tokenResponse.accessToken,
-        idToken: tokenResponse.idToken,
-        refreshToken: tokenResponse.refreshToken,
-        issuedAt: tokenResponse.issuedAt,
-        expiresIn: tokenResponse.expiresIn,
-      });
-      await preloadCurrentUserProfileForToken(tokenResponse.accessToken);
-    } catch (error) {
-      console.error(`Auth0 ${mode} failed`, error);
-      setAuthError(error instanceof Error ? error.message : `Auth0 ${mode} failed`);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [auth0ClientId, configError, preloadCurrentUserProfileForToken, resolveDiscovery]);
-
-  const completeWebRedirectAuth = useCallback(async () => {
-    if (Platform.OS !== 'web' || !auth0ClientId) {
-      return false;
-    }
-
-    const pendingValue = await getStoredValue(WEB_AUTH_PENDING_KEY);
-    if (!pendingValue) {
-      return false;
-    }
-
-    const href = globalThis.location?.href;
-    if (!href) {
-      return false;
-    }
-
-    let pendingState: PendingWebAuthState;
-    try {
-      pendingState = JSON.parse(pendingValue) as PendingWebAuthState;
-    } catch (error) {
-      console.warn('Failed to parse pending web auth state. Clearing state.', error);
-      await deleteStoredValue(WEB_AUTH_PENDING_KEY);
-      return false;
-    }
-
-    const callbackUrl = new URL(href);
-    const code = callbackUrl.searchParams.get('code');
-    const state = callbackUrl.searchParams.get('state');
-    const authErrorCode = callbackUrl.searchParams.get('error');
-    const authErrorDescription = callbackUrl.searchParams.get('error_description');
-
-    if (authErrorCode) {
-      await deleteStoredValue(WEB_AUTH_PENDING_KEY);
-      const message = authErrorDescription
-        ? `${authErrorCode}: ${authErrorDescription}`
-        : authErrorCode;
-      setAuthError(message);
-      return false;
-    }
-
-    if (!code || !state) {
-      return false;
-    }
-
-    if (
-      !pendingState.codeVerifier ||
-      !pendingState.redirectUri ||
-      !pendingState.state ||
-      state !== pendingState.state
-    ) {
-      await deleteStoredValue(WEB_AUTH_PENDING_KEY);
-      setAuthError('Auth0 returned an invalid authentication state.');
-      return false;
-    }
-
-    setAuthError(null);
-    setIsLoading(true);
-
-    try {
-      const discovery = await resolveDiscovery();
-      if (!discovery) {
-        setAuthError('Could not load Auth0 discovery.');
-        return false;
-      }
-
-      const tokenResponse = await AuthSession.exchangeCodeAsync(
-        {
-          clientId: auth0ClientId,
-          code,
-          redirectUri: pendingState.redirectUri,
-          extraParams: {
-            code_verifier: pendingState.codeVerifier,
-          },
-        },
-        discovery
-      );
-
-      await saveTokenResponse(tokenResponse);
-      await deleteStoredValue(WEB_AUTH_PENDING_KEY);
-      logTokenResponseMetadata('web redirect exchange succeeded', tokenResponse);
-      setCurrentUserProfile(null);
-      setSessionMode('online');
-      setAuthState(toAuthState(tokenResponse));
-      await preloadCurrentUserProfileForToken(tokenResponse.accessToken);
-      return true;
-    } catch (error) {
-      console.error('Auth0 web redirect completion failed', error);
-      setAuthError(error instanceof Error ? error.message : 'Auth0 web redirect completion failed');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [auth0ClientId, preloadCurrentUserProfileForToken, resolveDiscovery]);
-
-  const login = useCallback(async () => {
-    await authenticate('login');
-  }, [authenticate]);
-
-  const signup = useCallback(async () => {
-    await authenticate('signup');
-  }, [authenticate]);
-
-  const completeOnboarding = useCallback(async () => {
-    const accessToken = authState?.accessToken ?? null;
-    let completedUserId = currentUserProfile?.id ?? getTokenSubject(accessToken);
-
-    if (accessToken) {
-      const updatedUser = await updateCurrentUserOnboardingCompleted(
-        accessToken,
-        true,
-        completedUserId ?? undefined
-      );
-      completedUserId = updatedUser?.ID ?? completedUserId;
-    }
-
-    await saveOnboardingState(true, completedUserId);
-    setHasCompletedOnboarding(true);
-    if (currentUserProfile) {
-      applyCurrentUserProfileState(
-        {
-          ...currentUserProfile,
-          onboardingCompleted: true,
-        },
-        accessToken
-      );
-    }
-  }, [applyCurrentUserProfileState, authState?.accessToken, currentUserProfile]);
-
-  const clearLocalSession = useCallback(async () => {
-    setAuthError(null);
-    await clearTokenResponse();
-    await deleteStoredValue(WEB_AUTH_PENDING_KEY);
-    await clearPersistedQueryCache();
-    queryClient.clear();
-    setAuthState(null);
-    setSessionMode('online');
-    setCurrentUserProfile(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [currentUserProfile, setProfile] = useState<CurrentUserProfileData | null>(null);
+  const [isLoading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const actionPending = useRef(false);
+  const [authError, setError] = useState<string | null>(null);
+  const [authNotice, setNotice] = useState<string | null>(null);
+  const [passwordRecovery, setRecovery] = useState(false);
+  const live = useRef<Session | null>(null);
+  const offline = useRef(isOffline); offline.current = isOffline;
+  const signedOut = useRef(false);
+  const exchanges = useRef(new Map<string, Promise<boolean>>());
+  const revision = useRef(0);
+  const missing = getMissingConfig();
+  const configError = missing.length ? `Anmeldung konfigurieren: ${missing.join(', ')}` : null;
+  const redirectUri = Platform.OS === 'web'
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}${Constants.expoConfig?.experiments?.baseUrl || ''}/auth/callback`
+    : AuthSession.makeRedirectUri({ scheme: 'harzerwanderbuddyapp', path: 'auth/callback' });
+  const profileKey = (id: string) => `hwb-supabase-profile-${appConfig.supabaseUrl.replace(/[^a-zA-Z0-9.-]/g, '-')}-${id}`;
+  const clearCaches = useCallback(async () => {
+    await queryClient.cancelQueries(); queryClient.clear(); await clearPersistedQueryCache();
   }, []);
-
-  const logout = useCallback(async () => {
-    await clearLocalSession();
-  }, [clearLocalSession]);
-
-  const logoutEverywhere = useCallback(async () => {
-    await clearLocalSession();
+  const applySession = useCallback(async (next: Session | null) => {
+    if (next && signedOut.current) return;
+    const turn = ++revision.current;
+    const owner = next ? `${appConfig.supabaseUrl}|${next.user.id}` : '';
+    const previous = await authStorage.getItem('hwb-supabase-cache-owner');
+    if (turn !== revision.current) return;
+    if (previous !== owner) {
+      setSession(null); setProfile(null);
+      await clearCaches();
+      await authStorage.setItem('hwb-supabase-cache-owner', owner);
+    }
+    if (turn !== revision.current) return;
+    live.current = next; setSession(next);
+    if (!next) { setProfile(null); setLoading(false); return; }
+    const stored = await authStorage.getItem(profileKey(next.user.id));
+    if (turn !== revision.current) return;
+    setProfile(stored ? JSON.parse(stored) : null);
+    if (offline.current) { setLoading(false); return; }
     try {
-      if (!configError && auth0ClientId && appConfig.auth0Domain) {
-        const returnTo = getRedirectUri(appConfig.auth0LogoutReturnPath);
-        const logoutUrl =
-          `${getIssuer()}/v2/logout?client_id=${encodeURIComponent(auth0ClientId ?? '')}` +
-          `&returnTo=${encodeURIComponent(returnTo)}`;
-
-        if (typeof WebBrowser.openAuthSessionAsync === 'function') {
-          await WebBrowser.openAuthSessionAsync(logoutUrl, returnTo);
-        } else if (typeof WebBrowser.openBrowserAsync === 'function') {
-          await WebBrowser.openBrowserAsync(logoutUrl);
-        } else if (Platform.OS === 'web' && typeof globalThis.location?.assign === 'function') {
-          globalThis.location.assign(logoutUrl);
-        }
-      }
+      const profile = await fetchCurrentUserProfile(next.access_token);
+      if (turn !== revision.current) return;
+      await authStorage.setItem(profileKey(next.user.id), JSON.stringify(profile));
+      if (turn === revision.current) setProfile(profile);
     } catch (error) {
-      console.error('Auth0 logout failed', error);
-    }
-  }, [auth0ClientId, clearLocalSession, configError]);
-
-  const resetApp = useCallback(async () => {
-    const accessToken = authState?.accessToken ?? null;
-    const userId = currentUserProfile?.id ?? getTokenSubject(accessToken);
-
-    if (accessToken) {
-      try {
-        await updateCurrentUserOnboardingCompleted(accessToken, false, userId ?? undefined);
-      } catch (error) {
-        console.warn('Failed to reset onboarding state on the server.', error);
+      if (turn === revision.current && error instanceof Error && error.name === 'UnauthorizedError') {
+        live.current = null; setSession(null); setProfile(null); await clearCaches();
+        await authStorage.removeItem(profileKey(next.user.id));
+        await getSupabase().auth.signOut({ scope: 'local' });
       }
-    }
-
-    await saveOnboardingState(false, userId);
-    setHasCompletedOnboarding(false);
-    setCurrentUserProfile(null);
-    await clearLocalSession();
-  }, [authState?.accessToken, clearLocalSession, currentUserProfile?.id]);
-
-  const contextValue = useMemo<AuthContextValue>(
-    () => ({
-      accessToken: authState?.accessToken ?? null,
-      idToken: authState?.idToken ?? null,
-      refreshToken: authState?.refreshToken ?? null,
-      issuedAt: authState?.issuedAt ?? null,
-      expiresIn: authState?.expiresIn ?? null,
-      sessionMode,
-      isOffline,
-      canPerformWrites: !!authState?.accessToken && !isOffline,
-      currentUserProfile,
-      hasCompletedOnboarding,
-      isAuthenticated: !!authState?.accessToken,
-      isLoading,
-      authError,
-      configError,
-      completeOnboarding,
-      login,
-      signup,
-      completeWebRedirectAuth,
-      getValidAccessToken,
-      logout,
-      logoutEverywhere,
-      resetApp,
-      preloadCurrentUserProfile,
-      setCurrentUserProfile: updateCurrentUserProfileState,
+    } finally { if (turn === revision.current) setLoading(false); }
+  }, [clearCaches]);
+  const run = useCallback(async (action: () => Promise<void>) => {
+    if (actionPending.current) return;
+    actionPending.current = true; setBusy(true); setError(null); setNotice(null);
+    try { await action(); } catch { setError('Anmeldung fehlgeschlagen. Bitte Verbindung und Eingaben prüfen und erneut versuchen.'); }
+    finally { actionPending.current = false; setBusy(false); }
+  }, []);
+  const callback = useCallback(async (url: string) => {
+    try {
+      const target = new URL(url);
+      const expected = new URL(redirectUri);
+      if (target.protocol !== expected.protocol || target.host !== expected.host || target.pathname !== expected.pathname) return false;
+      if (target.searchParams.has('error')) { setError('Anmeldung wurde abgebrochen oder der Link ist abgelaufen.'); return false; }
+      const code = target.searchParams.get('code');
+      if (!code) return false;
+      const existing = exchanges.current.get(code);
+      if (existing) return await existing;
+      const exchange = (async () => {
+      signedOut.current = false;
+      const { data, error } = await getSupabase().auth.exchangeCodeForSession(code);
+      if (Platform.OS === 'web') window.history.replaceState({}, '', target.pathname);
+      if (error) { setError('Der Anmeldelink ist abgelaufen oder gehört zu einem anderen Gerät. Bitte neu anfordern.'); return false; }
+      await applySession(data.session); return true;
+      })();
+      exchanges.current.set(code, exchange);
+      return await exchange;
+    } catch { setError('Anmeldelink konnte nicht verarbeitet werden. Bitte erneut anfordern.'); return false; }
+  }, [redirectUri, applySession]);
+  useEffect(() => {
+    if (configError) { void clearCaches(); setLoading(false); return; }
+    const supabase = getSupabase();
+    let active = true;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
+      if (event === 'PASSWORD_RECOVERY') setRecovery(true);
+      // Leave the SDK's auth lock before making async auth calls.
+      setTimeout(() => { if (active && !(event === 'INITIAL_SESSION' && !next && offline.current)) void applySession(next).catch(() => setError('Sitzung konnte nicht geladen werden.')); }, 0);
+    });
+    void (async () => {
+      // Read-only offline restoration: never use this unverified local session for server authorization.
+      await clearLegacyAuthStorage();
+      const raw = await authStorage.getItem(supabaseStorageKey);
+      if (active && raw && offline.current) {
+        const cached = JSON.parse(raw) as Session;
+        if (cached?.user?.id && cached.access_token && cached.refresh_token) await applySession(cached);
+      }
+      const { data } = await supabase.auth.getSession();
+      if (active && !(offline.current && !data.session && live.current)) await applySession(data.session);
+    })().catch(() => { if (active) { setError('Sitzung konnte nicht geladen werden.'); setLoading(false); } });
+    const links = Linking.addEventListener('url', ({ url }) => { void callback(url); });
+    if (Platform.OS !== 'web') void Linking.getInitialURL().then(url => { if (url) void callback(url); }).catch(() => setError('Anmeldelink konnte nicht gelesen werden.'));
+    const refresh = (state: string) => { if (state === 'active' && !offline.current) supabase.auth.startAutoRefresh(); else supabase.auth.stopAutoRefresh(); };
+    if (Platform.OS !== 'web') refresh(AppState.currentState);
+    const appState = AppState.addEventListener('change', refresh);
+    return () => { active = false; subscription.unsubscribe(); links.remove(); appState.remove(); if (Platform.OS !== 'web') supabase.auth.stopAutoRefresh(); };
+  }, [configError, applySession, callback, clearCaches]);
+  useEffect(() => {
+    if (configError || Platform.OS === 'web') return;
+    const auth = getSupabase().auth;
+    if (!isOffline && AppState.currentState === 'active') auth.startAutoRefresh();
+    else auth.stopAutoRefresh();
+  }, [isOffline, configError]);
+  const getValidAccessToken = useCallback(async () => {
+    if (isOffline || !live.current) return null;
+    const owner = live.current.user.id;
+    const turn = revision.current;
+    const { data, error } = await getSupabase().auth.getSession();
+    if (turn !== revision.current || live.current?.user.id !== owner || data.session?.user.id !== owner) return null;
+    if (error || !data.session || (data.session.expires_at || 0) <= Date.now() / 1000) return null;
+    return data.session.access_token;
+  }, [isOffline]);
+  const preloadCurrentUserProfile = useCallback(async () => {
+    const token = await getValidAccessToken(); if (!token) return null;
+    const turn = revision.current;
+    const profile = await fetchCurrentUserProfile(token);
+    if (turn !== revision.current) return null;
+    setProfile(profile);
+    if (live.current) await authStorage.setItem(profileKey(live.current.user.id), JSON.stringify(profile));
+    return profile;
+  }, [getValidAccessToken]);
+  const logout = useCallback(async () => {
+    const old = live.current;
+    signedOut.current = true;
+    live.current = null; ++revision.current; setLoading(false); setSession(null); setProfile(null); setRecovery(false);
+    await clearCaches();
+    if (old) await authStorage.removeItem(profileKey(old.user.id));
+    await clearOfflineCaches();
+    const keys = await AsyncStorage.getAllKeys();
+    await AsyncStorage.multiRemove(keys.filter(key => key.startsWith('hwb-offline-notes-v1:') || key.startsWith('hwb-offline-visits-v1:')));
+    const { error } = await getSupabase().auth.signOut({ scope: 'local' });
+    await authStorage.removeItem(supabaseStorageKey);
+    if (error) setError('Abmeldung beim Anmeldedienst fehlgeschlagen. Bitte erneut versuchen.');
+  }, [clearCaches]);
+  const value: AuthContextValue = {
+    accessToken: session?.access_token ?? null, idToken: null, refreshToken: session?.refresh_token ?? null,
+    issuedAt: null, expiresIn: session?.expires_in ?? null, sessionMode: isOffline ? 'offline_grace' : 'online',
+    isOffline, canPerformWrites: !!session && !isOffline && (session.expires_at || 0) > Date.now() / 1000,
+    currentUserProfile, hasCompletedOnboarding: currentUserProfile?.onboardingCompleted ?? false,
+    isAuthenticated: !!session, isLoading: isLoading || busy, authError, authNotice, configError, passwordRecovery,
+    login: (email = '', password = '') => run(async () => {
+      signedOut.current = false;
+      const { error } = await getSupabase().auth.signInWithPassword({ email, password }); if (error) throw error;
     }),
-    [
-      authError,
-      authState?.accessToken,
-      authState?.expiresIn,
-      authState?.idToken,
-      authState?.issuedAt,
-      authState?.refreshToken,
-      sessionMode,
-      configError,
-      completeOnboarding,
-      completeWebRedirectAuth,
-      currentUserProfile,
-      getValidAccessToken,
-      isOffline,
-      login,
-      hasCompletedOnboarding,
-      isLoading,
-      logout,
-      logoutEverywhere,
-      preloadCurrentUserProfile,
-      resetApp,
-      signup,
-      updateCurrentUserProfileState,
-    ]
-  );
-
-  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
+    signup: (email = '', password = '') => run(async () => {
+      signedOut.current = false;
+      const { error } = await getSupabase().auth.signUp({ email, password, options: { emailRedirectTo: redirectUri } });
+      if (error) throw error; setNotice('Bitte bestätige deine E-Mail-Adresse über den zugesandten Link auf diesem Gerät.');
+    }),
+    resetPassword: email => run(async () => {
+      const { error } = await getSupabase().auth.resetPasswordForEmail(email, { redirectTo: redirectUri });
+      if (error) throw error; setNotice('Falls ein Konto existiert, erhältst du einen Link zum Zurücksetzen auf diesem Gerät.');
+    }),
+    updatePassword: password => run(async () => {
+      const { error } = await getSupabase().auth.updateUser({ password }); if (error) throw error;
+      setRecovery(false); setNotice('Passwort aktualisiert.');
+    }),
+    loginWithProvider: provider => run(async () => {
+      if (!appConfig.supabaseOAuthProviders.split(',').includes(provider)) throw new Error('Provider disabled');
+      const { data, error } = await getSupabase().auth.signInWithOAuth({ provider: provider as Provider,
+        options: { redirectTo: redirectUri, skipBrowserRedirect: Platform.OS !== 'web' } });
+      if (error) throw error;
+      if (Platform.OS !== 'web' && data.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
+        if (result.type === 'success') await callback(result.url);
+      }
+    }),
+    completeWebRedirectAuth: () => Platform.OS === 'web' ? callback(window.location.href) : Promise.resolve(false),
+    getValidAccessToken, preloadCurrentUserProfile,
+    completeOnboarding: async () => { const token = await getValidAccessToken(); if (!token) throw new Error('Bitte anmelden.'); await updateCurrentUserOnboardingCompleted(token, true); await preloadCurrentUserProfile(); },
+    setCurrentUserProfile: profile => {
+      const merged = profile && profile.id === currentUserProfile?.id && typeof profile.onboardingCompleted !== 'boolean'
+        ? { ...profile, onboardingCompleted: currentUserProfile.onboardingCompleted } : profile;
+      setProfile(merged);
+      if (live.current && merged) void authStorage.setItem(profileKey(live.current.user.id), JSON.stringify(merged))
+        .catch(() => setError('Profil konnte nicht lokal gespeichert werden.'));
+    }, logout,
+    resetApp: async () => {
+      const token = await getValidAccessToken();
+      if (token) await updateCurrentUserOnboardingCompleted(token, false);
+      await logout();
+    },
+    logoutEverywhere: async () => { const { error } = await getSupabase().auth.signOut({ scope: 'global' }); if (error) { setError('Globale Abmeldung fehlgeschlagen.'); return; } await logout(); },
+  };
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
@@ -1423,33 +382,13 @@ export function useAuth() {
 }
 
 export function useIdTokenClaims<T>() {
-  const { idToken, currentUserProfile } = useAuth();
-  if (appConfig.authMode === 'basic') {
-    return currentUserProfile ? {
-      sub: currentUserProfile.id, name: currentUserProfile.name, picture: currentUserProfile.picture,
-    } as T : null;
-  }
-  return decodeJwt<T>(idToken ?? undefined);
+  const { currentUserProfile } = useAuth();
+  return currentUserProfile ? { sub: currentUserProfile.id, name: currentUserProfile.name,
+    picture: currentUserProfile.picture } as T : null;
 }
-
-type GenericIdTokenClaims = Record<string, unknown> & { sub?: string };
-
 export function useAdminAccess() {
   const { currentUserProfile, isAuthenticated, isLoading } = useAuth();
-  const claims = useIdTokenClaims<GenericIdTokenClaims>();
-  const claimRoles = useMemo(() => extractRolesFromClaims(claims), [claims]);
   const profileRoles = currentUserProfile?.roles ?? [];
-  const isAdminFromClaims = hasAdminRole(claimRoles);
-  const isAdminFromProfile = hasAdminRole(profileRoles);
-  const isAdmin = isAdminFromClaims || isAdminFromProfile;
-  const source = isAdminFromClaims ? 'claims' : isAdminFromProfile ? 'profile' : 'none';
-  const isResolved = !isAuthenticated || isAdminFromClaims || Boolean(currentUserProfile);
-
-  return {
-    isAdmin,
-    source,
-    isResolved: isResolved && !isLoading,
-    claimRoles,
-    profileRoles,
-  } as const;
+  return { isAdmin: hasAdminRole(profileRoles), source: profileRoles.length ? 'profile' : 'none',
+    isResolved: !isLoading && (!isAuthenticated || !!currentUserProfile), claimRoles: [], profileRoles } as const;
 }

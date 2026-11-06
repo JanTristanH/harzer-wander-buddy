@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const { timingSafeEqual } = require('node:crypto');
 const { syncExternalUserIfNeeded } = require('./auth-utils');
 
-// Explicit development profile only; production continues to use Auth0.
+// Explicit development profile only; production uses Supabase Auth.
 module.exports = function createBasicAuth(options) {
   if (cds.env.profiles.includes('production')) {
     throw new Error('Local Basic authentication cannot be used in production');
