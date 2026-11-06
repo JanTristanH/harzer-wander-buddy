@@ -43,3 +43,11 @@ Vor der Merge-Freigabe auf einem funktionierenden eigenen Development Client ode
 3. Erst danach die dazugehörige App ausrollen. Kein produktives Deployment wurde im Rahmen dieser PR-Aufbereitung ausgeführt.
 
 **Breaking API:** `calculateHikingRoute.results[].path` enthält sortierte Tour-Verknüpfungen (`travelTime_ID`, `rank`, eingebettetes `travelTime`) anstelle flacher Pfadeinträge. Backend und App gehören beim Rollout zusammen. Die Suche bleibt begrenzt (Wegegraph, Startparkplätze, Segmenttiefe, Suchzustände); sie garantiert keine global optimale Route.
+
+## Integration vom 6. November 2026
+
+`develop` `7513b1b` integriert. Die nativen Offline-Besuchs- und Notizprovider bleiben erhalten; Automatik- und Vorschlagsrouten sind darin registriert. Die neue gespeicherte Tourenansicht bietet den GPX-Export aus develop im Aktionsmenü an, auch ohne Bearbeitungsrechte. Der bestehende Editor-Export bleibt erhalten.
+
+388 App-Tests in 71 Suites und 58 Backend-Tests erfolgreich; TypeScript und gezieltes ESLint ohne Fehler. Ein neuer Reader-Test sichert den Export-Einstieg ohne Schreibrechte ab. Native Gesten-/Sichtprüfung bleibt offen. Keine Premium-Berechtigung oder Zahlung implementiert; die Founder-Strategie beschreibt dies weiterhin als separate Umsetzung.
+
+Vollständiger Basic-Webexport aller Routen erfolgreich.

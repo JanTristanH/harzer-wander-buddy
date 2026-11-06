@@ -30,3 +30,9 @@ it('retains recalculated geometry after editing tour stops', async () => {
   expect(result.path[0].travelTime?.positionString).toBe(positionString);
   expect(result.path[0].travelTime?.travelMode).toBe('drive');
 });
+
+it('uses the link ID when the structured update response omits the nested ID', async () => {
+  respond({ ID: 'tour', path: [{ ...path[0], travelTime: { positionString, fromPoi: 'a', toPoi: 'b', travelMode: 'walk' } }] });
+  const result = await updateTourByPOIList('token', { TourID: 'tour', POIList: 'a;b' });
+  expect(result.path[0].travelTime).toEqual(expect.objectContaining({ ID: 'leg', positionString, fromPoi: 'a', toPoi: 'b' }));
+});

@@ -1,7 +1,9 @@
 import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { AccessibilityInfo } from "react-native";
+import { shareGpx } from "@/lib/share-gpx";
 import TourScreenView from "@/components/tour-screen";
+jest.mock("@/lib/share-gpx", () => ({ shareGpx: jest.fn().mockResolvedValue(undefined) }));
 let mockParams = { id: "tour", edit: "0" };
 let mockUser = "alice";
 let mockAuthenticated = true;
@@ -116,4 +118,15 @@ test("offline ownership does not enable writing and signed-out readers request l
   render(<TourScreen />);
   expect(screen.getByText("Anmelden")).toBeTruthy();
   expect(screen.queryByTestId("tour-map-sheet")).toBeNull();
+});
+
+test("saved tour reader keeps GPX export accessible without edit rights", () => {
+  mockUser = "bob";
+  mockWrites = false;
+  render(<TourScreen />);
+  fireEvent.press(screen.getByLabelText("Touraktionen"));
+  fireEvent.press(screen.getByLabelText("Tour als GPX exportieren"));
+  expect(screen.getByLabelText("Verbundene Route")).toBeTruthy();
+  expect(screen.getByLabelText("Einzelne Etappen")).toBeTruthy();
+  expect(shareGpx).not.toHaveBeenCalled();
 });

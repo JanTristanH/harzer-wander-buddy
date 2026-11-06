@@ -14,15 +14,19 @@ async function main() {
   assert.match(await web.text(), /<!DOCTYPE html>/i);
   const endpoint = `${url}/odata/v4/api/getCurrentUser()`;
   assert.equal((await fetch(endpoint)).status, 401);
-  const id = 'user1@hwb.de';
-  const profile = await fetch(endpoint, {
-    headers: { Authorization: `Basic ${Buffer.from(`${id}:${users[id].password}`).toString('base64')}` },
-  });
-  assert.equal(profile.status, 200);
-  assert.equal((await profile.json()).ID, id);
+  for (const [id, isAdmin] of [['user1@hwb.de', false], ['admin@hwb.de', true]]) {
+    const headers = { Authorization: `Basic ${Buffer.from(`${id}:${users[id].password}`).toString('base64')}` };
+    const profile = await fetch(endpoint, { headers });
+    assert.equal(profile.status, 200, id);
+    const currentUser = await profile.json();
+    assert.equal(currentUser.ID, id);
+    assert.equal(JSON.stringify(currentUser.roles).includes('admin'), isAdmin, id);
+    const adminResponse = await fetch(`${url}/odata/v4/api/getMissingTravelTimesCount(n=1)`, { headers });
+    assert.equal(adminResponse.status, isAdmin ? 200 : 403, id);
+  }
   const stamps = await fetch(`${url}/odata/v4/public/Stampboxes?$top=3`);
   assert.equal(stamps.status, 200);
   assert.equal((await stamps.json()).value.length, 3);
-  console.log('Preview smoke check passed: matching commit, web route, authentication and seeded SQLite.');
+  console.log('Preview smoke check passed: matching commit, web route, user/admin authentication, authorization and seeded SQLite.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

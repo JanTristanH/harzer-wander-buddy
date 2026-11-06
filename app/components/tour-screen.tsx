@@ -7,6 +7,7 @@ import {
   buildTourShareUrl,
 } from "@/lib/tour-links";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { TourGpxExport } from "@/components/tour-gpx-export";
 import { GroupSelector } from "@/components/group-selector";
 import { SignInRequiredScreen } from "@/components/auth-locked-state";
 import { TourExperience } from "@/components/tour-experience";
@@ -32,7 +33,7 @@ function SavedTour({ id }: { id: string }) {
   const { isAuthenticated, canPerformWrites } = useAuth();
   const sub = useIdTokenClaims<{ sub?: string }>()?.sub;
   const group = useHikingGroup();
-  const { data, error } = useTourDetailQuery(id, {
+  const { data, error, isFetching } = useTourDetailQuery(id, {
     groupUserIds: group.groupUserIds,
   });
   const { data: points = [] } = usePointsOfInterestQuery();
@@ -258,6 +259,8 @@ function SavedTour({ id }: { id: string }) {
                       );
                     }}
                   />
+                  <TourGpxExport name={t.name} path={data.path} disabled={isFetching}
+                    onExported={() => setMenu(false)} />
                   {own && canPerformWrites && (
                     <Action
                       label="Tour löschen"
