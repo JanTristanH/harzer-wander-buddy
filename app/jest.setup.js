@@ -36,7 +36,7 @@ jest.mock('expo-linear-gradient', () => {
 jest.mock('@expo/vector-icons', () => {
   const React = require('react');
   const { Text } = require('react-native');
-  const makeIcon = () => (props) => React.createElement(Text, props, null);
+  const makeIcon = () => function MockIcon(props) { return React.createElement(Text, props, null); };
   return new Proxy(
     {},
     {
@@ -44,3 +44,9 @@ jest.mock('@expo/vector-icons', () => {
     }
   );
 });
+
+// UI-thread animations have no native runtime in Jest.
+jest.mock('react-native-reanimated', () => ({
+  ...require('react-native-reanimated/mock'),
+  useReducedMotion: () => false,
+}));

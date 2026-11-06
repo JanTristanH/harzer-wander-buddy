@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react-native';
 import { fetchProfileOverview } from '@/lib/api';
 import { useProfileOverviewQuery } from '@/lib/queries';
-const mockQuery = jest.fn();
+const mockQuery = jest.fn().mockReturnValue({ data: undefined });
 const mockCache = jest.fn(() => ({ stamps: [{ ID: 'stamp', hasVisited: false }] }));
 jest.mock('@tanstack/react-query', () => ({ useQuery: (options: unknown) => mockQuery(options), useQueryClient: () => ({ getQueryData: mockCache }) }));
 jest.mock('@/lib/auth', () => ({ useAuth: () => ({ accessToken: 'token', getValidAccessToken: async () => 'token', isAuthenticated: true, logout: jest.fn() }), useIdTokenClaims: () => ({ sub: 'user', name: 'Alex' }) }));
