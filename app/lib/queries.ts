@@ -399,7 +399,7 @@ function getCachedSelfProfileOverview(
   } satisfies ProfileOverviewData;
 }
 
-function useAuthorizedRequest() {
+export function useAuthorizedRequest() {
   const { getValidAccessToken, logout } = useAuth();
 
   return async function authorizedRequest<T>(request: (token: string) => Promise<T>) {
@@ -797,6 +797,7 @@ export function useToursOverviewQuery(options?: {
 
   return useQuery<Tour[]>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
+    placeholderData: keepPreviousData,
     queryKey: queryKeys.toursOverview(claims?.sub, groupUserIds),
     enabled: Boolean(accessToken && isAuthenticated),
     queryFn: () =>

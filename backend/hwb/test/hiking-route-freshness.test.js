@@ -55,5 +55,5 @@ test('successive planning requests see inserted, updated and deleted travel time
   const remaining = await plan();
   assert.equal(remaining.length, 1, 'deleted routes must disappear without restarting the backend');
   assert.equal(Number(remaining[0].distance), 450);
-  assert.ok(remaining[0].path.every(p => first.some(e => e.ID === p.id)));
+  assert.ok(remaining[0].path.every(p => first.some(e => e.ID === p.travelTime_ID)));
 });

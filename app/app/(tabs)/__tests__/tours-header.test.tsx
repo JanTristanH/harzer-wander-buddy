@@ -4,6 +4,8 @@ import React from 'react';
 import type { Tour } from '@/lib/api';
 
 const mockUseToursOverviewQuery = jest.fn();
+jest.mock('@/lib/tour-suggestions', () => ({ useTourSuggestions: () => ({ suggestions: null }) }));
+jest.mock('@/components/maps/map-primitives', () => ({ __esModule: true, default: () => null, Marker: () => null, Polyline: () => null }));
 
 jest.mock('@/lib/auth', () => ({
   useAuth: () => ({
