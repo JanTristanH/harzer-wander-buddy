@@ -1,3 +1,4 @@
+import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
@@ -160,7 +161,7 @@ export default function StampsScreen() {
     return new Set(badgeGoal.required.filter(stamp => !stamp.visited && (!poolComplete || stamp.mandatory)).map(stamp => stamp.id));
   },[badgeGoal]);
   const reducedMotion = useReducedMotion();
-  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, isOffline, logout } = useAuth();
+  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
   const queryClient = useQueryClient();
   const offlineVisits = useOfflineVisits();
   const canRecordVisit = offlineVisits.isNative ? offlineVisits.canRecord : canPerformWrites || offlineVisits.canRecord;
@@ -309,6 +310,7 @@ export default function StampsScreen() {
     setToastVisible(false);
     const targetIds = remove ? (plan ?? []).map((place) => place.stampId) : selectedIds;
     const failedIds: string[] = [];
+    const confirmedIds: string[] = [];
     let completed = 0;
     let removedVisits = 0;
     try {
@@ -324,7 +326,10 @@ export default function StampsScreen() {
             if (offlineVisits.canRecord) {
               if (!stamp) throw new Error('Die Stempelstelle ist nicht lokal verfügbar.');
               await offlineVisits.record(stamp);
-            } else await createStamping(accessToken, stampId);
+            } else {
+              const visit = await createStamping(accessToken, stampId);
+              if (visit.ID) confirmedIds.push(visit.ID);
+            }
           }
           completed++;
           if (!remove && mounted.current) setStampProgress(0.08 + 0.82 * completed / targetIds.length);
@@ -340,9 +345,12 @@ export default function StampsScreen() {
         setStampProgress(1);
         await new Promise<void>((resolve) => setTimeout(resolve, reducedMotion ? 120 : STAMP_SELECTION_FILL_MS));
       }
+      if (confirmedIds.length && currentUserProfile?.id) {
+        publishStampingSuccess({ owner: currentUserProfile.id, visitIds: confirmedIds });
+      }
       await queryClient.invalidateQueries();
       if (!mounted.current) return;
-      if (!remove && completed > 0 && failedIds.length === 0) {
+      if (!remove && !offlineVisits.canRecord && completed > 0 && failedIds.length === 0) {
         setCelebrationCount(completed);
         // Returning to progress is intentional only after a successful explicit action.
         listRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -351,11 +359,11 @@ export default function StampsScreen() {
       setSelectedIds(failedIds);
       setSelectionMode(failedIds.length > 0);
       setRemovalPlan([]);
-      showBulkToast(failedIds.length > 0
+      if (remove || failedIds.length > 0 || offlineVisits.canRecord) showBulkToast(failedIds.length > 0
         ? `${completed} erledigt. ${failedIds.length} fehlgeschlagen. Bitte erneut versuchen.`
         : remove
           ? `${removedVisits} ${removedVisits === 1 ? 'Besuch' : 'Besuche'} entfernt.`
-          : offlineVisits.canRecord && isOffline
+          : offlineVisits.canRecord
             ? `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} auf diesem Gerät gespeichert.`
             : `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} gestempelt.`);
     } finally {
@@ -365,7 +373,7 @@ export default function StampsScreen() {
         setStampProgress(null);
       }
     }
-  }, [accessToken, canPerformWrites, canRecordVisit, hasPendingSelection, isOffline, offlineVisits, stamps, currentUserProfile?.id, logout, queryClient, reducedMotion, selectedIds, showBulkToast]);
+  }, [accessToken, canPerformWrites, canRecordVisit, hasPendingSelection, offlineVisits, stamps, currentUserProfile?.id, logout, queryClient, reducedMotion, selectedIds, showBulkToast]);
 
   const prepareRemoval = useCallback(async () => {
     if (!accessToken || !currentUserProfile?.id || !canPerformWrites || hasPendingSelection || bulkBusyRef.current) return;
@@ -761,7 +769,7 @@ export default function StampsScreen() {
       if (finished && isActive) {
         setAnimatedVisitedCount(visitedCount);
 
-        if (hasCompletedAllStamps) {
+        if (hasCompletedAllStamps && celebrationCount > 0 && offlineVisits.entries.length === 0) {
           playCompletionConfetti();
         }
       }
@@ -774,6 +782,8 @@ export default function StampsScreen() {
       visitedCountAnimation.removeListener(listenerId);
     };
   }, [
+    celebrationCount,
+    offlineVisits.entries.length,
     hasCompletedAllStamps,
     playCompletionConfetti,
     progressFillAnimation,

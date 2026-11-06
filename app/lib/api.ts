@@ -4,6 +4,22 @@ import { assertLiveBackend, isStaticWebsite, loadStaticCatalogue, staticStampbox
 import { prepareProfileImageForUpload, type UploadableImage } from '@/lib/image-upload';
 import buildODataQuery, { type QueryOptions } from 'odata-query';
 import type { BadgeAlbum, BadgeSelection } from '@/lib/badge-types';
+import type { StampingFeedback } from '@/lib/stamping-feedback';
+
+export async function fetchStampingFeedback(token: string, visitIds: string[]): Promise<StampingFeedback> {
+  const payload = await mutateOData<unknown>(token, buildUrl('getStampingFeedback'), {
+    method: 'POST', body: JSON.stringify({ visitIds }),
+  });
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Der Fortschritt konnte nicht geladen werden.');
+  const feedback = JSON.parse(raw) as StampingFeedback;
+  if (!Array.isArray(feedback.visitIds) || !Array.isArray(feedback.newBadges) ||
+      !Array.isArray(feedback.places) || !Number.isInteger(feedback.visitCount) ||
+      !Number.isInteger(feedback.beforeCount) || !Number.isInteger(feedback.afterCount)) {
+    throw new Error('Der Fortschritt konnte nicht bestätigt werden.');
+  }
+  return feedback;
+}
 
 export async function fetchBadgeAlbum(token: string, userId?: string): Promise<BadgeAlbum> {
   const parameters = userId ? `userId='${escapeODataString(userId)}'` : 'userId=null';
@@ -3944,14 +3960,15 @@ export async function stampForGroup(
     stampId: string;
     friendIds: string[];
     includeCurrentUser: boolean;
-  }
+  },
+  withFeedback = false
 ) {
   const stampId = safeTrim(payload.stampId);
   if (!stampId) {
     throw new Error('Stamp ID is required');
   }
 
-  return mutateOData<unknown>(accessToken, buildUrl('stampForGroup'), {
+  return mutateOData<unknown>(accessToken, buildUrl(withFeedback ? 'stampForGroupWithFeedback' : 'stampForGroup'), {
     method: 'POST',
     body: JSON.stringify({
       sStampId: stampId,
@@ -3959,6 +3976,10 @@ export async function stampForGroup(
       sGroupUserIds: normalizeIdList(payload.friendIds).join(','),
     }),
   });
+}
+
+export function stampForGroupWithFeedback(token: string, payload: Parameters<typeof stampForGroup>[1]) {
+  return stampForGroup(token, payload, true);
 }
 
 export async function removeFriendship(accessToken: string, friendshipId: string) {

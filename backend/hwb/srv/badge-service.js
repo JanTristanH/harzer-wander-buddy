@@ -1,8 +1,21 @@
 const cds = require('@sap/cds');
 const { buildAlbum, sanitizeSelection } = require('./badge-catalog');
+const { buildStampingFeedback } = require('./stamping-feedback');
 
 module.exports = function registerBadgeService(service) {
   const { BadgeProfiles, Stampboxes, Stampings } = cds.entities('hwb.db');
+  service.on('getStampingFeedback', async req => {
+    const ids = req.data.visitIds;
+    if (!Array.isArray(ids) || !ids.length || ids.length > 250)
+      return req.reject(400, 'Bitte 1 bis 250 bestätigte Besuche angeben.');
+    const [stamps, visits] = await Promise.all([
+      SELECT.from(Stampboxes).columns('ID', 'number', 'name'),
+      SELECT.from(Stampings).columns('ID', 'stamp_ID', 'visitedAt')
+        .where({ createdBy: req.user.id }),
+    ]);
+    // Never load another person's visits, even when a client supplies their UUIDs.
+    return JSON.stringify(buildStampingFeedback(stamps, visits, ids));
+  });
   async function load(userId) {
     const [stamps, visits, stored] = await Promise.all([
       SELECT.from(Stampboxes).columns('ID', 'number', 'name'),

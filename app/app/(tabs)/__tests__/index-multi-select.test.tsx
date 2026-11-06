@@ -1,3 +1,4 @@
+import { subscribeStampingSuccess } from '@/lib/stamping-feedback';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 
@@ -52,7 +53,7 @@ beforeEach(() => {
   mockBadgeAlbum.mockReturnValue({data:undefined});
   jest.useFakeTimers();
   mockAuth.mockReturnValue({ isAuthenticated: true, accessToken: 'test-token', canPerformWrites: true, currentUserProfile: { id: 'self' } });
-  mockCreate.mockResolvedValue({});
+  mockCreate.mockImplementation(async (_token: string, id: string) => ({ ID: `visit-${id}` }));
   mockDelete.mockResolvedValue(null);
   mockInvalidate.mockResolvedValue(undefined);
   mockVisits.mockResolvedValue([]);
@@ -87,6 +88,8 @@ it('opens details normally, then toggles rows without navigation after holding',
 });
 
 it('stamps every selected place including existing visits and exits selection', async () => {
+  const confirmed = jest.fn();
+  const unsubscribe = subscribeStampingSuccess(confirmed);
   await openScreen();
   hold('open');
   fireEvent.press(screen.getByTestId('stamp-list-item-visited'));
@@ -97,8 +100,11 @@ it('stamps every selected place including existing visits and exits selection', 
   expect(mockCreate).toHaveBeenCalledWith('test-token', 'visited');
   expect(mockDelete).not.toHaveBeenCalled();
   expect(mockInvalidate).toHaveBeenCalled();
-  expect(screen.getByText('2 Besuche gestempelt.')).toBeTruthy();
+  expect(screen.queryByText('2 Besuche gestempelt.')).toBeNull();
   expect(screen.queryByTestId('stamp-selection-toolbar')).toBeNull();
+  expect(confirmed).toHaveBeenCalledTimes(1);
+  expect(confirmed).toHaveBeenCalledWith({ owner: 'self', visitIds: ['visit-open', 'visit-visited'] });
+  unsubscribe();
   await act(async () => { jest.advanceTimersByTime(2500); });
   expect(screen.queryByText('2 Besuche gestempelt.')).toBeNull();
 });
