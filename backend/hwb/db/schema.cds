@@ -40,6 +40,7 @@ entity Attachments_local : Attachments {
 
 @assert.integrity: false
 entity Stampboxes : cuid, PointOfInterest {
+    virtual activeNotices  : LargeString;
     number                 : String(40); // to allow Sonderstempel via name
     validFrom              : Timestamp;
     validTo                : Timestamp;
@@ -183,3 +184,22 @@ entity PendingFriendshipRequests : cuid {
 
 // Input start any poi -> gps guess & Max driving time
 // Check adjecent stamps -> could also be generic -> load eg 20 km radius/box -> salesman trump
+
+// Reports are private until an admin approves them. Only actions may mutate these.
+entity StampNotices : cuid, managed {
+    stamp       : Association to Stampboxes not null;
+    kind        : String(20) not null;
+    message     : String(2000) not null;
+    status      : String(20) default 'pending';
+    source      : String(20) default 'community';
+    sourceUrl   : String(2048);
+    sourceKey   : String(64);
+    checkedAt   : Timestamp;
+    reviewedAt  : Timestamp;
+    reviewedBy  : User;
+}
+
+entity NoticeSyncState {
+    key ID      : String(20);
+    checkedAt   : Timestamp;
+}

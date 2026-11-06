@@ -1,3 +1,4 @@
+import { parseActiveNotices } from '@/lib/stamp-notices';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import { isStaticWebsite, openStaticStampArticle } from '@/lib/static-website';
@@ -90,6 +91,7 @@ type BaseMarkerItem = {
   coordinate: Coordinate;
   title: string;
   description?: string;
+  activeNotices?: string;
   imageUrl?: string;
 };
 
@@ -734,6 +736,7 @@ export default function MapScreen() {
           coordinate,
           title: `${stamp.number || '--'} • ${stamp.name}`,
           description: stamp.description?.trim() || undefined,
+          activeNotices: stamp.activeNotices,
           imageUrl: stamp.heroImageUrl?.trim() || stamp.image?.trim() || undefined,
           number: stamp.number,
           stampId: stamp.ID,
@@ -879,7 +882,8 @@ export default function MapScreen() {
     const elements = viewportStampItems.map((stampItem) => {
       const visual = getStampMarkerVisual(stampItem);
       const colors = markerColors(visual.visualKind);
-      const accessibilityLabel = stampMarkerAccessibilityLabel(
+      const hasNotice = parseActiveNotices(stampItem.activeNotices).length > 0;
+      const accessibilityLabel = (hasNotice ? 'Aktuelle Sperrung oder Meldung. ' : '') + stampMarkerAccessibilityLabel(
         stampItem,
         visual.visualKind,
         isGroupActive
@@ -893,10 +897,11 @@ export default function MapScreen() {
         return (
           <Marker
             accessibilityLabel={accessibilityLabel}
+            noticeBadge={hasNotice}
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
             identifier={stampItem.id}
-            key={`${stampItem.id}:${visual.visualKind}`}
+            key={`${stampItem.id}:${hasNotice}:${visual.visualKind}`}
             onPress={() => handleMarkerPress(stampItem)}
             tracksViewChanges={false}
             zIndex={markerZIndex(stampItem.kind)}>
@@ -924,10 +929,11 @@ export default function MapScreen() {
         return (
           <Marker
             accessibilityLabel={accessibilityLabel}
+            noticeBadge={hasNotice}
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
             identifier={stampItem.id}
-            key={`${stampItem.id}:${visual.visualKind}:fallback`}
+            key={`${stampItem.id}:${hasNotice}:${visual.visualKind}:fallback`}
             onPress={() => handleMarkerPress(stampItem)}
             pinColor={Platform.OS === 'web' ? colors.fill : undefined}
             tracksViewChanges={false}
@@ -952,11 +958,12 @@ export default function MapScreen() {
       return (
         <Marker
           accessibilityLabel={accessibilityLabel}
+          noticeBadge={hasNotice}
           anchor={MARKER_ANCHOR}
           coordinate={stampItem.coordinate}
           identifier={stampItem.id}
           image={visual.image}
-          key={`${stampItem.id}:${visual.visualKind}`}
+          key={`${stampItem.id}:${hasNotice}:${visual.visualKind}`}
           onPress={() => handleMarkerPress(stampItem)}
           pinColor={undefined}
           tracksViewChanges={false}
@@ -2355,6 +2362,7 @@ export default function MapScreen() {
             item={{
               kind: selectedItem.kind,
               title: selectedItem.title,
+              activeNotices: selectedItem.activeNotices,
               description:
                 selectedItem.kind === 'parking' ? undefined : selectedItem.description,
               imageUrl: selectedItem.imageUrl,

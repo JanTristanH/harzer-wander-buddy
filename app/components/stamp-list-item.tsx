@@ -1,8 +1,9 @@
+import { StampNoticeBadge } from '@/components/stamp-notice-badge';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
 import { GroupStampStatus, getGroupStampStatus } from '@/components/group-stamp-status';
 import { UncollectedStampArtwork } from '@/components/uncollected-stamp-artwork';
@@ -11,7 +12,10 @@ import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 
 // Safari owns long presses unless text selection and its native callout are disabled.
-const webCardInteractionStyle = Platform.OS === 'web' ? {
+const webCardInteractionStyle: (ViewStyle & {
+  userSelect: 'none';
+  WebkitUserSelect: string; WebkitTouchCallout: string;
+}) | undefined = Platform.OS === 'web' ? {
   userSelect: 'none' as const, WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
 } : undefined;
 const webCardInteractionProps = Platform.OS === 'web' ? {
@@ -138,6 +142,7 @@ function StampListItemComponent({
             {item.description?.trim() || 'Keine Beschreibung verfügbar.'}
           </Text>
 
+          <StampNoticeBadge value={item.activeNotices} />
           <View style={styles.cardMetaRow}>
             <View style={[styles.statePill, item.hasVisited ? styles.statePillVisited : styles.statePillOpen]}>
               <Feather
