@@ -1,6 +1,6 @@
 # TODOs: Premium-Gefühl und Gamification
 
-Stand: 14. Oktober 2026. Status: alle fünf Aufgaben offen, noch keine UI umgesetzt.
+Stand: 6. November 2026. #65 deckt Album und Sammelziel ab, #118 die gemeinsamen Oberflächen. Beide PRs sind offen. Stempelerfolg ist durch #113 teilweise in develop umgesetzt; Fortschrittskarte und vollständiger Abgleich der Entdeckerkarten bleiben offen. Die einzelnen Aufgaben enthalten den aktuellen Integrationsstatus.
 
 Ziel ist ein hochwertiges, motivierendes Sammelerlebnis: nächstes Ziel erkennen,
 Stempel sammeln, Fortschritt erleben und die eigene Sammlung präsentieren.

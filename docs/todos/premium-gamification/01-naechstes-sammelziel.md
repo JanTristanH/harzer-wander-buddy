@@ -1,6 +1,9 @@
 # TODO 01: Fortschrittskarte auf das nächste Sammelziel ausrichten
 
-Status: offen · Priorität: P1 · Aufwand: M
+Status: in PR #65; Integration/Abnahme offen · Priorität: P1 · Aufwand: M
+
+
+Abgleich 06.11.2026: Die Zielkomponente ist in #65 vorhanden. Den vollständigen Flow nach Integration gegen die folgenden Kriterien prüfen; diese Liste ist keine erneute Implementierungsanweisung.
 
 ## Beschreibung und Hintergrund
 
