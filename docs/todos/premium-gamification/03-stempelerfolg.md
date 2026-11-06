@@ -1,6 +1,9 @@
 # TODO 03: Erfolgreiches Stempeln als Fortschrittsmoment gestalten
 
-Status: offen · Priorität: P1 · Aufwand: S–M
+Status: teilweise in develop (#113); gemeinsames Erfolgsmodell offen · Priorität: P1 · Aufwand: S–M
+
+
+Abgleich 06.11.2026: Mehrfachauswahl hat bereits eine Buddy-Animation und einen Toast. Der gemeinsame Fortschrittsmoment für Liste, Details und Karte sowie serverbestätigte Abzeichenereignisse bleiben offen.
 
 ## Beschreibung und Hintergrund
 

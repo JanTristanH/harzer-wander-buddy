@@ -1,6 +1,9 @@
 # TODO 02: Profil in ein sichtbares Abzeichenalbum erweitern
 
-Status: offen · Priorität: P1 · Aufwand: M
+Status: in PR #65; Integration/Abnahme offen · Priorität: P1 · Aufwand: M
+
+
+Abgleich 06.11.2026: Album, Regeln, Auswahl und Profilbearbeitung sind in #65 implementiert. Native Profilbild-Gesten bleiben offen; physische offizielle Nachweise werden dadurch nicht ersetzt.
 
 ## Beschreibung und Hintergrund
 

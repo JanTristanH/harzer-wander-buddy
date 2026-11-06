@@ -113,3 +113,16 @@ Bezahlte Laufzeiten erfüllen. Spätere Bestandsänderungen erst zur Verlängeru
 Quellen: `app/xTODO.md`, `backend/hwb/README.md`; aktuelle Tourenansichten unter `app/app/tours/`; `group-selector.tsx`, `group-stamp-dialog.tsx`; Automatik in `hwb-service.js`, `routingManager.js`, API-Helfer in `app/lib/api.ts`; ältere Oberfläche: `HikingRouteDialog.fragment.xml`.
 
 Billing, geteilte Passrechte und Bezahlschranken sind noch umzusetzen.
+
+## Technischer Abgleich vom 6. November 2026
+
+Die Preis- und Gruppenregeln oben behalten ihren jeweiligen Entscheidungsstatus. Der ältere Codebefund vom 15. Oktober ist inzwischen teilweise überholt:
+
+- develop enthält native Offline-Besuche/-Notizen (#85), Mehrfachauswahl (#113) und GPX-Export (#86).
+- Tourenautomatik einschließlich Gruppenmodi und neuer Leseansicht ist in offenem PR #91 implementiert; native Abnahme und Integration fehlen. Billing und Premium-Berechtigungen fehlen weiterhin.
+- Abzeichen und Sammelziel liegen in #65, Themenhefte in darauf aufbauendem #88; diese Funktionen sind noch nicht in develop integriert.
+- Defekte, Sperrungen und moderierte Meldungen liegen in #89. Der offizielle Import wurde isoliert live geprüft; offene Zuordnungen und native Abnahme bleiben sichtbar.
+- Persönlicher Datenexport/Kontolöschung liegen in #63, der Auth-Anbieterwechsel in #119; technische Implementierung ist keine Produktions- oder Vertragsabnahme.
+- Native herunterladbare Wanderkarten liegen als Draft #87 vor; reale Offline-Darstellung muss noch nachgewiesen werden.
+
+Diese Punkte ersetzen keine Preisentscheidung. 7,99 €/Jahr, 2,99 €/14 Tage, fünf eingeladene Freunde und drei Automatik-Proben sind weiterhin Vorschläge. Manuelle Touren, Stempel, Kartenbasis und soziale Kernfunktionen bleiben gemäß bestätigter Founder-Vorgabe kostenlos.
