@@ -511,3 +511,46 @@ The independent reviewer completed the previously interrupted review: all 35 PNG
 Guest matrix carried forward (not newly inspected as a full matrix): list/login/tours/friends/profile and onboarding start/end at 320/390/768/1440 each 8.5; map at 390/768/1440 each 8.5. Map 320 is replaced only by the newly inspected round-7 overview, 8.5.
 
 The repetition uncovered that the former lower tour capture changed the camera rather than just scrolling the page, while the instruction overlapped zoom and a single draft point still showed zero server totals. Those concrete findings start the next correction round. Native testing remains with the user; screen-reader, offline/error, upload and multileg-route/reordering coverage is not implied.
+
+## Correction review 10 — source 7959e85
+
+The reviewer newly inspected six tour states and seven other changed images; unchanged images were compared by SHA-256 and explicitly carried forward from the completed round-7 review. Fifteen browser checks passed with no pageerrors. Camera stability during page scroll, separated tools and the one-point explanation were confirmed. The diagnostic round-9 failed assertion is retained in `review-9-diagnostic-browser-checks.json`; its overbroad global text assertion was replaced by a check scoped to the actual tour profile card. Production UI code was identical between that failed capture and round 10.
+
+| Category | Score /10 |
+| --- | ---: |
+| Icons | 8.5 |
+| Color/contrast | 8.5 |
+| Typography | 8.5 |
+| Visual hierarchy | 8.5 |
+| Spacing/layout | 8.5 |
+| Radii/forms | 8.5 |
+| Buttons/interactions | 8.5 |
+| Navigation | 8.5 |
+| Map UX | 8.0 |
+| Forms/search | 8.5 |
+| Feedback/system states | 8.5 |
+| Accessibility | 8.5 for evidenced Web scope |
+| Responsive/adaptive | 8.5 |
+| Consistency | 8.5 |
+| Information quality | 8.5 |
+| Polish/brand | 8.5 |
+
+| Newly inspected image | Score /10 |
+| --- | ---: |
+| tour-created | 8.5 |
+| tour-created-bottom | 8.5 |
+| tour-search | 8.0 |
+| tour-point-selected | 8.5 |
+| tour-point-added | 8.5 |
+| tour-first-point-summary | 8.5 |
+| map-filter | 8.5 |
+| profile-edit | 8.5 |
+| profile-saved | 8.5 |
+| signed-map-390 | 8.5 |
+| signed-tours-390 | 8.5 |
+| stamp-detail | 8.5 |
+| stamp-success | 8.5 |
+
+Explicitly carried forward at 8.5 each: friend request before/after acceptance; friend search; group dialog/selection; multiple selection; onboarding 0–4; search focus/empty; friends 390/1440; list 390/1440; map 1440; profile 390/1440; tours 1440; lower stamp detail. The previously recorded guest matrix and 320 map overview also remain carried forward.
+
+Remaining finding: in `tour-search`, many unrelated pins still overlap even though the text result is clear. The next change limits the map to matching targets while text search is focused, retaining already selected route points. Native, screen-reader, offline/error, upload and multileg-routing coverage remains unverified.

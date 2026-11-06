@@ -1309,8 +1309,14 @@ export default function TourDetailScreen() {
   );
 
   const mapItemsForRendering = useMemo(() => {
-    return allMapItems;
-  }, [allMapItems]);
+    const search = normalizeSearchValue(poiSearchQuery.trim());
+    if (!isSearchFocused || !search) return allMapItems;
+
+    // Keep route context while making matching destinations individually visible.
+    return allMapItems.filter((item) =>
+      draftPoiStats.positionsById.has(item.ID.toLowerCase()) || rankSearchItem(item, search) !== null
+    );
+  }, [allMapItems, draftPoiStats.positionsById, isSearchFocused, poiSearchQuery]);
 
   const markerRenderStates = useMemo(
     () =>

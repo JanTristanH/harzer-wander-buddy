@@ -210,6 +210,8 @@ async def main():
             await page.get_by_role('button',name='Ersten Stempel wählen').click()
             await page.get_by_role('textbox',name='Tourpunkte suchen').last.fill('Brocken')
             await page.wait_for_timeout(1000)
+            assert await page.locator('.leaflet-marker-icon').count() == 1, 'Unrelated pins remain in the focused Brocken search'
+            checks.append({'flow':'tour text search shows matching pins without unrelated markers','passed':True})
             await shot('tour-search')
             await page.get_by_text('#1 · Brocken – Gipfelblick',exact=True).last.click()
             await page.wait_for_timeout(700)
@@ -224,17 +226,25 @@ async def main():
             await page.wait_for_timeout(700)
             sequence=page.get_by_text('Aktuelle Reihenfolge',exact=True).locator('..')
             await sequence.scroll_into_view_if_needed()
-            assert 'Brocken' in await sequence.inner_text()
+            assert 'Brocken' in await sequence.inner_text(), 'First point is missing from the tour sequence'
             await page.get_by_text('Startpunkt gewählt. Füge ein weiteres Ziel hinzu. Distanz, Dauer und Höhenprofil werden ab zwei Punkten berechnet.',exact=True).wait_for()
-            assert await page.get_by_text('Stempel gesamt:',exact=False).count() == 0
+            profile_card=page.get_by_text('Tourprofil',exact=True).last.locator('xpath=../..')
+            assert await profile_card.get_by_text('Stempel gesamt:',exact=False).count() == 0, 'Single-point tour profile still shows server totals'
             await shot('tour-point-added')
             await page.get_by_text('Tourprofil',exact=True).scroll_into_view_if_needed()
             await shot('tour-first-point-summary')
             checks.append({'flow':'find and add first local tour point','passed':True})
+            await page.get_by_role('textbox',name='Tourpunkte suchen').last.fill('Froschfelsen')
+            await page.wait_for_timeout(1000)
+            labels=await page.locator('.leaflet-marker-icon').evaluate_all('(elements) => elements.map(el => el.getAttribute("aria-label") || "")')
+            assert any('Brocken' in label for label in labels), 'Search hid an existing route point'
+            assert any('Froschfelsen' in label for label in labels), 'Matching new destination is missing'
+            await shot('tour-search-route-context')
+            checks.append({'flow':'tour search keeps the existing route point beside a different matching target','passed':True})
 
         except Exception as error:
             checks.append({'flow':'capture continuation','passed':False,'errorType':type(error).__name__})
-            print('Capture stopped:',type(error).__name__,flush=True)
+            print('Capture stopped:',type(error).__name__,re.sub(r'https?://\S+', '<url>', str(error))[:500],flush=True)
         finally:
             (OUT/'browser-checks.json').write_text(json.dumps({'checks':checks,'errors':errors,'sourceHead':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT).decode().strip()},ensure_ascii=False,indent=2))
             await browser.close()
