@@ -4,6 +4,15 @@ const fetch = require("node-fetch");
 const DEBUG = cds.debug("cds-auth0");
 const EXTERNAL_USER_CACHE_TTL_MS = Number(process.env.EXTERNAL_USER_CACHE_TTL_MS || 5 * 60 * 1000);
 const EXTERNAL_USER_SYNC_TTL_MS = Number(process.env.EXTERNAL_USER_SYNC_TTL_MS || 24 * 60 * 60 * 1000);
+// Bound both per-process caches even when one-off users never return after TTL.
+const EXTERNAL_USER_CACHE_MAX_ENTRIES = 1000;
+function setBoundedCache(cache, key, value) {
+  cache.delete(key);
+  cache.set(key, value);
+  while (cache.size > EXTERNAL_USER_CACHE_MAX_ENTRIES) {
+    cache.delete(cache.keys().next().value);
+  }
+}
 const externalUserClaimsCache = new Map();
 const externalUserSyncCache = new Map();
 
@@ -87,7 +96,7 @@ function setCachedExternalUserClaims(userId, claims = {}) {
     return;
   }
 
-  externalUserClaimsCache.set(userId, {
+  setBoundedCache(externalUserClaimsCache, userId, {
     claims,
     expiresAt: Date.now() + EXTERNAL_USER_CACHE_TTL_MS,
   });
@@ -231,7 +240,7 @@ async function syncExternalUserIfNeeded(claims = {}) {
 
   const synced = await upsertExternalUser(claims);
   if (synced) {
-    externalUserSyncCache.set(claims.sub, Date.now());
+    setBoundedCache(externalUserSyncCache, claims.sub, Date.now());
   }
 }
 

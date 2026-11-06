@@ -41,6 +41,7 @@ services:
       - "traefik.http.routers.hwb.tls.certresolver=myresolver"
       - "com.centurylinklabs.watchtower.enable=true"
     environment:
+      DEPLOY_ON_START: ${DEPLOY_ON_START:-true}
       GOOLGE_MAPS_API_KEY: ${GOOLGE_MAPS_API_KEY}
       ISSUER_BASE_URL: https://dev-ijucl08spdudaszc.us.auth0.com
       CLIENT_ID: ${CLIENT_ID}
@@ -55,8 +56,29 @@ services:
       cds.requires.db.[production].credentials.database: postgres
       cds.requires.db.[production].credentials.password: ${DB_PASSWORD}
 
+  # Optional job for deployments that manage migrations before starting replicas.
+  hwb-migrate:
+    profiles: [migration]
+    image: ghcr.io/jantristanh/hwb:latest
+    command: ["node", "util/deployProduction.js"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      cds.requires.db.[production].credentials.host: db
+      cds.requires.db.[production].credentials.port: 5432
+      cds.requires.db.[production].credentials.user: postgres
+      cds.requires.db.[production].credentials.database: postgres
+      cds.requires.db.[production].credentials.password: ${DB_PASSWORD}
+
   db:
     image: postgres:16-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres

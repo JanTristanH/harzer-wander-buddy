@@ -1,0 +1,79 @@
+{
+  "before": {
+    "Tours?$top=100": {
+      "medianMs": 270.03,
+      "p95Ms": 295.45,
+      "medianHeapGrowthMiB": 45.17,
+      "readQueries": 205
+    },
+    "Stampboxes?$top=500": {
+      "medianMs": 138.17,
+      "p95Ms": 195.23,
+      "medianHeapGrowthMiB": 15.35,
+      "readQueries": 3
+    }
+  },
+  "after": {
+    "Tours?$top=100": {
+      "medianMs": 30.03,
+      "p95Ms": 43.42,
+      "medianHeapGrowthMiB": 2.65,
+      "readQueries": 7
+    },
+    "Stampboxes?$top=500": {
+      "medianMs": 22.59,
+      "p95Ms": 24.46,
+      "medianHeapGrowthMiB": 6,
+      "readQueries": 3
+    }
+  },
+  "startupSameOptimizedImage": {
+    "before": {
+      "medianProcessToListenMs": 1728.96,
+      "runsMs": [
+        2002.04,
+        1997.64,
+        1655.51,
+        1728.96,
+        1534.06
+      ],
+      "idleMemory": [
+        "100.8MiB / 17.59GiB",
+        "101.3MiB / 17.59GiB",
+        "100.5MiB / 17.59GiB",
+        "102.1MiB / 17.59GiB",
+        "101.5MiB / 17.59GiB"
+      ]
+    },
+    "after": {
+      "medianProcessToListenMs": 899.68,
+      "runsMs": [
+        883.27,
+        809.28,
+        927.27,
+        1339.09,
+        899.68
+      ],
+      "idleMemory": [
+        "101.2MiB / 17.59GiB",
+        "102.1MiB / 17.59GiB",
+        "100.5MiB / 17.59GiB",
+        "100.8MiB / 17.59GiB",
+        "101.5MiB / 17.59GiB"
+      ]
+    }
+  },
+  "docker": {
+    "backendBuildSeconds": 97.1,
+    "webExportBuildWithDependencyCacheSeconds": 104.5,
+    "rootSourceOnlyRebuildSeconds": 18.38,
+    "rootUnchangedRebuildSeconds": 2.44,
+    "runtimeImageBytes": 623860754,
+    "legacyCompleteBuild": "not completed: vfs filesystem exhausted"
+  },
+  "validation": {
+    "backendTestsPassed": 40,
+    "postgres16Smoke": "schema deployment, pool disconnect, tour aggregation, stampbox visits and user progress passed",
+    "runtimeSmoke": "public OData and Expo web return HTTP 200"
+  }
+}
