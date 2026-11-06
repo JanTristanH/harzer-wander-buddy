@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BadgeButton } from '@/components/badge-ui';
 import { ProfileErrorState, ProfileLoadingState } from '@/components/profile-view';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
@@ -504,6 +505,9 @@ export default function ProfileTimelineScreen() {
               </View>
             </View>
 
+            {isSelf ? <BadgeButton onPress={() => router.push('/profile/badges')}>
+              Alle Abzeichen entdecken
+            </BadgeButton> : null}
             <View style={styles.jumpCard}>
               <Text style={styles.jumpTitle}>Zu einem Datum springen</Text>
               <Pressable

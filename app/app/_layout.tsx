@@ -1,4 +1,5 @@
 import { NativeOfflineNotesProvider } from '@/lib/offline-notes';
+import { StampingSuccessHost } from '@/components/stamping-success-host';
 import {
   focusManager,
   useQueryClient,
@@ -195,6 +196,7 @@ export default function RootLayout() {
                 </HikingGroupProvider>
               </NativeOfflineNotesProvider>
             </NativeOfflineVisitsProvider>
+            <StampingSuccessHost />
           </AuthProvider>
         </GestureHandlerRootView>
       </ConnectivityProvider>

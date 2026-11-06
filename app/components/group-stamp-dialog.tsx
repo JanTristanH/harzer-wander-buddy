@@ -1,3 +1,4 @@
+import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -62,6 +63,7 @@ export function GroupStampDialog({
   const queryClient = useQueryClient();
   const {
     accessToken,
+    currentUserProfile,
     canPerformWrites,
     isAuthenticated,
     isOffline,
@@ -174,11 +176,22 @@ export function GroupStampDialog({
 
     setIsSubmitting(true);
     try {
-      await groupStampApi.stampForGroup(accessToken, {
+      const send = groupStampApi.stampForGroupWithFeedback ?? groupStampApi.stampForGroup;
+      const result = await send(accessToken, {
         stampId,
         friendIds: selectedStampFriendIds,
         includeCurrentUser: shouldIncludeCurrentUser,
       });
+      if (currentUserProfile?.id) {
+        const raw = typeof result === 'string' ? result : (result as { value?: unknown })?.value;
+        let confirmed: { eventId?: string; ownVisitIds?: string[]; friendVisitCount?: number } = {};
+        try { if (typeof raw === 'string') confirmed = JSON.parse(raw); } catch { /* Older backend: no personal progress claim. */ }
+        publishStampingSuccess({ owner: currentUserProfile.id,
+          eventId: confirmed.eventId ?? `group-${Date.now()}`,
+          visitIds: confirmed.ownVisitIds ?? [],
+          friendVisitCount: confirmed.friendVisitCount ?? selectedStampFriendIds.length,
+        });
+      }
       await queryClient.invalidateQueries();
       await onSuccess();
       onClose();
@@ -205,6 +218,7 @@ export function GroupStampDialog({
     }
   }, [
     accessToken,
+    currentUserProfile?.id,
     canPerformWrites,
     isAuthenticated,
     isOffline,
