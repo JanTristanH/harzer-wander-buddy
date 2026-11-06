@@ -20,6 +20,9 @@ module.exports = function createBasicAuth(options) {
       // JSON response avoids a browser-native Basic challenge over the app form.
       return res.status(401).json({ error: { code: '401', message: 'Unauthorized' } });
     }
+    if (await require('./account-privacy').isAccountDeleted(id)) {
+      return res.status(401).json({ error: { code: '401', message: 'Dieses Konto wurde gelöscht.' } });
+    }
     const roles = ['authenticated-user', ...(account.roles || [])];
     req.user = new cds.User({ id, roles, _roles: roles });
     if (cds.context) cds.context.user = req.user;
