@@ -27,7 +27,20 @@
       "readQueries": 3
     }
   },
-  "startupSameOptimizedImage": {
+  "validation": {
+    "backendTestsPassed": 44,
+    "postgres16Smoke": "fresh compiled schema, custom handlers and aggregations passed; existing visits preserved on redeploy",
+    "runtimeSmoke": "nonroot UID 65532, no shell/SDK/SQLite, compiled model and Expo artifact present, native sharp WebP transform passed"
+  },
+  "initialPrDocker": {
+    "backendBuildSeconds": 97.1,
+    "webExportBuildWithDependencyCacheSeconds": 104.5,
+    "rootSourceOnlyRebuildSeconds": 18.38,
+    "rootUnchangedRebuildSeconds": 2.44,
+    "runtimeImageBytes": 623860754,
+    "legacyCompleteBuild": "not completed: vfs filesystem exhausted"
+  },
+  "historicalStartupWithSQLite": {
     "before": {
       "medianProcessToListenMs": 1728.96,
       "runsMs": [
@@ -63,17 +76,87 @@
       ]
     }
   },
-  "docker": {
-    "backendBuildSeconds": 97.1,
-    "webExportBuildWithDependencyCacheSeconds": 104.5,
-    "rootSourceOnlyRebuildSeconds": 18.38,
-    "rootUnchangedRebuildSeconds": 2.44,
-    "runtimeImageBytes": 623860754,
-    "legacyCompleteBuild": "not completed: vfs filesystem exhausted"
-  },
-  "validation": {
-    "backendTestsPassed": 40,
-    "postgres16Smoke": "schema deployment, pool disconnect, tour aggregation, stampbox visits and user progress passed",
-    "runtimeSmoke": "public OData and Expo web return HTTP 200"
+  "productionStartupFollowup": {
+    "database": "isolated PostgreSQL 16",
+    "authentication": "mocked",
+    "runsPerVariant": 5,
+    "beforeImageBytes": 623860754,
+    "afterImageBytes": 281148132,
+    "before": {
+      "true": {
+        "medianProcessToListenMs": 1579.51,
+        "runsMs": [
+          1606.7,
+          1562.84,
+          1579.51,
+          1554.06,
+          1667.87
+        ],
+        "medianFirstApiMs": 82.36,
+        "containerMemoryAfterFirstApi": [
+          "103.3MiB / 17.59GiB",
+          "102.8MiB / 17.59GiB",
+          "102.6MiB / 17.59GiB",
+          "104.1MiB / 17.59GiB",
+          "103.6MiB / 17.59GiB"
+        ]
+      },
+      "false": {
+        "medianProcessToListenMs": 920.61,
+        "runsMs": [
+          965.67,
+          948.68,
+          915.84,
+          920.61,
+          897.57
+        ],
+        "medianFirstApiMs": 82.27,
+        "containerMemoryAfterFirstApi": [
+          "105MiB / 17.59GiB",
+          "104.3MiB / 17.59GiB",
+          "104.1MiB / 17.59GiB",
+          "103.3MiB / 17.59GiB",
+          "103.6MiB / 17.59GiB"
+        ]
+      }
+    },
+    "after": {
+      "true": {
+        "medianProcessToListenMs": 1105.54,
+        "runsMs": [
+          1098.86,
+          1109.91,
+          1105.54,
+          1118.88,
+          1056.08
+        ],
+        "medianFirstApiMs": 61.88,
+        "containerMemoryAfterFirstApi": [
+          "113.5MiB / 17.59GiB",
+          "113.9MiB / 17.59GiB",
+          "114.8MiB / 17.59GiB",
+          "114.2MiB / 17.59GiB",
+          "114.6MiB / 17.59GiB"
+        ]
+      },
+      "false": {
+        "medianProcessToListenMs": 791.18,
+        "runsMs": [
+          790.56,
+          791.18,
+          800.66,
+          846.73,
+          775.44
+        ],
+        "medianFirstApiMs": 79.89,
+        "containerMemoryAfterFirstApi": [
+          "97.02MiB / 17.59GiB",
+          "96.29MiB / 17.59GiB",
+          "96.26MiB / 17.59GiB",
+          "96.7MiB / 17.59GiB",
+          "95.96MiB / 17.59GiB"
+        ]
+      }
+    }
   }
 }

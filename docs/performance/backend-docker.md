@@ -45,64 +45,93 @@ zusammengesetzten Primärschlüssel beginnend mit `tour_ID`. Zusätzliche Indize
 nicht blind in Produktion anlegen: Selektivität, Schreiblast und vorhandene
 Indizes zuerst messen. In dieser Änderung wurde keine externe Datenbank verändert.
 
-## Docker-Betrieb
+## Docker-Betrieb und Schema
 
-Beide Dockerfiles trennen Backend-Abhängigkeiten, UI5-Build und Laufzeitimage.
-Die Laufzeit enthält keine Compiler, global installierte CAP-CLI oder
-UI5-Entwicklungsabhängigkeiten. `npm ci --omit=dev` verwendet die Lockdatei.
-Eine reine Backend-Codeänderung installiert keine Abhängigkeiten neu und baut
-UI5 nicht neu. Expo-Export nutzt maximal zwei Worker und mountet seine
-Build-Abhängigkeiten, um zusätzliche Kopien zu vermeiden.
+Das Schema wird weiterhin automatisch aktualisiert. Standardmäßig gilt
+`DEPLOY_ON_START=true`: `util/startProduction.js` lädt die CAP-Plugins, führt
+`cds.deploy('*').to('db')` aus und startet den HTTP-Server erst nach Erfolg.
+Deployment und Server verwenden denselben Node-Prozess und Datenbank-Pool.
+Ein Deploymentfehler verhindert den Serverstart. CAPs bisherige automatische
+PostgreSQL-Schema-Evolution bleibt aktiv; es gibt keinen neuen Schema-Hash oder
+selbst entwickelten Mechanismus zum Überspringen von Änderungen.
 
-Die neue Root-`.dockerignore` verhindert die Übertragung lokaler `node_modules`,
-nativer Android-/iOS-Builds, Git-Daten, Datenbankkopien und lokaler Konfiguration.
-Der öffentliche Backend-URL-Default des bestehenden Google-Buildtriggers bleibt
-erhalten. Es wird kein neuer Docker-Publish-Workflow eingeführt.
+Beim Build entsteht `srv/csn.json` aus den CDS-Quelldateien. Diese Datei enthält
+das vollständige Modell samt Service-Handler-Verweisen. Sie ersetzt die
+CDS-Quelldateien im Image und spart Quellcode-Kompilation beim Start. Der Build
+selbst ändert keine Datenbank. Sowohl das Start-Deployment als auch der separate
+Migrationsjob laden anschließend dieses Modell. SQL-DDL aus Quellmodell und
+vorkompiliertem Modell wird für PostgreSQL und SQLite im Test verglichen.
 
-Compose enthält einen optionalen `hwb-migrate`-Job im Profil `migration`, der
-auf einen erfolgreichen PostgreSQL-Healthcheck wartet. Das bisherige
-CAP-Schema-Deployment-Verhalten bleibt erhalten; es wird nicht durch eine neue
-Migrationsstrategie ersetzt. Standardmäßig bleibt `DEPLOY_ON_START=true`, damit
-auch bestehende Watchtower-Updates weiterhin ihr Schema deployen. Erst wenn die
-Release-Orchestrierung Migrationen zuverlässig vor **jedem** Update ausführt,
-kann `DEPLOY_ON_START=false` gesetzt werden. Beispiel für kontrollierte Deployments:
-
-```sh
-docker compose --profile migration run --rm hwb-migrate
-DEPLOY_ON_START=false docker compose up -d hwb
-```
-
-Bei manuellem Betrieb:
+Nur bei `DEPLOY_ON_START=false` wird die Start-Migration ausgelassen. Dann muss
+der Release-Prozess das Schema **vor jedem App-Update** erfolgreich deployen:
 
 ```sh
 docker run --rm --env-file deployment.env IMAGE node util/deployProduction.js
 docker run --env-file deployment.env -e DEPLOY_ON_START=false IMAGE
 ```
 
-Ohne `DEPLOY_ON_START=false` deployt das Standalone-Image aus Kompatibilitätsgründen
-weiter beim Start. Bei Cloud Run oder anderer Orchestrierung muss der einmalige
-Migrationsschritt dort eingerichtet werden, bevor diese Option aktiviert wird.
-Der eigentliche Server startet über `exec node` und erhält Stoppsignale direkt.
+Compose bietet dafür den optionalen Job `hwb-migrate` im Profil `migration` mit
+PostgreSQL-Healthcheck. Aus `backend/hwb`:
 
-Für die verwaltete Testumgebung wird die Proxy-CA nur temporär eingebunden:
+```sh
+docker compose --profile migration run --rm hwb-migrate
+DEPLOY_ON_START=false docker compose up -d hwb
+```
+
+Für bestehende Watchtower-Updates bleibt der Standard `true` erhalten. Auch bei
+Cloud Run darf `false` erst gesetzt werden, wenn ein vorgeschalteter Release-Job
+jedes Schema-Update zuverlässig übernimmt. Ein externes Schema-Deployment
+verschiebt die Arbeit innerhalb des Releases; es entfernt sie nicht.
+
+## Inhalt und Build des Produktionsimages
+
+Beide Dockerfiles trennen Dependency-Installation, Modell-Kompilation,
+UI5-/Expo-Build und Runtime. Die Runtime basiert auf
+`gcr.io/distroless/nodejs22-debian12:nonroot` und läuft als UID 65532.
+Sie enthält Node, die notwendigen Runtime-Bibliotheken, produktive
+Node-Abhängigkeiten, JS-Service-Handler, das CSN-Modell und Web-Assets.
+
+Entfernt sind:
+
+- CAP-Entwicklungs-SDK samt verschachtelten HANA-/ESLint-Werkzeugen. Es blieb
+  zuvor trotz `--omit=dev` über den optionalen Peer von `@cap-js/postgres` im
+  Image. Deshalb wird es nach der gelockten Installation gezielt entfernt.
+- SQLite: nur noch Entwicklungsabhängigkeit für lokale Arbeit und Tests;
+  das Produktionsimage verwendet PostgreSQL.
+- npm, Yarn, Corepack, Shell, Node-Header und native Build-Compiler.
+- CDS-Quellen, UI5-Test-/Mock-Dateien und UI5-Build-Konfiguration.
+- Die ungenutzte Selbst-Abhängigkeit `hwb: file:`.
+
+Der CAP-Runtime-Compiler bleibt vorhanden: Er wird unter anderem für
+Schema-Evolution und OData-Metadaten benötigt. Lizenzdateien und unbekannte
+Paketbestandteile werden nicht pauschal gelöscht. Beide alten UI5-Pfade
+`/app/frontendhwb/webapp` und `/app/frontendhwb/dist` bleiben bedienbar.
+
+Diagnose erfolgt über `docker logs` und `docker exec CONTAINER node ...`;
+`docker exec ... sh` und Paketinstallationen im laufenden Image sind nicht
+verfügbar. Der Migrationsbefehl `node util/deployProduction.js` funktioniert
+weiterhin. `start.sh` bleibt als Wrapper im Repository, das Produktionsimage
+startet Node direkt und benötigt die Shell-Datei nicht.
+
+`npm ci --omit=dev --omit=peer` verwendet die Lockdatei. Build-Prüfungen stellen
+sicher, dass weder SDK noch SQLite im Runtime-Dependency-Verzeichnis verbleiben.
+Die Build-Stufe benötigt durch den Wegfall von SQLite keine C++-Toolchain mehr.
+Modellquellen und Build-Abhängigkeiten werden temporär gemountet, um zusätzliche
+Kopien zu sparen. Backend-Codeänderungen bauen weder UI5 noch Expo neu; die
+kleine Modell-Kompilation wird bei Änderungen ihrer Eingaben erneut ausgeführt.
+Expo exportiert mit maximal zwei Workern.
+
+`.dockerignore` hält lokale `node_modules`, native Android-/iOS-Builds, Git-Daten,
+Datenbankkopien und lokale Konfiguration aus dem Kontext. Der Backend-URL-Default
+des bestehenden Google-Buildtriggers bleibt erhalten; kein neuer Publish-Workflow.
+Die Proxy-CA der verwalteten Umgebung wird nur bei Bedarf temporär eingebunden:
 
 ```sh
 docker build --secret id=proxy_ca,src="$CODEX_PROXY_CERT" -t hwb-perf .
 ```
 
-Die CA ist optional; normale Builds benötigen dieses Secret nicht. Der Build
-benötigt BuildKit. Docker-Layer- und npm-Cache werden genutzt; wie viel davon
-zwischen Google-Buildläufen erhalten bleibt, hängt vom bestehenden Trigger ab.
-
-## Grenzen
-
-Die Umgebung verwendet Docker mit `vfs`. Vollständige Vergleichsbuilds haben
-zunächst das 32-GiB-Dateisystem gefüllt; nur Artefakte des eigenen überholten
-Testimages wurden entfernt. Vorhandene Android-/Build-Caches bleiben erhalten.
-Kaltbuild-Werte mit Downloads und SQLite-Kompilation sind nicht auf die
-Produktions-Buildmaschine übertragbar. Die vollständigen alten Images konnten hier nicht fertig gebaut werden; daraus
-wird keine prozentuale Verbesserung von Kaltbuild-Zeit oder Imagegröße abgeleitet.
-
+Normale Builds benötigen das Secret nicht. BuildKit ist erforderlich. Wie viel
+Cache zwischen Google-Buildläufen erhalten bleibt, hängt vom bestehenden Trigger ab.
 
 ## Ergebnisse
 
@@ -117,34 +146,53 @@ Diese Prozentsätze gelten für den beschriebenen Testfall, nicht für alle
 Endpunkte oder den gesamten Server-RAM. Die Besuchsdatenmenge und die Größe der
 vorher unnötig geladenen Geometrien beeinflussen die Ergebnisse wesentlich.
 
-Docker-Startvergleich mit demselben optimierten Backend-Image und einer bereits
-angelegten SQLite-Datenbank: fünf Starts mit `DEPLOY_ON_START=true`, fünf mit
-`false`. Gemessen vom Docker-Prozessstart bis zum Log „server listening“, ohne
-VFS-Containerkopie vor dem Prozessstart. Median 1.728,96 → 899,68 ms, **48,0 %**
-weniger Startzeit. Das ist der Effekt des ausgelagerten Deployments, kein
-Vergleich zwischen vollständigen alten/neuen Produktions-Deployments. Das
-Deployment selbst entfällt nicht aus dem Release. Leerlauf-Containerverbrauch
-laut `docker stats` in beiden Varianten etwa **101 MiB**; hier ist keine
-RAM-Halbierung belegt. Reproduktion:
+Die folgende zusätzliche Runde vergleicht das erste optimierte PR-Image mit dem
+jetzigen Runtime-Image, jeweils mit lokalem PostgreSQL 16 und Mock-Authentifizierung.
+Fünf frische Node-Prozesse pro Variante; nach jedem Lauf wird der Container
+gestoppt und neu gestartet. Gemessen vom Prozessstart bis „server listening“,
+ohne Image-Pull und VFS-Containerkopie. Zusätzlich wird die erste öffentliche
+Stempelboxen-Abfrage vollständig gelesen.
+
+| Messung | Erstes PR-Image | Jetzt |
+| --- | ---: | ---: |
+| Imagegröße, unkomprimiert | 623,86 MB | 281,15 MB (**−54,9 %**) |
+| Start mit Schema-Deployment | 1.579,51 ms | 1.105,54 ms (**−30,0 %**) |
+| Erste API-Abfrage nach diesem Start | 82,36 ms | 61,88 ms |
+| Start bei bereits separat deploytem Schema | 920,61 ms | 791,18 ms (**−14,1 %**) |
+
+Der gemeinsame Deployment-/Serverprozess hält Compiler-Arbeit im Speicher.
+Nach der ersten Anfrage zeigt `docker stats` bei aktivem Start-Deployment etwa
+**114 MiB statt 104 MiB**. Mit vorgelagertem Deployment benötigt die neue Runtime
+etwa **96 MiB**. Das ist ein gemessener Zielkonflikt zwischen Standard-Startzeit
+und RAM, keine Halbierung des gesamten Serververbrauchs. Reproduktion:
 
 ```sh
-cd backend/hwb
-python3 benchmark/startup.py IMAGE
+python3 backend/hwb/benchmark/startup.py IMAGE --compare-image BASELINE --runs 5
 ```
 
-Der Backend-Build benötigte 97,10 s einschließlich Abhängigkeitsinstallation.
-Der vollständige Root-Build mit vorhandenem Dependency-Cache und neuem Expo-Export
-benötigte 104,50 s. Eine anschließende reine Backend-Quellcodeänderung benötigte
-18,38 s; `npm ci`, UI5-Build und Expo-Export waren dabei vollständig gecacht.
-Ein weiterer Build unveränderter Quellen benötigte 2,44 s. Das fertige Root-Image
-misst rund **624 MB / 595 MiB**. Es gibt keinen fertiggestellten alten
-Vergleichsbuild für eine belastbare prozentuale Kaltbuild- oder Größenangabe.
+Historische Build-Messungen der ersten Runde stehen separat in `results.json`:
+97,10 s für den Backend-Build einschließlich Installation, 104,50 s für den
+Root-Build mit vorhandenem Dependency-Cache und neuem Expo-Export, 18,38 s für
+eine Backend-Codeänderung und 2,44 s für unveränderte Quellen. Die zweite Runde
+baut keine SQLite-Bibliothek mehr und liefert das kleinere Runtime-Image.
+Diese Buildzeiten sind keine kontrollierten Kaltbuild-Vergleiche.
 
-Validierung: 40 Backend-Tests erfolgreich, beide Dockerfiles erfolgreich gebaut,
-vollständiger Expo-Web- und UI5-Build erfolgreich, öffentliche API und Expo-Web
-im fertigen Container liefern HTTP 200, Compose-Konfiguration validiert.
+## Validierung und Grenzen
 
-Zusätzlich mit einem frischen, lokalen PostgreSQL-16-Container geprüft:
-Schema-Deployment und Pool-Abbau beenden sich erfolgreich; die optimierten
-Abfragen für Tour-Gruppenwerte, Stempelboxen und Nutzerfortschritt liefern auch
-unter PostgreSQL die erwarteten Ergebnisse. Kein Zugriff auf Produktionsdaten.
+44 Backend-Tests erfolgreich, inklusive Deployment-Reihenfolge/Fehlerabbruch
+und Modell-DDL-Vergleich. Beide finalen Dockerfiles bauen erfolgreich.
+PostgreSQL 16 wurde frisch initialisiert: Deployment, Tour-Gruppenwerte,
+Stempelboxen und Fortschritt funktionieren mit dem kompilierten Modell.
+Ein weiteres Deployment erhält beide zuvor angelegten Stempelbesuche.
+Native WebP-Kompression mit `sharp` funktioniert im distroless-Image als UID 65532.
+
+CI prüft nach dem Image-Build zusätzlich Runtime-Inhalt, Web-Artifact, native
+Bildverarbeitung und beide Startup-Varianten mit einer isolierten PostgreSQL-Datenbank.
+Kein Zugriff auf Produktionsdaten. Die lokale Umgebung nutzt Docker mit `vfs`;
+fehlgeschlagene Vergleichsbuilds füllten zeitweise das 32-GiB-Dateisystem. Nur
+Artefakte eigener verworfener Testimages wurden entfernt; vorhandene
+Android-/Build-Caches bleiben erhalten. Das ursprüngliche Dockerfile konnte
+hier nicht vollständig gebaut werden. Die neue Größen-/Startzeit-Angabe
+vergleicht deshalb ausdrücklich mit dem bereits optimierten ersten PR-Image.
+Produktionsauthentifizierung, reale Netzwerklatenz und Registry-Transferzeiten
+sind in den lokalen Startwerten nicht enthalten.
