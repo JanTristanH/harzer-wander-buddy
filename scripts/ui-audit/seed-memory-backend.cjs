@@ -1,6 +1,10 @@
 // Run from backend/hwb. The --profile memory database is discarded on exit.
 const { createRequire } = require('node:module');
 const path = require('node:path');
+// Match the web test client without depending on an untracked backend .env.
+const webConfig = require('../../app/app.json').expo.extra;
+process.env.ISSUER_BASE_URL ||= `https://${webConfig.auth0Domain}/`;
+process.env.AUDIENCE ||= webConfig.auth0Audience;
 const cds = createRequire(path.join(process.cwd(), 'package.json'))('@sap/cds');
 cds.on('served', async () => {
  const db = await cds.connect.to('db');

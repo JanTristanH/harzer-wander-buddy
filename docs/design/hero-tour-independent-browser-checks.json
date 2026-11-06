@@ -1,0 +1,38 @@
+{
+  "checks": [
+    {
+      "flow": "guest-list",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "flow": "guest-list",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "flow": "guest-list",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "flow": "guest-list",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "flow": "instruction with active stamp",
+      "count": 0
+    },
+    {
+      "flow": "instruction with route stamp",
+      "count": 0
+    },
+    {
+      "flow": "route search fullscreen",
+      "count": 1,
+      "pins": 3
+    }
+  ],
+  "pageErrors": []
+}

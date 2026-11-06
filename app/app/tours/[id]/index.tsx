@@ -1007,6 +1007,7 @@ export default function TourDetailScreen() {
   const [showPoiAddedFeedback, setShowPoiAddedFeedback] = useState(false);
 
   const mapRef = useRef<MapViewRef | null>(null);
+  const tourSearchInputRef = useRef<TextInput | null>(null);
   const hasAppliedAutoStartEditModeRef = useRef(false);
   const regionRef = useRef<Region>(HARZ_REGION);
   const activeSaveRequestIdRef = useRef(0);
@@ -1049,6 +1050,12 @@ export default function TourDetailScreen() {
   }, []);
 
   const closeMapFullscreen = useCallback(() => {
+    if (Platform.OS === 'web') {
+      tourSearchInputRef.current?.blur();
+      setIsSearchFocused(false);
+      setIsMapFullscreen(false);
+      return;
+    }
     fullscreenProgress.value = withTiming(
       0,
       {
@@ -1062,6 +1069,35 @@ export default function TourDetailScreen() {
       }
     );
   }, [fullscreenProgress]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !isMapFullscreen) return;
+    const focusFrame = requestAnimationFrame(() => tourSearchInputRef.current?.focus());
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMapFullscreen();
+      } else if (event.key === 'Tab') {
+        const card = document.querySelector('[data-testid="tour-map-card"]');
+        const controls = Array.from(card?.querySelectorAll<HTMLElement>('button, input, a[href], [tabindex="0"]') ?? [])
+          .filter((element) => !element.hasAttribute('disabled') && element.getClientRects().length > 0);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [closeMapFullscreen, isMapFullscreen]);
 
   useEffect(() => {
     if (!tourId) {
@@ -2627,8 +2663,13 @@ export default function TourDetailScreen() {
 
   const renderTourMap = (isFullscreen: boolean) => (
     <View
+      testID="tour-map-card"
+      role={Platform.OS === 'web' && isFullscreen ? 'dialog' : undefined}
+      aria-modal={Platform.OS === 'web' && isFullscreen ? true : undefined}
+      accessibilityLabel={isFullscreen ? 'Tourkarte' : undefined}
       onLayout={(event) => setRouteMapHeight(event.nativeEvent.layout.height)}
-      style={[styles.mapCard, isEditMode && draftPoiIds.length === 0 && styles.emptyMapCard, isFullscreen && styles.mapCardFullscreen]}>
+      style={[styles.mapCard, isEditMode && draftPoiIds.length === 0 && styles.emptyMapCard, isFullscreen && styles.mapCardFullscreen,
+        Platform.OS === 'web' && isFullscreen && styles.mapCardWebFullscreen]}>
       <MapView
         attributionPlacement="bottom-right"
         ref={mapRef}
@@ -2756,6 +2797,7 @@ export default function TourDetailScreen() {
           <View style={styles.mapSearchWrap}>
             <Feather color="#6d7d6e" name="search" size={14} />
             <ClearableSearchInput
+              ref={tourSearchInputRef}
               autoFocus={isFullscreen}
               onBlur={() => {
                 if (searchBlurTimeoutRef.current) {
@@ -2840,7 +2882,7 @@ export default function TourDetailScreen() {
             ) : null}
           </View>
         ) : null}
-        {isEditMode ? (
+        {isEditMode && (selectedExternalPlace || (!selectedMapItem && draftPoiIds.length === 0)) ? (
           <Text testID="tour-map-instruction" style={styles.externalSearchHint}>
             {selectedExternalPlace ? 'Externe Orte dienen zur Orientierung. Füge Stempel oder Parkplätze als Tourpunkte hinzu.' : 'Stempel auswählen und „Zur Tour hinzufügen“ antippen.'}
           </Text>
@@ -3011,6 +3053,8 @@ export default function TourDetailScreen() {
         visible={isSaveSuccessToastVisible}
       />
       <ScrollView
+        scrollEnabled={Platform.OS !== 'web' || !isMapFullscreen}
+        style={Platform.OS === 'web' && isMapFullscreen ? { zIndex: 1000 } : undefined}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.scrollContent, { paddingBottom: footerReservedHeight }]}
         showsVerticalScrollIndicator={false}>
@@ -3200,11 +3244,13 @@ export default function TourDetailScreen() {
           </View>
         ) : null}
 
-        {isMapFullscreen ? null : showDeferredTourSections ? (
+        {isMapFullscreen && Platform.OS !== 'web' ? null : showDeferredTourSections ? (
           <View style={styles.loadingMapCard}>
             <SkeletonBlock height={236} radius={18} width="100%" />
           </View>
-        ) : renderTourMap(false)}
+        ) : <View style={Platform.OS === 'web' && isMapFullscreen ? { height: isEditMode && draftPoiIds.length === 0 ? 460 : 390, zIndex: 1000 } : undefined}>
+          {renderTourMap(Platform.OS === 'web' && isMapFullscreen)}
+        </View>}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Aktuelle Reihenfolge</Text>
@@ -3469,7 +3515,7 @@ export default function TourDetailScreen() {
         </View>
       </Modal>
 
-      <Modal
+      {Platform.OS !== 'web' ? <Modal
         animationType="none"
         accessibilityLabel="Tourkarte"
         visible={isMapFullscreen}
@@ -3479,7 +3525,7 @@ export default function TourDetailScreen() {
             {renderTourMap(true)}
           </Animated.View>
         </View>
-      </Modal>
+      </Modal> : null}
     </SafeAreaView>
   );
 }
@@ -3872,6 +3918,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     shadowRadius: 0,
     elevation: 0,
+  },
+  mapCardWebFullscreen: {
+    // Keep the map and focused input mounted while switching viewport size.
+    position: 'fixed' as 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    height: '100%',
+    marginBottom: 0,
+    zIndex: 1000,
   },
   mapFullscreenSafeArea: {
     flex: 1,

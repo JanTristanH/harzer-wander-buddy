@@ -45,3 +45,16 @@ python scripts/ui-audit/capture-web.py /workspace/artifacts/ui-audit/final
 The capture reads only the approved test credentials from `AGENTS.md` and performs actual Auth0 login. Profile setup and visit writes go to the disposable local memory backend. It never exports cookies, tokens, storage state or emulator userdata. `runtime-proxy.cjs` enables Node fetch to use the configured environment proxy for Auth0, preserving local exclusions and TLS verification. Without an environment proxy it leaves fetch unchanged.
 
 The capture records source commit, viewport overflow, interaction outcomes and sanitized browser errors alongside PNGs. Run it against the built working tree and record any uncommitted UI changes in the review ledger. A failed capture or missing screen is not a passing check. Do not publish the runtime directory or test credentials.
+
+## Focused hero/tour follow-up
+
+Against the build currently served on port 4004, run `python scripts/ui-audit/capture-hero-tour.py after`.
+It captures guest/personal heroes, empty/selected/added tour states, reopening search,
+and removing the last point. It asserts the instruction visibility, including its
+return after removing the last point and deselecting. Use `before` only when the
+baseline build is served; the argument labels evidence and does not switch source.
+The memory seed obtains the public test issuer/audience from `app/app.json` when
+they are absent from the environment. SSO tokens are still verified normally.
+
+See `docs/design/ux-ui-review-followup.md` and `docs/design/hero-tour-validation.md`
+for the screenshot comparison, independent review, and known validation limits.

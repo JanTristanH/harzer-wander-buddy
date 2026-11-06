@@ -13,6 +13,8 @@ export const AppColors = {
   textSecondary: '#2e3a2e',
   textMuted: '#526351',
   primaryStrong: '#24543c',
+  // Forest to warm olive: a visible hero gradient with readable light text.
+  progressGradient: ['#244e38', '#397653', '#74633e'],
   border: '#d7dfd3',
   warning: '#71592f',
   onPrimary: '#ffffff',

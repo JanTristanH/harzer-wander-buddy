@@ -1,4 +1,4 @@
-import { Design } from '@/constants/theme';
+import { AppColors, Design } from '@/constants/theme';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
@@ -843,7 +843,7 @@ export default function StampsScreen() {
         accessibilityRole="button"
         onPress={() => router.push((isAuthenticated ? '/profile/timeline/self' : '/login') as never)}
         style={({ pressed }) => [pressed && styles.progressCardPressed]}>
-        <LinearGradient colors={[Design.color.brandDeep, Design.color.brand]} style={styles.progressCard}>
+        <LinearGradient colors={AppColors.progressGradient} style={styles.progressCard}>
           <Text style={styles.progressEyebrow}>{isAuthenticated ? 'Dein Fortschritt' : 'Dein digitaler Stempelpass'}</Text>
           <Text style={styles.progressTitle}>
             {isAuthenticated ? `${animatedVisitedCount} von ${totalCount} Stempelstellen` : 'Harz entdecken'}
@@ -1078,7 +1078,7 @@ export default function StampsScreen() {
               </View>
               {renderSelectionButton(true)}
             </View>
-            <LinearGradient colors={[Design.color.brandDeep, Design.color.brand]} style={styles.loadingProgressCard}>
+            <LinearGradient colors={AppColors.progressGradient} style={styles.loadingProgressCard}>
               <SkeletonBlock height={14} radius={7} width="34%" />
               <SkeletonBlock height={24} radius={12} tone="strong" width="64%" />
               <SkeletonBlock height={8} radius={999} tone="muted" width="100%" />

@@ -777,15 +777,20 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
       return;
     }
 
+    let frameId: number;
     const resizeAndInvalidate = () => {
-      map.invalidateSize();
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => map.invalidateSize({ pan: false }));
     };
-
-    const frameId = requestAnimationFrame(resizeAndInvalidate);
+    // Fullscreen cards resize without a window resize; retain the same map.
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(resizeAndInvalidate);
+    observer?.observe(map.getContainer());
+    resizeAndInvalidate();
     window.addEventListener('resize', resizeAndInvalidate);
 
     return () => {
       cancelAnimationFrame(frameId);
+      observer?.disconnect();
       window.removeEventListener('resize', resizeAndInvalidate);
     };
   }, [map]);

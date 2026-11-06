@@ -227,9 +227,10 @@ async def main():
             await page.wait_for_timeout(700)
             await shot('tour-point-selected')
             zoom=await page.get_by_role('button',name='Tourkarte vergrößern').bounding_box()
-            hint=await page.get_by_text('Stempel auswählen und „Zur Tour hinzufügen“ antippen.',exact=True).last.bounding_box()
-            assert zoom['y'] >= hint['y'] + hint['height']
-            checks.append({'flow':'tour zoom controls stay below the complete instruction','passed':True})
+            assert await page.get_by_test_id('tour-map-instruction').count() == 0
+            search_box=await page.get_by_role('textbox',name='Tourpunkte suchen').last.bounding_box()
+            assert zoom['y'] >= search_box['y'] + search_box['height']
+            checks.append({'flow':'selected tour point hides the instruction and zoom stays below search','passed':True})
             await page.get_by_text('Zur Tour hinzufügen',exact=True).last.click()
             await page.wait_for_timeout(1500)
             await page.keyboard.press('Escape')
@@ -254,11 +255,12 @@ async def main():
             assert any('Froschfelsen' in label for label in labels), 'Matching new destination is missing'
             assert await page.get_by_role('button',name='Tourkarte im Vollbild schließen').count() == 1
             assert await page.get_by_text('Aus Tour entfernen',exact=True).count() == 0, 'Previous point detail still covers the search'
-            hint_box=await page.get_by_test_id('tour-map-instruction').last.bounding_box()
+            assert await page.get_by_test_id('tour-map-instruction').count() == 0
+            search_box=await page.get_by_role('textbox',name='Tourpunkte suchen').last.bounding_box()
             map_box=await page.locator('.leaflet-container').last.bounding_box()
             pin_boxes=await page.locator('.leaflet-marker-icon').evaluate_all('(elements) => elements.filter(el => /Brocken|Froschfelsen/.test(el.getAttribute("aria-label") || "")).map(el => {const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right};})')
             assert len(pin_boxes) >= 2
-            assert all(box['top'] >= hint_box['y']+hint_box['height'] and box['bottom'] <= map_box['y']+map_box['height'] and box['left'] >= map_box['x'] and box['right'] <= map_box['x']+map_box['width'] for box in pin_boxes), 'Route or target pin is obscured/outside the search viewport'
+            assert all(box['top'] >= search_box['y']+search_box['height'] and box['bottom'] <= map_box['y']+map_box['height'] and box['left'] >= map_box['x'] and box['right'] <= map_box['x']+map_box['width'] for box in pin_boxes), 'Route or target pin is obscured/outside the search viewport'
             await shot('tour-search-route-context')
             checks.append({'flow':'fullscreen tour search keeps route and new target pins visible below the search overlay without the previous detail card','passed':True})
 
