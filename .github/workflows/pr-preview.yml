@@ -68,9 +68,15 @@ jobs:
             if (pr.head.repo?.full_name !== context.payload.repository.full_name) throw new Error('Fork previews are disabled');
             if (context.eventName === 'workflow_dispatch' && pr.state !== 'open' && process.env.REQUESTED_ACTION !== 'remove') throw new Error('Choose an open PR');
             const { previewAction, previewServiceName } = require('./scripts/pr-preview-policy.cjs');
-            const action = previewAction({ pr, eventName: context.eventName,
+            let action = previewAction({ pr, eventName: context.eventName,
               action: context.payload.action, label: context.payload.label?.name,
               requestedAction: process.env.REQUESTED_ACTION });
+            // Explicit label/manual requests and cleanup remain independent of paths.
+            if (action === 'deploy' && context.eventName === 'pull_request' &&
+                ['opened', 'synchronize', 'reopened'].includes(context.payload.action)) {
+              const { previewChangesRelevant } = require('./.github/ci/select-jobs.cjs');
+              if (!await previewChangesRelevant({ github, context, pr })) action = 'skip';
+            }
             core.setOutput('action', action);
             core.notice(`Preview action: ${action}. Automatic deploys require the preview label.`);
             // Fetch the current head instead of building a superseded event SHA.

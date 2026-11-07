@@ -2,17 +2,22 @@ name: Static website Expo build
 
 on:
   pull_request:
-    paths: ['app/**', 'scripts/build-static-website.mjs', '.agents/skills/hwb-sites-preview/**', '.github/workflows/static-website.yml']
   push:
     branches: [develop, main]
-    paths: ['app/**', 'scripts/build-static-website.mjs', '.agents/skills/hwb-sites-preview/**', '.github/workflows/static-website.yml']
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+    with:
+      force-full: ${{ github.event_name == 'workflow_dispatch' }}
+
   static-expo:
+    needs: changes
+    if: needs.changes.outputs.static == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
