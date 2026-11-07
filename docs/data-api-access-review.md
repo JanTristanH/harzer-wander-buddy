@@ -20,3 +20,13 @@ Die Vorlage wurde mit synthetischen Daten in einem wegwerfbaren lokalen PostgreS
 - Ausführung, Rollenwahl und Rückfallplan intern dokumentieren; keine Zugangsdaten oder Nutzerexports ins Repository aufnehmen.
 
 Quellen: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [API absichern](https://supabase.com/docs/guides/api/securing-your-api).
+
+## Ergänzender Runtime-Nachweis (7. November)
+
+[Schreibgeschützter Prüfpfad, ausführbare SQL-/HTTP-Prüfungen und verbindliche
+Staging-Abnahme](cap-runtime-access-check.md). Die Produktionskonfiguration legt
+keine feste Runtime-Rolle fest; `start.sh` deployt vor jedem Start. Die bisherige
+Owner-Abnahme ersetzt weder den echten CAP-Rollennachweis noch die Prüfung von
+`auth.sessions`, geerbten/Spaltenrechten, alternativen Views/RPCs und zukünftigen
+Tabellen. Die Absicherungsvorlage wurde hierfür nicht automatisch erweitert oder
+im verbundenen Projekt angewendet.

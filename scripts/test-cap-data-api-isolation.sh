@@ -59,3 +59,13 @@ done
 # Applying the same hardening twice must remain safe.
 "${psql_local[@]}" < "$repository_root/backend/hwb/util/secureCapDataApi.sql" >/dev/null
 echo 'PASS: CAP tables/model/views deny browser roles; RLS enabled; owner data and unrelated grants preserved; repeat application succeeds.'
+
+# Additional role/view/drift cases; deliberately introduce leaks AFTER the
+# original hardening assertions. This is fixture coverage, not a secure end state.
+"${psql_local[@]}" < "$repository_root/scripts/fixtures/cap-runtime-roles.sql" >/dev/null
+{
+  echo 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;'
+  cat "$repository_root/backend/hwb/util/inspectCapDatabase.sql"
+  echo 'ROLLBACK;'
+} | "${psql_local[@]}" >/dev/null
+echo 'PASS: schema owner / table owner / FORCE / BYPASSRLS, inherited and column grants, alternate view, future-table drift, auth.sessions RLS, read-only inventory.'
