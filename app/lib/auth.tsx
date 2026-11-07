@@ -12,6 +12,7 @@ import {
   updateCurrentUserOnboardingCompleted,
   type CurrentUserProfileData,
 } from '@/lib/api';
+import { clearBasicAuthSession, loadBasicAuthSession, saveBasicAuthSession } from '@/lib/basic-auth-session';
 import { appConfig, getAuth0ClientIdForPlatform, getMissingConfig } from '@/lib/config';
 import { useConnectivity } from '@/lib/connectivity';
 import { clearPersistedQueryCache } from '@/lib/query-persistence';
@@ -570,11 +571,29 @@ function StaticWebsiteAuthProvider({ children }: React.PropsWithChildren) {
 
 function BasicAuthProvider({ children }: React.PropsWithChildren) {
   const { isOffline } = useConnectivity();
-  // Development credentials stay in memory and are cleared on reload/logout.
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfileData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(Platform.OS !== 'web');
   const [authError, setAuthError] = useState<string | null>(null);
+  const sessionRevision = useRef(0);
+  useEffect(() => {
+    let active = true;
+    async function restoreSession() {
+      try {
+        const session = await loadBasicAuthSession();
+        if (active && sessionRevision.current === 0 && session) {
+          setAccessToken(session.token);
+          setCurrentUserProfile(session.profile);
+        }
+      } catch {
+        if (active && sessionRevision.current === 0) setAuthError('Gespeicherte Anmeldung konnte nicht geladen werden. Bitte erneut anmelden.');
+      } finally {
+        if (active && sessionRevision.current === 0) setIsLoading(false);
+      }
+    }
+    void restoreSession();
+    return () => { active = false; };
+  }, []);
   const updateCurrentUserProfileState = useCallback((profile: CurrentUserProfileData | null) => {
     setCurrentUserProfile((currentProfile) =>
       profile && currentProfile?.id === profile.id && typeof profile.onboardingCompleted !== 'boolean'
@@ -584,32 +603,45 @@ function BasicAuthProvider({ children }: React.PropsWithChildren) {
   }, []);
   const preloadCurrentUserProfile = useCallback(async () => {
     if (!accessToken) return null;
+    const revision = sessionRevision.current;
     const profile = await fetchCurrentUserProfile(accessToken);
+    if (revision !== sessionRevision.current) return null;
+    await saveBasicAuthSession({ token: accessToken, profile });
+    if (revision !== sessionRevision.current) return null;
     setCurrentUserProfile(profile);
     return profile;
   }, [accessToken]);
   const logout = useCallback(async () => {
+    sessionRevision.current += 1;
+    setIsLoading(false);
     setAccessToken(null);
     setCurrentUserProfile(null);
     setAuthError(null);
     queryClient.clear();
+    await clearBasicAuthSession();
     await clearPersistedQueryCache();
   }, []);
   const login = useCallback(async (username = '', password = '') => {
+    const revision = ++sessionRevision.current;
     setIsLoading(true);
     setAuthError(null);
     try {
       const token = btoa(`${username}:${password}`);
       const profile = await fetchCurrentUserProfile(token);
+      if (revision !== sessionRevision.current) return;
       queryClient.clear();
       await clearPersistedQueryCache();
+      if (revision !== sessionRevision.current) return;
+      await saveBasicAuthSession({ token, profile });
+      if (revision !== sessionRevision.current) return;
       setCurrentUserProfile(profile);
       setAccessToken(token);
     } catch (error) {
+      if (revision !== sessionRevision.current) return;
       setAuthError(error instanceof Error && error.name === 'UnauthorizedError'
         ? 'Nutzername oder Passwort ist falsch.' : 'Anmeldung fehlgeschlagen. Bitte Backend und Zugangsdaten pruefen.');
     } finally {
-      setIsLoading(false);
+      if (revision === sessionRevision.current) setIsLoading(false);
     }
   }, []);
   const completeOnboarding = useCallback(async () => {
