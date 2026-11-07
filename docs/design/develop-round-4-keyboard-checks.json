@@ -1,0 +1,30 @@
+[
+  {
+    "flow": "onboarding account actions reachable 320",
+    "passed": true
+  },
+  {
+    "flow": "onboarding account actions reachable 390",
+    "passed": true
+  },
+  {
+    "flow": "onboarding account actions reachable 768",
+    "passed": true
+  },
+  {
+    "flow": "onboarding account actions reachable 1440",
+    "passed": true
+  },
+  {
+    "flow": "keyboard clear search",
+    "passed": true
+  },
+  {
+    "flow": "keyboard map switch",
+    "passed": false
+  },
+  {
+    "flow": "keyboard Escape closes map filter",
+    "passed": true
+  }
+]

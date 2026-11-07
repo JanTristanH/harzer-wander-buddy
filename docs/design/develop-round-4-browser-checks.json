@@ -1,0 +1,39 @@
+{
+  "checks": [
+    {
+      "flow": "search, empty and clear",
+      "passed": true
+    },
+    {
+      "flow": "map switch checked state and close",
+      "passed": true
+    },
+    {
+      "flow": "SSO and onboarding through port 4004",
+      "passed": true
+    },
+    {
+      "flow": "group choose and clear fictional local buddy",
+      "passed": false,
+      "errorType": "TimeoutError"
+    },
+    {
+      "flow": "multiple selection and cancel",
+      "passed": true
+    },
+    {
+      "flow": "local visit write and immediate acknowledgement",
+      "passed": true
+    },
+    {
+      "flow": "accept fictional local buddy request",
+      "passed": true
+    },
+    {
+      "flow": "create local tour",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "sourceHead": "b5f299f8eaec492c751e8c694f3b92535589cfce"
+}

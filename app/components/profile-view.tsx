@@ -1,3 +1,4 @@
+import { AppColors, Layout, Radii } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +19,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { FriendsList } from '@/components/friends-list';
+import { ProfileImageViewer } from '@/components/profile-image-viewer';
+import { BadgeTitle } from '@/components/badge-title';
+import { BadgeArtwork } from '@/components/badge-artwork';
+import { BadgeProfileSection } from '@/components/badge-profile-section';
+import { useBadgeAlbum } from '@/lib/badges';
+import { badgeTitle } from '@/lib/badge-types';
 import { AdvancedSettings } from '@/components/profile/advanced-settings';
 import { InstallAppBanner } from '@/components/profile/install-app-banner';
 import { TechnicalDetails } from '@/components/profile/technical-details';
@@ -82,6 +89,7 @@ type CompareStampItem = {
 };
 
 export type ProfileViewModel = {
+  badgeUserId?: string;
   mode: 'self' | 'user';
   name: string;
   subtitle: string;
@@ -231,9 +239,10 @@ function HeaderAvatar({
     <View
       style={[
         compact ? styles.avatarCompact : styles.avatarPlaceholder,
-        { backgroundColor: color },
-      ]}
-    />
+        { backgroundColor: color, alignItems: 'center', justifyContent: 'center' },
+      ]}>
+      <Feather name="user" size={compact ? 26 : 40} color={AppColors.primary} />
+    </View>
   );
 }
 
@@ -266,23 +275,6 @@ function StampArtwork({
   }
 
   return <LinearGradient colors={artworkGradient(index, visited)} style={style} />;
-}
-
-function chipToneStyle(tone?: StampChip['tone']) {
-  switch (tone) {
-    case 'success':
-      return [styles.countChipSuccess, styles.countChipLabelSuccess] as const;
-    case 'sand':
-      return [styles.countChipSand, styles.countChipLabelSand] as const;
-    case 'rose':
-      return [styles.countChipRose, styles.countChipLabelRose] as const;
-    case 'brown':
-      return [styles.countChipBrown, styles.countChipLabelBrown] as const;
-    case 'subtle':
-      return [styles.countChipSubtle, styles.countChipLabelSubtle] as const;
-    default:
-      return [styles.countChipSand, styles.countChipLabelSand] as const;
-  }
 }
 
 function normalizedText(value: unknown) {
@@ -364,7 +356,7 @@ function StampComparisonRow({
           {item.stamp.number || '--'} {'\u2022'} {item.stamp.name}
         </Text>
         <Text numberOfLines={2} style={styles.rowSubtitle}>
-          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfuegbar.')}
+          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfügbar.')}
         </Text>
       </View>
       <View style={styles.stampCompareStatus}>
@@ -405,7 +397,7 @@ function SimpleStampRow({
           {item.stamp.number || '--'} {'\u2022'} {item.stamp.name}
         </Text>
         <Text numberOfLines={2} style={styles.rowSubtitle}>
-          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfuegbar.')}
+          {getTrimmedText(item.stamp.description, 'Keine Beschreibung verfügbar.')}
         </Text>
       </View>
       <Feather color="#2e6b4b" name="chevron-right" size={18} />
@@ -517,6 +509,9 @@ export function ProfileErrorState({
 }
 
 export function ProfileView({ data }: { data: ProfileViewModel }) {
+  const badges = useBadgeAlbum(data.badgeUserId);
+  const selectedFrame = badges.data?.entries.find(entry => entry.id === badges.data?.selection.frame)?.frame;
+  const selectedTitle = badgeTitle(badges.data);
   const actionCard = data.actionCard;
   const [showAllVisits, setShowAllVisits] = useState(false);
   const [showAllFriends, setShowAllFriends] = useState(false);
@@ -609,19 +604,17 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             </Pressable>
           ) : null}
           <View style={styles.heroRow}>
-            <View style={styles.avatarBadgeWrap}>
-              <HeaderAvatar
+            <ProfileImageViewer uri={data.avatarImage}><View style={styles.avatarBadgeWrap}>
+              {selectedFrame ? <BadgeArtwork frame={selectedFrame} image={data.avatarImage} initials={data.name.slice(0,2).toUpperCase()} size={118} /> : <HeaderAvatar
                 color={data.avatarColor || avatarColor()}
                 compact={false}
                 image={data.avatarImage}
-              />
-              <View style={styles.profileBadge}>
-                <Text style={styles.profileBadgeLabel}>WANDERER</Text>
-              </View>
-            </View>
+              />}
+              {selectedTitle ? <View style={styles.profileBadge}><BadgeTitle title={selectedTitle} /></View> : null}
+            </View></ProfileImageViewer>
             <View style={styles.headerBody}>
               <Text style={styles.headerName}>{data.name}</Text>
-              <Text style={styles.headerMeta}>{data.subtitle}</Text>
+              {data.subtitle ? <Text style={styles.headerMeta}>{data.subtitle}</Text> : null}
               {data.headerAction?.type === 'edit' ? (
                 <Pressable
                   onPress={data.headerAction.onPress}
@@ -745,6 +738,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
           </View>
         ) : null}
 
+        <BadgeProfileSection album={badges.data} error={badges.error} own={data.mode === 'self'} />
         {data.achievements && data.achievements.length > 0 ? (
           <ProfileSection title="Erfolge & Meilensteine">
             <View style={styles.achievementRow}>
@@ -888,15 +882,16 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
               horizontal
               showsHorizontalScrollIndicator={false}>
               {data.stampChips.map((chip) => {
-                const [backgroundStyle, labelToneStyle] = chipToneStyle(chip.tone);
                 const active = data.activeStampChip === chip.key;
                 return (
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
+                    aria-pressed={active}
                     key={chip.key}
                     onPress={() => data.onSelectStampChip(chip.key)}
                     style={({ pressed }) => [
                       styles.countChip,
-                      backgroundStyle,
                       active && styles.countChipActive,
                       pressed && styles.pressed,
                     ]}>
@@ -904,7 +899,6 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                       numberOfLines={1}
                       style={[
                         styles.countChipLabel,
-                        labelToneStyle,
                         active && styles.countChipLabelActive,
                       ]}>
                       {chip.label}
@@ -1003,6 +997,10 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                 return (
                   <Pressable
                     key={option.key}
+                    accessibilityRole="radio"
+                    accessibilityLabel={option.label}
+                    accessibilityState={{ checked: isActive }}
+                    aria-checked={isActive}
                     onPress={() => hapticSettings.onChange(option.key)}
                     style={({ pressed }) => [
                       styles.hapticChip,
@@ -1010,7 +1008,7 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
                       pressed && styles.pressed,
                     ]}>
                     <Text style={[styles.hapticChipLabel, isActive && styles.hapticChipLabelActive]}>
-                      {option.label}
+                      {isActive ? '✓ ' : ''}{option.label}
                     </Text>
                   </Pressable>
                 );
@@ -1056,6 +1054,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
+    width: '100%',
+    maxWidth: Layout.contentWidth,
+    alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 22,
     paddingBottom: 220,
@@ -1076,6 +1077,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loadingContent: {
+    width: '100%',
+    maxWidth: Layout.contentWidth,
+    alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 22,
     paddingBottom: 220,
@@ -1098,7 +1102,7 @@ const styles = StyleSheet.create({
   loadingStatCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 8,
@@ -1134,8 +1138,8 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   backButton: {
-    width: 28,
-    height: 28,
+    width: Layout.touchTarget,
+    height: Layout.touchTarget,
     borderRadius: 8,
     backgroundColor: '#f0e9dd',
     alignItems: 'center',
@@ -1162,17 +1166,18 @@ const styles = StyleSheet.create({
   },
   headerName: {
     color: '#1e2a1e',
-    fontSize: 31,
-    lineHeight: 38,
-    fontFamily: 'serif',
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: '700',
   },
   headerMeta: {
-    color: '#788777',
+    color: AppColors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
   editButton: {
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     alignSelf: 'flex-start',
     marginTop: 4,
     backgroundColor: '#2e6b4b',
@@ -1195,12 +1200,10 @@ const styles = StyleSheet.create({
   },
   profileBadge: {
     position: 'absolute',
-    right: -10,
     bottom: 0,
-    backgroundColor: '#e9e2d6',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    alignItems: 'center',
+    left: -12,
+    right: -12,
   },
   profileBadgeLabel: {
     color: '#2e3a2e',
@@ -1211,7 +1214,7 @@ const styles = StyleSheet.create({
   },
   statsCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 14,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -1241,7 +1244,7 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 12,
     paddingVertical: 12,
     flexDirection: 'column',
@@ -1377,7 +1380,7 @@ const styles = StyleSheet.create({
   },
   section: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
+    borderRadius: Radii.card,
     paddingHorizontal: 12,
     paddingVertical: 12,
     gap: 8,
@@ -1510,12 +1513,16 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   countChip: {
+    backgroundColor: AppColors.subtle,
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     minWidth: 92,
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 11,
   },
   countChipActive: {
+    backgroundColor: AppColors.primary,
     shadowColor: '#141e14',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -1540,10 +1547,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#f6f1e8',
   },
   countChipLabel: {
+    color: AppColors.textMuted,
     fontSize: 12,
     lineHeight: 16,
   },
   countChipLabelActive: {
+    color: AppColors.onPrimary,
     fontWeight: '700',
   },
   countChipLabelSuccess: {
@@ -1573,14 +1582,14 @@ const styles = StyleSheet.create({
   },
   hapticChip: {
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#d7cfbb',
     backgroundColor: '#f2ebde',
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   hapticChipActive: {
-    backgroundColor: '#2e6b4b',
+    backgroundColor: '#e6eee4',
     borderColor: '#2e6b4b',
   },
   hapticChipLabel: {
@@ -1589,18 +1598,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   hapticChipLabelActive: {
-    color: '#f5f3ee',
+    color: '#20291f',
   },
   hapticTestButton: {
+    borderWidth: 1,
+    borderColor: '#c3cfc3',
     marginTop: 10,
     alignSelf: 'flex-start',
     borderRadius: 12,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: '#fff',
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
   hapticTestButtonLabel: {
-    color: '#f5f3ee',
+    color: '#2e6b4b',
     fontSize: 13,
     fontWeight: '700',
   },

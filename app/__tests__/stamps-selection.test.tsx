@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
+jest.mock('@/lib/badges', () => ({useBadgeAlbum: () => ({data:undefined})}));
 
 import StampsScreen from '@/app/(tabs)/index';
 import { triggerHaptic } from '@/lib/haptics-preferences';

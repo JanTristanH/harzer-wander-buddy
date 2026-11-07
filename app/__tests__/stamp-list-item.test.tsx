@@ -71,15 +71,24 @@ describe('StampListItem user interaction', () => {
   });
 
   it('renders the "Unbesucht" pill for unvisited stamps', () => {
+    mockUseAuth.mockReturnValue({ accessToken: null, isAuthenticated: true });
     render(<StampListItem index={0} item={makeStamp({ hasVisited: false })} onPress={jest.fn()} />);
 
     expect(screen.getByText('Unbesucht')).toBeTruthy();
   });
 
   it('renders the "Besucht" pill for visited stamps', () => {
+    mockUseAuth.mockReturnValue({ accessToken: null, isAuthenticated: true });
     render(<StampListItem index={1} item={makeStamp({ hasVisited: true })} onPress={jest.fn()} />);
 
     expect(screen.getByText('Besucht')).toBeTruthy();
+  });
+
+  it('does not claim a personal visit state for guests', () => {
+    mockUseAuth.mockReturnValue({ accessToken: null, isAuthenticated: false });
+    render(<StampListItem index={0} item={makeStamp()} onPress={jest.fn()} />);
+    expect(screen.getByText('Entdecken')).toBeTruthy();
+    expect(screen.queryByText('Unbesucht')).toBeNull();
   });
 
   it('shows the optional meta label when provided', () => {
@@ -180,5 +189,5 @@ it('does not expose selectable text inside an interactive stamp card', () => {
   render(<StampListItem index={0} item={{ ID: 'safari', number: '1', name: 'Brocken', description: 'Wanderziel' }} onPress={jest.fn()} />);
   expect(screen.getByText(/Brocken/).props.selectable).toBe(false);
   expect(screen.getByText('Wanderziel').props.selectable).toBe(false);
-  expect(screen.getByText('Unbesucht').props.selectable).toBe(false);
+  expect(screen.getByText('Entdecken').props.selectable).toBe(false);
 });

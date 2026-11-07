@@ -1,0 +1,58 @@
+{
+  "checks": [
+    {
+      "flow": "search, empty and clear",
+      "passed": true
+    },
+    {
+      "flow": "Kartenfilter: focus remains in dialog through 24 Tab steps",
+      "passed": true
+    },
+    {
+      "flow": "map switch checked state and close",
+      "passed": true
+    },
+    {
+      "flow": "SSO and onboarding through port 4004",
+      "passed": true
+    },
+    {
+      "flow": "Wandergruppe auswählen: focus remains in dialog through 24 Tab steps",
+      "passed": true
+    },
+    {
+      "flow": "group choose and clear fictional local buddy",
+      "passed": true
+    },
+    {
+      "flow": "multiple selection and cancel",
+      "passed": true
+    },
+    {
+      "flow": "local visit write and immediate acknowledgement",
+      "passed": true
+    },
+    {
+      "flow": "edit and save local profile name",
+      "passed": true
+    },
+    {
+      "flow": "accept fictional local buddy request",
+      "passed": true
+    },
+    {
+      "flow": "Freunde finden: focus remains in dialog through 24 Tab steps",
+      "passed": true
+    },
+    {
+      "flow": "create local tour",
+      "passed": true
+    },
+    {
+      "flow": "find and add first local tour point",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "sourceHead": "6a6bf27969f8494236e66560c158151f88a8083e"
+}

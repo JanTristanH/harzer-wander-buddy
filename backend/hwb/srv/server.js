@@ -3,6 +3,7 @@ const { auth, requiresAuth } = require("express-openid-connect");
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const { routeHtml } = require('./rnweb-html');
 const {
   buildCapUserFromClaims,
   enrichClaimsWithUserInfo,
@@ -309,6 +310,7 @@ cds.on("bootstrap", (app) => {
 
   app.use("/app/frontendhwb", requireStaticAuth, express.static(__dirname + "/../app/frontendhwb"));
   // RN web owns its Auth0 flow and calls CAP APIs with bearer tokens.
+  app.use(RN_WEB_MOUNT_PATH, routeHtml(RN_WEB_DIST_PATH));
   app.use(RN_WEB_MOUNT_PATH, express.static(RN_WEB_DIST_PATH, { extensions: ["html"] }));
   app.get(/^\/app\/rnweb(?:\/.*)?$/, (req, res, next) => {
     if (req.path.includes(".") || !isHtmlNavigationRequest(req)) {

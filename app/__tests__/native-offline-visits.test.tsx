@@ -1,3 +1,4 @@
+import { subscribeStampingSuccess } from '@/lib/stamping-feedback';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import React from 'react';
@@ -31,15 +32,21 @@ beforeEach(async () => {
 afterEach(() => { Object.defineProperty(Platform, 'OS', { configurable: true, value: originalPlatform }); });
 
 it('records offline, restores on remount and uploads with the same visit time on reconnect', async () => {
+  const confirmation = jest.fn();
+  const unsubscribe = subscribeStampingSuccess(confirmation);
   const first = renderHook(useOfflineVisits, { wrapper });
   await waitFor(() => expect(first.result.current.canRecord).toBe(true));
   await act(async () => { await first.result.current.record(stamp); });
-  const original = first.result.current.entries[0]; expect(mockSync).not.toHaveBeenCalled(); first.unmount();
+  const original = first.result.current.entries[0]; expect(mockSync).not.toHaveBeenCalled();
+  expect(confirmation).not.toHaveBeenCalled(); first.unmount();
   const second = renderHook(useOfflineVisits, { wrapper });
   await waitFor(() => expect(second.result.current.entries).toHaveLength(1));
   mockOnline = true; second.rerender({});
   await waitFor(() => expect(second.result.current.entries).toHaveLength(0));
   expect(mockSync).toHaveBeenCalledWith('token-for-alice', 'alice', original);
+  await waitFor(() => expect(confirmation).toHaveBeenCalledWith({ owner: 'alice', visitIds: [original.id] }));
+  expect(confirmation).toHaveBeenCalledTimes(1);
+  unsubscribe();
 });
 
 it('hides pending visits on logout/account switch and reloads them only for their owner', async () => {
