@@ -1,7 +1,7 @@
 # Supabase Auth: Implementierung und Betreiber-Runbook
 
 Stand: 6. November 2026. Draft, keine Produktionsfreigabe. Grundlage: aktuelles
-`develop` (7513b1b) plus unveränderter PR-63-Stand b868b566. PR 63 bleibt separat;
+`develop` (7513b1b) plus aktualisierter PR-63-Stand 587ff96. PR 63 bleibt separat;
 dieser Branch integriert ihn als Vorbedingung. Nach Merge von #63 den Auth-PR
 gegen develop erneut prüfen; bei Squash-Merge ggf. die reinen Auth-Commits auf
 den neuen develop-Stand übernehmen. Keine parallele Datenschutzimplementation.
@@ -261,3 +261,9 @@ Die neue Auth-Implementierung nutzt keine providerabhängigen Onboarding-Schlüs
 der neue SecureStore-Adapter verwendet ausschließlich gültige Schlüssel und kleine
 Werte. Caches und lokale Datenbanken wurden erhalten. Runtime-Browsertokens und
 Emulator-Userdaten wurden nicht archiviert oder eingecheckt.
+
+## Erneute Integration und lesende Hosted-Prüfung
+
+Aktuellen #63-Stand integriert; Datenschutz-/Moderations- und Offline-APIs gemeinsam erhalten. Die Release-Sperren bleiben bestehen. Das verbundene Projekt liefert öffentlich ES256-Schlüssel und ist gesund; es gibt keine Entwicklungsbranches. Das ersetzt keine Staging-/SMTP-/Native-/Löschabnahme.
+
+Die lesende Rechteprüfung bestätigt überbreite Browserrollen-Grants bei deaktivierter RLS auf 15 öffentlichen CAP-Tabellen. [Befund, konkret vorbereitete SQL-Änderung und lokale PostgreSQL-17-Abnahme](data-api-access-review.md). Das Hosted-Projekt wurde nicht verändert. Vor produktiver Anwendung sind CAP-Runtime-Rolle, isolierte Abnahme und Betreiberfreigabe erforderlich.
