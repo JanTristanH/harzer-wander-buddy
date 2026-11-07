@@ -1,6 +1,9 @@
 # TODO 01: Fortschrittskarte auf das nächste Sammelziel ausrichten
 
-Status: offen · Priorität: P1 · Aufwand: M
+Status: teilweise in PR #65; Startkarten-Abgleich offen · Priorität: P1 · Aufwand: M
+
+
+Abgleich 06.11.2026: Zielmodell, Album-Zielkomponente und Zielfilter sind in #65 vorhanden; #118 erhält diese bei der UX-Integration. Daraus folgt keine vollständige Umsetzung der hier beschriebenen Startkarte. Den verbleibenden Startkarten-Flow gegen die folgenden Kriterien prüfen.
 
 ## Beschreibung und Hintergrund
 
