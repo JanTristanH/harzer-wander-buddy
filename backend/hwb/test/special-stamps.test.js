@@ -12,6 +12,8 @@ const special = catalogRows();
 const regular = Array.from({ length: 222 }, (_, i) => ({ ID: `regular-${i + 1}`, number: String(i + 1), name: `HWN ${i + 1}` }));
 test('reviewed catalog and development CSV contain all special entries without duplicating regular identities', () => {
   assert.equal(special.length, 151);
+  const badgeSpecialKeys = [...new Set(catalog.flatMap(badge => badge.required || []).filter(key => typeof key === 'string' && key.startsWith('special-')))].sort();
+  assert.deepEqual(JSON.parse(readFileSync(path.join(__dirname, '../../../app/lib/badge-special-stamps.json'), 'utf8')).catalogKeys.filter(key => key.startsWith('special-')), badgeSpecialKeys);
   assert.equal(new Set(special.map(s => s.ID)).size, 151);
   assert.equal(new Set(special.map(s => s.catalogKey)).size, 151);
   assert.equal(special.filter(s => s.locationStatus === 'verified').length, 124);

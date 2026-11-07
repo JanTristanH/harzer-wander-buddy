@@ -2,10 +2,10 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SPECIAL_STAMP_COLOR, stampThemeLabels, type StampTypeFilter } from '@/lib/stamp-catalog';
 
-export function StampCatalogFilters({ type, theme, themes, onTypeChange, onThemeChange, automatic = false, themeOnly = false }: {
+export function StampCatalogFilters({ type, theme, themes, onTypeChange, onThemeChange, automatic = false, themeOnly = false, includeBadgeRelevant = false }: {
   type: StampTypeFilter; theme: string; themes: string[];
   onTypeChange: (type: StampTypeFilter) => void; onThemeChange: (theme: string) => void;
-  automatic?: boolean; themeOnly?: boolean;
+  automatic?: boolean; themeOnly?: boolean; includeBadgeRelevant?: boolean;
 }) {
   function chip(key: string, label: string, selected: boolean, onPress: () => void) {
     return <Pressable key={key} accessibilityRole="button" accessibilityState={{ selected }}
@@ -20,8 +20,9 @@ export function StampCatalogFilters({ type, theme, themes, onTypeChange, onTheme
         { auto: 'Standard', all: 'Alle Arten', regular: 'Regulär (1–222)', special: 'Sonderstempel' }[key],
         type === key, () => onTypeChange(key)))}
     </ScrollView></> : null}
-    {themes.length > 0 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    {themes.length > 0 || includeBadgeRelevant ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
       {chip('all-themes', 'Alle Themen', theme === '', () => onThemeChange(''))}
+      {includeBadgeRelevant ? chip('badge-relevant', 'Abzeichenrelevant', theme === 'badge-relevant', () => onThemeChange('badge-relevant')) : null}
       {themes.map(key => chip(key, stampThemeLabels[key] || key, theme === key, () => onThemeChange(key)))}
     </ScrollView> : null}
   </View>;

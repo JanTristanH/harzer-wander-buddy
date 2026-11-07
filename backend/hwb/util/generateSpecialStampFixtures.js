@@ -30,3 +30,16 @@ for (const item of catalogue.regularMemberships) {
 }
 const appThemes = path.join(__dirname, '../../..', 'app/lib/regular-stamp-themes.json');
 fs.writeFileSync(appThemes, JSON.stringify(regularThemes, null, 2) + '\n');
+
+// The UI's badge filter follows the actual required special identities, not themes or proximity.
+const { catalog } = require('../srv/badge-catalog');
+const badgeSpecialKeys = [...new Set(catalog.flatMap(badge => badge.required || [])
+  .filter(key => typeof key === 'string' && key.startsWith('special-')))].sort();
+const { borderAliases } = require('../srv/special-stamp-identity');
+const aliases = require('../catalogue/special-stamp-key-aliases.json');
+const normalize = value => value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+const badgeSpecialIdentities = {
+  catalogKeys: [...badgeSpecialKeys, ...Object.keys(aliases).filter(key => badgeSpecialKeys.includes(aliases[key]))].sort(),
+  legacyNumbers: [...new Set(badgeSpecialKeys.flatMap(key => [key, ...(borderAliases[key] || [])]).map(normalize))].sort(),
+};
+fs.writeFileSync(path.join(__dirname, '../../..', 'app/lib/badge-special-stamps.json'), JSON.stringify(badgeSpecialIdentities, null, 2) + '\n');

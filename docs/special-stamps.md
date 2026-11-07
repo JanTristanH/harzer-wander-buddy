@@ -56,13 +56,13 @@ Die Entwicklungs-CSV `backend/hwb/db/doNotDeploy-data/hwb.db.Stampboxes.csv` ent
 node backend/hwb/util/generateSpecialStampFixtures.js
 ```
 
-Der Generator aktualisiert ausschließlich diese Entwicklungsdaten sowie die abgeleiteten regulären Themenzugehörigkeiten der App. Er greift nicht auf eine Datenbank zu. Wiederholung erzeugt byteidentische Ergebnisse. Die bestehenden regulären UUIDs, Standorte und Beschreibungen bleiben erhalten.
+Der Generator aktualisiert ausschließlich diese Entwicklungsdaten sowie die abgeleiteten regulären Themenzugehörigkeiten und abzeichenrelevanten Sonderidentitäten der App. Er greift nicht auf eine Datenbank zu. Wiederholung erzeugt byteidentische Ergebnisse. Die bestehenden regulären UUIDs, Standorte und Beschreibungen bleiben erhalten.
 
 Der öffentliche Website-Export überspringt explizite Sonderstempel-Identitäten vor der Prüfung von Anzeigenummer und Koordinaten. Sein öffentliches Schema bleibt auf die 222 regulären Stellen begrenzt; neue interne Katalogmetadaten werden nicht veröffentlicht. Auch ein Sonderstempel mit einer regulär aussehenden Anzeigenummer wird dort nicht mitgezählt.
 
 ## Filter und Marker
 
-Karte und Liste besitzen unabhängige Filter für reguläre/Sonderstempel, Themen und Besuchsstatus. Mehrfachzugehörigkeiten sind möglich. Der reguläre Zähler bleibt auf 222 begrenzt. Stempelart-Filter sind als dezente Chips in die vorhandene Listenfilterzeile integriert; die Themenauswahl öffnet sich erst über „Themen …“. Im großen Fortschrittsfeld gibt es keine zusätzliche Sonderstempelanzeige. Noch nicht initialisierte Produktivdatenbanken erhalten reguläre Themenzugehörigkeiten in der App aus demselben geprüften Datensatz.
+Karte und Liste besitzen unabhängige Filter für reguläre/Sonderstempel, Themen und Besuchsstatus. Mehrfachzugehörigkeiten sind möglich. Der reguläre Zähler bleibt auf 222 begrenzt. Stempelart-Filter sind als dezente Chips in die vorhandene Listenfilterzeile integriert; „Sonderstempel“ steht lila an dritter Stelle hinter „Alle“ und „Unbesucht“. Bei aktiven Sonderstempeln erscheint automatisch eine zweite, horizontal scrollbare Chipreihe mit „Alle Themen“, „Abzeichenrelevant“ und den Themenheften. Die Reihe bleibt bei Auswahl offen; beim Verlassen des Sonderfilters wird das Thema zurückgesetzt. „Abzeichenrelevant“ verwendet ausschließlich die aus den Backend-Abzeichenregeln generierten Sonderidentitäten (aktuell Jungborn, Zwei-Länder-Eiche und Drei-Länder-Stein), nicht pauschal alle Grenzweg-Stellen. Im großen Fortschrittsfeld gibt es keine zusätzliche Sonderstempelanzeige. Noch nicht initialisierte Produktivdatenbanken erhalten reguläre Themenzugehörigkeiten in der App aus demselben geprüften Datensatz.
 
 Die Karte startet im Modus „Standard“ mit regulären Stellen. Sonderstempel werden automatisch erst bei `longitudeDelta < 0.18` eingeblendet, derselben Detailstufe wie Parkplätze. „Alle Arten“, „Sonderstempel“, eine Themen-/Statusauswahl, eine Suche oder die gezielte Auswahl einer Sonderstelle übersteuern diese Zoomgrenze. „Regulär“ bleibt bei jedem Zoom ausschließlich regulär. Kartenbewegungen innerhalb derselben Sichtbarkeitsstufe bauen den Stempelbestand nicht neu auf.
 
@@ -104,7 +104,7 @@ Beschreibende Meldungen verwenden ausschließlich vollständig geprüfte exakte 
 
 Die Screenshots stammen aus der vollständigen Web-App an einem isolierten lokalen In-Memory-Backend. Sie zeigen sieben synthetische reguläre Besuche und einen bewusst angelegten Sonderbesuch. Die Initialisierung wurde im Browser wiederholt; der zweite Aufruf legte nichts mehr an. Markerfarbe, Filter, unveränderter regulärer Fortschritt, fehlender horizontaler Seitenüberlauf und Browserfehler wurden geprüft. Keine Produktivdaten verändert. Native Android-/iOS-Laufzeitabnahme bleibt offen.
 
-Die aktuelle Browserprüfung bestätigt zusätzlich: Hauptliste mit einer Filterzeile und eingeklappter Themenauswahl; Karte im Standardmodus mit 0 Sondermarkern in der Übersicht, 124 am Detailzoom und erneut 0 nach dem Herauszoomen. „Alle Arten“ blendet 124 Sondermarker sofort ein; „Regulär“ zeigt auch bei näherem Zoom keine. Sonderstempel + Grenzweg zeigt vier Marker. Kein horizontaler Seitenüberlauf oder JavaScript-Fehler.
+Die aktuelle Browserprüfung bestätigt zusätzlich: Hauptliste mit einer Filterzeile; bei aktiven Sonderstempeln erscheint die Themenreihe automatisch; Karte im Standardmodus mit 0 Sondermarkern in der Übersicht, 124 am Detailzoom und erneut 0 nach dem Herauszoomen. „Alle Arten“ blendet 124 Sondermarker sofort ein; „Regulär“ zeigt auch bei näherem Zoom keine. Sonderstempel + Grenzweg zeigt vier Marker. Kein horizontaler Seitenüberlauf oder JavaScript-Fehler.
 
 | Dezente Standardliste | Kartenübersicht ohne Sondermarker |
 | --- | --- |
@@ -125,3 +125,7 @@ Die aktuelle Browserprüfung bestätigt zusätzlich: Hauptliste mit einer Filter
 ### Bilder auf der Website
 
 50 eindeutig zugeordnete Fotos mit geprüfter Creative-Commons-Lizenz sind über `heroImageUrl` und `imageCaption` im Katalog und in der Dummy-CSV verknüpft. Die anderen 101 Einträge bleiben ohne Bild. Bildnachweise müssen in der App sichtbar bleiben. Die Fotos zeigen Orte/Einrichtungen, nicht zwingend den aktuellen Stempelkasten. Die Website stellt Dateien unter `/assets/images/stampboxes/special/<catalogKey>.webp` und das Bildverzeichnis unter `/data/special-stamp-images.json` bereit; sie muss vor Nutzung der neuen URLs veröffentlicht werden. Bestehende Datenbankeinträge werden vom Initialisierungsbutton weiterhin übersprungen, individuelle Fotos bleiben erhalten. Diese Änderung aktualisiert keine produktiven Datensätze.
+
+Die gezielte Browserprüfung der Listenfilter bestätigt: Reihenfolge „Alle · Unbesucht · Sonderstempel“, violetter Sonderchip, automatisch sichtbare und offen bleibende Themenreihe, drei abzeichenrelevante Sonderstempel gegenüber vier im Thema Grenzweg und Rücksetzen des Themas beim Artenwechsel.
+
+![Abzeichenrelevante Sonderstempel mit offener Themenreihe](screenshots/special-stamps/list-specials-badges.png)

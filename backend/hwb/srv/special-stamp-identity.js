@@ -44,4 +44,4 @@ function resolveSpecialStamp(input, existing) {
   return null;
 }
 
-module.exports = { canonicalCatalogKey, legacyBorderKey, isSpecialStamp, resolveSpecialStamp };
+module.exports = { borderAliases, canonicalCatalogKey, legacyBorderKey, isSpecialStamp, resolveSpecialStamp };

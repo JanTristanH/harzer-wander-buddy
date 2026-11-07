@@ -1,3 +1,4 @@
+import badgeSpecialKeys from './badge-special-stamps.json';
 import regularThemes from './regular-stamp-themes.json';
 import type { Stampbox } from './api';
 
@@ -30,3 +31,14 @@ export const stampThemeLabels: Record<string, string> = {
   klosterwanderweg: 'Klosterwanderweg', quedlinburg: 'Quedlinburg',
 };
 export const SPECIAL_STAMP_COLOR = '#7851a9';
+
+export function matchesStampTheme(stamp: Pick<Stampbox, 'themeKeys' | 'number' | 'stampType' | 'catalogKey'>, theme: string) {
+  if (!theme) return true;
+  if (theme === 'badge-relevant') {
+    if (!isSpecialStamp(stamp)) return false;
+    if (stamp.catalogKey) return badgeSpecialKeys.catalogKeys.includes(stamp.catalogKey);
+    const number = stamp.number.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    return badgeSpecialKeys.legacyNumbers.includes(number);
+  }
+  return stampThemes(stamp).includes(theme);
+}

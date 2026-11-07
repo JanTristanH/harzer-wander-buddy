@@ -1,5 +1,5 @@
 import { StampCatalogFilters } from '@/components/stamp-catalog-filters';
-import { matchesStampType, regularStampCounts, stampThemes, stampThemeLabels, type StampTypeFilter } from '@/lib/stamp-catalog';
+import { matchesStampType, regularStampCounts, stampThemes, matchesStampTheme, SPECIAL_STAMP_COLOR, type StampTypeFilter } from '@/lib/stamp-catalog';
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
@@ -48,8 +48,8 @@ type RemovalPlan = { stampId: string; visitIds: string[] }[];
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all', label: 'Alle' },
-  { key: 'visited', label: 'Besucht' },
   { key: 'open', label: 'Unbesucht' },
+  { key: 'visited', label: 'Besucht' },
   { key: 'near', label: 'In der Nähe' },
   { key: 'relocated', label: 'Verlegt' },
 ];
@@ -194,7 +194,6 @@ export default function StampsScreen() {
   const [query, setQuery] = useState('');
   const [stampType, setStampType] = useState<StampTypeFilter>('all');
   const [stampTheme, setStampTheme] = useState('');
-  const [showThemes, setShowThemes] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   useEffect(() => {
     if (goalParams.badgeGoal) {
@@ -482,7 +481,7 @@ export default function StampsScreen() {
   const filteredStamps = useMemo(
     () =>
       stampDistances.filter(({ stamp, distanceKm }) => {
-        if (!matchesStampType(stamp, stampType) || (stampTheme && !stampThemes(stamp).includes(stampTheme))) return false;
+        if (!matchesStampType(stamp, stampType) || !matchesStampTheme(stamp, stampTheme)) return false;
         if (goalParams.badgeGoal) {
           if (!badgeGoal || stamp.hasVisited) return false;
           if (goalStampIds ? !goalStampIds.has(stamp.ID) : !/^\d+$/.test(stamp.number) || Number(stamp.number) < 1 || Number(stamp.number) > 222) return false;
@@ -932,8 +931,8 @@ export default function StampsScreen() {
         {FILTERS.map((filter) => {
           const isActive = activeFilter === filter.key;
           return (
-            <Pressable
-              key={filter.key}
+            <React.Fragment key={filter.key}><Pressable
+              accessibilityRole="button" accessibilityState={{ selected: isActive }}
               onPress={() => setActiveFilter(filter.key)}
               style={({ pressed }) => [
                 styles.filterPill,
@@ -944,23 +943,23 @@ export default function StampsScreen() {
                 {filter.label}
               </Text>
             </Pressable>
+            {filter.key === 'open' ? <Pressable accessibilityRole="button" accessibilityState={{ selected: stampType === 'special' }}
+              onPress={() => { setStampType(current => current === 'special' ? 'all' : 'special'); setStampTheme(''); }}
+              style={({ pressed }) => [styles.filterPill, styles.specialFilterPill, stampType === 'special' && styles.specialFilterPillActive, pressed && styles.filterPillPressed]}>
+              <Text style={[styles.filterPillLabel, styles.specialFilterLabel, stampType === 'special' && styles.filterPillLabelActive]}>Sonderstempel</Text>
+            </Pressable> : null}</React.Fragment>
           );
         })}
-        {(['regular', 'special'] as const).map(type => <Pressable key={type}
+        {(['regular'] as const).map(type => <Pressable key={type}
           accessibilityRole="button" accessibilityState={{ selected: stampType === type }}
-          onPress={() => setStampType(current => current === type ? 'all' : type)}
+          onPress={() => { setStampType(current => current === type ? 'all' : type); setStampTheme(''); }}
           style={({ pressed }) => [styles.filterPill, stampType === type && styles.filterPillActive, pressed && styles.filterPillPressed]}>
-          <Text style={[styles.filterPillLabel, stampType === type && styles.filterPillLabelActive]}>{type === 'regular' ? 'Regulär' : 'Sonderstempel'}</Text>
+          <Text style={[styles.filterPillLabel, stampType === type && styles.filterPillLabelActive]}>Regulär</Text>
         </Pressable>)}
-        <Pressable accessibilityRole="button" accessibilityState={{ expanded: showThemes, selected: Boolean(stampTheme) }}
-          accessibilityLabel="Themen auswählen" onPress={() => setShowThemes(current => !current)}
-          style={[styles.filterPill, stampTheme && styles.filterPillActive]}>
-          <Text style={[styles.filterPillLabel, stampTheme && styles.filterPillLabelActive]}>{stampTheme ? stampThemeLabels[stampTheme] || stampTheme : 'Themen …'}</Text>
-        </Pressable>
       </ScrollView>
-      {showThemes ? <StampCatalogFilters themeOnly type={stampType} theme={stampTheme}
-        themes={[...new Set(stamps.flatMap(stampThemes))].sort()} onTypeChange={setStampType}
-        onThemeChange={theme => { setStampTheme(theme); setShowThemes(false); }} /> : null}
+      {stampType === 'special' ? <StampCatalogFilters themeOnly includeBadgeRelevant type={stampType} theme={stampTheme}
+        themes={[...new Set(stamps.filter(stamp => matchesStampType(stamp, 'special')).flatMap(stampThemes))].sort()} onTypeChange={setStampType}
+        onThemeChange={setStampTheme} /> : null}
 
       {activeFilter === 'near' && locationState !== 'granted' ? (
         <Text style={styles.filterHint}>
@@ -968,7 +967,7 @@ export default function StampsScreen() {
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router,stamps,stampType,stampTheme,showThemes]);
+  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router,stamps,stampType,stampTheme]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {
@@ -1538,6 +1537,16 @@ const styles = StyleSheet.create({
   },
   filterPillActive: {
     backgroundColor: '#2e6b4b',
+  },
+  specialFilterPill: {
+    backgroundColor: '#f0e9f8',
+  },
+  specialFilterPillActive: {
+    backgroundColor: SPECIAL_STAMP_COLOR,
+  },
+  specialFilterLabel: {
+    color: SPECIAL_STAMP_COLOR,
+    fontWeight: '600',
   },
   filterPillPressed: {
     opacity: 0.85,

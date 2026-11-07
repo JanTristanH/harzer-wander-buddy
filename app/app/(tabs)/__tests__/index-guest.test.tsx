@@ -237,15 +237,25 @@ describe('StampsScreen', () => {
     ]);
     await renderScreen();
     expect(screen.getByText(/von 1 Stempelstellen/)).toBeOnTheScreen();
+    const mainChips = screen.getAllByRole('button', { name: /^(Alle|Unbesucht|Sonderstempel|Besucht|In der Nähe|Verlegt|Regulär)$/ });
+    expect(mainChips.slice(0, 3)).toEqual(['Alle', 'Unbesucht', 'Sonderstempel'].map(name => screen.getByRole('button', { name })));
+    expect(screen.queryByRole('button', { name: 'Abzeichenrelevant' })).toBeNull();
     fireEvent.press(screen.getByRole('button', { name: 'Sonderstempel' }));
-    expect(screen.getByRole('button', { name: 'Sonderstempel', selected: true })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Sonderstempel', selected: true })).toHaveStyle({ backgroundColor: '#7851a9' });
     expect(screen.queryByTestId('stamp-list-item-regular')).toBeNull();
     expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
-    expect(screen.queryByRole('button', { name: 'Grenzweg' })).toBeNull();
-    fireEvent.press(screen.getByRole('button', { name: 'Themen auswählen' }));
-    fireEvent.press(screen.getByRole('button', { name: 'Grenzweg' }));
-    expect(screen.getByRole('button', { name: 'Themen auswählen', selected: true })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Abzeichenrelevant' })).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Abzeichenrelevant' }));
     expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Grenzweg' }));
+    expect(screen.getByRole('button', { name: 'Grenzweg', selected: true })).toBeOnTheScreen();
+    expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Alle Themen' })).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Regulär' }));
+    expect(screen.queryByRole('button', { name: 'Grenzweg' })).toBeNull();
+    expect(screen.getByTestId('stamp-list-item-regular')).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Sonderstempel' }));
+    expect(screen.getByRole('button', { name: 'Alle Themen', selected: true })).toBeOnTheScreen();
   });
 
   it('uses the guest query and disables the authenticated query', async () => {
