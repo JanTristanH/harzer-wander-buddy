@@ -3,13 +3,10 @@ import { Platform } from 'react-native';
 
 type ExtraConfig = {
   backendUrl?: string;
-  auth0Domain?: string;
-  auth0ClientId?: string;
-  auth0ClientIdNative?: string;
-  auth0ClientIdWeb?: string;
-  auth0Audience?: string;
-  auth0Scope?: string;
-  auth0LogoutReturnPath?: string;
+  supabaseUrl?: string;
+  supabasePublishableKey?: string;
+  supabaseOAuthProviders?: string;
+
 };
 
 const extra = (Constants.expoConfig?.extra ?? {}) as ExtraConfig;
@@ -40,41 +37,16 @@ const backendUrl = resolveBackendUrlForPlatform(readConfig('backendUrl'));
 export const appConfig = {
   backendUrl,
   authMode: process.env.EXPO_PUBLIC_AUTH_MODE === 'basic' ? 'basic' : 'sso',
-  auth0Domain: readConfig('auth0Domain', process.env.EXPO_PUBLIC_AUTH0_DOMAIN),
-  auth0ClientId: readConfig('auth0ClientId', process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID),
-  auth0ClientIdNative:
-    readConfig('auth0ClientIdNative', process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID_NATIVE) ||
-    readConfig('auth0ClientId', process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID),
-  auth0ClientIdWeb:
-    readConfig('auth0ClientIdWeb', process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID_WEB) ||
-    readConfig('auth0ClientId', process.env.EXPO_PUBLIC_AUTH0_CLIENT_ID),
-  auth0Audience: readConfig('auth0Audience', process.env.EXPO_PUBLIC_AUTH0_AUDIENCE),
-  auth0Scope:
-    readConfig('auth0Scope', process.env.EXPO_PUBLIC_AUTH0_SCOPE) ||
-    'openid profile email offline_access',
-  auth0LogoutReturnPath:
-    readConfig('auth0LogoutReturnPath', process.env.EXPO_PUBLIC_AUTH0_LOGOUT_RETURN_PATH) ||
-    'auth/logout',
+  supabaseUrl: readConfig('supabaseUrl', process.env.EXPO_PUBLIC_SUPABASE_URL),
+  supabasePublishableKey: readConfig('supabasePublishableKey', process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY),
+  supabaseOAuthProviders: readConfig('supabaseOAuthProviders', process.env.EXPO_PUBLIC_SUPABASE_OAUTH_PROVIDERS),
 } as const;
 
-export function getAuth0ClientIdForPlatform(
-  platform: 'web' | 'native' = Platform.OS === 'web' ? 'web' : 'native'
-) {
-  return platform === 'web' ? appConfig.auth0ClientIdWeb : appConfig.auth0ClientIdNative;
-}
-
 export function getMissingConfig() {
-  if (appConfig.authMode === 'basic') {
-    return appConfig.backendUrl || Platform.OS === 'web' ? [] : ['backendUrl'];
-  }
-  const requiredEntries: [string, string | undefined][] = [
-    ['backendUrl', appConfig.backendUrl],
-    ['auth0Domain', appConfig.auth0Domain],
-    ['auth0Audience', appConfig.auth0Audience],
-    ['auth0Scope', appConfig.auth0Scope],
-    ['auth0LogoutReturnPath', appConfig.auth0LogoutReturnPath],
-    ['auth0ClientId', getAuth0ClientIdForPlatform()],
+  if (appConfig.authMode === 'basic') return appConfig.backendUrl || Platform.OS === 'web' ? [] : ['backendUrl'];
+  return [
+    ...(!appConfig.backendUrl && Platform.OS !== 'web' ? ['backendUrl'] : []),
+    ...(!/^https:\/\//.test(appConfig.supabaseUrl) ? ['supabaseUrl'] : []),
+    ...(!appConfig.supabasePublishableKey.startsWith('sb_publishable_') ? ['supabasePublishableKey'] : []),
   ];
-
-  return requiredEntries.filter(([, value]) => !value).map(([key]) => key);
 }

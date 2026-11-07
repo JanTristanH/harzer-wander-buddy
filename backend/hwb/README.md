@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | `dev-basic` | `npm run watch:basic` (or `start:basic`) | Separately run `npm run web:basic --prefix app` from repository root; `http://localhost:8081/login` |
 | `dev-sso` | `npm run watch:sso` (or `start:sso`) | Build with `./scripts/build-and-copy-rnweb.sh` from repository root; `http://localhost:4004/app/rnweb` |
-| `production` | Existing container startup | Existing PostgreSQL and Auth0 configuration |
+| `production` | Existing container startup | Existing PostgreSQL and Supabase Auth configuration |
 
 Both local profiles use the ignored SQLite database `db.local.db`. Their startup
 scripts copy the checked-in `db.sqlite` seed on first start only; existing local
@@ -20,11 +20,10 @@ are accepted. A valid login provisions the local `ExternalUsers` record so profi
 onboarding and ownership checks work with the same user ID. Test users have no admin
 role by default. Basic cannot be combined with `production`.
 
-`dev-sso` keeps the existing Auth0 session and bearer authentication. For local startup,
-empty issuer/audience values fall back to the public Auth0 configuration in
-`../../app/app.json`; CAP's session base URL is explicitly `http://localhost:4004/`.
-Session secrets and client credentials still come from the local `.env`. If using a
-different tenant, configure matching `ISSUER_BASE_URL`, `AUDIENCE` and Expo values.
+`dev-sso` uses Supabase Auth bearer authentication. Configure SUPABASE_URL and
+SUPABASE_SECRET_KEY from a dedicated test project; see sample.env and the runbook.
+There is no implicit tenant fallback.
+
 These local defaults do not apply to production. The existing `development` default
 and container startup remain unchanged.
 
@@ -32,9 +31,8 @@ and container startup remain unchanged.
 
 - run `cds watch` to start the backend
 - the frontend is also served via the cds server
-  - be careful with the link in the console: is protected by the auth0 endpoint.
-    - http://localhost:4004/app -> protected by auth0
-    - http://localhost:4004/app/frontendhwb/webapp/index.html -> legacy UI5 app (Auth0 in the default profile)
+  - Maintained web entry: http://localhost:4004/app/rnweb
+  - The legacy UI5 entry redirects to the RN web login.
 - The profiles `memory`, `development` and `production` are available and can be selected using the `--profile` flag
   - `development` is selected as default with a persistent database
   - to get dummy data, rename the folder `DoNotDeploy-data` to `data` and run `cds deploy`
@@ -43,7 +41,7 @@ and container startup remain unchanged.
 
 ## React Native Web via CAP
 
-Use the separate Expo web dev server only with `dev-basic`; do not use it for local Auth0 login. The Auth0 SPA configuration is meant for the RN web build served by the CAP server.
+Use the separate Expo web dev server only with `dev-basic`; do not use it for local Supabase Auth login. The Supabase Auth SPA configuration is meant for the RN web build served by the CAP server.
 
 Install dependencies once, from the repository root, if either `node_modules` directory is missing:
 
@@ -72,22 +70,19 @@ Open the RN web app through CAP:
 
 - http://localhost:4004/app/rnweb
 
-Auth0 local development settings for this CAP-served entry point:
-
-- Allowed Callback URLs: `http://localhost:4004/app/rnweb/auth/callback`
-- Allowed Logout URLs: `http://localhost:4004/app/rnweb/auth/logout`
-- Allowed Web Origins: `http://localhost:4004`
+Supabase Auth configuration, callback allowlists and server secrets are described
+in [the migration runbook](../../docs/supabase-auth-migration.md). The former UI5
+cookie-login entry points redirect to the maintained RN web login.
 
 ## Needed Environment variables
 
 Copy `sample.env` to `.env` for local development. Keep the `.env` file local and do not commit secrets.
 
-For the React Native web app's Auth0 bearer-token API calls, make sure these values are populated in `backend/hwb/.env` before starting CAP:
-
-- `ISSUER_BASE_URL`: the Auth0 tenant issuer matching `auth0Domain` in `app/app.json` (for example, `https://<tenant>.us.auth0.com`).
-- `AUDIENCE`: the API identifier matching `auth0Audience` in `app/app.json`.
-
-An empty `ISSUER_BASE_URL` lets the page load and Auth0 login begin, but protected API requests fail. `CLIENT_ID`, `CLIENT_SECRET`, `SECRET`, and `BASE_URL` configure CAP's own Auth0 session flow (for example, the older `/app` UI5 route); the RN web SPA uses `auth0ClientIdWeb` from `app/app.json` instead. For CAP's session flow, `BASE_URL` should be `http://localhost:4004/` locally.
+For bearer authentication set `SUPABASE_URL` and server-only `SUPABASE_SECRET_KEY`.
+Use the matching project URL and Publishable-Key in the Expo build. The exact
+issuer is derived from the project URL; audience is fixed to `authenticated`.
+Legacy `ISSUER_BASE_URL` and Auth0 M2M credentials are only used to finish old
+provider deletion jobs. There is no backend cookie-login configuration.
 
 You must also provide an API key in `app/frontendhwb/index.html` to load the Google Maps script. For deployment, environment variables may be provided directly to the container.
 
@@ -181,7 +176,7 @@ npm run download-csv-exports -- \
 - show user profile picture ✔️
 - set up social media ✔️
 - set up jeykell pages for seo ✔️ -> indexing does not work as intended; maybe use cloudflare pages
-- trackability total users / users active in the last x days (✔️ Good enough for start on auth0)
+- trackability total users / users active in the last x days (historical Auth0 implementation; Supabase dashboard acceptance remains open)
 - UI overhaul II -> fix up design
   - mainly tour handling
 
@@ -272,28 +267,12 @@ npm run download-csv-exports -- \
 
 - Authentication (createdBy) https://community.sap.com/t5/technology-blogs-by-members/cap-demystify-user-authentication/ba-p/13488676
 
-## Role related setup in auth0
+## Roles and Supabase Auth
 
-- add role `admin` to user
-- add permission to role
-- add Application -> API (for audience)
-- enable RBAC
-- add again manually
-  - Action -> Triggers -> Post Login
-    - create custom:
-````js
-exports.onExecutePostLogin = async (event, api) => {
-  const namespace = "https://app.harzer-wander-buddy.de/"; // Use a custom namespace -> same as audience
-  
-  // Get assigned roles
-  const assignedRoles = event.authorization.roles || [];
-
-  // Add roles to the token
-  api.idToken.setCustomClaim(`${namespace}roles`, assignedRoles);
-  api.accessToken.setCustomClaim(`${namespace}roles`, assignedRoles);
-};
-````
-    - move into flow on the left
+Only server-controlled `app_metadata.roles` grants `admin`/`moderator`.
+The backend reads current user metadata and checks auth.sessions on every request.
+See [the migration runbook](../../docs/supabase-auth-migration.md) for identity
+mapping, SQL permissions, provider deletion, callbacks, SMTP and rollout.
 
 ## Image compression and database traffic
 
@@ -309,7 +288,7 @@ are rejected; processing is limited to 20 MiB input and 40 megapixels.
 Deploy the CDS schema before running the new backend: `Attachments_local` gains a
 nullable `compressionProfile` column. The existing container startup runs the
 schema deployment. Stored content stays in the database and existing URLs stay valid.
-External profile-picture URLs (for example Auth0/Gravatar) are unaffected.
+External profile-picture URLs (for example legacy provider/Gravatar) are unaffected.
 
 An authenticated user with the `admin` role can optimize existing attachments:
 

@@ -10,18 +10,22 @@ function sendODataError(res, statusCode, message) {
   });
 }
 
-function capAuth0(req, res, next) {
+async function capSupabase(req, res, next) {
   const requestPath = `${req.originalUrl || ''} ${req.baseUrl || ''} ${req.path || ''} ${req.url || ''}`;
   if (requestPath.includes('/odata/v4/public')) {
     req.user = cds.User.anonymous;
     return next();
   }
 
+  const accountId = req.user?.id || req.supabaseClaims?.sub;
+  if (accountId && await require('./account-privacy').isAccountDeleted(accountId)) {
+    return sendODataError(res, 401, "Dieses Konto wurde gelöscht.");
+  }
   if (req.user?.id) {
     return next();
   }
 
-  const claims = req.auth0TokenPayload || req.oidc?.user;
+  const claims = req.supabaseClaims;
   const user = buildCapUserFromClaims(claims);
   if (!user) {
     sendODataError(res, 401, "Unauthorized");
@@ -32,4 +36,4 @@ function capAuth0(req, res, next) {
   next();
 }
 
-module.exports = capAuth0;
+module.exports = capSupabase;

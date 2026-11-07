@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LegalLinks } from '@/components/legal-links';
 import { Fonts } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { appConfig } from '@/lib/config';
@@ -70,14 +71,14 @@ function StaticLoginRedirect() {
 }
 
 function LiveLoginScreen() {
-  const { authError, configError, hasCompletedOnboarding, isAuthenticated, isLoading, login, signup } =
+  const { authError, configError, hasCompletedOnboarding, isAuthenticated, isLoading, login, signup, resetPassword, updatePassword, passwordRecovery, authNotice, loginWithProvider } =
     useAuth();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const isBasic = appConfig.authMode === 'basic';
 
-  if (isAuthenticated && !isLoading) {
+  if (isAuthenticated && !isLoading && !passwordRecovery) {
     return <Redirect href={(hasCompletedOnboarding ? '/(tabs)' : '/onboarding') as never} />;
   }
 
@@ -105,31 +106,37 @@ function LiveLoginScreen() {
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Konto</Text>
+            {!isBasic ? <Text style={styles.cardCopy}>Bestehende Konten: Deine bisherigen App-Daten bleiben erhalten. Nach der erneuten Registrierung muss der Support die Kontozuordnung anhand eines Besitznachweises bestätigen. Gleiche E-Mail-Adressen werden nicht automatisch verknüpft.</Text> : null}
             {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+            {authNotice ? <Text style={styles.copy}>{authNotice}</Text> : null}
 
-            {isBasic ? (
+            {(
               <View style={styles.buttonColumn}>
-                <TextInput accessibilityLabel="Nutzername" placeholder="Nutzername" autoCapitalize="none"
+                <TextInput accessibilityLabel={isBasic ? "Nutzername" : "E-Mail"} placeholder={isBasic ? "Nutzername" : "E-Mail"} autoCapitalize="none"
                   autoComplete="username" value={username} onChangeText={setUsername} style={styles.input} />
                 <TextInput accessibilityLabel="Passwort" placeholder="Passwort" secureTextEntry
                   autoComplete="current-password" value={password} onChangeText={setPassword} style={styles.input} />
               </View>
-            ) : null}
+            )}
             <View style={styles.buttonColumn}>
               <ActionButton
                 disabled={!!configError || isLoading}
-                label={isLoading ? 'Wird vorbereitet...' : 'Anmelden'}
-                onPress={() => void login(username, password)}
+                label={isLoading ? 'Wird vorbereitet...' : passwordRecovery ? 'Neues Passwort speichern' : 'Anmelden'}
+                onPress={() => void (passwordRecovery ? updatePassword?.(password) : login(username, password))}
                 variant="primary"
               />
               {!isBasic ? <ActionButton
                 disabled={!!configError || isLoading}
                 label={isLoading ? 'Wird vorbereitet...' : 'Konto erstellen'}
-                onPress={signup}
+                onPress={() => void signup(username, password)}
               /> : null}
+              {!isBasic && !passwordRecovery ? <ActionButton label="Passwort vergessen" onPress={() => void resetPassword?.(username)} /> : null}
+              {!isBasic ? (appConfig.supabaseOAuthProviders || '').split(',').filter(Boolean).map(provider =>
+                <ActionButton key={provider} label={`Mit ${provider} anmelden`} onPress={() => void loginWithProvider?.(provider)} />) : null}
             </View>
           </View>
 
+          <Text style={styles.copy}>Dein Profilname und Profilbild sind für andere angemeldete Nutzer auffindbar. Informationen über Standort, Kontodaten und Löschung findest du unter Datenschutz.</Text>
           {!hasCompletedOnboarding ? (
             <View style={styles.noteCard}>
               <Text style={styles.noteTitle}>Neu hier?</Text>
@@ -141,6 +148,7 @@ function LiveLoginScreen() {
               </Link>
             </View>
           ) : null}
+          <LegalLinks />
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>

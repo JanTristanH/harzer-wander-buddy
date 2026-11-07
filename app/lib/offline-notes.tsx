@@ -34,7 +34,7 @@ export function NativeOfflineNotesProvider({ children }: React.PropsWithChildren
   const [state, setState] = useState<{ owner?: string; queue?: OfflineNoteQueue; ready: boolean; error: string | null }>({ ready: false, error: null });
   const [, redraw] = useState(0);
   useEffect(() => {
-    if (!owner) { setState({ ready: false, error: null }); return; }
+    if (!owner) { queues.current.clear(); setState({ ready: false, error: null }); return; }
     let entry = queues.current.get(owner);
     if (!entry) {
       const queue = new OfflineNoteQueue(AsyncStorage,

@@ -20,7 +20,7 @@ export default function AuthCallbackScreen() {
         return;
       }
 
-      router.replace('/');
+      router.replace('/login');
     }
 
     void finalizeAuth();

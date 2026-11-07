@@ -85,3 +85,23 @@ describe('LoginScreen user interaction', () => {
     expect(screen.getByText('Login fehlgeschlagen')).toBeTruthy();
   });
 });
+
+it('submits Supabase signup and password reset using the entered email', () => {
+  const signup = jest.fn(), resetPassword = jest.fn();
+  mockUseAuth.mockReturnValue(buildAuth({ signup, resetPassword }));
+  render(<LoginScreen />);
+  fireEvent.changeText(screen.getByLabelText('E-Mail'), 'test@example.invalid');
+  fireEvent.changeText(screen.getByLabelText('Passwort'), 'test-only-password');
+  fireEvent.press(screen.getByText('Konto erstellen'));
+  expect(signup).toHaveBeenCalledWith('test@example.invalid', 'test-only-password');
+  fireEvent.press(screen.getByText('Passwort vergessen'));
+  expect(resetPassword).toHaveBeenCalledWith('test@example.invalid');
+});
+it('allows an authenticated recovery session to submit a new password', () => {
+  const updatePassword = jest.fn();
+  mockUseAuth.mockReturnValue(buildAuth({ isAuthenticated: true, passwordRecovery: true, updatePassword }));
+  render(<LoginScreen />);
+  fireEvent.changeText(screen.getByLabelText('Passwort'), 'new-test-only-password');
+  fireEvent.press(screen.getByText('Neues Passwort speichern'));
+  expect(updatePassword).toHaveBeenCalledWith('new-test-only-password');
+});

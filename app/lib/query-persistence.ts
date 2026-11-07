@@ -16,7 +16,7 @@ export const queryPersistOptions = {
   maxAge: QUERY_PERSISTENCE_MAX_AGE_MS,
   buster: isStaticWebsite
     ? `static-${process.env.EXPO_PUBLIC_STATIC_REVISION || 'preview'}`
-    : 'v2-offline-core-sync',
+    : 'v3-supabase-auth',
 };
 
 export async function clearPersistedQueryCache() {

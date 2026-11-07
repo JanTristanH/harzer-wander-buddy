@@ -119,3 +119,10 @@ describe('Expo backend configuration', () => {
     expect(resolveBackendUrlForPlatform(LOCAL_BACKEND_URL, 'web')).toBe(LOCAL_BACKEND_URL);
   });
 });
+
+it('requires isolated configured EAS preview authentication', () => {
+  expect(() => createExpoConfig({ EAS_BUILD_PROFILE: 'production', EXPO_PUBLIC_AUTH_MODE: 'basic' })).toThrow('cannot use local Basic');
+  expect(() => createExpoConfig({ EAS_BUILD_PROFILE: 'preview' })).toThrow('explicit HTTPS');
+  expect(() => createExpoConfig({ EAS_BUILD_PROFILE: 'preview', EXPO_PUBLIC_BACKEND_URL: 'https://app.harzer-wander-buddy.de',
+    EXPO_PUBLIC_SUPABASE_URL: 'https://staging.supabase.co', EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_test' })).toThrow('isolated staging');
+});
