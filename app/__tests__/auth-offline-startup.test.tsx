@@ -29,7 +29,7 @@ jest.mock('expo-web-browser', () => ({}));
 jest.mock('@/lib/config', () => ({ appConfig: { authMode: 'sso', auth0Domain: 'auth.test' }, getMissingConfig: () => [], getAuth0ClientIdForPlatform: () => 'client' }));
 jest.mock('@/lib/api', () => ({ fetchCurrentUserProfile: jest.fn(async () => mockProfile) }));
 jest.mock('@/lib/query-client', () => ({ queryClient: {
-  getQueryData: jest.fn(() => mockProfile), setQueryData: jest.fn(),
+  getQueryData: jest.fn(() => mockProfile), getQueryState: jest.fn(() => ({ dataUpdatedAt: Date.now(), isInvalidated: false })), setQueryData: jest.fn(),
   fetchQuery: jest.fn(async () => mockProfile), clear: jest.fn(),
 } }));
 jest.mock('@/lib/query-persistence', () => ({ clearPersistedQueryCache: async () => {} }));
@@ -116,4 +116,13 @@ it('shares a single token refresh between startup and simultaneous outbox consum
   });
   expect(AuthSession.refreshAsync).toHaveBeenCalledTimes(1);
   expect(mockStorage.get('hwb-auth-token-response-refresh-token')).toBe('rotated-refresh-token');
+});
+
+it('does not preload Auth0 discovery for an online guest startup', async () => {
+  mockNetwork = { isConnected: true, isInternetReachable: true };
+  const view = renderHook(useAuth, { wrapper });
+  await waitFor(() => expect(view.result.current.isLoading).toBe(false));
+  expect(view.result.current.isAuthenticated).toBe(false);
+  expect(AuthSession.fetchDiscoveryAsync).not.toHaveBeenCalled();
+  view.unmount();
 });

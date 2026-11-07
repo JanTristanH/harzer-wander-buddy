@@ -1,13 +1,12 @@
 import { NativeOfflineNotesProvider } from '@/lib/offline-notes';
 import {
   focusManager,
-  useQueryClient,
 } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { ErrorBoundary as RouterErrorBoundary, type ErrorBoundaryProps, Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { AppState, type AppStateStatus, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
@@ -16,9 +15,9 @@ import { NativeOfflineVisitsProvider } from '@/lib/native-offline-visits';
 import { OfflineVisitStatus } from '@/components/offline-visit-status';
 import { PreviewDiagnosticsBridge } from '@/components/preview-diagnostics-bridge';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { AuthProvider, useAuth, useIdTokenClaims } from '@/lib/auth';
-import { ConnectivityProvider, configureQueryOnlineManager, useConnectivity } from '@/lib/connectivity';
-import { runCoreOfflineSync } from '@/lib/core-offline-sync';
+import { AuthProvider, useAuth } from '@/lib/auth';
+import { ConnectivityProvider, configureQueryOnlineManager } from '@/lib/connectivity';
+import { CoreOfflineSyncBridge } from '@/lib/startup-sync';
 import { HikingGroupProvider } from '@/lib/hiking-group';
 import { queryPersistOptions } from '@/lib/query-persistence';
 import { queryClient } from '@/lib/query-client';
@@ -29,6 +28,12 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
     void recordPreviewEvent('react.render_error', props.error.stack || props.error.message, 'error');
   }, [props.error]);
   return <RouterErrorBoundary {...props} />;
+}
+
+// Configure before child queries mount; a late effect can leak guest requests
+// while the native connection state is still unknown. Skip server-side rendering.
+if (Platform.OS !== 'web' || typeof window !== 'undefined') {
+  configureQueryOnlineManager();
 }
 
 const WEB_DOCUMENT_STYLE_TAG_ID = 'hwb-web-document-behavior';
@@ -92,46 +97,6 @@ function QueryFocusBridge() {
   return null;
 }
 
-function CoreOfflineSyncBridge() {
-  const queryClient = useQueryClient();
-  const { accessToken, currentUserProfile, isAuthenticated } = useAuth();
-  const { isOnline } = useConnectivity();
-  const claims = useIdTokenClaims<{ sub?: string }>();
-  const syncSignatureRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!isAuthenticated || !accessToken || !isOnline) {
-      return;
-    }
-
-    const signature = `${claims?.sub ?? 'anonymous'}:${accessToken.slice(-10)}`;
-    if (syncSignatureRef.current === signature) {
-      return;
-    }
-
-    syncSignatureRef.current = signature;
-
-    void runCoreOfflineSync({
-      queryClient,
-      accessToken,
-      userId: claims?.sub,
-      currentUserProfile:
-        claims?.sub && currentUserProfile?.id === claims.sub
-          ? {
-              id: currentUserProfile.id,
-              name: currentUserProfile.name,
-              picture: currentUserProfile.picture,
-            }
-          : null,
-    }).catch((error) => {
-      syncSignatureRef.current = null;
-      console.warn('Failed to run core offline sync', error);
-    });
-  }, [accessToken, claims?.sub, currentUserProfile, isAuthenticated, isOnline, queryClient]);
-
-  return null;
-}
-
 function OnboardingRouteSync() {
   const { hasCompletedOnboarding, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
@@ -151,10 +116,6 @@ function OnboardingRouteSync() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-
-  useEffect(() => {
-    configureQueryOnlineManager();
-  }, []);
 
   return (
     <PersistQueryClientProvider client={queryClient} persistOptions={queryPersistOptions}>

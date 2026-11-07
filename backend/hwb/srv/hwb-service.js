@@ -111,7 +111,7 @@ module.exports = class api extends cds.ApplicationService {
     }));
 
     this.on('getVersion', async (req) => {
-      return process.env.npm_package_version;
+      return process.env.npm_package_version || require('../package.json').version;
     });
 
     this.on('acceptPendingFriendshipRequest', acceptPendingFriendshipRequest);
@@ -299,99 +299,59 @@ async function onTourRead(req, next) {
   return bReturnOnlyFirst ? result[0] : result;
 }
 
-function addGroupDetailsToTours(db, tours, groupUserIds, currentUserId) {
-  if (!tours) {
-    return Promise.resolve([]);
+async function addGroupDetailsToTours(db, tours, groupUserIds, currentUserId) {
+  if (!tours || tours.length === 0) return tours || [];
+
+  // Keep visit counts (including repeat visits), but transfer only aggregate rows.
+  const users = await SELECT.from(db.ExternalUsers).columns('ID').where({ ID: { in: groupUserIds } });
+  const validUserIds = users.map(user => user.ID);
+  const stampCounts = validUserIds.length
+    ? await SELECT.from(db.Stampings).columns('stamp_ID', 'count(*) as visits')
+      .where({ createdBy: { in: validUserIds } }).groupBy('stamp_ID')
+    : [];
+  const visitsByStamp = new Map(stampCounts.map(row => [row.stamp_ID, Number(row.visits)]));
+  const stampBoxes = await SELECT.from(db.Stampboxes).columns('ID');
+  const stampBoxIds = new Set(stampBoxes.map(stamp => stamp.ID));
+  const requestedUserStampings = currentUserId
+    ? await SELECT.distinct.from(db.Stampings).columns('stamp_ID').where({ createdBy: currentUserId })
+    : [];
+  const requestedUserStampIds = new Set(requestedUserStampings.map(stamping => stamping.stamp_ID));
+
+  // Fetch all links and small edge metadata once per page, rather than per tour.
+  const tourIds = tours.map(tour => tour.ID).filter(Boolean);
+  const links = tourIds.length
+    ? await SELECT.from(db.Tour2TravelTime).columns('tour_ID', 'travelTime_ID', 'rank')
+      .where({ tour_ID: { in: tourIds } }).orderBy('rank')
+    : [];
+  const edgeIds = [...new Set(links.map(link => link.travelTime_ID))];
+  const edges = edgeIds.length
+    ? await SELECT.from(db.TravelTimes).columns('ID', 'fromPoi', 'toPoi').where({ ID: { in: edgeIds } })
+    : [];
+  const edgeById = new Map(edges.map(edge => [edge.ID, edge]));
+  const linksByTour = new Map();
+  for (const link of links) {
+    if (!linksByTour.has(link.tour_ID)) linksByTour.set(link.tour_ID, []);
+    linksByTour.get(link.tour_ID).push(link);
   }
 
-  return new Promise(async (resolve, reject) => {
-    // Query stampings where createdBy is in the provided group.
-    const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
-    const aUsers = await SELECT.from(db.ExternalUsers).where({ ID: { in: groupUserIds } });
-    const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
-    const stampBoxes = await SELECT.from(db.Stampboxes).columns('ID');
-    const stampBoxIds = new Set(stampBoxes.map(stamp => stamp.ID));
-    const requestedUserStampings = currentUserId
-      ? await SELECT.from(db.Stampings).columns('stamp_ID').where({ createdBy: currentUserId })
-      : [];
-    const requestedUserStampIds = new Set(requestedUserStampings.map(stamping => stamping.stamp_ID));
-
-    const result = await Promise.all(
-      tours?.map(tour => {
-        return new Promise(async (resolve, reject) => {
-          try {
-            tour.groupSize = groupUserIds.length;
-            const tourId = tour.ID;
-            let toPois;
-            if (tourId) {
-              const ttt = await SELECT
-                .from(db.Tour2TravelTime)
-                .where({ tour_ID: tourId });
-              ttt.sort((a, b) => a.rank - b.rank);
-
-              const tt = await SELECT
-              .from(db.TravelTimes)
-              .where({ ID: { in: ttt.map(t => t.travelTime_ID) } });
-          
-              toPois = tt.map(t => t.toPoi);
-
-              if (tt.length > 0 && ttt.length > 0) {
-                const firstTravelTime = tt.filter( tt => tt.ID == ttt[0].travelTime_ID)[0];
-                toPois.push(firstTravelTime.fromPoi);
-              }
-            } else {
-              toPois = tour.path?.map(p => p.poi)
-            }
-            if (!toPois) {
-              tour.AverageGroupStampings = 0;
-              tour.newStampCountForUser = 0;
-              resolve(tour);
-              return;
-            }
-            const nAverageGroupStampings = getTotalStampings(aStampingsByUser, toPois) / groupUserIds.length;
-            const uniqueTourStampIds = [...new Set(toPois.filter(poiId => stampBoxIds.has(poiId)))];
-            const newStampCountForUser = uniqueTourStampIds.filter(
-              stampId => !requestedUserStampIds.has(stampId)
-            ).length;
-
-            // Populate the custom fields:
-            tour.AverageGroupStampings = Math.round(nAverageGroupStampings * 100) / 100;
-            tour.newStampCountForUser = newStampCountForUser;
-
-            resolve(tour);
-          } catch (error) {
-            reject(error);
-          }
-        });
-      })
-    );
-    resolve(result);
-  });
-}
-
-function getTotalStampings(stampings, toPois) {
-  let aStampCount = [];
-  for (let i = 0; i < toPois.length; i++) {
-    const poi = toPois[i];
-    const aStampings = stampings.filter(s => s.stamping.stamp_ID == poi);
-    aStampCount.push(aStampings.length);
-  }
-  return aStampCount.reduce((p, c) => p + c, 0);
-}
-
-function getStampingByUsers(stampings, users) {
-  let result = [];
-  for (let i = 0; i < stampings.length; i++) {
-    let stamping = stampings[i];
-    let user = users.find(u => u.ID == stamping.createdBy);
-    if (user) {
-      result.push({
-        user: user,
-        stamping: stamping
-      });
+  for (const tour of tours) {
+    tour.groupSize = groupUserIds.length;
+    let toPois = tour.path?.map(item => item.poi);
+    if (tour.ID) {
+      const tourLinks = linksByTour.get(tour.ID) || [];
+      // The old IN query counted each edge once, even if several links referred to it.
+      const tourEdges = [...new Set(tourLinks.map(link => link.travelTime_ID))]
+        .map(id => edgeById.get(id)).filter(Boolean);
+      toPois = tourEdges.map(edge => edge.toPoi);
+      const firstEdge = edgeById.get(tourLinks[0]?.travelTime_ID);
+      if (firstEdge) toPois.push(firstEdge.fromPoi);
     }
+    const total = (toPois || []).reduce((sum, poi) => sum + (visitsByStamp.get(poi) || 0), 0);
+    tour.AverageGroupStampings = Math.round(total / groupUserIds.length * 100) / 100;
+    tour.newStampCountForUser = [...new Set(toPois || [])]
+      .filter(id => stampBoxIds.has(id) && !requestedUserStampIds.has(id)).length;
   }
-  return result;
+  return tours;
 }
 
 async function onStampboxesRead(req, next) {
@@ -418,12 +378,19 @@ async function onStampboxesRead(req, next) {
       ? groupFilterStampings.split(',').map(u => u.trim())
       : [req.user.id];
 
-  const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
+  const boxIds = stampBoxes.map(box => box.ID).filter(Boolean);
+  if (boxIds.length === 0) return bReturnOnlyFirst ? stampBoxes[0] : stampBoxes;
+  const aStampings = await SELECT.distinct.from(db.Stampings).columns('stamp_ID', 'createdBy')
+    .where({ createdBy: { in: groupUserIds }, stamp_ID: { in: boxIds } });
   const aUsers = await SELECT.from(db.ExternalUsers).where({ ID: { in: groupUserIds } });
+  const usersByStamp = new Map();
+  for (const stamping of aStampings) {
+    if (!usersByStamp.has(stamping.stamp_ID)) usersByStamp.set(stamping.stamp_ID, new Set());
+    usersByStamp.get(stamping.stamp_ID).add(stamping.createdBy);
+  }
 
   const result = stampBoxes.map(box => {
-    const boxStampings = aStampings.filter(s => s.stamp_ID == box.ID);
-    const stampedUserIds = [...new Set(boxStampings.map(s => s.createdBy))];
+    const stampedUserIds = [...(usersByStamp.get(box.ID) || [])];
 
     // Populate the custom fields:
     box.hasVisited = stampedUserIds.includes(req.user.id);
@@ -445,6 +412,7 @@ async function onStampboxesRead(req, next) {
 
     return box;
   });
+  if (stampBoxes.$count !== undefined) result.$count = stampBoxes.$count;
   return bReturnOnlyFirst ? result[0] : result;
 }
 
@@ -923,9 +891,9 @@ async function getTourByIdListTravelTimes(req) {
     .where({ ID: { in: aPathIds } })
     .from(typedTravelTimes);
 
-  let aStampBoxes = await SELECT.from(Stampboxes);
+  let aStampBoxes = await SELECT.from(Stampboxes).columns('ID');
   const currentUser = req.user.id; // Get the current user ID
-  let aStampingForUser = await SELECT.from(Stampings).where({ createdBy: currentUser });
+  let aStampingForUser = await SELECT.distinct.from(Stampings).columns('stamp_ID').where({ createdBy: currentUser });
   const stampedStampBoxIds = new Set(aStampingForUser.map(stamping => stamping.stamp_ID));
 
   let oStampBoxById = {};
@@ -2055,37 +2023,16 @@ async function getUsersProgress(req) {
     return JSON.stringify([]);
   }
 
-  const allStampboxes = await SELECT
-    .from(Stampboxes)
-    .columns('ID');
-  const totalCount = allStampboxes.length;
-
-  const stampings = await SELECT
-    .from(Stampings)
-    .columns('createdBy', 'stamp_ID')
-    .where({
-      createdBy: { in: userIds }
-    });
-  const stampedIdsByUser = new Map();
-
-  for (const stamping of stampings) {
-    const userId = stamping.createdBy;
-    const stampId = stamping.stamp_ID;
-    if (!userId || !stampId) {
-      continue;
-    }
-
-    let stampedIds = stampedIdsByUser.get(userId);
-    if (!stampedIds) {
-      stampedIds = new Set();
-      stampedIdsByUser.set(userId, stampedIds);
-    }
-
-    stampedIds.add(stampId);
-  }
+  const total = await SELECT.one.from(Stampboxes).columns('count(*) as totalCount');
+  const totalCount = Number(total.totalCount);
+  const counts = await SELECT.from(Stampings)
+    .columns('createdBy', 'count(distinct stamp_ID) as visitedCount')
+    .where({ createdBy: { in: userIds }, stamp_ID: { '!=': null } })
+    .groupBy('createdBy');
+  const countsByUser = new Map(counts.map(row => [row.createdBy, Number(row.visitedCount)]));
 
   const progress = userIds.map(userId => {
-    const visitedCount = stampedIdsByUser.get(userId)?.size || 0;
+    const visitedCount = countsByUser.get(userId) || 0;
     const completionPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
 
     return {

@@ -56,6 +56,8 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
     });
 
     const routes = [];
+    const pathPoiIds = new Set([calculationParamsOuter.startId]);
+    const stampedPoiIds = new Set(aStampsDoneByUser);
 
     const dfs = (poi, path, duration, distance, depth, stampCount, canDrive, calculationParamsInner) => {
         if (duration > calculationParamsInner.maxDuration ||
@@ -64,7 +66,9 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
             return;
         }
         if (poi === calculationParamsInner.startId && calculationParamsInner.pathLengthSinceCar > 1) {
-            routes.push({ path: path, stampCount: stampCount, distance, duration });
+            if (stampCount >= calculationParamsOuter.minStampCount) {
+                routes.push({ path: path.slice(), stampCount, distance, duration });
+            }
             if (!calculationParamsInner.allowDriveInRoute) {
                 return;
             }
@@ -74,7 +78,8 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
         const neighbors = adjacencyList.get(poi);
         if (!!neighbors) {
             neighbors.forEach(neighbor => {
-                if (!path.map(p => p.poi).includes(neighbor.toPoi) || neighbor.toPoi === calculationParamsInner.startId) {
+                const alreadyInPath = pathPoiIds.has(neighbor.toPoi);
+                if (!alreadyInPath || neighbor.toPoi === calculationParamsInner.startId) {
                     let newDistance = distance;
                     let newStampCount = stampCount;
                     let nextCanDrive = canDrive;
@@ -98,27 +103,31 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
 
                     // Increment stamp count if poi is of type 'stamp'
                     if (neighbor.toPoiType === 'stamp'
-                        && !path.map(p => p.poi).includes(neighbor.toPoi)
-                        && !aStampsDoneByUser.includes(neighbor.toPoi)) {
+                        && !alreadyInPath
+                        && !stampedPoiIds.has(neighbor.toPoi)) {
                         newStampCount++;
                     }
 
+                    path.push({
+                        poi: neighbor.toPoi,
+                        id: neighbor.ID,
+                        name: neighbor.name,
+                        toPoiType: neighbor.toPoiType,
+                        travelMode: neighbor.travelMode,
+                        duration: neighbor.durationSeconds,
+                        distance: neighbor.distanceMeters
+                    });
+                    if (!alreadyInPath) pathPoiIds.add(neighbor.toPoi);
                     dfs(neighbor.toPoi,
-                        path.concat({
-                            poi: neighbor.toPoi,
-                            id: neighbor.ID,
-                            name: neighbor.name,
-                            toPoiType: neighbor.toPoiType,
-                            travelMode: neighbor.travelMode,
-                            duration: neighbor.durationSeconds,
-                            distance: neighbor.distanceMeters
-                        }),
+                        path,
                         duration + parseInt(neighbor.durationSeconds),
                         newDistance,
                         depth + 1,
                         newStampCount,
                         nextCanDrive,
                         calculationParamsInnerClone);
+                    path.pop();
+                    if (!alreadyInPath) pathPoiIds.delete(neighbor.toPoi);
                 }
             });
         }
@@ -164,7 +173,7 @@ async function addPositionStrings(aRoutes) {
     }
 
     const aTravelTimesWithPositionString = await cds.run(
-        SELECT.from('hwb_db_TravelTimes').where({ ID: { in: uniqueIds } })
+        SELECT.from('hwb_db_TravelTimes').columns('ID', 'positionString').where({ ID: { in: uniqueIds } })
     );
     const dataMap = aTravelTimesWithPositionString.reduce((map, obj) => {
         // probably old local db

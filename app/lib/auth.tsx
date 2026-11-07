@@ -1,3 +1,4 @@
+import { useIsRestoring } from '@tanstack/react-query';
 import * as AuthSession from 'expo-auth-session';
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
@@ -32,6 +33,7 @@ const ONBOARDING_STORAGE_KEY = 'hwb-auth-onboarding-complete';
 const ONBOARDING_STORAGE_KEY_PREFIX = 'hwb-auth-onboarding-complete-user';
 const WEB_AUTH_PENDING_KEY = 'hwb-auth-pending-web-request';
 const CURRENT_USER_PROFILE_QUERY_KEY_PREFIX = 'current-user-profile';
+const CURRENT_USER_PROFILE_STALE_TIME = 15 * 60 * 1000;
 const inMemoryStorage = new Map<string, string>();
 const AUTH_DEBUG_ENABLED = false;
 
@@ -667,6 +669,7 @@ function BasicAuthProvider({ children }: React.PropsWithChildren) {
 }
 
 function SsoAuthProvider({ children }: React.PropsWithChildren) {
+  const isRestoringQueries = useIsRestoring();
   const { isOffline } = useConnectivity();
   const [authState, setAuthState] = useState<AuthState | null>(null);
   const [sessionMode, setSessionMode] = useState<SessionMode>('online');
@@ -708,18 +711,6 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
     return discoveryPromiseRef.current;
   }, [configError]);
 
-  useEffect(() => {
-    if (configError || isOffline) {
-      discoveryRef.current = null;
-      discoveryPromiseRef.current = null;
-      return;
-    }
-
-    void resolveDiscovery().catch((error) => {
-      console.warn('Failed to preload Auth0 discovery document.', error);
-    });
-  }, [configError, isOffline, resolveDiscovery]);
-
   const applyCurrentUserProfileState = useCallback(
     (profile: CurrentUserProfileData | null, accessToken?: string | null) => {
       if (!profile) {
@@ -741,8 +732,12 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
             };
 
       setCurrentUserProfile(resolvedProfile);
-      queryClient.setQueryData([CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, resolvedProfile.id], resolvedProfile);
-      if (accessToken) {
+      // Applying restored data must not refresh its timestamp or serialize the
+      // complete persisted query cache again when nothing actually changed.
+      if (existingProfile !== resolvedProfile) {
+        queryClient.setQueryData([CURRENT_USER_PROFILE_QUERY_KEY_PREFIX, resolvedProfile.id], resolvedProfile);
+      }
+      if (accessToken && queryClient.getQueryData(getCurrentUserProfileQueryKey(accessToken)) !== resolvedProfile) {
         queryClient.setQueryData(getCurrentUserProfileQueryKey(accessToken), resolvedProfile);
       }
 
@@ -764,14 +759,17 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
     const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(queryKey);
     if (cachedProfile) {
       applyCurrentUserProfileState(cachedProfile, accessToken);
-      return cachedProfile;
+      const state = queryClient.getQueryState(queryKey);
+      if (!state?.isInvalidated && Date.now() - (state?.dataUpdatedAt ?? 0) < CURRENT_USER_PROFILE_STALE_TIME) {
+        return cachedProfile;
+      }
     }
 
     try {
       const profile = await queryClient.fetchQuery({
         queryKey,
         queryFn: () => fetchCurrentUserProfile(accessToken),
-        staleTime: Number.POSITIVE_INFINITY,
+        staleTime: CURRENT_USER_PROFILE_STALE_TIME,
         gcTime: 14 * 24 * 60 * 60 * 1000,
       });
       applyCurrentUserProfileState(profile, accessToken);
@@ -929,6 +927,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
   }, [configError, resolveSession]);
 
   useEffect(() => {
+    if (isRestoringQueries) return;
     let isMounted = true;
 
     async function restoreSession() {
@@ -1052,7 +1051,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
     return () => {
       isMounted = false;
     };
-  }, [applyCurrentUserProfileState, configError, isOffline, preloadCurrentUserProfileForToken, resolveSession]);
+  }, [applyCurrentUserProfileState, configError, isOffline, isRestoringQueries, preloadCurrentUserProfileForToken, resolveSession]);
 
   useEffect(() => {
     if (Platform.OS === 'web' || typeof AppState.addEventListener !== 'function') {
@@ -1423,13 +1422,19 @@ export function useAuth() {
 }
 
 export function useIdTokenClaims<T>() {
-  const { idToken, currentUserProfile } = useAuth();
-  if (appConfig.authMode === 'basic') {
-    return currentUserProfile ? {
-      sub: currentUserProfile.id, name: currentUserProfile.name, picture: currentUserProfile.picture,
-    } as T : null;
-  }
-  return decodeJwt<T>(idToken ?? undefined);
+  const { accessToken, idToken, currentUserProfile, isAuthenticated } = useAuth();
+  const claims = appConfig.authMode === 'basic' ? null : decodeJwt<T>(idToken ?? undefined);
+  if (claims) return claims;
+  if (!isAuthenticated) return null;
+  // Older/rotated sessions can have an access token without a separate ID token.
+  // Reuse only its identity (not access-token permissions) for user-scoped caches.
+  const tokenIdentity = decodeJwt<{ sub?: string; name?: string; picture?: string }>(accessToken ?? undefined);
+  const id = tokenIdentity?.sub ?? currentUserProfile?.id;
+  if (!id) return null;
+  const profile = currentUserProfile?.id === id ? currentUserProfile : null;
+  return {
+    sub: id, name: profile?.name ?? tokenIdentity?.name, picture: profile?.picture ?? tokenIdentity?.picture,
+  } as T;
 }
 
 type GenericIdTokenClaims = Record<string, unknown> & { sub?: string };
