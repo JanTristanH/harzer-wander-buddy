@@ -15,3 +15,5 @@
 - 2026-10-15 · pricing-strategy · Freunde in den Pass einzuladen gefällt dem Gründer; genaue Gruppengröße und Freigaberegeln noch offen.
 - 2026-10-15 · pricing-strategy · Tatsächliche Compute-Ausgaben insgesamt 5 Euro pro Monat; zusätzlich Entwicklerzugänge Google und Apple.
 - 2026-10-15 · pricing-strategy · Verbrauchskosten werden vom Gründer als gering beschrieben; konkrete Beträge nicht genannt.
+
+- 2026-11-07 · PR-Abgleich · Betreiber bestätigt: Bisher gibt es App-Administratoren und normale Nutzer. Daraus ist keine technische PostgreSQL-Runtime-Rolle ableitbar; Premium-Rechte sind eine separate Funktionsberechtigung.
