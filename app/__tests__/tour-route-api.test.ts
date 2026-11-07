@@ -36,3 +36,13 @@ it('uses the link ID when the structured update response omits the nested ID', a
   const result = await updateTourByPOIList('token', { TourID: 'tour', POIList: 'a;b' });
   expect(result.path[0].travelTime).toEqual(expect.objectContaining({ ID: 'leg', positionString, fromPoi: 'a', toPoi: 'b' }));
 });
+
+it('rejects a failed path read instead of replacing an offline route with an empty path', async () => {
+  global.fetch = jest.fn().mockRejectedValue(new TypeError('Network request failed'));
+  await expect(fetchTourPath('token', 'tour')).rejects.toThrow('Network request failed');
+});
+
+it('allows a successful empty path response', async () => {
+  respond({ value: [] });
+  await expect(fetchTourPath('token', 'tour')).resolves.toEqual([]);
+});

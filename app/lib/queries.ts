@@ -122,6 +122,34 @@ export async function fetchStampsOverviewData(
   };
 }
 
+// Imperative startup work and mounted screens must share the same queries.
+export const CORE_QUERY_STALE_TIME = 15 * 60 * 1000;
+
+export function fetchSharedStampsOverview(
+  queryClient: QueryClient, token: string, userId?: string,
+  groupUserIds?: readonly string[], refresh = false
+) {
+  const queryKey = queryKeys.stampsOverviewByFilter(userId, 'validToday', groupUserIds);
+  return queryClient.fetchQuery({
+    queryKey,
+    staleTime: refresh || queryClient.getQueryState(queryKey)?.fetchStatus === 'fetching'
+      ? 0 : CORE_QUERY_STALE_TIME,
+    queryFn: () => fetchStampsOverviewData(token, userId, 'validToday', canonicalGroupUserIds(userId, groupUserIds)),
+  });
+}
+
+export function fetchSharedFriendsOverview(
+  queryClient: QueryClient, token: string, userId?: string, refresh = false
+) {
+  const queryKey = queryKeys.friendsOverview(userId);
+  return queryClient.fetchQuery({
+    queryKey,
+    staleTime: refresh || queryClient.getQueryState(queryKey)?.fetchStatus === 'fetching'
+      ? 0 : CORE_QUERY_STALE_TIME,
+    queryFn: () => fetchFriendsOverview(token, userId),
+  });
+}
+
 export async function fetchGuestStampsOverviewData(
   stampboxFetchMode: StampboxFetchMode = 'default'
 ): Promise<StampsOverviewData> {
@@ -271,8 +299,8 @@ function getCachedStamp(
   groupUserIds?: readonly string[]
 ) {
   const stampsOverview = queryClient.getQueryData<StampsOverviewData>(
-    queryKeys.stampsOverview(userId, groupUserIds)
-  );
+    queryKeys.stampsOverviewByFilter(userId, 'validToday', groupUserIds)
+  ) ?? queryClient.getQueryData<StampsOverviewData>(queryKeys.stampsOverview(userId, groupUserIds));
   const fromOverview = stampsOverview?.stamps.find((stamp) => stamp.ID === stampId);
   if (fromOverview) {
     return fromOverview;
@@ -365,8 +393,8 @@ function getCachedSelfProfileOverview(
   }
 
   const stampsOverview = queryClient.getQueryData<StampsOverviewData>(
-    queryKeys.stampsOverview(claims?.sub)
-  );
+    queryKeys.stampsOverviewByFilter(claims?.sub, 'validToday')
+  ) ?? queryClient.getQueryData<StampsOverviewData>(queryKeys.stampsOverview(claims?.sub));
   const friendsOverview = queryClient.getQueryData<FriendsOverviewData>(
     queryKeys.friendsOverview(claims?.sub)
   );
@@ -441,7 +469,7 @@ export function useStampsOverviewQuery() {
   const query = useQuery<StampsOverviewData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampsOverview(claims?.sub),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: Boolean(accessToken && isAuthenticated && claims?.sub),
     queryFn: () => authorizedRequest((token) => fetchStampsOverviewData(token, claims?.sub)),
   });
   const data = useOfflineVisitData(query.data, 'stamps', { userId: claims?.sub });
@@ -455,7 +483,7 @@ export function useAdminStampsOverviewQuery(filter: 'validToday' | 'all') {
 
   return useQuery<StampsOverviewData>({
     queryKey: queryKeys.adminStampsOverview(claims?.sub, filter),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: Boolean(accessToken && isAuthenticated && claims?.sub),
     queryFn: () => authorizedRequest((token) => fetchStampsOverviewData(token, claims?.sub, filter)),
   });
 }
@@ -470,14 +498,18 @@ export function useFilteredStampsOverviewQuery(
   const claims = useIdTokenClaims<AuthClaims>();
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
+  const queryClient = useQueryClient();
   const stampboxFetchMode: StampboxFetchMode = filter;
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   const query = useQuery<StampsOverviewData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter, groupUserIds),
-    enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
+    enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated && claims?.sub),
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
+    placeholderData: () => filter === 'validToday'
+      ? queryClient.getQueryData<StampsOverviewData>(queryKeys.stampsOverview(claims?.sub, groupUserIds))
+      : undefined,
     queryFn: () =>
       authorizedRequest((token) =>
         fetchStampsOverviewData(token, claims?.sub, stampboxFetchMode, groupUserIds)
@@ -493,11 +525,12 @@ export function useGuestFilteredStampsOverviewQuery(
     enabled?: boolean;
   }
 ) {
+  const { isLoading } = useAuth();
   const stampboxFetchMode: StampboxFetchMode = filter;
 
   return useQuery<StampsOverviewData>({
     queryKey: queryKeys.stampsOverviewByFilter(undefined, filter),
-    enabled: options?.enabled ?? true,
+    enabled: (options?.enabled ?? true) && !isLoading,
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     queryFn: () => fetchGuestStampsOverviewData(stampboxFetchMode),
   });
@@ -516,28 +549,16 @@ export function useMapDataQuery(options?: {
   const query = useQuery<MapData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.mapData(claims?.sub, groupUserIds),
-    enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
+    enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated && claims?.sub),
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     placeholderData: () => getCachedMapData(queryClient, claims?.sub, groupUserIds),
-    queryFn: () =>
-      authorizedRequest((token) => {
-        const cachedStampsOverview = getReusableQueryData<StampsOverviewData>(
-          queryClient,
-          [
-            queryKeys.stampsOverviewByFilter(claims?.sub, 'validToday', groupUserIds),
-            queryKeys.stampsOverview(claims?.sub, groupUserIds),
-          ]
-        );
-
-        return fetchMapData(
-          token,
-          claims?.sub,
-          cachedStampsOverview?.stamps,
-          cachedStampsOverview?.lastVisited,
-          'validToday',
-          groupUserIds
-        );
-      }),
+    queryFn: () => authorizedRequest(async (token) => {
+      const overview = await fetchSharedStampsOverview(
+        queryClient, token, claims?.sub, groupUserIds,
+        Boolean(queryClient.getQueryData(queryKeys.mapData(claims?.sub, groupUserIds)))
+      );
+      return fetchMapData(token, claims?.sub, overview.stamps, overview.lastVisited, 'validToday', groupUserIds);
+    }),
   });
   const data = useOfflineVisitData(query.data, 'map', { userId: claims?.sub });
   return { ...query, data };
@@ -546,11 +567,12 @@ export function useMapDataQuery(options?: {
 export function useGuestMapDataQuery(options?: {
   enabled?: boolean;
 }) {
+  const { isLoading } = useAuth();
   const queryClient = useQueryClient();
 
   return useQuery<MapData>({
     queryKey: queryKeys.mapData(undefined),
-    enabled: options?.enabled ?? true,
+    enabled: (options?.enabled ?? true) && !isLoading,
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     placeholderData: () => getCachedMapData(queryClient, undefined),
     queryFn: () => {
@@ -576,7 +598,7 @@ export function useFriendsOverviewQuery() {
   return useQuery<FriendsOverviewData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.friendsOverview(claims?.sub),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: Boolean(accessToken && isAuthenticated && claims?.sub),
     queryFn: () => authorizedRequest((token) => fetchFriendsOverview(token, claims?.sub)),
   });
 }
@@ -592,14 +614,16 @@ export function useProfileOverviewQuery() {
   const query = useQuery<ProfileOverviewData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.profileOverview(claims?.sub),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: Boolean(accessToken && isAuthenticated && claims?.sub),
     placeholderData: () =>
       getCachedSelfProfileOverview(queryClient, claims, matchingCurrentUserProfile),
     queryFn: () =>
-      authorizedRequest((token) => {
-        const cachedStampsOverview = queryClient.getQueryData<StampsOverviewData>(
-          queryKeys.stampsOverview(claims?.sub)
-        );
+      authorizedRequest(async (token) => {
+        const refresh = Boolean(queryClient.getQueryData(queryKeys.profileOverview(claims?.sub)));
+        const [cachedStampsOverview, friendsOverview] = await Promise.all([
+          fetchSharedStampsOverview(queryClient, token, claims?.sub, undefined, refresh),
+          fetchSharedFriendsOverview(queryClient, token, claims?.sub, refresh),
+        ]);
         const prefetchedCurrentUser = matchingCurrentUserProfile
           ? {
               id: matchingCurrentUserProfile.id,
@@ -618,7 +642,8 @@ export function useProfileOverviewQuery() {
           token,
           claims?.sub,
           prefetchedCurrentUser,
-          cachedStampsOverview?.stamps
+          cachedStampsOverview.stamps,
+          friendsOverview
         );
       }),
   });
@@ -641,7 +666,7 @@ export function useStampDetailQuery(
   const query = useQuery<StampDetailData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampDetail(claims?.sub, stampId, groupUserIds),
-    enabled: Boolean(stampId && (isAuthenticated ? accessToken : true)),
+    enabled: Boolean(stampId && (isAuthenticated ? accessToken && claims?.sub : true)),
     gcTime: DETAIL_QUERY_GC_TIME,
     placeholderData: () => {
       if (!stampId) {
@@ -681,7 +706,7 @@ export function useParkingDetailQuery(parkingId?: string) {
 
   return useQuery<ParkingDetailData>({
     queryKey: queryKeys.parkingDetail(claims?.sub, parkingId),
-    enabled: Boolean(parkingId && (isAuthenticated ? accessToken : true)),
+    enabled: Boolean(parkingId && (isAuthenticated ? accessToken && claims?.sub : true)),
     gcTime: DETAIL_QUERY_GC_TIME,
     placeholderData: () => {
       if (!parkingId) {
@@ -719,7 +744,7 @@ export function useRouteToStampFromPositionQuery(
     queryKey: queryKeys.routeToStampFromPosition(claims?.sub, stampId, latitude, longitude),
     gcTime: ROUTE_QUERY_GC_TIME,
     enabled:
-      Boolean(accessToken && isAuthenticated && stampId) &&
+      Boolean(accessToken && isAuthenticated && claims?.sub && stampId) &&
       typeof latitude === 'number' &&
       Number.isFinite(latitude) &&
       typeof longitude === 'number' &&
@@ -745,7 +770,7 @@ export function useUserProfileOverviewQuery(targetUserId?: string) {
   const query = useQuery<UserProfileOverviewData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.userProfileOverview(claims?.sub, targetUserId),
-    enabled: Boolean(accessToken && isAuthenticated && targetUserId),
+    enabled: Boolean(accessToken && isAuthenticated && claims?.sub && targetUserId),
     placeholderData: () => {
       if (!targetUserId) {
         return undefined;
@@ -798,7 +823,7 @@ export function useToursOverviewQuery(options?: {
   return useQuery<Tour[]>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.toursOverview(claims?.sub, groupUserIds),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: Boolean(accessToken && isAuthenticated && claims?.sub),
     queryFn: () =>
       authorizedRequest((token) =>
         fetchTours(token, groupUserIds)
@@ -821,7 +846,7 @@ export function useTourDetailQuery(
   return useQuery<TourDetailData>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.tourDetail(claims?.sub, tourId, groupUserIds),
-    enabled: Boolean(accessToken && isAuthenticated && tourId),
+    enabled: Boolean(accessToken && isAuthenticated && claims?.sub && tourId),
     placeholderData: () => {
       if (!tourId) {
         return undefined;
@@ -860,7 +885,7 @@ export function usePointsOfInterestQuery() {
 
   return useQuery<PointOfInterest[]>({
     queryKey: queryKeys.pointsOfInterest(claims?.sub),
-    enabled: Boolean(accessToken && isAuthenticated),
+    enabled: Boolean(accessToken && isAuthenticated && claims?.sub),
     queryFn: () => authorizedRequest((token) => fetchAllPointsOfInterest(token)),
   });
 }
