@@ -38,8 +38,11 @@ async function readResource(url: string, remainingBytes: number, parentSignal: A
   if (parentSignal.aborted) abort();
   const timeout = setTimeout(abort, 30_000);
   try {
-    const response = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': OFFLINE_MAP_USER_AGENT } });
+    const response = await fetch(url, { signal: controller.signal, redirect: 'error', headers: { 'User-Agent': OFFLINE_MAP_USER_AGENT } });
     if (!response.ok) throw new Error(`Kartenquelle nicht erreichbar (HTTP ${response.status}). Bitte erneut versuchen.`);
+    if (response.headers.get('content-type')?.toLowerCase().includes('text/html')) {
+      throw new Error('Die Kartenquelle hat keine Kartendaten geliefert. Bitte erneut versuchen.');
+    }
     if (Number(response.headers.get('content-length') ?? 0) > remainingBytes) throw new Error('Der Download überschreitet 50 MB.');
     if (!response.body) throw new Error('Kartendaten konnten nicht gelesen werden.');
     const reader = response.body.getReader();

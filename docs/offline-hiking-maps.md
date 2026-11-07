@@ -30,9 +30,26 @@ Automatisiert geprüft: XYZ-Bereichsberechnung/Kachelgrenze, sequenzielle Reques
 
 **Der PR bleibt Entwurf, bis diese Prüfungen abgeschlossen sind:**
 
-1. Frischen Android- und iOS-Build erzeugen, einen kleinen Bereich vom echten OpenFreeMap-Endpunkt herunterladen. Die Ausführungsumgebung hier blockiert diesen Kachelserver per Netzwerkregel (HTTP 403); automatisierte Downloads verwenden kontrollierte Testantworten.
+1. Frischen Android- und iOS-Build erzeugen, einen kleinen Bereich vom echten OpenFreeMap-Endpunkt herunterladen. Der frühere HTTP-403-Blocker ist in der aktuellen Umgebung aufgehoben. Der gemeinsame Downloader wurde mit echten Antworten und lokalem Dateisystem geprüft (siehe unten); native Expo-Dateisystem-/HTTP- und Flugmodus-Abnahme bleiben offen.
 2. Empfangsseitig bestätigen, dass der app-spezifische User-Agent auf beiden Plattformen ankommt; aktuelle TileJSON- und Font-Endpunkte prüfen.
 3. Flugmodus aktivieren, App vollständig beenden und neu starten. Gespeichertes Paket öffnen und Wege, Ortsnamen inkl. Umlauten und Gipfel bei mehreren Zoomstufen prüfen. Insbesondere `file://`-Templates für Vektorkacheln und Schriften im nativen Renderer verifizieren. Kein Netzwerk-Fallback darf erforderlich sein.
 4. Standort, Verlassen des Bereichs, Stempel aus zuvor geladenen Daten, Downloadabbruch, Prozessabbruch, wenig Speicher und Löschen prüfen. Native Screenshots ergänzen.
 
-Diese Prüfungen wurden mangels Android-/iOS-Emulator in der Umgebung noch nicht durchgeführt. Der Entwurf beansprucht keine bereits nachgewiesene native Flugmodus-Funktion.
+Der lokale Android-Emulator konnte booten, der Paketmanager/APK-Installationspfad reagierte jedoch nicht zuverlässig; iOS steht hier nicht bereit. Der Entwurf beansprucht keine bereits nachgewiesene native Flugmodus-Funktion.
+
+## Erneuter Live-Nachweis am 7. November 2026
+
+Aktuelles develop `7513b1b` integriert. TileJSON und Schriften sind erreichbar (HTTP 200). Der unveränderte gemeinsame Downloader wurde seriell mit echten OpenFreeMap-Antworten über einen lokalen Curl-Dateisystemadapter ausgeführt: Ausschnitt Brocken/Schierke, 78 Kacheln, fünf Glyphdateien, 1.586.626 Bytes inklusive TileJSON; sämtliche 83 Binärressourcen gespeichert, Fortschritt vollständig und Manifest erst nach Abschluss geschrieben. Dieser Test ersetzt nicht den Expo-HTTP-/Dateisystemadapter auf einem Gerät.
+
+Dieselben Kacheln und derselbe lokale Stil wurden in MapLibre WebGL gerendert: 33 sichtbare Wege/Pfade und vier Gipfelfeatures, lesbare Umlaute, keine Kartenfehler. Sämtliche externen Browserrequests waren blockiert; es gab keinen Remote-Fallback. Nur der Browser-Prüfaufbau ersetzt die nativen file-URLs durch lokale Loopback-URLs. [Aufnahme](screenshots/offline-maps/live-map-web-validation.png) ist ausdrücklich eine Webvalidierung echter Offline-Daten, keine native Kartenaufnahme.
+
+Reproduktion (ein begrenzter Download, nicht in regulärer CI):
+
+```sh
+node scripts/check-offline-map-download.cjs --confirm-provider-download
+python scripts/check-offline-map-render.py /tmp/<ausgegebener-ordner>/pack --screenshot /tmp/offline-map-check.png
+```
+
+Der native Ressourcenabruf lehnt Redirects sowie HTML-Fehlerseiten ab, damit solche Antworten nicht als vollständiges Kartenpaket erscheinen. Regressionstest ergänzt. Die Abnahme des tatsächlichen nativen User-Agents, der file-Templates, App-Neustart und Flugmodus auf Android/iOS bleibt erforderlich.
+
+Aktueller Integrationsstand: 384 App-Tests in 68 Suites, TypeScript, gezieltes ESLint und vollständiger Basic-Webexport erfolgreich.

@@ -76,3 +76,10 @@ test('rejects declared oversized responses before consuming body data', async ()
   await expect(saveOfflineMap('Brocken', bounds, new AbortController().signal, jest.fn())).rejects.toThrow('50 MB');
   expect(await listOfflineMaps()).toEqual([]);
 });
+
+test('rejects HTML error pages and disallows redirects before marking a pack ready', async () => {
+  mockFetch.mockResolvedValueOnce({ ok: true, headers: { get: (name: string) => name === 'content-type' ? 'text/html' : null } });
+  await expect(saveOfflineMap('Brocken', bounds, new AbortController().signal, jest.fn())).rejects.toThrow('keine Kartendaten');
+  expect(mockFetch.mock.calls[0][1].redirect).toBe('error');
+  expect(await listOfflineMaps()).toEqual([]);
+});

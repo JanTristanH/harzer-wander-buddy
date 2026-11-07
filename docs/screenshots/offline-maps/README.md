@@ -9,3 +9,7 @@ OFFLINE_PREVIEW_TOOLS=/tmp/hwb-offline-preview CHROMIUM_PATH=/usr/bin/chromium n
 ```
 
 Offene Android-/iOS-Prüfungen: [Offline-Wanderkarten](../../offline-hiking-maps.md).
+
+## Echte lokale Kartendaten
+
+`live-map-web-validation.png`: 390 × 844 Pixel, echte OpenFreeMap-Kacheln und Glyphen aus einem begrenzten Brocken-/Schierke-Paket, derselbe lokale Stil. Browser-Netzwerk auf Loopback beschränkt; 33 Wege/Pfade und vier Gipfelfeatures ohne Kartenfehler gerendert. Die Aufnahme ist ein WebGL-Datentest, keine native Flugmodus-Abnahme. Reproduktion über `scripts/check-offline-map-download.cjs` und `scripts/check-offline-map-render.py`; siehe [Prüfumfang](../../offline-hiking-maps.md).
