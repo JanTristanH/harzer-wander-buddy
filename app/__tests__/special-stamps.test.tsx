@@ -5,6 +5,7 @@ import { resolveStampMarkerVisualKind, specialMarkerVisualKind } from '@/lib/gro
 import { StampCatalogFilters } from '@/components/stamp-catalog-filters';
 import { AdminSpecialStampsPanel } from '@/components/admin-special-stamps-panel';
 import { initializeSpecialStamps, type Stampbox } from '@/lib/api';
+import { isMapStampVisible, MAP_DETAIL_LONGITUDE_DELTA } from '@/lib/map-stamp-visibility';
 
 const mockAuth = { accessToken: 'test-only', isOffline: false, canPerformWrites: true };
 const mockInvalidate = jest.fn();
@@ -30,6 +31,18 @@ test('special marker variants preserve visited and partial group status', () => 
   const partial = resolveStampMarkerVisualKind({ groupActive: true, groupSize: 3, totalGroupStampings: 1, personalKind: 'open-stamp' });
   expect(specialMarkerVisualKind(partial)).toBe('special-group-partial-stamp');
   expect(specialMarkerVisualKind('open-stamp')).toBe('special-open-stamp');
+});
+
+test('map default hides specials at overview zoom and reveals them only at parking detail level or by explicit choice', () => {
+  const overview = { special: true, type: 'auto' as const, longitudeDelta: 0.42 };
+  expect(isMapStampVisible(overview)).toBe(false);
+  expect(isMapStampVisible({ ...overview, special: false })).toBe(true);
+  expect(isMapStampVisible({ ...overview, longitudeDelta: MAP_DETAIL_LONGITUDE_DELTA })).toBe(false);
+  expect(isMapStampVisible({ ...overview, longitudeDelta: 0.1 })).toBe(true);
+  expect(isMapStampVisible({ ...overview, type: 'all' })).toBe(true);
+  expect(isMapStampVisible({ ...overview, type: 'special' })).toBe(true);
+  expect(isMapStampVisible({ ...overview, explicitFilter: true })).toBe(true);
+  expect(isMapStampVisible({ ...overview, type: 'regular', longitudeDelta: 0.01, explicitFilter: true })).toBe(false);
 });
 
 test('type and theme filters expose independent, accessible selections', () => {

@@ -1,14 +1,14 @@
 import regularThemes from './regular-stamp-themes.json';
 import type { Stampbox } from './api';
 
-export type StampTypeFilter = 'all' | 'regular' | 'special';
+export type StampTypeFilter = 'auto' | 'all' | 'regular' | 'special';
 export function isSpecialStamp(stamp: Pick<Stampbox, 'number' | 'stampType' | 'catalogKey'>) {
   if (stamp.stampType === 'special') return true;
   if (stamp.catalogKey?.startsWith('special-')) return true;
   return !/^\d+$/.test(stamp.number) || Number(stamp.number) < 1 || Number(stamp.number) > 222;
 }
 export function matchesStampType(stamp: Pick<Stampbox, 'number' | 'stampType' | 'catalogKey'>, filter: StampTypeFilter) {
-  return filter === 'all' || (filter === 'special') === isSpecialStamp(stamp);
+  return filter === 'all' || filter === 'auto' || (filter === 'special') === isSpecialStamp(stamp);
 }
 export function regularStampCounts(stamps: Stampbox[]) {
   const numbers = new Set(stamps.filter(s => !isSpecialStamp(s)).map(s => Number(s.number)));

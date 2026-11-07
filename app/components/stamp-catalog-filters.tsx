@@ -2,9 +2,10 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SPECIAL_STAMP_COLOR, stampThemeLabels, type StampTypeFilter } from '@/lib/stamp-catalog';
 
-export function StampCatalogFilters({ type, theme, themes, onTypeChange, onThemeChange }: {
+export function StampCatalogFilters({ type, theme, themes, onTypeChange, onThemeChange, automatic = false, themeOnly = false }: {
   type: StampTypeFilter; theme: string; themes: string[];
   onTypeChange: (type: StampTypeFilter) => void; onThemeChange: (theme: string) => void;
+  automatic?: boolean; themeOnly?: boolean;
 }) {
   function chip(key: string, label: string, selected: boolean, onPress: () => void) {
     return <Pressable key={key} accessibilityRole="button" accessibilityState={{ selected }}
@@ -13,12 +14,12 @@ export function StampCatalogFilters({ type, theme, themes, onTypeChange, onTheme
     </Pressable>;
   }
   return <View style={styles.container}>
-    <Text style={styles.caption}>Stempelart · Sonderstempel sind violett</Text>
+    {!themeOnly ? <><Text style={styles.caption}>{automatic ? 'Standard: Sonderstempel erst bei näherem Zoom.' : 'Stempelart · Sonderstempel sind violett'}</Text>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-      {(['all', 'regular', 'special'] as const).map(key => chip(key,
-        { all: 'Alle Arten', regular: 'Regulär (1–222)', special: 'Sonderstempel' }[key],
+      {(automatic ? ['auto', 'all', 'regular', 'special'] as const : ['all', 'regular', 'special'] as const).map(key => chip(key,
+        { auto: 'Standard', all: 'Alle Arten', regular: 'Regulär (1–222)', special: 'Sonderstempel' }[key],
         type === key, () => onTypeChange(key)))}
-    </ScrollView>
+    </ScrollView></> : null}
     {themes.length > 0 ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
       {chip('all-themes', 'Alle Themen', theme === '', () => onThemeChange(''))}
       {themes.map(key => chip(key, stampThemeLabels[key] || key, theme === key, () => onThemeChange(key)))}

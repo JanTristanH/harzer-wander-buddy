@@ -1,5 +1,5 @@
 import { StampCatalogFilters } from '@/components/stamp-catalog-filters';
-import { isSpecialStamp, matchesStampType, regularStampCounts, stampThemes, type StampTypeFilter } from '@/lib/stamp-catalog';
+import { matchesStampType, regularStampCounts, stampThemes, stampThemeLabels, type StampTypeFilter } from '@/lib/stamp-catalog';
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
@@ -194,6 +194,7 @@ export default function StampsScreen() {
   const [query, setQuery] = useState('');
   const [stampType, setStampType] = useState<StampTypeFilter>('all');
   const [stampTheme, setStampTheme] = useState('');
+  const [showThemes, setShowThemes] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   useEffect(() => {
     if (goalParams.badgeGoal) {
@@ -466,7 +467,6 @@ export default function StampsScreen() {
   );
 
   const { visited: visitedCount, total: totalCount } = useMemo(() => regularStampCounts(stamps), [stamps]);
-  const specialStamps = useMemo(() => stamps.filter(isSpecialStamp), [stamps]);
   const progressPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
   const hasCompletedAllStamps =
     visitedCount >= COMPLETION_STAMP_COUNT && totalCount >= COMPLETION_STAMP_COUNT;
@@ -868,9 +868,6 @@ export default function StampsScreen() {
           <Text style={styles.progressTitle}>
             {animatedVisitedCount} von {totalCount} Stempelstellen
           </Text>
-          {specialStamps.length > 0 ? <Text style={styles.progressEyebrow}>
-            Sonderstempel: {specialStamps.filter(stamp => stamp.hasVisited).length} besucht · {specialStamps.length} im Katalog
-          </Text> : null}
           <View style={styles.progressRow}>
             <View
               onLayout={(event) => {
@@ -906,7 +903,6 @@ export default function StampsScreen() {
     progressPercent,
     router,
     totalCount,
-    specialStamps,
   ]);
 
   const renderControls = useCallback(() => (
@@ -927,9 +923,6 @@ export default function StampsScreen() {
         />
       </View>
 
-      <StampCatalogFilters type={stampType} theme={stampTheme}
-        themes={[...new Set(stamps.flatMap(stampThemes))].sort()}
-        onTypeChange={setStampType} onThemeChange={setStampTheme} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.filterRow}
@@ -953,7 +946,21 @@ export default function StampsScreen() {
             </Pressable>
           );
         })}
+        {(['regular', 'special'] as const).map(type => <Pressable key={type}
+          accessibilityRole="button" accessibilityState={{ selected: stampType === type }}
+          onPress={() => setStampType(current => current === type ? 'all' : type)}
+          style={({ pressed }) => [styles.filterPill, stampType === type && styles.filterPillActive, pressed && styles.filterPillPressed]}>
+          <Text style={[styles.filterPillLabel, stampType === type && styles.filterPillLabelActive]}>{type === 'regular' ? 'Regulär' : 'Sonderstempel'}</Text>
+        </Pressable>)}
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: showThemes, selected: Boolean(stampTheme) }}
+          accessibilityLabel="Themen auswählen" onPress={() => setShowThemes(current => !current)}
+          style={[styles.filterPill, stampTheme && styles.filterPillActive]}>
+          <Text style={[styles.filterPillLabel, stampTheme && styles.filterPillLabelActive]}>{stampTheme ? stampThemeLabels[stampTheme] || stampTheme : 'Themen …'}</Text>
+        </Pressable>
       </ScrollView>
+      {showThemes ? <StampCatalogFilters themeOnly type={stampType} theme={stampTheme}
+        themes={[...new Set(stamps.flatMap(stampThemes))].sort()} onTypeChange={setStampType}
+        onThemeChange={theme => { setStampTheme(theme); setShowThemes(false); }} /> : null}
 
       {activeFilter === 'near' && locationState !== 'granted' ? (
         <Text style={styles.filterHint}>
@@ -961,7 +968,7 @@ export default function StampsScreen() {
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router,stamps,stampType,stampTheme]);
+  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router,stamps,stampType,stampTheme,showThemes]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {

@@ -1,4 +1,5 @@
 import { StampCatalogFilters } from '@/components/stamp-catalog-filters';
+import { MAP_DETAIL_LONGITUDE_DELTA, isMapStampVisible } from '@/lib/map-stamp-visibility';
 import { isSpecialStamp, stampThemes, type StampTypeFilter } from '@/lib/stamp-catalog';
 import { specialMarkerVisualKind } from '@/lib/group-marker';
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
@@ -133,7 +134,7 @@ const HARZ_REGION: Region = {
   longitudeDelta: 0.42,
 };
 
-const PARKING_HIDE_LONGITUDE_DELTA = 0.18;
+const PARKING_HIDE_LONGITUDE_DELTA = MAP_DETAIL_LONGITUDE_DELTA;
 const WEB_MARKER_DIAGNOSTIC_INTERVAL_MS = 4000;
 const WEB_MARKER_BUILD_WARN_MS = 14;
 const WEB_LONG_TASK_WARN_MS = 100;
@@ -645,7 +646,7 @@ export default function MapScreen() {
   const [isRemoteSearchLoading, setIsRemoteSearchLoading] = useState(false);
   const [remoteSearchError, setRemoteSearchError] = useState<string | null>(null);
   const { locationState, userLocation, handleUserLocationChange, locateMe } = useMapLocation();
-  const [stampType, setStampType] = useState<StampTypeFilter>('all');
+  const [stampType, setStampType] = useState<StampTypeFilter>('auto');
   const [stampTheme, setStampTheme] = useState('');
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('all');
   const [showStamps, setShowStamps] = useState(true);
@@ -787,9 +788,12 @@ export default function MapScreen() {
       .filter((item): item is ParkingMarkerItem => item !== null);
   }, [data]);
 
+  const specialStampsVisible = isMapStampVisible({ special: true, type: stampType, longitudeDelta: region.longitudeDelta,
+    explicitFilter: Boolean(stampTheme || searchQuery.trim() || visitFilter !== 'all') });
   const visibleStampItems = useMemo(() => {
     return stampItems.filter((item) => {
-      if ((stampType === 'special' && !item.special) || (stampType === 'regular' && item.special) || (stampTheme && !item.themes.includes(stampTheme))) return false;
+      if ((item.special ? !specialStampsVisible && !(stampType === 'auto' && selectedItemId === item.id) : stampType === 'special') ||
+        (stampTheme && !item.themes.includes(stampTheme))) return false;
       if (!showStamps) {
         return false;
       }
@@ -804,7 +808,7 @@ export default function MapScreen() {
 
       return true;
     });
-  }, [showStamps, stampItems, visitFilter, stampType, stampTheme]);
+  }, [showStamps, stampItems, visitFilter, stampType, stampTheme, specialStampsVisible, selectedItemId]);
 
   // Keep all stamp markers mounted, including the 222 regular stamps on web.
   // A viewport update must not rebuild their elements or mount/unmount pins.
@@ -2472,7 +2476,7 @@ export default function MapScreen() {
           <View style={[styles.filterPopover, { top: topOverlayContentOffset, width: filterPopoverWidth }]}>
             <Text style={styles.filterTitle}>Filter</Text>
 
-            <StampCatalogFilters type={stampType} theme={stampTheme}
+            <StampCatalogFilters automatic type={stampType} theme={stampTheme}
               themes={[...new Set(stampItems.flatMap(item => item.themes))].sort()}
               onTypeChange={setStampType} onThemeChange={setStampTheme} />
             <Text style={styles.filterSectionLabel}>Status</Text>

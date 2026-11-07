@@ -62,9 +62,17 @@ Der öffentliche Website-Export überspringt explizite Sonderstempel-Identitäte
 
 ## Filter und Marker
 
-Karte und Liste besitzen unabhängige Filter für reguläre/Sonderstempel, Themen und Besuchsstatus. Mehrfachzugehörigkeiten sind möglich. Der reguläre Zähler bleibt separat; die Liste nennt zusätzlich den Sonderstempelfortschritt. Noch nicht initialisierte Produktivdatenbanken erhalten reguläre Themenzugehörigkeiten in der App aus demselben geprüften Datensatz.
+Karte und Liste besitzen unabhängige Filter für reguläre/Sonderstempel, Themen und Besuchsstatus. Mehrfachzugehörigkeiten sind möglich. Der reguläre Zähler bleibt auf 222 begrenzt. Stempelart-Filter sind als dezente Chips in die vorhandene Listenfilterzeile integriert; die Themenauswahl öffnet sich erst über „Themen …“. Im großen Fortschrittsfeld gibt es keine zusätzliche Sonderstempelanzeige. Noch nicht initialisierte Produktivdatenbanken erhalten reguläre Themenzugehörigkeiten in der App aus demselben geprüften Datensatz.
+
+Die Karte startet im Modus „Standard“ mit regulären Stellen. Sonderstempel werden automatisch erst bei `longitudeDelta < 0.18` eingeblendet, derselben Detailstufe wie Parkplätze. „Alle Arten“, „Sonderstempel“, eine Themen-/Statusauswahl, eine Suche oder die gezielte Auswahl einer Sonderstelle übersteuern diese Zoomgrenze. „Regulär“ bleibt bei jedem Zoom ausschließlich regulär. Kartenbewegungen innerhalb derselben Sichtbarkeitsstufe bauen den Stempelbestand nicht neu auf.
 
 Sondermarker sind violett; besucht ist dunkler, eine teilweise besuchte Gruppe erhält eine weitere violette Abstufung. Beschriftung und barrierefreie Beschreibung bleiben zusätzlich erhalten. Native Marker verwenden vorgerenderte PNGs; Webmarker verwenden dieselbe Farbgebung. Die zusätzlichen Markerbilder sind aus dem bestehenden SVG-Generator erzeugt.
+
+## Stempelzahlen in Touren
+
+Sonderstempel können als Stopps in einer Tour vorkommen und bleiben Teil der Wegstrecke, Dauer und Geometrie. Sie zählen nicht zu „Stempel gesamt“, „Neue Stempel für mich“, Gruppenfortschritt, Mindeststempelzahl oder Stempelwertung der Planung. Gezählt werden ausschließlich unterschiedliche reguläre Nummern 1–222; frühere Standort-UUIDs und wiederholte Besuche erhöhen die Zahlen nicht. Eine Profileinstellung dafür wird nicht eingeführt.
+
+Diese Regel gilt für Planung, Vorschau anhand von Routen-IDs, Speichern sowie Tourenlisten und Details. Bereits gespeicherte ältere Zähler werden bei Lesezugriffen in der Antwort anhand der tatsächlichen Stopps neu berechnet. Es gibt keine automatische schreibende Datenkorrektur alter Touren. Bei ausdrücklich gespeichertem Tourenumbau werden die korrekten regulären Zahlen gespeichert. Die Planung priorisiert weiterhin neue reguläre Stellen und wendet ihre Mindestzahl auf diese an.
 
 ## Offizielle Meldungen und Schutz bisheriger Warnungen
 
@@ -90,10 +98,19 @@ Beschreibende Meldungen verwenden ausschließlich vollständig geprüfte exakte 
 
 - Backend: `cd backend/hwb && npm test` — Katalog, CSV, konkurrierende Initialisierung, Rechte, Vorschau, Idempotenz, Erhalt bestehender Daten, Abzeichen, Meldungszuordnung und Routen ohne Koordinaten.
 - App: `cd app && npm test -- --config jest.config.js --runInBand`, TypeScript und gezieltes ESLint.
+- Aktueller Änderungsstand: 424 App-Tests und 65 Backend-Tests erfolgreich. Die Tourenregression prüft gemischte Stopps, reguläre Standortduplikate, Gruppenfortschritt, Vorschau, Speichern, Lesen älterer Touren und Planungs-Mindestzahlen.
 - CAP-Modell für PostgreSQL kompiliert; vollständiger Basic-Webexport erstellt.
 - Bewusster Live-Test, außerhalb der normalen Tests: `cd backend/hwb && node --test test/live/special-stamps.test.js`. Dieser startet ausschließlich eine eigene SQLite-In-Memory-Datenbank. Vorschau vor/nach Initialisierung, zwei schreibende Live-Importe, identische Meldungs-IDs sowie der Erhalt einer synthetischen Alt-Warnung werden geprüft. Die erwarteten Zähler gelten für den 7. November 2026 und können bei Änderungen der offiziellen Quelle abweichen.
 
 Die Screenshots stammen aus der vollständigen Web-App an einem isolierten lokalen In-Memory-Backend. Sie zeigen sieben synthetische reguläre Besuche und einen bewusst angelegten Sonderbesuch. Die Initialisierung wurde im Browser wiederholt; der zweite Aufruf legte nichts mehr an. Markerfarbe, Filter, unveränderter regulärer Fortschritt, fehlender horizontaler Seitenüberlauf und Browserfehler wurden geprüft. Keine Produktivdaten verändert. Native Android-/iOS-Laufzeitabnahme bleibt offen.
+
+Die aktuelle Browserprüfung bestätigt zusätzlich: Hauptliste mit einer Filterzeile und eingeklappter Themenauswahl; Karte im Standardmodus mit 0 Sondermarkern in der Übersicht, 124 am Detailzoom und erneut 0 nach dem Herauszoomen. „Alle Arten“ blendet 124 Sondermarker sofort ein; „Regulär“ zeigt auch bei näherem Zoom keine. Sonderstempel + Grenzweg zeigt vier Marker. Kein horizontaler Seitenüberlauf oder JavaScript-Fehler.
+
+| Dezente Standardliste | Kartenübersicht ohne Sondermarker |
+| --- | --- |
+| ![Eine Filterzeile ohne Sonderstempelblock](screenshots/special-stamps/list-compact-default.png) | ![Standardkarte mit regulären Stempelstellen](screenshots/special-stamps/map-default.png) |
+
+![Sonderstempel erscheinen automatisch am Detailzoom](screenshots/special-stamps/map-detail.png)
 
 | Admin-Initialisierung | Sonderstempelliste |
 | --- | --- |

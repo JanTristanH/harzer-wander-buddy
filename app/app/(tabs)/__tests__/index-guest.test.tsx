@@ -241,8 +241,10 @@ describe('StampsScreen', () => {
     expect(screen.getByRole('button', { name: 'Sonderstempel', selected: true })).toBeOnTheScreen();
     expect(screen.queryByTestId('stamp-list-item-regular')).toBeNull();
     expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Grenzweg' })).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Themen auswählen' }));
     fireEvent.press(screen.getByRole('button', { name: 'Grenzweg' }));
-    expect(screen.getByRole('button', { name: 'Grenzweg', selected: true })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Themen auswählen', selected: true })).toBeOnTheScreen();
     expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
   });
 
