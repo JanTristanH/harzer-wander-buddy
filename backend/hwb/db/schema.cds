@@ -9,6 +9,14 @@ using { Attachments } from '@cap-js/attachments';
 
 type User : String(255);
 
+entity BadgeProfiles {
+    key userId : String(255);
+    featured : LargeString;
+    title : String(80);
+    frame : String(80);
+    selectionChanged : Boolean default false;
+}
+
 aspect PointOfInterest {
     longitude   : Double;
     latitude    : Double;

@@ -1,6 +1,27 @@
 # TODO 02: Profil in ein sichtbares Abzeichenalbum erweitern
 
-Status: offen · Priorität: P1 · Aufwand: M
+Status: umgesetzt · Priorität: P1 · Aufwand: M
+
+## Bestätigte Entscheidungen und Umsetzung
+
+Die Nutzerentscheidung vom 14. Oktober 2026 legt Grenzweg auf 20 reguläre
+Pflichtstellen plus drei Sonderstempel fest; das digitale Abzeichen wird bei
+erfüllten Voraussetzungen freigeschaltet. Wanderprinzessin/Wanderprinz ist
+digital für alle Altersgruppen verfügbar, mit sichtbarem Hinweis auf die
+offizielle Kinder-Auszeichnung.
+
+Bronze, Silber und Gold verleihen realistische Metallrahmen. König, Kaiser,
+Steiger und Prinzessin/Prinz verleihen eigene Rahmen und auswählbare Titel.
+Kaiserrucksack und Kaiserschuh erhalten eigene Rahmen ohne Personentitel.
+Rahmen werden am Avatar und an Abzeichenmotiven eingesetzt; Titel, Avatarrahmen
+und bis zu drei hervorgehobene Abzeichen sind unabhängig voneinander wählbar.
+
+Regeln, Datenmodell, Grafik-Prompts und Prüfung sind in
+[Abzeichenalbum](../../abzeichenalbum.md) dokumentiert. Screenshots der
+tatsächlichen lokalen UI liegen unter
+[Abzeichenalbum-Screenshots](../../screenshots/abzeichenalbum/).
+Die gemeinsame Backend-Berechnung steht für TODO 01 und 03 bereit; deren
+zusätzliche Zielkarte und Erfolgsanimation sind weiterhin eigene Aufgaben.
 
 ## Beschreibung und Hintergrund
 
@@ -82,40 +103,40 @@ Ohne Erfolge freundlich zum ersten Stempel führen.
 
 ## Umsetzung
 
-- [ ] Bestehenden UI5-Katalog samt Bildern, Namen, Schwellen und Pflichtstempeln
+- [x] Bestehenden UI5-Katalog mit bestätigten Metallrahmen, Namen, Schwellen und Pflichtstempeln
   in ein gemeinsames, dokumentiertes Modell übertragen; Grenzweg-Differenz klären.
-- [ ] Persönliche Fortschritte für allgemeine und Sonderabzeichen getrennt
+- [x] Persönliche Fortschritte für allgemeine und Sonderabzeichen getrennt
   berechnen; Titelzuordnung und fachlich bestätigte Freischaltbedingungen festlegen.
-- [ ] Auswahl und Reihenfolge der Profilabzeichen sowie einen ausgewählten Titel
+- [x] Auswahl und Reihenfolge der Profilabzeichen sowie einen ausgewählten Titel
   pro Nutzer dauerhaft speichern und beim Profilabruf laden. Fehlende bestehende
   Datenfelder/API ergänzen; Auswahl serverseitig gegen Freischaltungen prüfen.
-- [ ] Eigene Auswahl bearbeiten können; fremde Profile zeigen nur deren gespeicherte Auswahl.
-- [ ] Gesperrte Abzeichen wie offene Stempel ausgrauen, mit lesbarem Fortschritt
+- [x] Eigene Auswahl bearbeiten können; fremde Profile zeigen nur deren gespeicherte Auswahl.
+- [x] Gesperrte Abzeichen wie offene Stempel ausgrauen, mit lesbarem Fortschritt
   und zusätzlicher Statuskennzeichnung; für Profilanzeige nicht auswählbar machen.
-- [ ] Gemeinsame Berechnung für TODO 01, 02 und 03 implementieren; historische
+- [x] Gemeinsame Berechnung für TODO 01, 02 und 03 implementieren; historische
   Besuche berücksichtigen und Wiederholungen korrekt behandeln.
-- [ ] Motive mit einheitlicher Silhouette und klar unterscheidbaren Zuständen gestalten.
-- [ ] Profilvorschau, Album und Abzeichendetail mit vorhandener Navigation verbinden.
-- [ ] Bei abgeleitetem Erwerbsdatum den ersten erfüllenden Besuch verwenden;
+- [x] Motive mit einheitlicher Silhouette und klar unterscheidbaren Zuständen gestalten.
+- [x] Profilvorschau, Album und Abzeichendetail mit vorhandener Navigation verbinden.
+- [x] Bei abgeleitetem Erwerbsdatum den ersten erfüllenden Besuch verwenden;
   unvollständige Historie nicht mit einem erfundenen Datum ergänzen.
 
 ## Abnahmekriterien
 
-- [ ] Profil zeigt erreichte und erreichbare Ziele auch bei null Erfolgen verständlich.
-- [ ] Bedingung und tatsächlicher Fortschritt sind für jedes Abzeichen einsehbar.
-- [ ] Bereits berechtigte Nutzer erhalten ihre Erfolge beim Einstieg rückwirkend.
-- [ ] Gewählte Abzeichen, Reihenfolge und Titel überstehen Neuladen und erneute Anmeldung.
-- [ ] Nur freigeschaltete Titel sind auswählbar; gewählter Titel erscheint am Profil.
-- [ ] Keine Auswahl ist möglich; freigeschaltete Optionen werden nicht automatisch aufgedrängt.
-- [ ] Fremde Profile zeigen die Auswahl ihres Besitzers, nicht die des Betrachters.
-- [ ] Offene Motive sind ausgegraut und als gesperrt beschriftet; Details bleiben zugänglich.
-- [ ] Entfernte/korrigierte Besuche werden nach einer festgelegten Regel behandelt;
+- [x] Profil zeigt erreichte und erreichbare Ziele auch bei null Erfolgen verständlich.
+- [x] Bedingung und tatsächlicher Fortschritt sind für jedes Abzeichen einsehbar.
+- [x] Bereits berechtigte Nutzer erhalten ihre Erfolge beim Einstieg rückwirkend.
+- [x] Gewählte Abzeichen, Reihenfolge und Titel überstehen Neuladen und erneute Anmeldung.
+- [x] Nur freigeschaltete Titel sind auswählbar; gewählter Titel erscheint am Profil.
+- [x] Keine Auswahl ist möglich; freigeschaltete Optionen werden nicht automatisch aufgedrängt.
+- [x] Fremde Profile zeigen die Auswahl ihres Besitzers, nicht die des Betrachters.
+- [x] Offene Motive sind ausgegraut und als gesperrt beschriftet; Details bleiben zugänglich.
+- [x] Entfernte/korrigierte Besuche werden nach einer festgelegten Regel behandelt;
   aktueller Status wird aus der aktuellen Historie neu berechnet. Nicht mehr
   berechtigte angezeigte Abzeichen und Titel werden aus der aktiven Auswahl
   entfernt; die UI erklärt die Änderung ohne einen Ersatz automatisch auszuwählen.
-- [ ] Offline wird vorhandener Stand angezeigt; ein Ladefehler wirkt nicht wie ein leerer Erfolgskatalog.
-- [ ] Status ist ohne reine Farberkennung verständlich; lange Titel und große Schrift passen.
-- [ ] Screenshots für leeres Album, gemischtes Album und freigeschaltetes Detail liegen vor.
+- [x] Offline wird vorhandener Stand angezeigt; ein Ladefehler wirkt nicht wie ein leerer Erfolgskatalog.
+- [x] Status ist ohne reine Farberkennung verständlich; lange Titel und große Schrift passen.
+- [x] Screenshots für leeres Album, gemischtes Album und freigeschaltetes Detail liegen vor.
 
 ## Betroffene Stellen und Abhängigkeiten
 

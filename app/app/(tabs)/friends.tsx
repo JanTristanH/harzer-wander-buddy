@@ -1,37 +1,27 @@
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   RefreshControl,
   Share,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/empty-state';
-import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { SignInRequiredScreen } from '@/components/auth-locked-state';
 import { FriendsList } from '@/components/friends-list';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
-import { AppColors, Fonts, Layout, Radii } from '@/constants/theme';
-import {
-  acceptPendingFriendshipRequest,
-  createFriendRequest,
-  removeFriendship,
-  searchUsers,
-  type SearchUserResult,
-} from '@/lib/api';
+import { FriendSearchModal } from '@/components/friend-search-modal';
+import { useFriendSearch } from '@/lib/use-friend-search';
+import { AppColors, Fonts, Layout } from '@/constants/theme';
+import { acceptPendingFriendshipRequest } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useRequireSignInAction } from '@/lib/auth-actions';
 import {
@@ -85,109 +75,19 @@ export default function FriendsScreen() {
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<FriendFilter>('friends');
   const [acceptingPendingRequestId, setAcceptingPendingRequestId] = useState<string | null>(null);
-  const [recallingFriendshipId, setRecallingFriendshipId] = useState<string | null>(null);
-  const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
-  const [isSearchLoading, setIsSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [submittingUserId, setSubmittingUserId] = useState<string | null>(null);
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
-  const searchInputRef = useRef<TextInput | null>(null);
   const { data, error, isFetching, isPending, refetch } = useFriendsOverviewQuery();
+  const friendSearch = useFriendSearch(data, (userId) => {
+    friendSearch.closeSearchModal();
+    requestAnimationFrame(() => router.push(`/profile/${encodeURIComponent(userId)}` as never));
+  });
+  const { setIsSearchModalVisible } = friendSearch;
   const isRefreshing = isFetching && !isPending;
   const blockingError = !data ? error : null;
   const floatingActionBottom = getFloatingActionBottomOffset(insets.bottom);
 
-  useEffect(() => {
-    if (!isSearchModalVisible) {
-      return;
-    }
-
-    const normalizedQuery = searchQuery.trim();
-    if (normalizedQuery.length < 2) {
-      setSearchResults([]);
-      setSearchError(null);
-      setIsSearchLoading(false);
-      return;
-    }
-
-    if (!accessToken || isOffline) {
-      setSearchResults([]);
-      setSearchError(null);
-      setIsSearchLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setIsSearchLoading(true);
-
-    const timer = setTimeout(() => {
-      void (async () => {
-        try {
-          const results = await searchUsers(accessToken, normalizedQuery);
-          if (cancelled) {
-            return;
-          }
-
-          setSearchResults(results);
-          setSearchError(null);
-        } catch (nextError) {
-          if (cancelled) {
-            return;
-          }
-
-          setSearchError(nextError instanceof Error ? nextError.message : 'Unknown error');
-          setSearchResults([]);
-        } finally {
-          if (!cancelled) {
-            setIsSearchLoading(false);
-          }
-        }
-      })();
-    }, 250);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [accessToken, isOffline, isSearchModalVisible, searchQuery]);
-
   const requestsLabel = `Anfragen (${data?.incomingRequestCount ?? 0})`;
   const sentLabel = `Gesendet${data && data.outgoingRequestCount > 0 ? ` (${data.outgoingRequestCount})` : ''}`;
-
-  const sentRequestIds = useMemo(() => new Set((data?.outgoingRequests ?? []).map((item) => item.userId)), [data]);
-  const receivedRequestIds = useMemo(
-    () => new Set((data?.incomingRequests ?? []).map((item) => item.userId)),
-    [data]
-  );
-  const friendIds = useMemo(() => new Set((data?.friends ?? []).map((item) => item.id)), [data]);
-
-  const closeSearchModal = useCallback(() => {
-    setIsSearchModalVisible(false);
-    setSearchQuery('');
-    setSearchResults([]);
-    setSearchError(null);
-    setIsSearchLoading(false);
-    setSubmittingUserId(null);
-  }, []);
-
-  const handleSearchModalShow = useCallback(() => {
-    setTimeout(() => {
-      searchInputRef.current?.focus();
-    }, 50);
-  }, []);
-
-  const handleSearchProfilePress = useCallback(
-    (userId: string) => {
-      closeSearchModal();
-      requestAnimationFrame(() => {
-        router.push(`/profile/${encodeURIComponent(userId)}` as never);
-      });
-    },
-    [closeSearchModal, router]
-  );
 
   const handleAcceptRequest = useCallback(
     async (pendingRequestId: string) => {
@@ -230,107 +130,6 @@ export default function FriendsScreen() {
     [accessToken, canPerformWrites, claims?.sub, isAuthenticated, logout, queryClient, requireSignIn]
   );
 
-  const handleCreateRequest = useCallback(
-    async (userId: string) => {
-      if (!isAuthenticated) {
-        requireSignIn('Melde dich an, um Freundschaftsanfragen zu senden.');
-        return;
-      }
-
-      if (!accessToken) {
-        return;
-      }
-
-      try {
-        requireOnlineForWrite(canPerformWrites);
-        setSubmittingUserId(userId);
-        await createFriendRequest(accessToken, userId);
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: queryKeys.friendsOverview(claims?.sub) }),
-          queryClient.invalidateQueries({ queryKey: queryKeys.profileOverview(claims?.sub) }),
-        ]);
-        setSearchResults((current) => current.slice());
-      } catch (nextError) {
-        if (isNetworkUnavailableError(nextError)) {
-          Alert.alert('Offline', nextError.message);
-          return;
-        }
-
-        if (nextError instanceof Error && nextError.name === 'UnauthorizedError') {
-          await logout();
-          return;
-        }
-
-        Alert.alert(
-          'Anfrage konnte nicht gesendet werden',
-          nextError instanceof Error ? nextError.message : 'Unknown error'
-        );
-      } finally {
-        setSubmittingUserId(null);
-      }
-    },
-    [accessToken, canPerformWrites, claims?.sub, isAuthenticated, logout, queryClient, requireSignIn]
-  );
-
-  const handleRecallRequest = useCallback(
-    (friendshipId: string) => {
-      if (!isAuthenticated) {
-        requireSignIn('Melde dich an, um Freundschaftsanfragen zu verwalten.');
-        return;
-      }
-
-      if (!accessToken) {
-        return;
-      }
-
-      Alert.alert(
-        'Anfrage zurueckrufen?',
-        'Diese gesendete Freundschaftsanfrage wird zurueckgezogen.',
-        [
-          {
-            text: 'Abbrechen',
-            style: 'cancel',
-          },
-          {
-            text: 'Zurückrufen',
-            style: 'destructive',
-            onPress: () => {
-              void (async () => {
-                try {
-                  requireOnlineForWrite(canPerformWrites);
-                  setRecallingFriendshipId(friendshipId);
-                  await removeFriendship(accessToken, friendshipId);
-                  await Promise.all([
-                    queryClient.invalidateQueries({ queryKey: queryKeys.friendsOverview(claims?.sub) }),
-                    queryClient.invalidateQueries({ queryKey: queryKeys.profileOverview(claims?.sub) }),
-                  ]);
-                } catch (nextError) {
-                  if (isNetworkUnavailableError(nextError)) {
-                    Alert.alert('Offline', nextError.message);
-                    return;
-                  }
-
-                  if (nextError instanceof Error && nextError.name === 'UnauthorizedError') {
-                    await logout();
-                    return;
-                  }
-
-                  Alert.alert(
-                    'Anfrage konnte nicht zurueckgerufen werden',
-                    nextError instanceof Error ? nextError.message : 'Unknown error'
-                  );
-                } finally {
-                  setRecallingFriendshipId(null);
-                }
-              })();
-            },
-          },
-        ]
-      );
-    },
-    [accessToken, canPerformWrites, claims?.sub, isAuthenticated, logout, queryClient, requireSignIn]
-  );
-
   const handleInviteFriends = useCallback(async () => {
     try {
       await Share.share({
@@ -345,54 +144,6 @@ export default function FriendsScreen() {
       );
     }
   }, []);
-
-  const searchListItems = useMemo(
-    () =>
-      searchResults.map((result) => {
-        const status: 'request' | 'sent' | 'received' | 'friend' | 'self' =
-          result.id === data?.currentUserId
-            ? 'self'
-            : friendIds.has(result.id) || result.isFriend
-              ? 'friend'
-              : receivedRequestIds.has(result.id)
-                ? 'received'
-                : sentRequestIds.has(result.id)
-                  ? 'sent'
-                  : 'request';
-
-        return {
-          id: result.id,
-          image: result.picture,
-          name: result.name,
-          onPress: () => handleSearchProfilePress(result.id),
-          subtitle: `${result.visitedCount} Stempel • ${result.completionPercent}%`,
-          actionLabel:
-            status === 'sent'
-              ? 'Gesendet'
-              : status === 'received'
-                ? 'Erhalten'
-                : status === 'friend'
-                  ? 'Verbunden'
-                  : status === 'self'
-                    ? 'Du'
-                    : 'Anfrage',
-          actionMuted: status !== 'request',
-          actionDisabled: status !== 'request' || submittingUserId === result.id || !canPerformWrites,
-          onActionPress: () => void handleCreateRequest(result.id),
-        };
-      }),
-    [
-      data?.currentUserId,
-      friendIds,
-      handleCreateRequest,
-      handleSearchProfilePress,
-      receivedRequestIds,
-      searchResults,
-      sentRequestIds,
-      submittingUserId,
-      canPerformWrites,
-    ]
-  );
 
   if (!isAuthenticated) {
     return (
@@ -539,33 +290,7 @@ export default function FriendsScreen() {
           {!isPending && !blockingError && activeFilter === 'sent' ? (
             data && data.outgoingRequests.length > 0 ? (
               <FriendsList
-                items={data.outgoingRequests.map((request) => {
-                  const legacyPendingRequestId = (
-                    request as unknown as {
-                      pendingRequestId?: string;
-                    }
-                  ).pendingRequestId;
-                  const recallFriendshipId = request.friendshipId || legacyPendingRequestId;
-                  const isRecalling = !!recallFriendshipId && recallingFriendshipId === recallFriendshipId;
-
-                  return {
-                    id: request.id,
-                    image: request.picture,
-                    name: request.name,
-                    onPress: () => router.push(`/profile/${encodeURIComponent(request.userId)}` as never),
-                    subtitle: 'Anfrage gesendet',
-                    actionLabel: isRecalling ? '...' : 'Zurückrufen',
-                    actionMuted: true,
-                    actionDisabled: !recallFriendshipId || isRecalling || !canPerformWrites,
-                    onActionPress: () => {
-                      if (!recallFriendshipId) {
-                        return;
-                      }
-
-                      void handleRecallRequest(recallFriendshipId);
-                    },
-                  };
-                })}
+                items={friendSearch.sentRequestItems}
               />
             ) : (
               <EmptyState
@@ -595,79 +320,7 @@ export default function FriendsScreen() {
         </View>
       ) : null}
 
-        <Modal accessibilityLabel="Freunde finden"
-          animationType="fade"
-          onShow={handleSearchModalShow}
-          transparent
-          visible={isSearchModalVisible}
-          onRequestClose={closeSearchModal}>
-          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <Pressable style={styles.modalBackdrop} onPress={closeSearchModal} />
-            <SafeAreaView style={styles.modalSafeArea} pointerEvents="box-none">
-            <View style={styles.modalCard}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Freunde finden</Text>
-                <Pressable
-                  accessibilityLabel="Suche schließen"
-                  accessibilityRole="button"
-                  onPress={closeSearchModal}
-                  style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]}>
-                  <Feather color={AppColors.text} name="x" size={16} />
-                </Pressable>
-              </View>
-
-              <View style={[styles.searchInputShell, isSearchFocused && styles.searchInputShellFocused]}>
-                <View style={styles.searchInputIconWrap}>
-                  <Feather color={AppColors.textMuted} name="search" size={14} />
-                </View>
-                <ClearableSearchInput
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoFocus
-                  ref={searchInputRef}
-                  onFocus={() => setIsSearchFocused(true)}
-                  onBlur={() => setIsSearchFocused(false)}
-                  onChangeText={setSearchQuery}
-                  placeholder="Name oder Nutzername suchen"
-                  placeholderTextColor={AppColors.textMuted}
-                  style={styles.searchInput}
-                  value={searchQuery}
-                />
-              </View>
-
-              <ScrollView style={styles.searchResultsScroll} contentContainerStyle={styles.searchResultsColumn} keyboardShouldPersistTaps="handled">
-                {isSearchLoading ? (
-                  <View style={styles.searchStatusWrap}>
-                    <ActivityIndicator color={AppColors.primary} size="small" />
-                  </View>
-                ) : null}
-
-                {!isSearchLoading && searchError ? (
-                  <Text style={styles.searchStatusText}>{searchError}</Text>
-                ) : null}
-
-                {!isSearchLoading && !searchError && searchQuery.trim().length < 2 ? (
-                  <Text style={styles.searchStatusText}>
-                    Gib mindestens zwei Zeichen ein, um nach Freunden zu suchen.
-                  </Text>
-                ) : null}
-
-                {!isSearchLoading &&
-                !searchError &&
-                searchQuery.trim().length >= 2 &&
-                searchResults.length === 0 ? (
-                  <Text style={styles.searchStatusText}>Keine passenden Nutzer gefunden.</Text>
-                ) : null}
-
-                {!isSearchLoading && !searchError && searchResults.length > 0 ? (
-                  <FriendsList items={searchListItems} />
-                ) : null}
-              </ScrollView>
-
-            </View>
-            </SafeAreaView>
-          </KeyboardAvoidingView>
-        </Modal>
+        <FriendSearchModal search={friendSearch} />
       </View>
     </SafeAreaView>
   );
@@ -787,93 +440,6 @@ const styles = StyleSheet.create({
   },
   searchButtonDisabled: {
     opacity: 0.5,
-  },
-  modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-start',
-  },
-  modalSafeArea: { flex: 1, paddingVertical: 16 },
-  searchResultsScroll: { flexGrow: 0, flexShrink: 1 },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(46,58,46,0.35)',
-  },
-  modalCard: {
-    backgroundColor: AppColors.surface,
-    borderRadius: Radii.card,
-    marginHorizontal: 20,
-    maxHeight: '100%',
-    flexShrink: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    shadowColor: AppColors.shadow,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 28,
-    elevation: 10,
-  },
-  modalHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  modalTitle: {
-    color: AppColors.text,
-    fontFamily: Fonts.sans,
-    fontWeight: '700',
-    fontSize: 20,
-    lineHeight: 24,
-  },
-  modalCloseButton: {
-    alignItems: 'center',
-    backgroundColor: '#F0E9DD',
-    borderRadius: 8,
-    height: Layout.touchTarget,
-    justifyContent: 'center',
-    width: Layout.touchTarget,
-  },
-  searchInputShellFocused: { outlineColor: AppColors.primary, outlineWidth: 2, outlineStyle: 'solid' },
-  searchInputShell: {
-    alignItems: 'center',
-    backgroundColor: '#F6F2EA',
-    borderRadius: 14,
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-    minHeight: 46,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-  },
-  searchInputIconWrap: {
-    alignItems: 'center',
-    height: 14,
-    justifyContent: 'center',
-    width: 14,
-  },
-  searchInput: {
-    color: AppColors.text,
-    flex: 1,
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    lineHeight: 16,
-    padding: 0,
-  },
-  searchResultsColumn: {
-    gap: 10,
-    minHeight: 120,
-  },
-  searchStatusWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
-  searchStatusText: {
-    color: AppColors.textMuted,
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    lineHeight: 16,
-    paddingVertical: 8,
   },
   pressed: {
     opacity: 0.88,

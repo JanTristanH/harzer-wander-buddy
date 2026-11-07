@@ -1,3 +1,4 @@
+import { subscribeStampingSuccess } from '@/lib/stamping-feedback';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 
@@ -8,6 +9,9 @@ const mockDelete = jest.fn();
 const mockVisits = jest.fn();
 const mockInvalidate = jest.fn();
 const mockPush = jest.fn();
+const mockGoalParams: { badgeGoal?: string } = {};
+const mockBadgeAlbum = jest.fn();
+const mockSetParams = jest.fn();
 const mockAuth = jest.fn();
 const mockClient = { invalidateQueries: mockInvalidate };
 const mockGroup = { groupUserIds: [], selectedFriendIds: [], selectedMembers: [] };
@@ -17,7 +21,8 @@ const mockStamps = [
 ];
 
 jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => mockClient }));
-jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush }) }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: mockPush, setParams: mockSetParams }), useLocalSearchParams: () => mockGoalParams }));
+jest.mock('@/lib/badges', () => ({ useBadgeAlbum: () => mockBadgeAlbum() }));
 jest.mock('@/lib/auth', () => ({ useAuth: () => mockAuth() }));
 jest.mock('@/lib/hiking-group', () => ({ useHikingGroup: () => mockGroup }));
 jest.mock('@/components/group-selector', () => ({ GroupSelector: () => null }));
@@ -44,14 +49,26 @@ function hold(id: string) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  delete mockGoalParams.badgeGoal;
+  mockBadgeAlbum.mockReturnValue({data:undefined});
   jest.useFakeTimers();
   mockAuth.mockReturnValue({ isAuthenticated: true, accessToken: 'test-token', canPerformWrites: true, currentUserProfile: { id: 'self' } });
-  mockCreate.mockResolvedValue({});
+  mockCreate.mockImplementation(async (_token: string, id: string) => ({ ID: `visit-${id}` }));
   mockDelete.mockResolvedValue(null);
   mockInvalidate.mockResolvedValue(undefined);
   mockVisits.mockResolvedValue([]);
 });
 afterEach(() => { jest.useRealTimers(); });
+
+it('shows only missing goal stamps and allows resetting the goal filter',async () => {
+  mockGoalParams.badgeGoal = 'goethe';
+  mockBadgeAlbum.mockReturnValue({data:{entries:[{id:'goethe',name:'Goethe im Harz',required:[{id:'open',visited:false},{id:'visited',visited:true}],progress:[]}]}});
+  await openScreen();
+  expect(screen.getByTestId('stamp-list-item-open')).toBeTruthy();
+  expect(screen.queryByTestId('stamp-list-item-visited')).toBeNull();
+  fireEvent.press(screen.getByLabelText('Zielfilter entfernen'));
+  expect(mockSetParams).toHaveBeenCalledWith({badgeGoal:''});
+});
 
 it('opens details normally, then toggles rows without navigation after holding', async () => {
   await openScreen();
@@ -71,6 +88,8 @@ it('opens details normally, then toggles rows without navigation after holding',
 });
 
 it('stamps every selected place including existing visits and exits selection', async () => {
+  const confirmed = jest.fn();
+  const unsubscribe = subscribeStampingSuccess(confirmed);
   await openScreen();
   hold('open');
   fireEvent.press(screen.getByTestId('stamp-list-item-visited'));
@@ -81,8 +100,11 @@ it('stamps every selected place including existing visits and exits selection', 
   expect(mockCreate).toHaveBeenCalledWith('test-token', 'visited');
   expect(mockDelete).not.toHaveBeenCalled();
   expect(mockInvalidate).toHaveBeenCalled();
-  expect(screen.getByText('2 Besuche gestempelt.')).toBeTruthy();
+  expect(screen.queryByText('2 Besuche gestempelt.')).toBeNull();
   expect(screen.queryByTestId('stamp-selection-toolbar')).toBeNull();
+  expect(confirmed).toHaveBeenCalledTimes(1);
+  expect(confirmed).toHaveBeenCalledWith({ owner: 'self', visitIds: ['visit-open', 'visit-visited'] });
+  unsubscribe();
   await act(async () => { jest.advanceTimersByTime(2500); });
   expect(screen.queryByText('2 Besuche gestempelt.')).toBeNull();
 });

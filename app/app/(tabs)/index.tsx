@@ -1,11 +1,12 @@
 import { AppColors, Design } from '@/constants/theme';
+import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Animated,
@@ -37,6 +38,7 @@ import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { STAMP_SELECTION_FILL_MS } from '@/lib/stamp-selection-motion';
 import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
+import { useBadgeAlbum } from '@/lib/badges';
 import { useFilteredStampsOverviewQuery, useGuestFilteredStampsOverviewQuery } from '@/lib/queries';
 import { isStaticWebsite, openStaticStampArticle } from '@/lib/static-website';
 
@@ -153,9 +155,18 @@ export default function StampsScreen() {
   const router = useRouter();
   const reduceMotion = useReduceMotion();
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, isOffline, logout } = useAuth();
+  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
   const visibleFilters = useMemo(() => isAuthenticated ? FILTERS : FILTERS.filter((filter) => filter.key !== 'visited' && filter.key !== 'open'), [isAuthenticated]);
   const reducedMotion = reduceMotion;
+  const goalParams = useLocalSearchParams<{badgeGoal?:string}>();
+  const goalAlbum = useBadgeAlbum(undefined,Boolean(goalParams.badgeGoal));
+  const badgeGoal = goalAlbum.data?.entries.find(entry => entry.id === goalParams.badgeGoal);
+  const goalStampIds = useMemo(() => {
+    if (!badgeGoal) return null;
+    if (!badgeGoal.required.length || (badgeGoal.id === 'steiger' && badgeGoal.progress[0].current < badgeGoal.progress[0].total)) return null;
+    const poolComplete = badgeGoal.id === 'witch' && badgeGoal.progress[0].current >= badgeGoal.progress[0].total;
+    return new Set(badgeGoal.required.filter(stamp => !stamp.visited && (!poolComplete || stamp.mandatory)).map(stamp => stamp.id));
+  },[badgeGoal]);
   const queryClient = useQueryClient();
   const offlineVisits = useOfflineVisits();
   const canRecordVisit = offlineVisits.isNative ? offlineVisits.canRecord : canPerformWrites || offlineVisits.canRecord;
@@ -186,6 +197,14 @@ export default function StampsScreen() {
   const stampRowHeight = Math.ceil((isGroupActive ? GROUP_STAMP_ROW_HEIGHT : KNOWN_STAMP_ROW_HEIGHT) * Math.max(1, fontScale));
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  useEffect(() => {
+    if (goalParams.badgeGoal) {
+      setActiveFilter('all');
+      setQuery('');
+      setSelectionMode(false);
+      setSelectedIds([]);
+    }
+  },[goalParams.badgeGoal]);
   const [locationState, setLocationState] = useState<LocationState>('idle');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
@@ -297,6 +316,7 @@ export default function StampsScreen() {
     setToastVisible(false);
     const targetIds = remove ? (plan ?? []).map((place) => place.stampId) : selectedIds;
     const failedIds: string[] = [];
+    const confirmedIds: string[] = [];
     let completed = 0;
     let removedVisits = 0;
     try {
@@ -312,7 +332,10 @@ export default function StampsScreen() {
             if (offlineVisits.canRecord) {
               if (!stamp) throw new Error('Die Stempelstelle ist nicht lokal verfügbar.');
               await offlineVisits.record(stamp);
-            } else await createStamping(accessToken, stampId);
+            } else {
+              const visit = await createStamping(accessToken, stampId);
+              if (visit.ID) confirmedIds.push(visit.ID);
+            }
           }
           completed++;
           if (!remove && mounted.current) setStampProgress(0.08 + 0.82 * completed / targetIds.length);
@@ -328,9 +351,12 @@ export default function StampsScreen() {
         setStampProgress(1);
         await new Promise<void>((resolve) => setTimeout(resolve, reducedMotion ? 120 : STAMP_SELECTION_FILL_MS));
       }
+      if (confirmedIds.length && currentUserProfile?.id) {
+        publishStampingSuccess({ owner: currentUserProfile.id, visitIds: confirmedIds });
+      }
       await queryClient.invalidateQueries();
       if (!mounted.current) return;
-      if (!remove && completed > 0 && failedIds.length === 0) {
+      if (!remove && !offlineVisits.canRecord && completed > 0 && failedIds.length === 0) {
         setCelebrationCount(completed);
         // Returning to progress is intentional only after a successful explicit action.
         listRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -339,11 +365,11 @@ export default function StampsScreen() {
       setSelectedIds(failedIds);
       setSelectionMode(failedIds.length > 0);
       setRemovalPlan([]);
-      showBulkToast(failedIds.length > 0
+      if (remove || failedIds.length > 0 || offlineVisits.canRecord) showBulkToast(failedIds.length > 0
         ? `${completed} erledigt. ${failedIds.length} fehlgeschlagen. Bitte erneut versuchen.`
         : remove
           ? `${removedVisits} ${removedVisits === 1 ? 'Besuch' : 'Besuche'} entfernt.`
-          : offlineVisits.canRecord && isOffline
+          : offlineVisits.canRecord
             ? `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} auf diesem Gerät gespeichert.`
             : `${completed} ${completed === 1 ? 'Besuch' : 'Besuche'} gestempelt.`);
     } finally {
@@ -353,7 +379,7 @@ export default function StampsScreen() {
         setStampProgress(null);
       }
     }
-  }, [accessToken, canPerformWrites, canRecordVisit, hasPendingSelection, isOffline, offlineVisits, stamps, currentUserProfile?.id, logout, queryClient, reducedMotion, selectedIds, showBulkToast]);
+  }, [accessToken, canPerformWrites, canRecordVisit, hasPendingSelection, offlineVisits, stamps, currentUserProfile?.id, logout, queryClient, reducedMotion, selectedIds, showBulkToast]);
 
   const prepareRemoval = useCallback(async () => {
     if (!accessToken || !currentUserProfile?.id || !canPerformWrites || hasPendingSelection || bulkBusyRef.current) return;
@@ -458,6 +484,10 @@ export default function StampsScreen() {
   const filteredStamps = useMemo(
     () =>
       stampDistances.filter(({ stamp, distanceKm }) => {
+        if (goalParams.badgeGoal) {
+          if (!badgeGoal || stamp.hasVisited) return false;
+          if (goalStampIds ? !goalStampIds.has(stamp.ID) : !/^\d+$/.test(stamp.number) || Number(stamp.number) < 1 || Number(stamp.number) > 222) return false;
+        }
         const matchesQuery =
           normalizedQuery.length === 0 ||
           stamp.name.toLowerCase().includes(normalizedQuery) ||
@@ -485,7 +515,7 @@ export default function StampsScreen() {
 
         return true;
       }),
-    [activeFilter, normalizedQuery, stampDistances]
+    [activeFilter, normalizedQuery, stampDistances,goalParams.badgeGoal,badgeGoal,goalStampIds]
   );
   const isVisitedEmptyState = activeFilter === 'visited' && visitedCount === 0;
   const isNearEmptyState = activeFilter === 'near' && filteredStamps.length === 0;
@@ -755,7 +785,7 @@ export default function StampsScreen() {
       if (finished && isActive) {
         setAnimatedVisitedCount(visitedCount);
 
-        if (hasCompletedAllStamps) {
+        if (hasCompletedAllStamps && celebrationCount > 0 && offlineVisits.entries.length === 0) {
           playCompletionConfetti();
         }
       }
@@ -769,6 +799,8 @@ export default function StampsScreen() {
     };
   }, [
     reduceMotion,
+    celebrationCount,
+    offlineVisits.entries.length,
     hasCompletedAllStamps,
     playCompletionConfetti,
     progressFillAnimation,
@@ -888,6 +920,9 @@ export default function StampsScreen() {
 
   const renderControls = useCallback(() => (
     <View style={styles.controlsContent}>
+      {goalParams.badgeGoal ? <Pressable accessibilityRole="button" accessibilityLabel="Zielfilter entfernen" onPress={() => router.setParams({badgeGoal:''})} style={{padding:12,backgroundColor:'#e8eee5',borderRadius:14}}>
+        <Text style={{color:'#2e6b4b',fontSize:15}}>{badgeGoal ? `Ziel: ${badgeGoal.name}` : goalAlbum.error ? 'Ziel konnte nicht geladen werden' : 'Ziel wird geladen …'} · Filter entfernen ×</Text>
+      </Pressable> : null}
       <View style={[styles.searchShell, isSearchFocused && styles.searchShellFocused]}>
         <View style={styles.searchIconWrap}>
           <Feather color="#6d7d6e" name="search" size={14} />
@@ -940,7 +975,7 @@ export default function StampsScreen() {
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, isSearchFocused, locationState, query, visibleFilters]);
+  ), [activeFilter, isSearchFocused, locationState, query, visibleFilters, goalParams.badgeGoal, badgeGoal, goalAlbum.error, router]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {

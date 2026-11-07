@@ -30,6 +30,7 @@ let count = 0;
 module.exports = class api extends cds.ApplicationService {
   init() {
     require('./attachment-images')(this);
+    require('./badge-service')(this);
 
     this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
 
@@ -82,6 +83,7 @@ module.exports = class api extends cds.ApplicationService {
     this.on('addElevationToAllTravelTimes', addElevationToAllTravelTimes)
 
     this.on('stampForGroup', stampForGroup)
+    this.on('stampForGroupWithFeedback', stampForGroup)
     this.on('getStampFriendVisits', getStampFriendVisits)
     this.on('getUsersProgress', getUsersProgress)
     this.on('searchPlacesByName', searchPlacesByName)
@@ -1918,7 +1920,12 @@ async function stampForGroup(req) {
 
   await tx.run(INSERT.into(Stampings).entries(stampings));
 
-  return "ok";
+  if (req.event !== 'stampForGroupWithFeedback') return 'ok';
+  return JSON.stringify({
+    eventId: uuidv4(),
+    ownVisitIds: stampings.filter(visit => visit.createdBy === req.user.id).map(visit => visit.ID),
+    friendVisitCount: stampings.filter(visit => visit.createdBy !== req.user.id).length,
+  });
 }
 
 async function backfillMissingVisitedAt(req) {

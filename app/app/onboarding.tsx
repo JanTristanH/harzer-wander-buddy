@@ -6,12 +6,10 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Redirect, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  ActivityIndicator,
   Alert,
-  Modal,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -25,16 +23,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ClearableSearchInput } from '@/components/clearable-search-input';
-import { FriendsList, type FriendsListItem } from '@/components/friends-list';
+import { FriendsList } from '@/components/friends-list';
+import { FriendSearchModal } from '@/components/friend-search-modal';
+import { useFriendSearch } from '@/lib/use-friend-search';
 import { Design, Fonts } from '@/constants/theme';
 import {
-  createFriendRequest,
-  searchUsers,
   updateCurrentUserProfile,
   uploadProfileImage,
   type ProfileOverviewData,
-  type SearchUserResult,
 } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { appConfig } from '@/lib/config';
@@ -45,7 +41,7 @@ import {
   OFFLINE_REFRESH_MESSAGE,
   requireOnlineForWrite,
 } from '@/lib/offline-write';
-import { fetchStampsOverviewData, queryKeys } from '@/lib/queries';
+import { fetchStampsOverviewData, queryKeys, useFriendsOverviewQuery } from '@/lib/queries';
 
 const bearIllustration = require('@/assets/images/onboarding-bear.png');
 const DEFAULT_AVATARS = [
@@ -66,12 +62,6 @@ type LoginClaims = {
   given_name?: string;
   name?: string;
   nickname?: string;
-  picture?: string;
-};
-
-type SentRequestPreview = {
-  key: string;
-  name: string;
   picture?: string;
 };
 
@@ -144,7 +134,6 @@ export default function OnboardingScreen() {
     configError,
     currentUserProfile,
     hasCompletedOnboarding,
-    isOffline,
     isAuthenticated,
     login,
     signup,
@@ -160,13 +149,9 @@ export default function OnboardingScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const [locationPermission, setLocationPermission] = useState<LocationPermissionState>('unknown');
   const [locationError, setLocationError] = useState<string | null>(null);
-  const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
-  const [isSearchLoading, setIsSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [submittingUserId, setSubmittingUserId] = useState<string | null>(null);
-  const [sentRequests, setSentRequests] = useState<SentRequestPreview[]>([]);
+  const { data: friendsOverview } = useFriendsOverviewQuery();
+  const friendSearch = useFriendSearch(friendsOverview);
+  const { setIsSearchModalVisible, sentRequestItems } = friendSearch;
   const [profileName, setProfileName] = useState('');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [selectedProfileImage, setSelectedProfileImage] = useState<SelectedImage | null>(null);
@@ -188,20 +173,6 @@ export default function OnboardingScreen() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [step]);
-
-  const sentRequestIdSet = useMemo(
-    () => new Set(sentRequests.map((request) => request.key)),
-    [sentRequests]
-  );
-
-  const closeSearchModal = useCallback(() => {
-    setIsSearchModalVisible(false);
-    setSearchQuery('');
-    setSearchResults([]);
-    setSearchError(null);
-    setIsSearchLoading(false);
-    setSubmittingUserId(null);
-  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -256,65 +227,6 @@ export default function OnboardingScreen() {
       isMounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (!isSearchModalVisible) {
-      return;
-    }
-
-    const normalizedQuery = searchQuery.trim();
-    if (normalizedQuery.length < 2) {
-      setSearchResults([]);
-      setSearchError(null);
-      setIsSearchLoading(false);
-      return;
-    }
-
-    if (!accessToken || isOffline) {
-      setSearchResults([]);
-      setSearchError(null);
-      setIsSearchLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setIsSearchLoading(true);
-
-    const timer = setTimeout(() => {
-      void (async () => {
-        try {
-          const results = await searchUsers(accessToken, normalizedQuery);
-          if (cancelled) {
-            return;
-          }
-
-          setSearchResults(results);
-          setSearchError(null);
-        } catch (error) {
-          if (cancelled) {
-            return;
-          }
-
-          if (error instanceof Error && error.name === 'UnauthorizedError') {
-            await logout();
-            return;
-          }
-
-          setSearchError(error instanceof Error ? error.message : 'Unknown error');
-          setSearchResults([]);
-        } finally {
-          if (!cancelled) {
-            setIsSearchLoading(false);
-          }
-        }
-      })();
-    }, 250);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [accessToken, isOffline, isSearchModalVisible, logout, searchQuery]);
 
   useEffect(() => {
     if (!accessToken || !isAuthenticated || hasPrefetchedListRef.current) {
@@ -545,88 +457,6 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleCreateRequest = useCallback(
-    async (userId: string) => {
-      if (!accessToken) {
-        return;
-      }
-
-      try {
-        requireOnlineForWrite(canPerformWrites);
-        setSubmittingUserId(userId);
-        await createFriendRequest(accessToken, userId);
-        // Tabs retain inactive queries and disable refetchOnMount, so refresh those too.
-        void queryClient.invalidateQueries({ queryKey: queryKeys.friendsOverview(claims?.sub), refetchType: 'all' });
-        void queryClient.invalidateQueries({ queryKey: queryKeys.profileOverview(claims?.sub), refetchType: 'all' });
-        const matchedUser = searchResults.find((result) => result.id === userId);
-        setSentRequests((current) => {
-          if (current.some((request) => request.key === userId)) {
-            return current;
-          }
-
-          return [
-            ...current,
-            {
-              key: userId,
-              name: matchedUser?.name || userId,
-              picture: matchedUser?.picture,
-            },
-          ];
-        });
-      } catch (error) {
-        if (isNetworkUnavailableError(error)) {
-          Alert.alert('Offline', error.message);
-          return;
-        }
-
-        if (error instanceof Error && error.name === 'UnauthorizedError') {
-          await logout();
-          return;
-        }
-
-        Alert.alert(
-          'Anfrage konnte nicht gesendet werden',
-          error instanceof Error ? error.message : 'Unknown error'
-        );
-      } finally {
-        setSubmittingUserId(null);
-      }
-    },
-    [accessToken, canPerformWrites, claims?.sub, logout, queryClient, searchResults]
-  );
-  const searchListItems = useMemo<FriendsListItem[]>(
-    () =>
-      searchResults.map((result) => {
-        const status: 'request' | 'sent' | 'friend' =
-          result.isFriend || sentRequestIdSet.has(result.id)
-            ? (result.isFriend ? 'friend' : 'sent')
-            : 'request';
-
-        return {
-          id: result.id,
-          name: result.name,
-          image: result.picture,
-          subtitle: `${result.visitedCount} Stempel • ${result.completionPercent}%`,
-          actionLabel:
-            status === 'sent' ? 'Gesendet' : status === 'friend' ? 'Verbunden' : 'Anfrage',
-          actionMuted: status !== 'request',
-          actionDisabled: status !== 'request' || submittingUserId === result.id || !canPerformWrites,
-          onActionPress: () => void handleCreateRequest(result.id),
-        };
-      }),
-    [canPerformWrites, handleCreateRequest, searchResults, sentRequestIdSet, submittingUserId]
-  );
-  const sentRequestItems = useMemo<FriendsListItem[]>(
-    () =>
-      sentRequests.map((request) => ({
-        id: request.key,
-        name: request.name,
-        image: request.picture,
-        subtitle: 'Anfrage gesendet',
-      })),
-    [sentRequests]
-  );
-
   async function requestLocationPermission() {
     setLocationError(null);
     setLocationPermission('checking');
@@ -745,7 +575,7 @@ export default function OnboardingScreen() {
 
             {step === 4 ? <View style={styles.inputCard}>
               <ActionButton disabled={!accessToken || !canPerformWrites || busy} label="Wanderbuddies finden" onPress={() => setIsSearchModalVisible(true)} variant="secondary" />
-              {sentRequests.length > 0 ? <View style={styles.sentRequestsBox}><Text style={styles.sentRequestsTitle}>Deine Anfragen sind unterwegs</Text><FriendsList items={sentRequestItems} /></View> :
+              {sentRequestItems.length > 0 ? <View style={styles.sentRequestsBox}><Text style={styles.sentRequestsTitle}>Deine Anfragen sind unterwegs</Text><FriendsList items={sentRequestItems} /></View> :
                 <Text style={styles.guidance}>Auch allein beginnt ein gutes Abenteuer. Freunde kannst du jederzeit später hinzufügen.</Text>}
             </View> : null}
             {profileSaveError && step > 0 ? <Text accessibilityRole="alert" style={styles.errorText}>{profileSaveError}</Text> : null}
@@ -758,80 +588,7 @@ export default function OnboardingScreen() {
           </View>
         </KeyboardAvoidingView>
 
-        <Modal accessibilityLabel="Freunde finden"
-          animationType="fade"
-          transparent
-          visible={isSearchModalVisible}
-          onRequestClose={closeSearchModal}>
-          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <Pressable style={styles.modalBackdrop} onPress={closeSearchModal} />
-            <SafeAreaView style={styles.modalSafeArea} pointerEvents="box-none">
-            <View style={styles.modalCard}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Freunde finden</Text>
-                <Pressable
-                  accessibilityLabel="Suche schließen"
-                  accessibilityRole="button"
-                  onPress={closeSearchModal}
-                  style={({ pressed }) => [styles.modalCloseButton, pressed && styles.actionButtonPressed]}>
-                  <Feather color="#1E2A1E" name="x" size={16} />
-                </Pressable>
-              </View>
-
-              <View style={styles.searchInputShell}>
-                <View style={styles.searchInputIconWrap}>
-                  <Feather color="#6B7A6B" name="search" size={14} />
-                </View>
-                <ClearableSearchInput
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoFocus
-                  onChangeText={setSearchQuery}
-                  placeholder="Name oder Nutzername suchen"
-                  placeholderTextColor="#6B7A6B"
-                  style={styles.searchInput}
-                  value={searchQuery}
-                />
-              </View>
-
-              <ScrollView style={styles.searchResultsScroll} contentContainerStyle={styles.searchResultsColumn} keyboardShouldPersistTaps="handled">
-                {isSearchLoading ? (
-                  <View style={styles.searchStatusWrap}>
-                    <ActivityIndicator color="#2E6B4B" size="small" />
-                  </View>
-                ) : null}
-
-                {!isSearchLoading && searchError ? (
-                  <Text style={styles.searchStatusText}>{searchError}</Text>
-                ) : null}
-
-                {!isSearchLoading && !searchError && searchQuery.trim().length < 2 ? (
-                  <Text style={styles.searchStatusText}>
-                    Gib mindestens zwei Zeichen ein, um nach Freunden zu suchen.
-                  </Text>
-                ) : null}
-
-                {!isSearchLoading &&
-                !searchError &&
-                searchQuery.trim().length >= 2 &&
-                searchResults.length === 0 ? (
-                  <Text style={styles.searchStatusText}>Keine passenden Nutzer gefunden.</Text>
-                ) : null}
-
-                {!isSearchLoading && !searchError && searchResults.length > 0 ? (
-                  <FriendsList items={searchListItems} />
-                ) : null}
-              </ScrollView>
-
-              <View style={styles.modalHint}>
-                <Text style={styles.modalHintText}>
-                  Profile kannst du nach dem Onboarding in der Freunde-Ansicht öffnen.
-                </Text>
-              </View>
-            </View>
-            </SafeAreaView>
-          </KeyboardAvoidingView>
-        </Modal>
+        <FriendSearchModal search={friendSearch} hint="Profile kannst du nach dem Onboarding in der Freunde-Ansicht oeffnen." />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -967,103 +724,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '700',
-  },
-  modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-start',
-  },
-  modalSafeArea: { flex: 1, paddingVertical: 16 },
-  searchResultsScroll: { flexGrow: 0, flexShrink: 1 },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(46,58,46,0.35)',
-  },
-  modalCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    marginHorizontal: 20,
-    maxHeight: '100%',
-    flexShrink: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    shadowColor: '#141E14',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 28,
-    elevation: 10,
-  },
-  modalHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  modalTitle: {
-    color: '#1E2A1E',
-    fontFamily: Fonts.serif,
-    fontSize: 20,
-    lineHeight: 24,
-  },
-  modalCloseButton: {
-    alignItems: 'center',
-    backgroundColor: '#F0E9DD',
-    borderRadius: 8,
-    height: 28,
-    justifyContent: 'center',
-    width: 28,
-  },
-  searchInputShell: {
-    alignItems: 'center',
-    backgroundColor: '#F6F2EA',
-    borderRadius: 14,
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  searchInputIconWrap: {
-    alignItems: 'center',
-    height: 14,
-    justifyContent: 'center',
-    width: 14,
-  },
-  searchInput: {
-    color: '#1E2A1E',
-    flex: 1,
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    lineHeight: 16,
-    padding: 0,
-  },
-  searchResultsColumn: {
-    gap: 10,
-    minHeight: 120,
-  },
-  searchStatusWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-  },
-  searchStatusText: {
-    color: '#6B7A6B',
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    lineHeight: 16,
-    paddingVertical: 8,
-  },
-  modalHint: {
-    backgroundColor: '#F8F6F1',
-    borderRadius: 14,
-    marginTop: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  modalHintText: {
-    color: '#6B7A6B',
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    lineHeight: 16,
   },
   bottomButton: {
     width: '100%',
