@@ -4,7 +4,7 @@ import type { Stampbox } from './api';
 export type StampTypeFilter = 'auto' | 'all' | 'regular' | 'special';
 export function isSpecialStamp(stamp: Pick<Stampbox, 'number' | 'stampType' | 'catalogKey'>) {
   if (stamp.stampType === 'special') return true;
-  if (stamp.catalogKey?.startsWith('special-')) return true;
+  if (/^(special-|hwn:special:)/.test(stamp.catalogKey || '')) return true;
   return !/^\d+$/.test(stamp.number) || Number(stamp.number) < 1 || Number(stamp.number) > 222;
 }
 export function matchesStampType(stamp: Pick<Stampbox, 'number' | 'stampType' | 'catalogKey'>, filter: StampTypeFilter) {

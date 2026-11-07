@@ -1,6 +1,7 @@
 const { load } = require("cheerio");
 const { createHash } = require("node:crypto");
 const SOURCE_URL = "https://www.harzer-wandernadel.de/defektmeldungen/";
+const { canonicalCatalogKey, isSpecialStamp } = require('./special-stamp-identity');
 const specialCatalogue = require('../catalogue/special-stamps.json');
 
 function normalize(text) {
@@ -69,16 +70,16 @@ function parseOfficialNotices(html, stamps) {
           ? stamps.filter(
               (s) =>
                 !specialSection && !/\b(?:Sonderstempel|Jubiläumstempel)/i.test(text) &&
-                s.stampType !== 'special' && !s.catalogKey?.startsWith('special-') &&
+                !isSpecialStamp(s) &&
                 /^\d+$/.test(s.number || "") && Number(s.number) === numbers[0],
             )
           : stamps.filter((s) => {
-              const special = specialCatalogue.stamps.find((entry) => entry.catalogKey === s.catalogKey);
+              const special = specialCatalogue.stamps.find((entry) => entry.catalogKey === canonicalCatalogKey(s.catalogKey));
               // Unresolved identities never become a match just because their label is identical.
               if (special?.identityStatus === 'unverified') return false;
-              if (specialSection && s.stampType !== 'special') return false;
+              if (specialSection && !isSpecialStamp(s)) return false;
               return nameKey(s.name) === nameKey(text) ||
-                (s.stampType === 'special' && special?.noticeAliases.some(alias => normalize(alias) === text));
+                (isSpecialStamp(s) && special?.noticeAliases.some(alias => normalize(alias) === text));
             });
     const kind = /sperr|nicht (?:zu )?erreich|entfällt|gesperrt|gefahr/i.test(
       text,

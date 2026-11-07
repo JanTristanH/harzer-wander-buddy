@@ -1,5 +1,5 @@
 function regularStampKey(stamp) {
-  if (!stamp || stamp.stampType === 'special' || stamp.catalogKey?.startsWith('special-')) return null;
+  if (!stamp || stamp.stampType === 'special' || /^(special-|hwn:special:)/.test(stamp.catalogKey || '')) return null;
   const raw = String(stamp.number ?? '').trim();
   const number = Number(raw);
   return /^\d+$/.test(raw) && number >= 1 && number <= 222 ? String(number) : null;

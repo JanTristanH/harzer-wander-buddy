@@ -1,5 +1,6 @@
 const cds = require('@sap/cds');
 const catalogue = require('../catalogue/special-stamps.json');
+const { resolveSpecialStamp } = require('./special-stamp-identity');
 
 function catalogRows() {
   return catalogue.stamps.map((stamp) => ({
@@ -18,18 +19,12 @@ function planInitialization(existing) {
   const missing = [], conflicts = [];
   let present = 0;
   for (const row of catalogRows()) {
-    const known = existing.find((stamp) => stamp.catalogKey === row.catalogKey);
-    if (known) {
-      if (known.stampType === 'special') present++;
-      else conflicts.push({ catalogKey: row.catalogKey, name: row.name, existingId: known.ID });
-      continue;
+    try {
+      if (resolveSpecialStamp(row, existing)) present++;
+      else missing.push(row);
+    } catch (error) {
+      conflicts.push({ catalogKey: row.catalogKey, name: row.name, reason: error.message });
     }
-    // Never adopt or overwrite legacy/admin entries on the strength of a name.
-    const collision = existing.find((stamp) => stamp.ID === row.ID ||
-      (row.number !== 'S' && stamp.number === row.number) ||
-      stamp.name?.normalize('NFKC').trim().toLocaleLowerCase('de') === row.name.toLocaleLowerCase('de'));
-    if (collision) conflicts.push({ catalogKey: row.catalogKey, name: row.name, existingId: collision.ID });
-    else missing.push(row);
   }
   return { missing, conflicts, existing: present };
 }

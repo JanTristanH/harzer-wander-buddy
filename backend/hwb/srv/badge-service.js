@@ -1,5 +1,6 @@
 const cds = require('@sap/cds');
 const { buildAlbum, sanitizeSelection } = require('./badge-catalog');
+const { loadThemeBadgeRules } = require('./theme-badge-rules');
 const { buildStampingFeedback } = require('./stamping-feedback');
 
 module.exports = function registerBadgeService(service) {
@@ -14,7 +15,7 @@ module.exports = function registerBadgeService(service) {
         .where({ createdBy: req.user.id }),
     ]);
     // Never load another person's visits, even when a client supplies their UUIDs.
-    return JSON.stringify(buildStampingFeedback(stamps, visits, ids));
+    return JSON.stringify(buildStampingFeedback(stamps, visits, ids, await loadThemeBadgeRules(stamps)));
   });
   async function load(userId) {
     const [stamps, visits, stored] = await Promise.all([
@@ -24,7 +25,7 @@ module.exports = function registerBadgeService(service) {
         .where({ createdBy: userId }),
       SELECT.one.from(BadgeProfiles).where({ userId }),
     ]);
-    const entries = buildAlbum(stamps, visits);
+    const entries = buildAlbum(stamps, visits, await loadThemeBadgeRules(stamps));
     const previous = {
       featured: stored ? JSON.parse(stored.featured || '[]') : [],
       title: stored?.title || '',

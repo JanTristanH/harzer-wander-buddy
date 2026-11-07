@@ -70,3 +70,12 @@ test('admin preview does not initialize; explicit initialize refreshes data; off
   expect(screen.getByRole('button', { name: 'Fehlende Sonderstempel in der DB anlegen' })).toBeDisabled();
   mockAuth.isOffline = false;
 });
+
+
+test('legacy theme keys remain special while canonical regular keys still count', () => {
+  const regular = stamp({ catalogKey: 'hwn-12', stampType: 'regular', hasVisited: true });
+  const legacy = stamp({ ID: 'legacy', number: '12', catalogKey: 'hwn:special:jungborn', hasVisited: true });
+  expect(isSpecialStamp(regular)).toBe(false);
+  expect(isSpecialStamp(legacy)).toBe(true);
+  expect(regularStampCounts([regular, legacy])).toEqual({ total: 1, visited: 1 });
+});

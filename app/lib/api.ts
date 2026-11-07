@@ -4181,3 +4181,16 @@ export async function initializeSpecialStamps(token: string, preview = true): Pr
   if (!raw) throw new Error('Die Initialisierung konnte nicht bestätigt werden.');
   return JSON.parse(raw) as SpecialStampInitialization;
 }
+
+
+export type ThemeCatalogItem = {
+  ID: string; code: string; edition: string; name: string; kind: 'booklet' | 'trail'; badgeId?: string;
+  sourceUrl: string; rulesNote: string; expectedStampCount: number; collectedCount: number;
+  requiredCount: number; requiredCollected: number; optionalCollected: number; minimumOptionalCount: number;
+  regularVisitTarget: number; regularVisited: number; complete: boolean;
+  stamps: { stampId: string; number: string; name: string; stampType: string; required: boolean; visited: boolean }[];
+};
+
+export async function fetchThemeCatalog(accessToken: string) {
+  return fetchCollection<ThemeCatalogItem>(accessToken, 'getThemeCatalog()');
+}

@@ -26,6 +26,8 @@ const specialNames = {
 };
 function normalizeNumber(value) {
   const raw = String(value ?? '').trim();
+  const officialSpecial = { '9901': special[1], '9902': special[0], '9903': special[2] };
+  if (officialSpecial[raw]) return officialSpecial[raw];
   if (/^\d+$/.test(raw)) return String(Number(raw));
   const name = raw
     .toLowerCase()
@@ -39,9 +41,11 @@ function normalizeNumber(value) {
   return raw;
 }
 
+const { canonicalCatalogKey, isSpecialStamp, legacyBorderKey } = require('./special-stamp-identity');
 function stampIdentity(stamp) {
-  if (stamp.stampType === 'special' || stamp.catalogKey?.startsWith('special-'))
-    return stamp.catalogKey || `special-id-${stamp.ID}`;
+  const key = canonicalCatalogKey(stamp.catalogKey) || legacyBorderKey(stamp);
+  if (key && isSpecialStamp(stamp)) return key;
+  if (isSpecialStamp(stamp)) return `special-id-${stamp.ID}`;
   return normalizeNumber(stamp.number);
 }
 const titles = {
@@ -173,7 +177,7 @@ function evaluate(rule, numbers) {
     });
   if (rule.pool)
     progress.unshift({
-      label: 'Stempel entlang des Hexen-Stiegs',
+      label: rule.poolLabel || 'Stempel entlang des Hexen-Stiegs',
       current: Math.min(
         rule.poolCount,
         rule.pool.filter((n) => numbers.has(String(n))).length
@@ -183,7 +187,7 @@ function evaluate(rule, numbers) {
   return { progress, unlocked: progress.every((p) => p.current >= p.total) };
 }
 
-function buildAlbum(stamps, visits) {
+function buildAlbum(stamps, visits, overrides = {}) {
   const stampsById = new Map(stamps.map((s) => [s.ID, s]));
   const numbers = new Set();
   const events = new Map();
@@ -200,7 +204,8 @@ function buildAlbum(stamps, visits) {
       events.set(number, Math.min(events.get(number) ?? Infinity, time));
   }
   const history = [...events].sort((a, b) => a[1] - b[1]);
-  return catalog.map((rule) => {
+  return catalog.map((baseRule) => {
+    const rule = { ...baseRule, ...(overrides[baseRule.id] || {}) };
     const result = evaluate(rule, numbers);
     let acquiredAt = null;
     if (
@@ -231,7 +236,7 @@ function buildAlbum(stamps, visits) {
         };
       }
     );
-    const condition =
+    const condition = rule.condition || (
       rule.id === 'steiger'
         ? '111 unterschiedliche Stempel, davon alle 23 Bergbau-Pflichtstellen.'
         : rule.id === 'witch'
@@ -240,7 +245,7 @@ function buildAlbum(stamps, visits) {
             ? 'Alle 20 regulären Pflichtstellen und die 3 Sonderstempel Zwei-Länder-Eiche, Jungborn und Drei-Länder-Stein.'
             : rule.threshold
               ? `${rule.threshold} unterschiedliche reguläre Stempelstellen.`
-              : `Alle ${rule.required.length} Pflichtstellen.`;
+              : `Alle ${rule.required.length} Pflichtstellen.`);
     return {
       ...rule,
       required,
@@ -270,4 +275,4 @@ function sanitizeSelection(selection, entries) {
     : '';
   return { featured, title, frame };
 }
-module.exports = { catalog, normalizeNumber, stampIdentity, buildAlbum, sanitizeSelection };
+module.exports = { catalog, normalizeNumber, stampIdentity, evaluate, buildAlbum, sanitizeSelection };

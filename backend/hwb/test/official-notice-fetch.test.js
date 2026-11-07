@@ -3,9 +3,9 @@ const { test } = require('node:test');
 const { officialNoticeAgent } = require('../srv/official-notice-fetch');
 
 test('official imports honor HTTPS proxies and NO_PROXY exclusions', () => {
-  const keys = ['HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy',
+  const keys = [...new Set(['HTTPS_PROXY', 'https_proxy', 'HTTP_PROXY', 'http_proxy',
     'ALL_PROXY', 'all_proxy', 'NO_PROXY', 'no_proxy',
-    'npm_config_https_proxy', 'npm_config_proxy', 'npm_config_no_proxy'];
+    'npm_config_https_proxy', 'npm_config_proxy', 'npm_config_no_proxy'].flatMap(key => [key, key.toUpperCase()]))];
   const previous = Object.fromEntries(keys.map(key => [key, process.env[key]]));
   try {
     for (const key of keys) delete process.env[key];
