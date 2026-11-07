@@ -47,9 +47,18 @@ entity Attachments_local : Attachments {
 }
 
 @assert.integrity: false
+@assert.unique.catalogKey: [catalogKey]
 entity Stampboxes : cuid, PointOfInterest {
     virtual activeNotices  : LargeString;
     number                 : String(40); // to allow Sonderstempel via name
+    stampType              : String(16) default 'regular';
+    catalogKey             : String(160);
+    themeKeys              : LargeString;
+    sourceUrl              : String(2048);
+    sourceCheckedAt        : Date;
+    locationStatus         : String(24);
+    availability           : String(24);
+    identityStatus         : String(24);
     validFrom              : Timestamp;
     validTo                : Timestamp;
     orderBy                : String(40);

@@ -110,6 +110,9 @@ service api @(requires: 'authenticated-user') {
     @requires: 'admin'
     action syncOfficialNotices(preview : Boolean) returns LargeString;
 
+    @requires: 'admin'
+    action initializeSpecialStamps(preview : Boolean) returns LargeString;
+
     type ImageCompressionResult {
         processed : Integer;
         compressed : Integer;
@@ -365,7 +368,7 @@ service api @(requires: 'authenticated-user') {
                     imageCaption,
                     description,
                     'stamp' as poiType   : String
-            }
+            } where latitude is not null and longitude is not null
         union all
             select from ParkingSpots {
                 key ID,
@@ -378,7 +381,7 @@ service api @(requires: 'authenticated-user') {
                     ''        as imageCaption : String(2048),
                     description,
                     'parking' as poiType : String
-            };
+            } where latitude is not null and longitude is not null;
 
 
     entity Stampings @(restrict: [
@@ -446,6 +449,8 @@ service api @(requires: 'authenticated-user') {
         select from db.Stampboxes as Stampboxes
         join db.Stampboxes as NeighborsBox
             on Stampboxes.ID != NeighborsBox.ID
+              and Stampboxes.latitude is not null and Stampboxes.longitude is not null
+              and NeighborsBox.latitude is not null and NeighborsBox.longitude is not null
         {
             key Stampboxes.ID,
             key NeighborsBox.ID     as NeighborsID,
@@ -485,6 +490,8 @@ service api @(requires: 'authenticated-user') {
         select from db.Stampboxes as Stampboxes
         join db.ParkingSpots as Neighbors
             on Stampboxes.ID != Neighbors.ID
+              and Stampboxes.latitude is not null and Stampboxes.longitude is not null
+              and Neighbors.latitude is not null and Neighbors.longitude is not null
         {
             key Stampboxes.ID,
             key Neighbors.ID as NeighborsID,
@@ -519,6 +526,8 @@ service api @(requires: 'authenticated-user') {
         select from db.ParkingSpots as Parking
         join db.Stampboxes as NeighborsBox
             on Parking.ID != NeighborsBox.ID
+              and Parking.latitude is not null and Parking.longitude is not null
+              and NeighborsBox.latitude is not null and NeighborsBox.longitude is not null
         {
             key Parking.ID,
             key NeighborsBox.ID     as NeighborsID,
@@ -555,6 +564,8 @@ service api @(requires: 'authenticated-user') {
         select from db.ParkingSpots as Parking
         join db.ParkingSpots as Neighbors
             on Parking.ID != Neighbors.ID
+              and Parking.latitude is not null and Parking.longitude is not null
+              and Neighbors.latitude is not null and Neighbors.longitude is not null
         {
             key Parking.ID,
             key Neighbors.ID as NeighborsID,

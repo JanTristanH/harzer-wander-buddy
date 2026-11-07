@@ -48,6 +48,8 @@ Die Screenshots unter `docs/screenshots/notices-*.png` stammen aus der laufenden
 
 ## Integration vom 6. November 2026
 
+Die anschließende [Sonderstempel-Erweiterung](special-stamps.md) ergänzt 151 Katalogeinträge und geprüfte exakte Textaliase. Nach ausdrücklicher Initialisierung ergibt der Live-Test vom 7. November 2026 27 zugeordnete Meldungen und eine offene Meldung („Brandberg“). Diese offene Identität blockiert weiterhin das automatische Erledigen bisheriger Warnungen. Die nachfolgenden älteren Prüfzähler beschreiben den Stand ohne Sonderstempelkatalog.
+
 Aktuelles `develop` (`7513b1b`) integriert. Hinweise-Refetch und lokale Offline-Besuchsüberlagerung bleiben gemeinsam aktiv; API-Erweiterungen für Meldungen und Offline-Besuche/-Notizen bleiben erhalten. Der Webstil der Stempelliste verwendet explizite Typen für Browser-Eigenschaften. Native Laufzeitabnahme bleibt offen.
 
 Prüfung des integrierten Stands: 377 App-Tests in 66 Suites, 42 Backend-Tests und 43 Release-Automationstests bestanden. TypeScript, gezieltes ESLint, PostgreSQL-Schemakompilierung und vollständiger Basic-Webexport erfolgreich.

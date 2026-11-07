@@ -4,11 +4,11 @@ const cds = require("@sap/cds");
 // directory for the local stamp fixture exports.
 module.exports = async (db) => {
   const { NoticeSyncState } = db.entities("hwb.db");
-  const existing = await db.run(
-    cds.ql.SELECT.one.from(NoticeSyncState).where({ ID: "official" }),
-  );
-  if (!existing)
-    await db.run(
-      cds.ql.INSERT.into(NoticeSyncState).entries({ ID: "official" }),
+  for (const ID of ['official', 'special-catalog']) {
+    const existing = await db.run(
+      cds.ql.SELECT.one.from(NoticeSyncState).where({ ID }),
     );
+    if (!existing)
+      await db.run(cds.ql.INSERT.into(NoticeSyncState).entries({ ID }));
+  }
 };

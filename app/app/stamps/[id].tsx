@@ -1,4 +1,5 @@
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
+import { StampCatalogInfo } from '@/components/stamp-catalog-info';
 import { StampNoticeBadge } from '@/components/stamp-notice-badge';
 import { StampNoticesSection } from '@/components/stamp-notices-section';
 import { useOfflineNotes } from '@/lib/offline-notes';
@@ -1961,6 +1962,7 @@ function StampDetailContent() {
 
             <View style={styles.body}>
               <Text style={styles.title}>{stamp.name}</Text>
+              <StampCatalogInfo stamp={stamp} />
               <StampNoticesSection key={stamp.ID} stampId={stamp.ID} value={stamp.activeNotices} />
               {stamp.description?.trim() ? (
                 <Text style={styles.description}>{stamp.description.trim()}</Text>

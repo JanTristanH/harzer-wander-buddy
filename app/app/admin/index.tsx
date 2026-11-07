@@ -1,4 +1,5 @@
 import { AdminNoticesPanel } from '@/components/admin-notices-panel';
+import { AdminSpecialStampsPanel } from '@/components/admin-special-stamps-panel';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -175,6 +176,8 @@ export default function AdminHomeScreen() {
               <Text style={styles.subtitle}>Stempelstellen, Parkplaetze und Backend-Jobs zentral verwalten.</Text>
             </View>
           </View>
+
+          <AdminSpecialStampsPanel />
 
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Daten pflegen</Text>

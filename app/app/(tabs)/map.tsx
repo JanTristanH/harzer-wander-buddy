@@ -1,3 +1,6 @@
+import { StampCatalogFilters } from '@/components/stamp-catalog-filters';
+import { isSpecialStamp, stampThemes, type StampTypeFilter } from '@/lib/stamp-catalog';
+import { specialMarkerVisualKind } from '@/lib/group-marker';
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { parseActiveNotices } from '@/lib/stamp-notices';
 import { useOfflineVisits } from '@/lib/offline-visits';
@@ -100,6 +103,8 @@ type StampMarkerItem = BaseMarkerItem & {
   kind: MapStamp['kind'];
   number?: string;
   stampId: string;
+  special: boolean;
+  themes: string[];
   visitedAt?: string;
   groupSize?: number;
   totalGroupStampings?: number;
@@ -234,6 +239,10 @@ function preventCancelableDefault(event: Event) {
 }
 
 function markerColors(kind: MarkerKind | StampMarkerVisualKind) {
+  if (kind.startsWith('special-')) {
+    const fill = kind === 'special-visited-stamp' ? '#5b3285' : kind === 'special-group-partial-stamp' ? '#9165b8' : '#7851a9';
+    return { fill, shadow: 'rgba(67,35,95,0.22)', text: '#fff', badgeFill: '#efe6f8', badgeText: '#5b3285' };
+  }
   if (kind === 'group-open-stamp') {
     return {
       fill: '#b9574d',
@@ -510,7 +519,7 @@ function stampMarkerAccessibilityLabel(
   const number = normalizeStampMarkerToken(item.number) ?? '--';
 
   if (!groupActive) {
-    return `Stempel ${number}: ${item.title}, ${
+    return `${item.special ? 'Sonderstempel' : 'Stempel'} ${number}: ${item.title}, ${
       item.kind === 'visited-stamp' ? 'besucht' : 'unbesucht'
     }`;
   }
@@ -518,13 +527,13 @@ function stampMarkerAccessibilityLabel(
   const groupSize = Math.max(1, item.groupSize ?? 1);
   const visitedCount = Math.max(0, Math.min(groupSize, item.totalGroupStampings ?? 0));
   const groupStatus =
-    visualKind === 'visited-stamp'
+    (visualKind === 'visited-stamp' || visualKind === 'special-visited-stamp')
       ? 'vollständig besucht'
-      : visualKind === 'group-partial-stamp'
+      : (visualKind === 'group-partial-stamp' || visualKind === 'special-group-partial-stamp')
         ? 'teilweise besucht'
         : 'unbesucht';
 
-  return `Stempel ${number}: ${item.title}, Wandergruppe ${groupStatus}, ${visitedCount} von ${groupSize} besucht`;
+  return `${item.special ? 'Sonderstempel' : 'Stempel'} ${number}: ${item.title}, Wandergruppe ${groupStatus}, ${visitedCount} von ${groupSize} besucht`;
 }
 
 type SearchResultRank = {
@@ -636,6 +645,8 @@ export default function MapScreen() {
   const [isRemoteSearchLoading, setIsRemoteSearchLoading] = useState(false);
   const [remoteSearchError, setRemoteSearchError] = useState<string | null>(null);
   const { locationState, userLocation, handleUserLocationChange, locateMe } = useMapLocation();
+  const [stampType, setStampType] = useState<StampTypeFilter>('all');
+  const [stampTheme, setStampTheme] = useState('');
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('all');
   const [showStamps, setShowStamps] = useState(true);
   const [showParking, setShowParking] = useState(true);
@@ -741,6 +752,8 @@ export default function MapScreen() {
           imageUrl: stamp.heroImageUrl?.trim() || stamp.image?.trim() || undefined,
           number: stamp.number,
           stampId: stamp.ID,
+          special: isSpecialStamp(stamp),
+          themes: stampThemes(stamp),
           visitedAt: stamp.visitedAt,
           groupSize: stamp.groupSize,
           totalGroupStampings: stamp.totalGroupStampings,
@@ -776,6 +789,7 @@ export default function MapScreen() {
 
   const visibleStampItems = useMemo(() => {
     return stampItems.filter((item) => {
+      if ((stampType === 'special' && !item.special) || (stampType === 'regular' && item.special) || (stampTheme && !item.themes.includes(stampTheme))) return false;
       if (!showStamps) {
         return false;
       }
@@ -790,7 +804,7 @@ export default function MapScreen() {
 
       return true;
     });
-  }, [showStamps, stampItems, visitFilter]);
+  }, [showStamps, stampItems, visitFilter, stampType, stampTheme]);
 
   // Keep all stamp markers mounted, including the 222 regular stamps on web.
   // A viewport update must not rebuild their elements or mount/unmount pins.
@@ -832,12 +846,13 @@ export default function MapScreen() {
   const getStampMarkerVisual = useCallback(
     (stampItem: StampMarkerItem) => {
       const label = normalizeStampMarkerToken(stampItem.number) || '--';
-      const visualKind = resolveStampMarkerVisualKind({
+      const baseKind = resolveStampMarkerVisualKind({
         groupActive: isGroupActive,
         groupSize: stampItem.groupSize ?? groupUserIds.length,
         personalKind: stampItem.kind,
         totalGroupStampings: stampItem.totalGroupStampings ?? 0,
       });
+      const visualKind = stampItem.special ? specialMarkerVisualKind(baseKind) : baseKind;
       const cacheKey = `${stampItem.id}:${visualKind}:${label}`;
       const cached = stampMarkerVisualCacheRef.current.get(cacheKey);
       if (cached) {
@@ -891,7 +906,8 @@ export default function MapScreen() {
       );
       const usesGeneratedGroupBackground =
         visual.visualKind === 'group-open-stamp' ||
-        visual.visualKind === 'group-partial-stamp';
+        visual.visualKind === 'group-partial-stamp' ||
+        visual.visualKind === 'special-group-open-stamp' || visual.visualKind === 'special-group-partial-stamp';
 
       if (usesGeneratedGroupBackground && visual.image) {
         const badge = groupMarkerBadgeDimensions(visual.label);
@@ -2456,6 +2472,9 @@ export default function MapScreen() {
           <View style={[styles.filterPopover, { top: topOverlayContentOffset, width: filterPopoverWidth }]}>
             <Text style={styles.filterTitle}>Filter</Text>
 
+            <StampCatalogFilters type={stampType} theme={stampTheme}
+              themes={[...new Set(stampItems.flatMap(item => item.themes))].sort()}
+              onTypeChange={setStampType} onThemeChange={setStampTheme} />
             <Text style={styles.filterSectionLabel}>Status</Text>
             <View style={styles.filterChipRow}>
               {VISIT_FILTERS.map((filter) => {

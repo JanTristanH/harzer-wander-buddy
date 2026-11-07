@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import React from 'react';
 import { FlatList, PanResponder, StyleSheet, View, type GestureResponderEvent, type PanResponderGestureState } from 'react-native';
 
@@ -221,13 +221,29 @@ describe('StampsScreen', () => {
   it('reflects the visited progress percentage', async () => {
     mockGuestData([
       createStamp({ ID: 'stamp-1', hasVisited: true }),
-      createStamp({ ID: 'stamp-2', hasVisited: false }),
+      createStamp({ ID: 'stamp-2', number: '002', hasVisited: false }),
     ]);
 
     await renderScreen();
 
     // 1 of 2 stamps visited -> 50%.
     expect(screen.getByText('50%')).toBeOnTheScreen();
+  });
+
+  it('updates the catalog filter selection and keeps special visits outside regular progress', async () => {
+    mockGuestData([
+      createStamp({ ID: 'regular', number: '1', hasVisited: true }),
+      createStamp({ ID: 'special', number: '9901', name: 'Jungborn', stampType: 'special', catalogKey: 'special-jungborn', themeKeys: '["grenzweg"]', hasVisited: true }),
+    ]);
+    await renderScreen();
+    expect(screen.getByText(/von 1 Stempelstellen/)).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Sonderstempel' }));
+    expect(screen.getByRole('button', { name: 'Sonderstempel', selected: true })).toBeOnTheScreen();
+    expect(screen.queryByTestId('stamp-list-item-regular')).toBeNull();
+    expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Grenzweg' }));
+    expect(screen.getByRole('button', { name: 'Grenzweg', selected: true })).toBeOnTheScreen();
+    expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
   });
 
   it('uses the guest query and disables the authenticated query', async () => {

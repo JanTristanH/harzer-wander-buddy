@@ -32,11 +32,17 @@ function normalizeNumber(value) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z]/g, '');
-  if (name.includes('jungborn')) return special[1];
-  if (name.includes('dreilanderstein')) return special[2];
-  if (name.includes('zweilandereiche') || name.includes('zweilaendereiche'))
+  if (['jungborn', 'sxjungborn'].includes(name)) return special[1];
+  if (['dreilanderstein', 'sxdreilanderstein'].includes(name)) return special[2];
+  if (['zweilandereiche', 'zweilaendereiche', 'sxzweilandereiche', 'sxzweilaendereiche'].includes(name))
     return special[0];
   return raw;
+}
+
+function stampIdentity(stamp) {
+  if (stamp.stampType === 'special' || stamp.catalogKey?.startsWith('special-'))
+    return stamp.catalogKey || `special-id-${stamp.ID}`;
+  return normalizeNumber(stamp.number);
 }
 const titles = {
   king: ['Wanderkönig', 'Wanderkönigin'],
@@ -185,7 +191,7 @@ function buildAlbum(stamps, visits) {
   for (const visit of visits) {
     const stamp = stampsById.get(visit.stamp_ID);
     if (!stamp) continue;
-    const number = normalizeNumber(stamp.number);
+    const number = stampIdentity(stamp);
     numbers.add(number);
     // A missing visitedAt is not an acquisition date; createdAt may be an import date.
     const time = Date.parse(visit.visitedAt);
@@ -214,7 +220,7 @@ function buildAlbum(stamps, visits) {
     const required = [...(rule.required ?? []), ...(rule.pool ?? [])].map(
       (n) => {
         const number = String(n);
-        const stamp = stamps.find((s) => normalizeNumber(s.number) === number);
+        const stamp = stamps.find((s) => stampIdentity(s) === number);
         return {
           number,
           id: stamp?.ID ?? null,
@@ -264,4 +270,4 @@ function sanitizeSelection(selection, entries) {
     : '';
   return { featured, title, frame };
 }
-module.exports = { catalog, normalizeNumber, buildAlbum, sanitizeSelection };
+module.exports = { catalog, normalizeNumber, stampIdentity, buildAlbum, sanitizeSelection };

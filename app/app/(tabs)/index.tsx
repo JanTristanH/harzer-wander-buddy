@@ -1,3 +1,5 @@
+import { StampCatalogFilters } from '@/components/stamp-catalog-filters';
+import { isSpecialStamp, matchesStampType, regularStampCounts, stampThemes, type StampTypeFilter } from '@/lib/stamp-catalog';
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
@@ -190,6 +192,8 @@ export default function StampsScreen() {
   const isGroupActive = isAuthenticated && selectedFriendIds.length > 0;
   const stampRowHeight = isGroupActive ? GROUP_STAMP_ROW_HEIGHT : KNOWN_STAMP_ROW_HEIGHT;
   const [query, setQuery] = useState('');
+  const [stampType, setStampType] = useState<StampTypeFilter>('all');
+  const [stampTheme, setStampTheme] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   useEffect(() => {
     if (goalParams.badgeGoal) {
@@ -249,7 +253,7 @@ export default function StampsScreen() {
   // Preserve selection across searches; reset when the filter or group changes.
   useEffect(() => {
     cancelSelection();
-  }, [activeFilter, selectedFriendKey, cancelSelection]);
+  }, [activeFilter, selectedFriendKey, cancelSelection, stampType, stampTheme]);
 
   const beginSelection = useCallback((stampId?: string) => {
     if (!isAuthenticated || bulkBusyRef.current) return;
@@ -461,8 +465,8 @@ export default function StampsScreen() {
     [stamps, userLocation]
   );
 
-  const visitedCount = useMemo(() => stamps.filter((stamp) => stamp.hasVisited).length, [stamps]);
-  const totalCount = stamps.length;
+  const { visited: visitedCount, total: totalCount } = useMemo(() => regularStampCounts(stamps), [stamps]);
+  const specialStamps = useMemo(() => stamps.filter(isSpecialStamp), [stamps]);
   const progressPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
   const hasCompletedAllStamps =
     visitedCount >= COMPLETION_STAMP_COUNT && totalCount >= COMPLETION_STAMP_COUNT;
@@ -478,6 +482,7 @@ export default function StampsScreen() {
   const filteredStamps = useMemo(
     () =>
       stampDistances.filter(({ stamp, distanceKm }) => {
+        if (!matchesStampType(stamp, stampType) || (stampTheme && !stampThemes(stamp).includes(stampTheme))) return false;
         if (goalParams.badgeGoal) {
           if (!badgeGoal || stamp.hasVisited) return false;
           if (goalStampIds ? !goalStampIds.has(stamp.ID) : !/^\d+$/.test(stamp.number) || Number(stamp.number) < 1 || Number(stamp.number) > 222) return false;
@@ -509,9 +514,9 @@ export default function StampsScreen() {
 
         return true;
       }),
-    [activeFilter, normalizedQuery, stampDistances,goalParams.badgeGoal,badgeGoal,goalStampIds]
+    [activeFilter, normalizedQuery, stampDistances,goalParams.badgeGoal,badgeGoal,goalStampIds,stampType,stampTheme]
   );
-  const isVisitedEmptyState = activeFilter === 'visited' && visitedCount === 0;
+  const isVisitedEmptyState = activeFilter === 'visited' && filteredStamps.length === 0;
   const isNearEmptyState = activeFilter === 'near' && filteredStamps.length === 0;
   const emptyStateTitle = isVisitedEmptyState
     ? 'Noch keine Stempelstellen besucht'
@@ -863,6 +868,9 @@ export default function StampsScreen() {
           <Text style={styles.progressTitle}>
             {animatedVisitedCount} von {totalCount} Stempelstellen
           </Text>
+          {specialStamps.length > 0 ? <Text style={styles.progressEyebrow}>
+            Sonderstempel: {specialStamps.filter(stamp => stamp.hasVisited).length} besucht · {specialStamps.length} im Katalog
+          </Text> : null}
           <View style={styles.progressRow}>
             <View
               onLayout={(event) => {
@@ -898,6 +906,7 @@ export default function StampsScreen() {
     progressPercent,
     router,
     totalCount,
+    specialStamps,
   ]);
 
   const renderControls = useCallback(() => (
@@ -918,6 +927,9 @@ export default function StampsScreen() {
         />
       </View>
 
+      <StampCatalogFilters type={stampType} theme={stampTheme}
+        themes={[...new Set(stamps.flatMap(stampThemes))].sort()}
+        onTypeChange={setStampType} onThemeChange={setStampTheme} />
       <ScrollView
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.filterRow}
@@ -949,7 +961,7 @@ export default function StampsScreen() {
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router]);
+  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router,stamps,stampType,stampTheme]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {

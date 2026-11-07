@@ -33,6 +33,7 @@ module.exports = class api extends cds.ApplicationService {
     require('./badge-service')(this);
 
     require('./stamp-notices').register(this);
+    require('./special-stamp-catalog').register(this);
 
     this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
 
@@ -1106,7 +1107,7 @@ async function getRouteToStampFromPosition(req) {
 
   const targetLatitude = Number(targetPoi.latitude);
   const targetLongitude = Number(targetPoi.longitude);
-  if (!Number.isFinite(targetLatitude) || !Number.isFinite(targetLongitude)) {
+  if (targetPoi.latitude == null || targetPoi.longitude == null || !Number.isFinite(targetLatitude) || !Number.isFinite(targetLongitude)) {
     req.error(422, `Point of interest with ID ${targetPoiId} does not have coordinates.`);
     return null;
   }
@@ -2066,8 +2067,9 @@ async function getUsersProgress(req) {
 
   const allStampboxes = await SELECT
     .from(Stampboxes)
-    .columns('ID');
-  const totalCount = allStampboxes.length;
+    .columns('ID', 'number', 'stampType', 'catalogKey');
+  const regular = new Map(allStampboxes.filter(stamp => stamp.stampType !== 'special' && !stamp.catalogKey?.startsWith('special-') && /^\d+$/.test(stamp.number) && Number(stamp.number) >= 1 && Number(stamp.number) <= 222).map(stamp => [stamp.ID, String(Number(stamp.number))]));
+  const totalCount = new Set(regular.values()).size;
 
   const stampings = await SELECT
     .from(Stampings)
@@ -2079,7 +2081,7 @@ async function getUsersProgress(req) {
 
   for (const stamping of stampings) {
     const userId = stamping.createdBy;
-    const stampId = stamping.stamp_ID;
+    const stampId = regular.get(stamping.stamp_ID);
     if (!userId || !stampId) {
       continue;
     }

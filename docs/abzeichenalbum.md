@@ -41,6 +41,8 @@ im Detail explizit als nicht verfügbar gezeigt und zählen nicht als besucht.
 
 ## Daten und Korrekturen
 
+Der [Sonderstempelkatalog](special-stamps.md) ergänzt die realen Grenzweg-Pflichtstellen mit den bestehenden stabilen Schlüsseln. Besuche anderer Sonderstempel erhöhen den regulären Fortschritt nicht; Initialisierung und Themenfilter verwenden denselben Katalog.
+
 `backend/hwb/srv/badge-catalog.js` ist die zentrale Regelquelle für API und UI.
 Der Server berücksichtigt die vollständige Besuchshistorie und zählt jede
 reguläre Nummer 1–222 einmal, auch bei Wiederholungen oder umgezogenen Stellen.

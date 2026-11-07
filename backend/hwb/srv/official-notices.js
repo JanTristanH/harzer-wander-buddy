@@ -1,6 +1,7 @@
 const { load } = require("cheerio");
 const { createHash } = require("node:crypto");
 const SOURCE_URL = "https://www.harzer-wandernadel.de/defektmeldungen/";
+const specialCatalogue = require('../catalogue/special-stamps.json');
 
 function normalize(text) {
   return text
@@ -20,6 +21,7 @@ function parseOfficialNotices(html, stamps) {
   let active = false;
   let foundHeading = false;
   let sectionKind = "defect";
+  let specialSection = false;
   const entries = [];
   $("h1,h2,h3,h4,li,p").each((_, element) => {
     const text = normalize($(element).text());
@@ -32,6 +34,10 @@ function parseOfficialNotices(html, stamps) {
     }
     if (/^Defekt melden$/i.test(text) || /^Auf dieser Seite/.test(text))
       active = false;
+    if (/^h[1-4]$/.test(element.tagName)) {
+      if (/^Sonderstempelstellen$/i.test(text)) specialSection = true;
+      if (/^Numerische Stempelstellen$/i.test(text) || /Weitere wichtige Informationen/i.test(text)) specialSection = false;
+    }
     if (
       /^h[1-4]$/.test(element.tagName) &&
       /Weitere wichtige Informationen/i.test(text)
@@ -62,9 +68,18 @@ function parseOfficialNotices(html, stamps) {
         : numbers.length === 1
           ? stamps.filter(
               (s) =>
+                !specialSection && !/\b(?:Sonderstempel|Jubiläumstempel)/i.test(text) &&
+                s.stampType !== 'special' && !s.catalogKey?.startsWith('special-') &&
                 /^\d+$/.test(s.number || "") && Number(s.number) === numbers[0],
             )
-          : stamps.filter((s) => nameKey(s.name) === nameKey(text));
+          : stamps.filter((s) => {
+              const special = specialCatalogue.stamps.find((entry) => entry.catalogKey === s.catalogKey);
+              // Unresolved identities never become a match just because their label is identical.
+              if (special?.identityStatus === 'unverified') return false;
+              if (specialSection && s.stampType !== 'special') return false;
+              return nameKey(s.name) === nameKey(text) ||
+                (s.stampType === 'special' && special?.noticeAliases.some(alias => normalize(alias) === text));
+            });
     const kind = /sperr|nicht (?:zu )?erreich|entfällt|gesperrt|gefahr/i.test(
       text,
     )

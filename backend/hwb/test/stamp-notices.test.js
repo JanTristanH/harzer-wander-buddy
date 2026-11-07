@@ -4,7 +4,7 @@ const cds = require("@sap/cds/lib");
 const { parseOfficialNotices, SOURCE_URL } = require("../srv/official-notices");
 const stampId = "b8124910-ce23-420a-a555-16a606ff1111";
 const secondId = "b8124910-ce23-420a-a555-16a606ff2222";
-const stamps = [{ ID: stampId, number: "12", name: "Achtermannshöhe" }];
+const stamps = [{ ID: stampId, number: "12", name: "Achtermannshöhe", latitude: 51.8, longitude: 10.6 }];
 const page = (entries) =>
   `<h2>Aktuell gemeldete Defekte</h2><h4>Numerische Stempelstellen</h4><ul>${entries.map((e) => `<li>${e}</li>`).join("")}</ul><h3>Defekt melden</h3><ul><li>HWN 1 Not a report</li></ul>`;
 let html = page(["HWN 12 Achtermannshöhe"]);
@@ -245,6 +245,22 @@ test("moderation, privacy, authorization and official reconciliation", async () 
     1,
     "unmatched entries preserve existing warnings",
   );
+  const previousWarningId = (await readPublic())[0].ID;
+  html = require("node:fs").readFileSync(
+    require("node:path").join(__dirname, "fixtures/official-notices-2026-11-07.html"),
+    "utf8",
+  ).replace("HWN 12 Achtermannshöhe", "HWN 12 Achtermannshöhe – aktualisierter Hinweis");
+  result = await request("api/syncOfficialNotices", "admin", { preview: true });
+  assert.ok(JSON.parse(result.body.value).unmatched.some((e) => e.message === "Brandberg"));
+  assert.equal((await readPublic()).length, 1, "live-source fixture preview writes nothing");
+  for (let i = 0; i < 2; i++) {
+    result = await request("api/syncOfficialNotices", "admin", { preview: false });
+    assert.equal(result.status, 200, JSON.stringify(result.body));
+    assert.equal(JSON.parse(result.body.value).retainedPrevious, true);
+    const warnings = await readPublic();
+    assert.equal(warnings.length, 2, "unresolved special stamps retain the previous warning even after a matched text changes");
+    assert.ok(warnings.some((n) => n.ID === previousWarningId));
+  }
   html = page(["HWN 12 Achtermannshöhe – Stempel fehlt"]);
   assert.equal(
     (await request("api/syncOfficialNotices", "admin", { preview: false }))

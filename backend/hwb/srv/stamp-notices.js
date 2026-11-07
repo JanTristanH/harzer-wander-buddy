@@ -136,7 +136,7 @@ function register(service) {
         throw new Error("Quelle nicht verfügbar.");
       entries = parseOfficialNotices(
         await response.text(),
-        await SELECT.from(Stampboxes).columns("ID", "number", "name"),
+        await SELECT.from(Stampboxes).columns("ID", "number", "name", "stampType", "catalogKey"),
       );
     } catch (error) {
       cds
