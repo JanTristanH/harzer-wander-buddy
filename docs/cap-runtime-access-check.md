@@ -4,6 +4,10 @@ Stand: 7. November 2026. Ergänzung zu [Befund und Absicherungsvorlage](data-api
 Keine Produktionsänderung und kein Abruf persönlicher Daten wurden für diese Ergänzung ausgeführt.
 Die tatsächliche Hosted-Runtime-Rolle bleibt **unbestätigt**.
 
+## Betreiberangabe zu App-Rollen
+
+Aktuell werden nur die App-Adminrolle und normale Nutzer verwendet. Diese Angabe identifiziert nicht die PostgreSQL-Runtime-Rolle. Der unten beschriebene technische Verbindungsnachweis bleibt erforderlich; es werden keine zusätzlichen App-Rollen oder Hosted-Grants angelegt.
+
 ## Konfigurationsbefund
 
 - `backend/hwb/package.json`: Produktionsprofil `@cap-js/postgres`, Pool max. 10;

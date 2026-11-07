@@ -52,6 +52,12 @@ und Abhängigkeiten leiten auf `/app/rnweb/login` weiter. Die gepflegte Web-App
 verwendet Bearer-Authentifizierung; CSV-Gesamtexport benötigt weiterhin Admin.
 Es gibt keine neue Browser-Cookie-Sitzung mit CSRF-Risiko.
 
+## Bestätigter App-Rollenumfang
+
+Der Betreiber hat für den aktuellen Betrieb nur Administratoren und normale Nutzer bestätigt. Vor dem Cutover die bisherigen Administratoren anhand bestätigter Bestandsidentitäten inventarisieren und deren neue Supabase-Konten gezielt mit serverkontrolliertem `app_metadata.roles = ["admin"]` ausstatten. Normale Nutzer erhalten keine privilegierte Rolle. Keine automatische Vergabe anhand gleicher E-Mail-Adressen, Clientangaben oder `user_metadata`; in diesem PR werden keine neuen Moderatorrollen zugewiesen.
+
+Diese App-Rollen sind unabhängig von der PostgreSQL-Rolle der CAP-Verbindung. „Admin in der App“ beweist weder Tabellen-Ownership noch BYPASSRLS. Die technische Runtime-Rolle bleibt bis zum im Runbook beschriebenen Verbindungsnachweis offen; deshalb keine automatische Hosted-Rechteänderung.
+
 ## Identität und Bestandsdaten
 
 Die internen IDs bleiben stabil. `AuthIdentities(subject, internalId,
