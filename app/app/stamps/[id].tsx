@@ -1,4 +1,6 @@
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
+import { StampNoticeBadge } from '@/components/stamp-notice-badge';
+import { StampNoticesSection } from '@/components/stamp-notices-section';
 import { useOfflineNotes } from '@/lib/offline-notes';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
@@ -1959,6 +1961,7 @@ function StampDetailContent() {
 
             <View style={styles.body}>
               <Text style={styles.title}>{stamp.name}</Text>
+              <StampNoticesSection key={stamp.ID} stampId={stamp.ID} value={stamp.activeNotices} />
               {stamp.description?.trim() ? (
                 <Text style={styles.description}>{stamp.description.trim()}</Text>
               ) : showDeferredSkeletons ? (
@@ -2308,6 +2311,7 @@ function StampDetailContent() {
                         <Text style={styles.rowTitle}>
                           {neighbor.number || '--'} {'\u2022'} {neighbor.name}
                         </Text>
+                        <StampNoticeBadge value={neighbor.activeNotices} />
                         <Text style={styles.rowMeta}>
                           {formatDistance(neighbor.distanceKm)}
                           {neighbor.durationMinutes ? ` • ${formatDuration(neighbor.durationMinutes)}` : ''}
