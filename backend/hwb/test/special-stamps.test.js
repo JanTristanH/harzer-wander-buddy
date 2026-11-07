@@ -31,6 +31,27 @@ test('reviewed catalog and development CSV contain all special entries without d
   assert.equal(planInitialization(rows).missing.length, 0);
 });
 
+test('reviewed image links and credits reach initialization and dummy CSV without touching existing records', () => {
+  const [columns, ...csv] = cds.parse.csv(readFileSync(path.join(__dirname, '../db/doNotDeploy-data/hwb.db.Stampboxes.csv'), 'utf8'));
+  const rows = csv.map(row => Object.fromEntries(columns.map((key, i) => [key, row[i]])));
+  const images = special.filter(stamp => stamp.heroImageUrl);
+  assert.equal(images.length, 50);
+  for (const stamp of images) {
+    assert.equal(stamp.heroImageUrl, `https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/${stamp.catalogKey}.webp`);
+    assert.match(stamp.imageCaption, /https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
+    assert.match(stamp.imageCaption, /https:\/\/creativecommons\.org\//);
+    const fixture = rows.find(row => row.ID === stamp.ID);
+    assert.equal(fixture.heroImageUrl, stamp.heroImageUrl);
+    assert.equal(fixture.imageCaption, stamp.imageCaption);
+  }
+  const existing = { ...images[0], heroImageUrl: 'https://example.org/admin.webp', imageCaption: 'Admin credit' };
+  const before = structuredClone(existing);
+  const plan = planInitialization([existing]);
+  assert.equal(plan.missing.some(row => row.ID === existing.ID), false);
+  assert.deepEqual(existing, before);
+  assert.ok(special.filter(stamp => !stamp.heroImageUrl).every(stamp => !stamp.imageCaption));
+});
+
 test('the real Grenzweg special identities unlock only their own requirements; other specials remain separate', () => {
   const rule = catalog.find(rule => rule.id === 'border');
   const required = rule.required.filter(n => typeof n === 'number');
@@ -108,11 +129,13 @@ test('admin initialization is explicit, serialized, idempotent and preserves exi
   assert.equal(concurrent.reduce((sum, result) => sum + result.result.created, 0), 150);
   assert.equal(concurrent[0].result.conflicts.length, 1);
   const jungborn = special.find(s => s.catalogKey === 'special-jungborn');
-  await UPDATE(Stampboxes).set({ name: 'Admin-korrigierter Name', latitude: 51.2 }).where({ ID: jungborn.ID });
+  await UPDATE(Stampboxes).set({ name: 'Admin-korrigierter Name', latitude: 51.2, heroImageUrl: 'https://example.org/custom.webp', imageCaption: 'Eigener Bildnachweis' }).where({ ID: jungborn.ID });
   response = await initialize('admin', false);
   assert.equal(response.result.created, 0);
   assert.equal(response.result.existing, 150);
   assert.equal((await SELECT.one.from(Stampboxes).where({ ID: jungborn.ID })).name, 'Admin-korrigierter Name');
+  assert.equal((await SELECT.one.from(Stampboxes).where({ ID: jungborn.ID })).heroImageUrl, 'https://example.org/custom.webp');
+  assert.equal((await SELECT.one.from(Stampboxes).where({ ID: jungborn.ID })).imageCaption, 'Eigener Bildnachweis');
   assert.equal((await SELECT.one.from(Stampboxes).where({ ID: legacy })).latitude, 51.1);
   assert.equal((await SELECT.from(Stampings)).length, 1);
   assert.equal((await SELECT.one.from(StampNotices)).status, 'approved');

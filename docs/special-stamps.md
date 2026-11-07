@@ -121,3 +121,7 @@ Die aktuelle Browserprüfung bestätigt zusätzlich: Hauptliste mit einer Filter
 | ![Stempelart und Themenfilter](screenshots/special-stamps/map-filter.png) | ![Violette Sondermarker am Grenzweg](screenshots/special-stamps/map-specials.png) |
 
 ![Sonderbesuch ohne zusätzlichen regulären Fortschritt](screenshots/special-stamps/special-success.png)
+
+### Bilder auf der Website
+
+50 eindeutig zugeordnete Fotos mit geprüfter Creative-Commons-Lizenz sind über `heroImageUrl` und `imageCaption` im Katalog und in der Dummy-CSV verknüpft. Die anderen 101 Einträge bleiben ohne Bild. Bildnachweise müssen in der App sichtbar bleiben. Die Fotos zeigen Orte/Einrichtungen, nicht zwingend den aktuellen Stempelkasten. Die Website stellt Dateien unter `/assets/images/stampboxes/special/<catalogKey>.webp` und das Bildverzeichnis unter `/data/special-stamp-images.json` bereit; sie muss vor Nutzung der neuen URLs veröffentlicht werden. Bestehende Datenbankeinträge werden vom Initialisierungsbutton weiterhin übersprungen, individuelle Fotos bleiben erhalten. Diese Änderung aktualisiert keine produktiven Datensätze.

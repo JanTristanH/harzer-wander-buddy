@@ -5,7 +5,7 @@ function catalogRows() {
   return catalogue.stamps.map((stamp) => ({
     ...Object.fromEntries(['ID', 'catalogKey', 'number', 'name', 'description',
       'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus',
-      'latitude', 'longitude'].map((key) => [key, stamp[key]])),
+      'latitude', 'longitude', 'heroImageUrl', 'imageCaption'].map((key) => [key, stamp[key]])),
     stampType: 'special',
     themeKeys: JSON.stringify(stamp.themeKeys),
     orderBy: `S-${(stamp.number === 'S' ? stamp.name : stamp.number).slice(0, 38)}`,
