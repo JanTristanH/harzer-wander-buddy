@@ -7,7 +7,8 @@ type MarkerVisualKind =
   | 'group-partial-stamp'
   | 'parking'
   | 'parking-order'
-  | 'tour-order';
+  | 'tour-order' | 'special-open-stamp' | 'special-visited-stamp'
+  | 'special-group-open-stamp' | 'special-group-partial-stamp';
 
 export function getPreGeneratedMapMarkerImageSource(_input: {
   kind: MarkerVisualKind;

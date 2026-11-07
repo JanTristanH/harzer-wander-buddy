@@ -1,8 +1,43 @@
+import { isSpecialStamp, regularStampCounts } from '@/lib/stamp-catalog';
 import { normalizeRoleTokens } from '@/lib/admin-access';
 import { appConfig } from '@/lib/config';
 import { assertLiveBackend, isStaticWebsite, loadStaticCatalogue, staticStampboxes } from '@/lib/static-website';
 import { prepareProfileImageForUpload, type UploadableImage } from '@/lib/image-upload';
 import buildODataQuery, { type QueryOptions } from 'odata-query';
+import type { BadgeAlbum, BadgeSelection } from '@/lib/badge-types';
+import type { StampingFeedback } from '@/lib/stamping-feedback';
+
+export async function fetchStampingFeedback(token: string, visitIds: string[]): Promise<StampingFeedback> {
+  const payload = await mutateOData<unknown>(token, buildUrl('getStampingFeedback'), {
+    method: 'POST', body: JSON.stringify({ visitIds }),
+  });
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Der Fortschritt konnte nicht geladen werden.');
+  const feedback = JSON.parse(raw) as StampingFeedback;
+  if (!Array.isArray(feedback.visitIds) || !Array.isArray(feedback.newBadges) ||
+      !Array.isArray(feedback.places) || !Number.isInteger(feedback.visitCount) ||
+      !Number.isInteger(feedback.beforeCount) || !Number.isInteger(feedback.afterCount)) {
+    throw new Error('Der Fortschritt konnte nicht bestätigt werden.');
+  }
+  return feedback;
+}
+
+export async function fetchBadgeAlbum(token: string, userId?: string): Promise<BadgeAlbum> {
+  const parameters = userId ? `userId='${escapeODataString(userId)}'` : 'userId=null';
+  const payload = await fetchOData<unknown>(token, buildUrl(`getBadgeAlbum(${parameters})`));
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Das Abzeichenalbum konnte nicht geladen werden.');
+  return JSON.parse(raw) as BadgeAlbum;
+}
+
+export async function saveBadgeProfile(token: string, selection: BadgeSelection): Promise<BadgeAlbum> {
+  const payload = await mutateOData<unknown>(token, buildUrl('saveBadgeProfile'), {
+    method: 'POST', body: JSON.stringify(selection),
+  });
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Die Auswahl konnte nicht gespeichert werden.');
+  return JSON.parse(raw) as BadgeAlbum;
+}
 
 export type StampedUser = {
   ID: string;
@@ -10,7 +45,41 @@ export type StampedUser = {
   picture?: string;
 };
 
+export type StampNotice = {
+  ID: string;
+  kind: 'closure' | 'defect' | 'info';
+  message: string;
+  source: 'official' | 'community';
+  sourceUrl?: string;
+  checkedAt?: string;
+  reviewedAt?: string;
+};
+
+export type StampNoticeReport = StampNotice & {
+  stamp_ID: string;
+  stamp?: { number: string; name: string };
+  status: 'pending' | 'approved' | 'rejected' | 'resolved';
+  createdAt: string;
+};
+export type NoticeSyncResult = {
+  preview: boolean;
+  sourceUrl: string;
+  checkedAt: string;
+  matched: { stamp_ID: string; stampName: string; kind: string; message: string }[];
+  unmatched: { message: string }[];
+  retainedPrevious?: boolean;
+};
+
 export type Stampbox = {
+  stampType?: 'regular' | 'special';
+  catalogKey?: string;
+  themeKeys?: string;
+  sourceUrl?: string;
+  sourceCheckedAt?: string;
+  locationStatus?: string;
+  availability?: string;
+  identityStatus?: string;
+  activeNotices?: string;
   ID: string;
   number: string;
   orderBy?: string;
@@ -73,7 +142,7 @@ type NeighborStampRow = {
   NeighborsID: string;
   NeighborsNumber?: string;
   distanceKm?: number;
-  neighborStamp?: Pick<Stampbox, 'ID' | 'number' | 'name' | 'heroImageUrl' | 'image' | 'imageCaption'>;
+  neighborStamp?: Pick<Stampbox, 'ID' | 'number' | 'activeNotices' | 'name' | 'heroImageUrl' | 'image' | 'imageCaption'>;
 };
 
 type NeighborParkingRow = {
@@ -376,6 +445,7 @@ export type UserProfileOverviewData = {
 export type StampDetailData = {
   stamp: Stampbox;
   nearbyStamps: {
+    activeNotices?: string;
     ID: string;
     number?: string;
     name: string;
@@ -407,6 +477,7 @@ export type StampDetailData = {
 export type ParkingDetailData = {
   parking: ParkingSpot;
   nearbyStamps: {
+    activeNotices?: string;
     ID: string;
     number?: string;
     name: string;
@@ -1137,10 +1208,10 @@ function normalizeOptionalTotalCount(totalCount?: number | null) {
 
 async function fetchTotalStampCount(accessToken: string) {
   const rows = await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
-    select: ['ID'],
-    top: 500,
+    select: ['ID', 'number', 'stampType', 'catalogKey'],
+    top: 1000,
   });
-  return rows.length;
+  return regularStampCounts(rows).total;
 }
 
 function parseActionArrayResult<T>(payload: unknown) {
@@ -1220,7 +1291,7 @@ async function fetchUsersProgressFromAction(
 
 async function fetchSingleUserProgress(accessToken: string, userId: string, totalCount: number) {
   const stampboxes = await fetchComparisonStampboxes(accessToken, [userId]);
-  const visitedCount = stampboxes.filter((stamp) => Number(stamp.totalGroupStampings || 0) > 0).length;
+  const visitedCount = new Set(stampboxes.filter((stamp) => !isSpecialStamp(stamp) && Number(stamp.totalGroupStampings || 0) > 0).map(stamp => Number(stamp.number))).size;
 
   return {
     visitedCount,
@@ -1342,7 +1413,7 @@ async function fetchComparisonStampboxes(accessToken: string, groupUserIds: stri
   const rows = await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
     select: [
       'ID',
-      'number',
+      'number', 'stampType', 'catalogKey', 'themeKeys', 'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus', 'activeNotices',
       'orderBy',
       'name',
       'description',
@@ -1358,7 +1429,7 @@ async function fetchComparisonStampboxes(accessToken: string, groupUserIds: stri
       'groupFilterStampings',
     ],
     skip: 0,
-    top: 250,
+    top: 1000,
     orderBy: 'orderBy asc',
     filter: buildStringNotEqualsFilter('groupFilterStampings', groupFilter),
   });
@@ -1885,7 +1956,7 @@ async function fetchStampWithRecentStampings(
   const stampFilter = combineODataFilters(groupFilter, `ID eq ${stampId}`);
   const stampSelect = [
     'ID',
-    'number',
+    'number', 'stampType', 'catalogKey', 'themeKeys', 'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus', 'activeNotices',
     'orderBy',
     'name',
     'description',
@@ -2054,7 +2125,7 @@ export async function fetchStampboxes(
   const rows = await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
     select: [
       'ID',
-      'number',
+      'number', 'stampType', 'catalogKey', 'themeKeys', 'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus', 'activeNotices',
       'orderBy',
       'name',
       'description',
@@ -2072,11 +2143,23 @@ export async function fetchStampboxes(
       'stampedUserIds',
     ],
     orderBy: 'orderBy asc',
-    top: 500,
+    top: 1000,
     ...(filter ? { filter } : {}),
   });
 
   return sortStampboxes(rows);
+}
+
+/** Load only the fixed requirement locations for a badge, never the entire catalog. */
+export async function fetchBadgeStampboxes(accessToken: string, stampIds: readonly string[]): Promise<Stampbox[]> {
+  const ids = [...new Set(stampIds.map(id => id.trim()).filter(Boolean))];
+  if (!ids.length) return [];
+  return sortStampboxes(await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
+    select: ['ID', 'number', 'name', 'description', 'heroImageUrl', 'image', 'imageCaption', 'hasVisited'],
+    filter: ids.map(id => buildStringEqualsFilter('ID', id)).join(' or '),
+    orderBy: 'orderBy asc',
+    top: ids.length,
+  }));
 }
 
 export async function fetchMapData(
@@ -2097,7 +2180,7 @@ export async function fetchMapData(
       : fetchStampboxes(accessToken, stampboxFetchMode, effectiveGroupUserIds),
     fetchCollection<ParkingSpot>(accessToken, 'ParkingSpots', {
       select: ['ID', 'name', 'description', 'image', 'latitude', 'longitude'],
-      top: 500,
+      top: 1000,
     }),
     prefetchedLatestVisited !== undefined
       ? Promise.resolve(prefetchedLatestVisited)
@@ -2137,7 +2220,7 @@ export async function fetchPublicStampboxes(mode: StampboxFetchMode = 'default')
   const rows = await fetchPublicCollection<Stampbox>('Stampboxes', {
     select: [
       'ID',
-      'number',
+      'number', 'stampType', 'catalogKey', 'themeKeys', 'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus', 'activeNotices',
       'orderBy',
       'name',
       'description',
@@ -2154,7 +2237,7 @@ export async function fetchPublicStampboxes(mode: StampboxFetchMode = 'default')
       'stampedUserIds',
     ],
     orderBy: 'orderBy asc',
-    top: 500,
+    top: 1000,
     ...(filter ? { filter } : {}),
   });
 
@@ -2175,7 +2258,7 @@ export async function fetchPublicMapData(
     prefetchedStamps ? Promise.resolve(prefetchedStamps) : fetchPublicStampboxes(stampboxFetchMode),
     isStaticWebsite ? loadStaticCatalogue().then((data) => data.parkingSpots) : fetchPublicCollection<ParkingSpot>('ParkingSpots', {
       select: ['ID', 'name', 'description', 'image', 'latitude', 'longitude'],
-      top: 500,
+      top: 1000,
     }),
   ]);
 
@@ -2198,7 +2281,7 @@ export async function fetchPublicStampDetail(stampId: string) {
     : await fetchPublicEntityById<Stampbox>('Stampboxes', stampId, [
     [
       '$select',
-      'ID,number,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
+      'ID,number,stampType,catalogKey,themeKeys,sourceUrl,sourceCheckedAt,locationStatus,availability,identityStatus,activeNotices,orderBy,name,description,heroImageUrl,image,imageCaption,validFrom,validTo,latitude,longitude,hasVisited,totalGroupStampings,stampedUsers,stampedUserIds',
     ],
   ]);
 
@@ -2604,7 +2687,7 @@ export async function fetchLatestVisitedStamp(accessToken: string, currentUserId
     top: 1,
     expand: {
       stamp: {
-        select: ['ID', 'number', 'name'],
+        select: ['ID', 'number', 'stampType', 'catalogKey', 'themeKeys', 'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus', 'activeNotices', 'name'],
       },
     },
   });
@@ -2835,7 +2918,7 @@ export async function fetchStampDetail(
       top: 3,
       expand: {
         neighborStamp: {
-          select: ['ID', 'number', 'name', 'heroImageUrl', 'image', 'imageCaption'],
+          select: ['ID', 'number', 'stampType', 'catalogKey', 'themeKeys', 'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus', 'activeNotices', 'name', 'heroImageUrl', 'image', 'imageCaption'],
         },
       },
     }),
@@ -2887,7 +2970,7 @@ export async function fetchStampDetail(
         'ID',
         missingNeighborStampIds,
         {
-          select: ['ID', 'number', 'name', 'heroImageUrl', 'image', 'imageCaption'],
+          select: ['ID', 'number', 'stampType', 'catalogKey', 'themeKeys', 'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus', 'activeNotices', 'name', 'heroImageUrl', 'image', 'imageCaption'],
         }
       ),
       fetchGuidEntitiesByIds<ParkingSpot>(
@@ -2935,6 +3018,7 @@ export async function fetchStampDetail(
         name: relatedStamp?.name || `${neighbor.NeighborsNumber || ''}`.trim(),
         heroImageUrl: relatedStamp?.heroImageUrl || relatedStamp?.image,
         imageCaption: relatedStamp?.imageCaption,
+        activeNotices: relatedStamp?.activeNotices,
         distanceKm: routeMetrics.distanceKm,
         durationMinutes: routeMetrics.durationMinutes,
         elevationGainMeters: routeMetrics.elevationGainMeters,
@@ -3061,7 +3145,7 @@ export async function fetchParkingDetail(accessToken: string, parkingId: string)
       top: 3,
       expand: {
         neighborStamp: {
-          select: ['ID', 'number', 'name', 'heroImageUrl', 'image', 'imageCaption'],
+          select: ['ID', 'number', 'stampType', 'catalogKey', 'themeKeys', 'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus', 'activeNotices', 'name', 'heroImageUrl', 'image', 'imageCaption'],
         },
       },
     }),
@@ -3115,7 +3199,7 @@ export async function fetchParkingDetail(accessToken: string, parkingId: string)
         'ID',
         missingNeighborStampIds,
         {
-          select: ['ID', 'number', 'name', 'heroImageUrl', 'image', 'imageCaption'],
+          select: ['ID', 'number', 'stampType', 'catalogKey', 'themeKeys', 'sourceUrl', 'sourceCheckedAt', 'locationStatus', 'availability', 'identityStatus', 'activeNotices', 'name', 'heroImageUrl', 'image', 'imageCaption'],
         }
       ),
       fetchGuidEntitiesByIds<ParkingSpot>(
@@ -3164,6 +3248,7 @@ export async function fetchParkingDetail(accessToken: string, parkingId: string)
         (neighbor.NeighborsNumber ? `Stempel ${neighbor.NeighborsNumber}` : 'Stempelstelle'),
       heroImageUrl: relatedStamp?.heroImageUrl || relatedStamp?.image,
       imageCaption: relatedStamp?.imageCaption,
+      activeNotices: relatedStamp?.activeNotices,
       distanceKm: routeMetrics.distanceKm,
       durationMinutes: routeMetrics.durationMinutes,
       elevationGainMeters: routeMetrics.elevationGainMeters,
@@ -3239,16 +3324,14 @@ export async function fetchProfileOverview(
   } | null,
   prefetchedStamps?: Stampbox[]
 ) {
-  const resolvedCurrentUserId = safeTrim(currentUserId || prefetchedCurrentUser?.id);
-  const [currentUser, stamps, stampings, friendships] = await Promise.all([
-    prefetchedCurrentUser?.id
-      ? Promise.resolve({
-          ID: prefetchedCurrentUser.id,
-          name: prefetchedCurrentUser.name,
-          picture: prefetchedCurrentUser.picture,
-        } satisfies User)
-      : fetchCurrentUserRecord(accessToken),
-    prefetchedStamps ? Promise.resolve(prefetchedStamps) : fetchStampboxes(accessToken),
+  const currentUser = prefetchedCurrentUser?.id
+    ? { ID: prefetchedCurrentUser.id, name: prefetchedCurrentUser.name, picture: prefetchedCurrentUser.picture } satisfies User
+    : await fetchCurrentUserRecord(accessToken);
+  const resolvedCurrentUserId = safeTrim(currentUserId || currentUser.ID);
+  const [stamps, stampings, friendships] = await Promise.all([
+    prefetchedStamps
+      ? Promise.resolve(prefetchedStamps)
+      : fetchStampboxes(accessToken, 'validToday', resolvedCurrentUserId ? [resolvedCurrentUserId] : undefined),
     resolvedCurrentUserId
       ? fetchCollection<Stamping>(accessToken, 'Stampings', {
           select: ['ID', 'visitedAt', 'createdAt', 'createdBy', 'stamp_ID'],
@@ -3286,8 +3369,7 @@ export async function fetchProfileOverview(
   const latestVisits = timelineVisits.slice(0, 3);
 
   const earliestVisit = sortedVisits[sortedVisits.length - 1];
-  const visitedCount = stamps.filter((stamp) => stamp.hasVisited).length;
-  const totalCount = stamps.length;
+  const { visited: visitedCount, total: totalCount } = regularStampCounts(stamps);
   const openCount = Math.max(0, totalCount - visitedCount);
   const completionPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
   const mappedFriends = await buildFriendProgress(accessToken, friends, totalCount);
@@ -3414,15 +3496,12 @@ export async function fetchUserProfileOverview(
   const friendshipId = friendMatch?.FriendshipID || outgoingPendingMatch?.FriendshipID || null;
   const pendingRequestId = incomingPendingMatch?.ID || null;
 
-  const targetVisitedCount = stamps.reduce(
-    (count, stamp) => count + (stampContainsUser(stamp, targetUser) ? 1 : 0),
-    0
-  );
-  const sharedVisitedCount = stamps.reduce(
-    (count, stamp) => count + (Boolean(stamp.hasVisited) && stampContainsUser(stamp, targetUser) ? 1 : 0),
-    0
-  );
-  const totalCount = stamps.length;
+  const regularStamps = stamps.filter(stamp => !isSpecialStamp(stamp));
+  const targetVisitedCount = new Set(regularStamps
+    .filter(stamp => stampContainsUser(stamp, targetUser)).map(stamp => Number(stamp.number))).size;
+  const sharedVisitedCount = new Set(regularStamps
+    .filter(stamp => stamp.hasVisited && stampContainsUser(stamp, targetUser)).map(stamp => Number(stamp.number))).size;
+  const totalCount = regularStampCounts(stamps).total;
   const sortedTargetStampings = targetStampings
     .slice()
     .sort(
@@ -3916,14 +3995,15 @@ export async function stampForGroup(
     stampId: string;
     friendIds: string[];
     includeCurrentUser: boolean;
-  }
+  },
+  withFeedback = false
 ) {
   const stampId = safeTrim(payload.stampId);
   if (!stampId) {
     throw new Error('Stamp ID is required');
   }
 
-  return mutateOData<unknown>(accessToken, buildUrl('stampForGroup'), {
+  return mutateOData<unknown>(accessToken, buildUrl(withFeedback ? 'stampForGroupWithFeedback' : 'stampForGroup'), {
     method: 'POST',
     body: JSON.stringify({
       sStampId: stampId,
@@ -3931,6 +4011,10 @@ export async function stampForGroup(
       sGroupUserIds: normalizeIdList(payload.friendIds).join(','),
     }),
   });
+}
+
+export function stampForGroupWithFeedback(token: string, payload: Parameters<typeof stampForGroup>[1]) {
+  return stampForGroup(token, payload, true);
 }
 
 export async function removeFriendship(accessToken: string, friendshipId: string) {
@@ -3998,6 +4082,38 @@ export async function fetchOwnStampings(accessToken: string, stampId: string, cu
   }
 }
 
+export function reportStampNotice(accessToken: string, stampId: string, kind: StampNotice['kind'], message: string) {
+  return mutateOData(accessToken, buildUrl('reportStampNotice'), {
+    method: 'POST', body: JSON.stringify({ stampId, kind, message }),
+  });
+}
+export async function fetchNoticeReports(accessToken: string) {
+  const reports: StampNoticeReport[] = [];
+  const pageSize = 250;
+  for (let skip = 0; ; skip += pageSize) {
+    const page = await fetchCollection<StampNoticeReport>(accessToken, 'StampNotices', {
+      expand: { stamp: { select: ['number', 'name'] } },
+      filter: "source eq 'community' and (status eq 'pending' or status eq 'approved')",
+      orderBy: 'status desc,createdAt desc,ID asc',
+      top: pageSize,
+      skip,
+    });
+    reports.push(...page);
+    if (page.length < pageSize) return reports;
+  }
+}
+export function reviewStampNotice(accessToken: string, noticeId: string, status: string) {
+  return mutateOData(accessToken, buildUrl('reviewStampNotice'), {
+    method: 'POST', body: JSON.stringify({ noticeId, status }),
+  });
+}
+export async function syncOfficialNotices(accessToken: string, preview: boolean): Promise<NoticeSyncResult> {
+  const result = await mutateOData<{ value: string }>(accessToken, buildUrl('syncOfficialNotices'), {
+    method: 'POST', body: JSON.stringify({ preview }),
+  });
+  return JSON.parse(result.value);
+}
+
 // Stable client IDs make a retried POST safe even if its first response was lost.
 // The existing CAP CREATE validates the stamp and records the authenticated owner.
 export async function syncOfflineStamping(
@@ -4050,4 +4166,31 @@ export async function syncStampNote(accessToken: string, stampId: string, note: 
     }
     return result;
   } finally { clearTimeout(timeout); }
+}
+
+export type SpecialStampInitialization = {
+  preview: boolean; checkedAt: string; total: number; existing: number;
+  created: number; pending: number; withoutCoordinates: number;
+  conflicts: { catalogKey: string; name: string; existingId: string }[];
+};
+export async function initializeSpecialStamps(token: string, preview = true): Promise<SpecialStampInitialization> {
+  const result = await mutateOData<unknown>(token, buildUrl('initializeSpecialStamps'), {
+    method: 'POST', body: JSON.stringify({ preview }),
+  });
+  const raw = parseActionStringResult(result);
+  if (!raw) throw new Error('Die Initialisierung konnte nicht bestätigt werden.');
+  return JSON.parse(raw) as SpecialStampInitialization;
+}
+
+
+export type ThemeCatalogItem = {
+  ID: string; code: string; edition: string; name: string; kind: 'booklet' | 'trail'; badgeId?: string;
+  sourceUrl: string; rulesNote: string; expectedStampCount: number; collectedCount: number;
+  requiredCount: number; requiredCollected: number; optionalCollected: number; minimumOptionalCount: number;
+  regularVisitTarget: number; regularVisited: number; complete: boolean;
+  stamps: { stampId: string; number: string; name: string; stampType: string; required: boolean; visited: boolean }[];
+};
+
+export async function fetchThemeCatalog(accessToken: string) {
+  return fetchCollection<ThemeCatalogItem>(accessToken, 'getThemeCatalog()');
 }

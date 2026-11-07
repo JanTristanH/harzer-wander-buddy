@@ -1,8 +1,9 @@
-import { act, render, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import React from 'react';
 import { FlatList, PanResponder, StyleSheet, View, type GestureResponderEvent, type PanResponderGestureState } from 'react-native';
 
 import type { Stampbox } from '@/lib/api';
+jest.mock('@/lib/badges', () => ({ useBadgeAlbum: () => ({data:undefined}) }));
 
 jest.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: jest.fn() }),
@@ -220,13 +221,41 @@ describe('StampsScreen', () => {
   it('reflects the visited progress percentage', async () => {
     mockGuestData([
       createStamp({ ID: 'stamp-1', hasVisited: true }),
-      createStamp({ ID: 'stamp-2', hasVisited: false }),
+      createStamp({ ID: 'stamp-2', number: '002', hasVisited: false }),
     ]);
 
     await renderScreen();
 
     // 1 of 2 stamps visited -> 50%.
     expect(screen.getByText('50%')).toBeOnTheScreen();
+  });
+
+  it('updates the catalog filter selection and keeps special visits outside regular progress', async () => {
+    mockGuestData([
+      createStamp({ ID: 'regular', number: '1', hasVisited: true }),
+      createStamp({ ID: 'special', number: '9901', name: 'Jungborn', stampType: 'special', catalogKey: 'special-jungborn', themeKeys: '["grenzweg"]', hasVisited: true }),
+    ]);
+    await renderScreen();
+    expect(screen.getByText(/von 1 Stempelstellen/)).toBeOnTheScreen();
+    const mainChips = screen.getAllByRole('button', { name: /^(Alle|Unbesucht|Sonderstempel|Besucht|In der Nähe|Verlegt|Regulär)$/ });
+    expect(mainChips.slice(0, 3)).toEqual(['Alle', 'Unbesucht', 'Sonderstempel'].map(name => screen.getByRole('button', { name })));
+    expect(screen.queryByRole('button', { name: 'Abzeichenrelevant' })).toBeNull();
+    fireEvent.press(screen.getByRole('button', { name: 'Sonderstempel' }));
+    expect(screen.getByRole('button', { name: 'Sonderstempel', selected: true })).toHaveStyle({ backgroundColor: '#7851a9' });
+    expect(screen.queryByTestId('stamp-list-item-regular')).toBeNull();
+    expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Abzeichenrelevant' })).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Abzeichenrelevant' }));
+    expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Grenzweg' }));
+    expect(screen.getByRole('button', { name: 'Grenzweg', selected: true })).toBeOnTheScreen();
+    expect(screen.getByTestId('stamp-list-item-special')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Alle Themen' })).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Regulär' }));
+    expect(screen.queryByRole('button', { name: 'Grenzweg' })).toBeNull();
+    expect(screen.getByTestId('stamp-list-item-regular')).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Sonderstempel' }));
+    expect(screen.getByRole('button', { name: 'Alle Themen', selected: true })).toBeOnTheScreen();
   });
 
   it('uses the guest query and disables the authenticated query', async () => {

@@ -33,6 +33,8 @@ const PLACEHOLDERS = {
   badgeFill: '__BADGE_FILL__',
 };
 
+const specialCatalogue = JSON.parse(await fs.readFile(new URL('../../backend/hwb/catalogue/special-stamps.json', import.meta.url), 'utf8'));
+const specialLabels = [...new Set(specialCatalogue.stamps.map(stamp => stamp.number))].sort();
 const markerVariants = [
   {
     kind: 'visited-stamp',
@@ -72,6 +74,10 @@ const markerVariants = [
     textColor: '#111111',
     labels: ['P'],
   },
+  { kind: 'special-open-stamp', fillColor: '#7851a9', textColor: '#111111', labels: specialLabels },
+  { kind: 'special-visited-stamp', fillColor: '#5b3285', textColor: '#111111', labels: specialLabels },
+  { kind: 'special-group-open-stamp', fillColor: '#7851a9', textColor: 'transparent', badgeFill: 'transparent', labels: ['--'] },
+  { kind: 'special-group-partial-stamp', fillColor: '#9165b8', textColor: 'transparent', badgeFill: 'transparent', labels: ['--'] },
 ];
 
 function escapeXmlText(value) {
@@ -142,7 +148,7 @@ function createMappingFile(entries) {
 
 import { type ImageRequireSource } from 'react-native';
 
-type MarkerVisualKind = 'visited-stamp' | 'open-stamp' | 'group-open-stamp' | 'group-partial-stamp' | 'parking' | 'parking-order' | 'tour-order';
+type MarkerVisualKind = 'visited-stamp' | 'open-stamp' | 'group-open-stamp' | 'group-partial-stamp' | 'parking' | 'parking-order' | 'tour-order' | 'special-open-stamp' | 'special-visited-stamp' | 'special-group-open-stamp' | 'special-group-partial-stamp';
 
 const MAP_MARKER_IMAGE_SOURCE_BY_KEY: Record<string, ImageRequireSource> = {
 ${markerRecord}
@@ -174,9 +180,11 @@ export function getPreGeneratedMapMarkerImageSource(input: {
     return sourceMap['parking:P'];
   }
 
-  if (input.kind === 'group-open-stamp' || input.kind === 'group-partial-stamp') {
+  if (input.kind.includes('group-')) {
     return sourceMap[\`${'${input.kind}'}:--\`];
   }
+
+  if (input.kind.startsWith('special-')) return sourceMap[\`${'${input.kind}'}:${'${input.label}'}\`] ?? sourceMap[\`${'${input.kind}'}:S\`];
 
   const normalizedStampLabel = normalizeStampLabel(input.label);
   if (!normalizedStampLabel) {

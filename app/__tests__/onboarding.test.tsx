@@ -4,8 +4,9 @@ import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import OnboardingScreen from '@/app/onboarding';
-import { createFriendRequest, searchUsers, updateCurrentUserProfile, uploadProfileImage } from '@/lib/api';
+import { createFriendRequest, removeFriendship, searchUsers, type FriendsOverviewData, updateCurrentUserProfile, uploadProfileImage } from '@/lib/api';
 
+const mockOverview: FriendsOverviewData = { currentUserId: 'test-user', friends: [], incomingRequests: [], outgoingRequests: [], friendCount: 0, incomingRequestCount: 0, outgoingRequestCount: 0 };
 const mockReplace = jest.fn();
 const mockComplete = jest.fn();
 const mockSetProfile = jest.fn();
@@ -21,14 +22,15 @@ jest.mock('expo-image-picker', () => ({ requestMediaLibraryPermissionsAsync: jes
 jest.mock('expo-location', () => ({ getForegroundPermissionsAsync: jest.fn(), requestForegroundPermissionsAsync: jest.fn() }));
 jest.mock('@tanstack/react-query', () => ({ useQueryClient: () => mockQueryClient }));
 jest.mock('@/lib/auth', () => ({ useIdTokenClaims: () => mockClaims, useAuth: () => mockAuth }));
-jest.mock('@/lib/api', () => ({ updateCurrentUserProfile: jest.fn(), uploadProfileImage: jest.fn(), searchUsers: jest.fn(), createFriendRequest: jest.fn() }));
-jest.mock('@/lib/queries', () => ({ queryKeys: { stampsOverview: () => ['stamps'], profileOverview: () => ['profile'], friendsOverview: (id: string) => ['friends', id] }, fetchStampsOverviewData: jest.fn() }));
+jest.mock('@/lib/api', () => ({ updateCurrentUserProfile: jest.fn(), uploadProfileImage: jest.fn(), searchUsers: jest.fn(), createFriendRequest: jest.fn(), removeFriendship: jest.fn() }));
+jest.mock('@/lib/queries', () => ({ useFriendsOverviewQuery: () => ({ data: mockOverview }), queryKeys: { stampsOverview: () => ['stamps'], profileOverview: () => ['profile'], friendsOverview: (id: string) => ['friends', id] }, fetchStampsOverviewData: jest.fn() }));
 jest.mock('@/lib/images', () => ({ buildAuthenticatedImageSource: (uri: string) => ({ uri }) }));
 jest.mock('@/lib/config', () => ({ appConfig: { authMode: 'basic' } }));
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockAuth.canPerformWrites = true;
+  mockOverview.outgoingRequests = [];
   (Location.getForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ granted: false, status: 'undetermined' });
   (updateCurrentUserProfile as jest.Mock).mockImplementation(async (_token, updates) => updates);
   (uploadProfileImage as jest.Mock).mockResolvedValue({ url: 'https://example.com/new.png' });
@@ -148,4 +150,30 @@ test('refreshes inactive friends and profile caches after sending an onboarding 
   expect(createFriendRequest).toHaveBeenCalledWith('token', 'buddy');
   expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['friends', 'test-user'], refetchType: 'all' });
   expect(mockQueryClient.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['profile'], refetchType: 'all' });
+});
+
+
+test('onboarding marks the current user as Du and prevents self requests', async () => {
+  (searchUsers as jest.Mock).mockResolvedValue([{ id: 'test-user', name: 'Alex', visitedCount: 0, completionPercent: 0 }]);
+  await openAvatarStep();
+  await advance();
+  await advance('Ohne Standort weiter');
+  await advance('Wanderbuddies finden');
+  fireEvent.changeText(screen.getByPlaceholderText('Name oder Nutzername suchen'), 'Alex');
+  await screen.findByText('Du');
+  fireEvent.press(screen.getByText('Du'));
+  expect(createFriendRequest).not.toHaveBeenCalled();
+});
+
+test('onboarding shows persisted requests with the shared recall action', async () => {
+  mockOverview.outgoingRequests = [{ id: 'request', userId: 'buddy', friendshipId: 'friendship', name: 'Wanderbuddy' }];
+  (removeFriendship as jest.Mock).mockResolvedValue(undefined);
+  await openAvatarStep();
+  await advance();
+  await advance('Ohne Standort weiter');
+  expect(screen.getByText('Wanderbuddy')).toBeTruthy();
+  fireEvent.press(screen.getByText('Zurueckrufen'));
+  const confirmation = jest.mocked(Alert.alert).mock.calls.find((call) => call[0] === 'Anfrage zurueckrufen?');
+  await act(async () => { confirmation![2]!.find((button) => button.text === 'Zurueckrufen')!.onPress!(); });
+  expect(removeFriendship).toHaveBeenCalledWith('token', 'friendship');
 });

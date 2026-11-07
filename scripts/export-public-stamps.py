@@ -31,6 +31,11 @@ def catalogue(csv_path, as_of, revision):
     numbers = set()
     with csv_path.open(encoding="utf-8-sig", newline="") as stream:
         for row in csv.DictReader(stream):
+            # The development CSV also contains special/themed stamps, including
+            # mobile and unlocated entries. The public website exports regular
+            # HWN identities only; do not reinterpret their display numbers.
+            if row.get("stampType") == "special" or row.get("catalogKey", "").startswith("special-"):
+                continue
             if not timestamp(row["validFrom"]) <= instant < timestamp(row["validTo"]):
                 continue
             number = int(row["number"])

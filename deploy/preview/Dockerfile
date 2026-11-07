@@ -19,6 +19,7 @@ RUN --mount=type=secret,id=proxy_ca \
     if [ -f /run/secrets/proxy_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/proxy_ca; fi; npm ci
 # Use the existing CAP demo CSVs, never a local database or private bindings.
 COPY --chown=node:node backend/hwb/srv ./srv
+COPY --chown=node:node backend/hwb/util/seedPreviewBadges.js ./util/seedPreviewBadges.js
 COPY --chown=node:node backend/hwb/db/schema.cds ./db/schema.cds
 COPY --chown=node:node backend/hwb/db/doNotDeploy-data ./db/data
 # CSV import needs more heap than the inexpensive 1-GiB runtime allows.
@@ -26,7 +27,9 @@ COPY --chown=node:node backend/hwb/db/doNotDeploy-data ./db/data
 RUN NODE_ENV=development CDS_ENV=dev-basic \
     CDS_REQUIRES_DB_CREDENTIALS_URL=/srv/hwb/preview-seed.sqlite \
     NODE_OPTIONS=--max-old-space-size=2048 \
-    ./node_modules/.bin/cds deploy --profile dev-basic
+    ./node_modules/.bin/cds deploy --profile dev-basic && \
+    NODE_ENV=development CDS_ENV=dev-basic CDS_REQUIRES_DB_CREDENTIALS_URL=/srv/hwb/preview-seed.sqlite \
+    node util/seedPreviewBadges.js
 COPY --from=web --chown=node:node /build/dist ./app/rnweb
 COPY --chown=node:node deploy/preview/start.sh ./start.sh
 ARG PREVIEW_SHA

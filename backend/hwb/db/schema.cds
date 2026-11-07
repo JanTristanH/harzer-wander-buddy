@@ -9,6 +9,14 @@ using { Attachments } from '@cap-js/attachments';
 
 type User : String(255);
 
+entity BadgeProfiles {
+    key userId : String(255);
+    featured : LargeString;
+    title : String(80);
+    frame : String(80);
+    selectionChanged : Boolean default false;
+}
+
 aspect PointOfInterest {
     longitude   : Double;
     latitude    : Double;
@@ -39,8 +47,18 @@ entity Attachments_local : Attachments {
 }
 
 @assert.integrity: false
+@assert.unique.catalogKey: [catalogKey]
 entity Stampboxes : cuid, PointOfInterest {
+    virtual activeNotices  : LargeString;
     number                 : String(40); // to allow Sonderstempel via name
+    stampType              : String(16) default 'regular';
+    catalogKey             : String(160);
+    themeKeys              : LargeString;
+    sourceUrl              : String(2048);
+    sourceCheckedAt        : Date;
+    locationStatus         : String(24);
+    availability           : String(24);
+    identityStatus         : String(24);
     validFrom              : Timestamp;
     validTo                : Timestamp;
     orderBy                : String(40);
@@ -183,3 +201,52 @@ entity PendingFriendshipRequests : cuid {
 
 // Input start any poi -> gps guess & Max driving time
 // Check adjecent stamps -> could also be generic -> load eg 20 km radius/box -> salesman trump
+
+// Reports are private until an admin approves them. Only actions may mutate these.
+entity StampNotices : cuid, managed {
+    stamp       : Association to Stampboxes not null;
+    kind        : String(20) not null;
+    message     : String(2000) not null;
+    status      : String(20) default 'pending';
+    source      : String(20) default 'community';
+    sourceUrl   : String(2048);
+    sourceKey   : String(64);
+    checkedAt   : Timestamp;
+    reviewedAt  : Timestamp;
+    reviewedBy  : User;
+}
+
+entity NoticeSyncState {
+    key ID      : String(20);
+    checkedAt   : Timestamp;
+}
+
+
+// Curated editions of booklets and named trails, separate from users' Tours.
+@assert.unique.catalogEdition: [code, edition]
+@assert.unique.activeBadge: [activeBadgeId]
+entity ThemeCollections : cuid, managed {
+    code                  : String(100) not null;
+    edition               : String(80) not null;
+    name                  : String(255) not null;
+    kind                  : String(20) enum { booklet; trail; };
+    sourceUrl             : String(2048);
+    reviewedAt            : Date;
+    rulesNote             : String(2048);
+    badgeId               : String(40);
+    activeBadgeId         : String(40);
+    expectedStampCount    : Integer;
+    minimumOptionalCount  : Integer default 0;
+    regularVisitTarget    : Integer default 0;
+    published             : Boolean default false;
+    revision              : Integer default 1;
+    entries               : Association to many ThemeStampLinks on entries.collection = $self;
+}
+
+@assert.integrity: true
+entity ThemeStampLinks {
+    key collection : Association to ThemeCollections;
+    key stamp      : Association to Stampboxes;
+    position       : Integer;
+    required       : Boolean default true;
+}

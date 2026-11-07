@@ -1,3 +1,9 @@
+import { StampCatalogFilters } from '@/components/stamp-catalog-filters';
+import { MAP_DETAIL_LONGITUDE_DELTA, isMapStampVisible } from '@/lib/map-stamp-visibility';
+import { isSpecialStamp, stampThemes, type StampTypeFilter } from '@/lib/stamp-catalog';
+import { specialMarkerVisualKind } from '@/lib/group-marker';
+import { publishStampingSuccess } from '@/lib/stamping-feedback';
+import { parseActiveNotices } from '@/lib/stamp-notices';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import { isStaticWebsite, openStaticStampArticle } from '@/lib/static-website';
@@ -90,6 +96,7 @@ type BaseMarkerItem = {
   coordinate: Coordinate;
   title: string;
   description?: string;
+  activeNotices?: string;
   imageUrl?: string;
 };
 
@@ -97,6 +104,8 @@ type StampMarkerItem = BaseMarkerItem & {
   kind: MapStamp['kind'];
   number?: string;
   stampId: string;
+  special: boolean;
+  themes: string[];
   visitedAt?: string;
   groupSize?: number;
   totalGroupStampings?: number;
@@ -125,7 +134,7 @@ const HARZ_REGION: Region = {
   longitudeDelta: 0.42,
 };
 
-const PARKING_HIDE_LONGITUDE_DELTA = 0.18;
+const PARKING_HIDE_LONGITUDE_DELTA = MAP_DETAIL_LONGITUDE_DELTA;
 const WEB_MARKER_DIAGNOSTIC_INTERVAL_MS = 4000;
 const WEB_MARKER_BUILD_WARN_MS = 14;
 const WEB_LONG_TASK_WARN_MS = 100;
@@ -231,6 +240,10 @@ function preventCancelableDefault(event: Event) {
 }
 
 function markerColors(kind: MarkerKind | StampMarkerVisualKind) {
+  if (kind.startsWith('special-')) {
+    const fill = kind === 'special-visited-stamp' ? '#5b3285' : kind === 'special-group-partial-stamp' ? '#9165b8' : '#7851a9';
+    return { fill, shadow: 'rgba(67,35,95,0.22)', text: '#fff', badgeFill: '#efe6f8', badgeText: '#5b3285' };
+  }
   if (kind === 'group-open-stamp') {
     return {
       fill: '#b9574d',
@@ -507,7 +520,7 @@ function stampMarkerAccessibilityLabel(
   const number = normalizeStampMarkerToken(item.number) ?? '--';
 
   if (!groupActive) {
-    return `Stempel ${number}: ${item.title}, ${
+    return `${item.special ? 'Sonderstempel' : 'Stempel'} ${number}: ${item.title}, ${
       item.kind === 'visited-stamp' ? 'besucht' : 'unbesucht'
     }`;
   }
@@ -515,13 +528,13 @@ function stampMarkerAccessibilityLabel(
   const groupSize = Math.max(1, item.groupSize ?? 1);
   const visitedCount = Math.max(0, Math.min(groupSize, item.totalGroupStampings ?? 0));
   const groupStatus =
-    visualKind === 'visited-stamp'
+    (visualKind === 'visited-stamp' || visualKind === 'special-visited-stamp')
       ? 'vollständig besucht'
-      : visualKind === 'group-partial-stamp'
+      : (visualKind === 'group-partial-stamp' || visualKind === 'special-group-partial-stamp')
         ? 'teilweise besucht'
         : 'unbesucht';
 
-  return `Stempel ${number}: ${item.title}, Wandergruppe ${groupStatus}, ${visitedCount} von ${groupSize} besucht`;
+  return `${item.special ? 'Sonderstempel' : 'Stempel'} ${number}: ${item.title}, Wandergruppe ${groupStatus}, ${visitedCount} von ${groupSize} besucht`;
 }
 
 type SearchResultRank = {
@@ -633,6 +646,8 @@ export default function MapScreen() {
   const [isRemoteSearchLoading, setIsRemoteSearchLoading] = useState(false);
   const [remoteSearchError, setRemoteSearchError] = useState<string | null>(null);
   const { locationState, userLocation, handleUserLocationChange, locateMe } = useMapLocation();
+  const [stampType, setStampType] = useState<StampTypeFilter>('auto');
+  const [stampTheme, setStampTheme] = useState('');
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('all');
   const [showStamps, setShowStamps] = useState(true);
   const [showParking, setShowParking] = useState(true);
@@ -734,9 +749,12 @@ export default function MapScreen() {
           coordinate,
           title: `${stamp.number || '--'} • ${stamp.name}`,
           description: stamp.description?.trim() || undefined,
+          activeNotices: stamp.activeNotices,
           imageUrl: stamp.heroImageUrl?.trim() || stamp.image?.trim() || undefined,
           number: stamp.number,
           stampId: stamp.ID,
+          special: isSpecialStamp(stamp),
+          themes: stampThemes(stamp),
           visitedAt: stamp.visitedAt,
           groupSize: stamp.groupSize,
           totalGroupStampings: stamp.totalGroupStampings,
@@ -770,8 +788,12 @@ export default function MapScreen() {
       .filter((item): item is ParkingMarkerItem => item !== null);
   }, [data]);
 
+  const specialStampsVisible = isMapStampVisible({ special: true, type: stampType, longitudeDelta: region.longitudeDelta,
+    explicitFilter: Boolean(stampTheme || searchQuery.trim() || visitFilter !== 'all') });
   const visibleStampItems = useMemo(() => {
     return stampItems.filter((item) => {
+      if ((item.special ? !specialStampsVisible && !(stampType === 'auto' && selectedItemId === item.id) : stampType === 'special') ||
+        (stampTheme && !item.themes.includes(stampTheme))) return false;
       if (!showStamps) {
         return false;
       }
@@ -786,7 +808,7 @@ export default function MapScreen() {
 
       return true;
     });
-  }, [showStamps, stampItems, visitFilter]);
+  }, [showStamps, stampItems, visitFilter, stampType, stampTheme, specialStampsVisible, selectedItemId]);
 
   // Keep all stamp markers mounted, including the 222 regular stamps on web.
   // A viewport update must not rebuild their elements or mount/unmount pins.
@@ -828,12 +850,13 @@ export default function MapScreen() {
   const getStampMarkerVisual = useCallback(
     (stampItem: StampMarkerItem) => {
       const label = normalizeStampMarkerToken(stampItem.number) || '--';
-      const visualKind = resolveStampMarkerVisualKind({
+      const baseKind = resolveStampMarkerVisualKind({
         groupActive: isGroupActive,
         groupSize: stampItem.groupSize ?? groupUserIds.length,
         personalKind: stampItem.kind,
         totalGroupStampings: stampItem.totalGroupStampings ?? 0,
       });
+      const visualKind = stampItem.special ? specialMarkerVisualKind(baseKind) : baseKind;
       const cacheKey = `${stampItem.id}:${visualKind}:${label}`;
       const cached = stampMarkerVisualCacheRef.current.get(cacheKey);
       if (cached) {
@@ -879,24 +902,27 @@ export default function MapScreen() {
     const elements = viewportStampItems.map((stampItem) => {
       const visual = getStampMarkerVisual(stampItem);
       const colors = markerColors(visual.visualKind);
-      const accessibilityLabel = stampMarkerAccessibilityLabel(
+      const hasNotice = parseActiveNotices(stampItem.activeNotices).length > 0;
+      const accessibilityLabel = (hasNotice ? 'Aktuelle Sperrung oder Meldung. ' : '') + stampMarkerAccessibilityLabel(
         stampItem,
         visual.visualKind,
         isGroupActive
       );
       const usesGeneratedGroupBackground =
         visual.visualKind === 'group-open-stamp' ||
-        visual.visualKind === 'group-partial-stamp';
+        visual.visualKind === 'group-partial-stamp' ||
+        visual.visualKind === 'special-group-open-stamp' || visual.visualKind === 'special-group-partial-stamp';
 
       if (usesGeneratedGroupBackground && visual.image) {
         const badge = groupMarkerBadgeDimensions(visual.label);
         return (
           <Marker
             accessibilityLabel={accessibilityLabel}
+            noticeBadge={hasNotice}
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
             identifier={stampItem.id}
-            key={`${stampItem.id}:${visual.visualKind}`}
+            key={`${stampItem.id}:${hasNotice}:${visual.visualKind}`}
             onPress={() => handleMarkerPress(stampItem)}
             tracksViewChanges={false}
             zIndex={markerZIndex(stampItem.kind)}>
@@ -924,10 +950,11 @@ export default function MapScreen() {
         return (
           <Marker
             accessibilityLabel={accessibilityLabel}
+            noticeBadge={hasNotice}
             anchor={MARKER_ANCHOR}
             coordinate={stampItem.coordinate}
             identifier={stampItem.id}
-            key={`${stampItem.id}:${visual.visualKind}:fallback`}
+            key={`${stampItem.id}:${hasNotice}:${visual.visualKind}:fallback`}
             onPress={() => handleMarkerPress(stampItem)}
             pinColor={Platform.OS === 'web' ? colors.fill : undefined}
             tracksViewChanges={false}
@@ -952,11 +979,12 @@ export default function MapScreen() {
       return (
         <Marker
           accessibilityLabel={accessibilityLabel}
+          noticeBadge={hasNotice}
           anchor={MARKER_ANCHOR}
           coordinate={stampItem.coordinate}
           identifier={stampItem.id}
           image={visual.image}
-          key={`${stampItem.id}:${visual.visualKind}`}
+          key={`${stampItem.id}:${hasNotice}:${visual.visualKind}`}
           onPress={() => handleMarkerPress(stampItem)}
           pinColor={undefined}
           tracksViewChanges={false}
@@ -1507,7 +1535,7 @@ export default function MapScreen() {
       setIsStamping(true);
       try {
         await offlineVisits.record(localStamp);
-        setStampSuccessMessage(!isOnline ? 'Besuch auf diesem Gerät gespeichert.' : 'Besuch gespeichert.');
+        setStampSuccessMessage('Besuch auf diesem Gerät gespeichert.');
         setIsStampSuccessToastVisible(true);
       } catch (error) {
         Alert.alert('Besuch nicht gespeichert', error instanceof Error ? error.message : 'Bitte erneut versuchen.');
@@ -1708,6 +1736,7 @@ export default function MapScreen() {
       });
 
       const createdStamping = await createStamping(accessToken, stampId);
+      if (createdStamping.ID && claims?.sub) publishStampingSuccess({ owner: claims.sub, visitIds: [createdStamping.ID] });
       const persistedVisitTimestamp =
         createdStamping.visitedAt || createdStamping.createdAt || nowIsoTimestamp;
       const persistedVisit: VisitStamping = {
@@ -1834,8 +1863,7 @@ export default function MapScreen() {
           queryFn: () => fetchStampDetail(accessToken, stampId, claims?.sub, groupUserIds),
         })
         .catch(() => undefined);
-      setStampSuccessMessage('Stempel erfolgreich gesetzt.');
-      setIsStampSuccessToastVisible(true);
+
     } catch (nextError) {
       rollbackOptimisticUpdates();
       if (isNetworkUnavailableError(nextError)) {
@@ -1863,7 +1891,6 @@ export default function MapScreen() {
     data?.stamps,
     groupUserIds,
     isAuthenticated,
-    isOnline,
     isStamping,
     logout,
     queryClient,
@@ -2355,6 +2382,7 @@ export default function MapScreen() {
             item={{
               kind: selectedItem.kind,
               title: selectedItem.title,
+              activeNotices: selectedItem.activeNotices,
               description:
                 selectedItem.kind === 'parking' ? undefined : selectedItem.description,
               imageUrl: selectedItem.imageUrl,
@@ -2433,8 +2461,7 @@ export default function MapScreen() {
           onClose={() => setIsGroupStampDialogVisible(false)}
           onSuccess={() => {
             setIsGroupStampDialogVisible(false);
-            setStampSuccessMessage('Gruppenstempel erfolgreich gesetzt.');
-            setIsStampSuccessToastVisible(true);
+
             void authenticatedMapQuery.refetch();
           }}
           stampId={selectedItem.stampId}
@@ -2449,6 +2476,9 @@ export default function MapScreen() {
           <View style={[styles.filterPopover, { top: topOverlayContentOffset, width: filterPopoverWidth }]}>
             <Text style={styles.filterTitle}>Filter</Text>
 
+            <StampCatalogFilters automatic type={stampType} theme={stampTheme}
+              themes={[...new Set(stampItems.flatMap(item => item.themes))].sort()}
+              onTypeChange={setStampType} onThemeChange={setStampTheme} />
             <Text style={styles.filterSectionLabel}>Status</Text>
             <View style={styles.filterChipRow}>
               {VISIT_FILTERS.map((filter) => {

@@ -85,9 +85,6 @@ export default function ProfileScreen() {
       return null;
     }
 
-    const collectorSinceText = data.collectorSinceYear
-      ? `Stempel-Sammler seit ${data.collectorSinceYear}`
-      : 'Stempel-Sammler';
     const profileName =
       matchingCurrentUserProfile?.name || data.name || claims?.name || claims?.sub || 'Profil';
     const profilePicture = matchingCurrentUserProfile?.picture || data.picture || claims?.picture;
@@ -110,7 +107,7 @@ export default function ProfileScreen() {
     return {
       mode: 'self',
       name: profileName,
-      subtitle: collectorSinceText,
+      subtitle: '',
       headerAction: {
         type: 'edit',
         label: 'Profil bearbeiten',
@@ -178,6 +175,7 @@ export default function ProfileScreen() {
       refreshHint: isFetching && !isPending ? 'Aktualisiere Daten im Hintergrund...' : undefined,
       showDeferredSkeletons: isPlaceholderData,
       footerButtons: [
+        { key: 'theme-booklets', label: 'Themenhefte & Themenwege', onPress: () => router.push('/theme-booklets' as never) },
         ...(isAdmin
           ? [
               {
