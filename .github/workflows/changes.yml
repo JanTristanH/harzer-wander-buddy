@@ -1,0 +1,41 @@
+name: Select CI jobs
+on:
+  workflow_call:
+    inputs:
+      force-full:
+        type: boolean
+        default: false
+    outputs:
+      docker:
+        value: ${{ jobs.changes.outputs.docker }}
+      backend:
+        value: ${{ jobs.changes.outputs.backend }}
+      app:
+        value: ${{ jobs.changes.outputs.app }}
+      release:
+        value: ${{ jobs.changes.outputs.release }}
+      static:
+        value: ${{ jobs.changes.outputs.static }}
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docker: ${{ steps.select.outputs.docker }}
+      backend: ${{ steps.select.outputs.backend }}
+      app: ${{ steps.select.outputs.app }}
+      release: ${{ steps.select.outputs.release }}
+      static: ${{ steps.select.outputs.static }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate CI selection policy
+        run: node --test .github/ci/*.test.cjs
+      - id: select
+        env:
+          FORCE_FULL: ${{ inputs.force-full }}
+        run: node .github/ci/select-jobs.cjs
