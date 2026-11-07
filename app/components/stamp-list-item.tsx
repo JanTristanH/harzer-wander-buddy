@@ -2,13 +2,21 @@ import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { GroupStampStatus, getGroupStampStatus } from '@/components/group-stamp-status';
 import { UncollectedStampArtwork } from '@/components/uncollected-stamp-artwork';
 import type { Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
+
+// Safari owns long presses unless text selection and its native callout are disabled.
+const webCardInteractionStyle = Platform.OS === 'web' ? {
+  userSelect: 'none' as const, WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
+} : undefined;
+const webCardInteractionProps = Platform.OS === 'web' ? {
+  onContextMenu: (event: { preventDefault: () => void }) => event.preventDefault(),
+} : {};
 
 type StampListItemProps = {
   item: Stampbox;
@@ -59,6 +67,7 @@ function StampListItemComponent({
   groupSize,
 }: StampListItemProps) {
   const { accessToken, isAuthenticated } = useAuth();
+  const consumedLongPress = React.useRef(false);
   const showUncollectedArtwork = isAuthenticated && !item.hasVisited;
   const artworkUri = item.heroImageUrl?.trim() || item.image?.trim() || '';
   const artworkSource = React.useMemo(
@@ -78,6 +87,7 @@ function StampListItemComponent({
 
   return (
     <Pressable
+      {...webCardInteractionProps}
       accessibilityLabel={groupAccessibilityLabel ?? `Stempel ${item.number || '--'}: ${item.name}. ${item.hasVisited ? 'Besucht' : 'Unbesucht'}`}
       accessibilityRole={selectionMode ? 'checkbox' : 'button'}
       accessibilityState={{ disabled, ...(selectionMode ? { checked: selected } : {}) }}
@@ -85,11 +95,16 @@ function StampListItemComponent({
       accessibilityHint={onLongPress ? 'Gedrückt halten, um mehrere Stempelstellen auszuwählen' : undefined}
       testID={`stamp-list-item-${item.ID}`}
       disabled={disabled}
-      onPress={onPress}
-      onLongPress={onLongPress}
+      onPressIn={() => { consumedLongPress.current = false; }}
+      onPress={() => {
+        if (consumedLongPress.current) { consumedLongPress.current = false; return; }
+        onPress();
+      }}
+      onLongPress={onLongPress ? () => { consumedLongPress.current = true; onLongPress(); } : undefined}
       delayLongPress={500}
       style={({ pressed }) => [
         styles.card,
+        webCardInteractionStyle,
         groupActive && styles.cardWithGroup,
         selectionMode && styles.cardSelectable,
         selected && styles.cardSelected,
@@ -116,10 +131,10 @@ function StampListItemComponent({
         )}
 
         <View style={styles.cardBody}>
-          <Text numberOfLines={1} style={styles.cardTitle}>
+          <Text selectable={false} numberOfLines={1} style={styles.cardTitle}>
             {item.number || '--'} {'\u2022'} {item.name}
           </Text>
-          <Text numberOfLines={groupActive ? 1 : 2} style={styles.cardDescription}>
+          <Text selectable={false} numberOfLines={groupActive ? 1 : 2} style={styles.cardDescription}>
             {item.description?.trim() || 'Keine Beschreibung verfügbar.'}
           </Text>
 
@@ -131,6 +146,7 @@ function StampListItemComponent({
                 size={11}
               />
               <Text
+                selectable={false}
                 style={[
                   styles.statePillLabel,
                   item.hasVisited ? styles.statePillLabelVisited : styles.statePillLabelOpen,
@@ -138,7 +154,7 @@ function StampListItemComponent({
                 {item.hasVisited ? 'Besucht' : 'Unbesucht'}
               </Text>
             </View>
-            {metaLabel ? <Text style={styles.distanceLabel}>{metaLabel}</Text> : null}
+            {metaLabel ? <Text selectable={false} style={styles.distanceLabel}>{metaLabel}</Text> : null}
           </View>
         </View>
 
