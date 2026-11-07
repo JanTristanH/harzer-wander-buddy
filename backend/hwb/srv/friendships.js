@@ -10,8 +10,10 @@ const onBeforeFriendshipCreate = async (req) => {
   const db = await cds.connect.to('db');
   const { Friendships } = db.entities;
 
-  req.data.fromUser_ID = req.data.fromUser_ID || req.user.id;
-  req.data.status = req.data.status || FRIENDSHIP_STATUS.PENDING;
+  req.data.fromUser_ID = req.user.id;
+  req.data.createdBy = req.user.id;
+  req.data.status = FRIENDSHIP_STATUS.PENDING;
+  req.data.isAllowedToStampForFriend = false;
 
   if (!req.data.toUser_ID) {
     req.error(400, 'Target user is required');

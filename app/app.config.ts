@@ -37,6 +37,19 @@ export function createExpoConfig(
   env: BuildEnvironment = process.env,
   baseConfig: ExpoConfig = config
 ): ExpoConfig {
+  if (env.EAS_BUILD_PROFILE === 'production' && env.EXPO_PUBLIC_AUTH_MODE === 'basic') {
+    throw new Error('Production builds cannot use local Basic authentication.');
+  }
+  if (['preview', 'production'].includes(env.EAS_BUILD_PROFILE || '') && env.EXPO_PUBLIC_AUTH_MODE !== 'basic') {
+    if (!env.EXPO_PUBLIC_BACKEND_URL?.startsWith('https://') ||
+        !env.EXPO_PUBLIC_SUPABASE_URL?.startsWith('https://') ||
+        !env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.startsWith('sb_publishable_')) {
+      throw new Error('EAS SSO builds require explicit HTTPS backend, Supabase project URL and Publishable-Key.');
+    }
+    if (env.EAS_BUILD_PROFILE === 'preview' && new URL(env.EXPO_PUBLIC_BACKEND_URL).hostname === 'app.harzer-wander-buddy.de') {
+      throw new Error('Preview builds require an isolated staging backend.');
+    }
+  }
   const androidGoogleMapsApiKey = env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY?.trim();
   const isAndroidEasBuild = env.EAS_BUILD_PLATFORM === 'android';
   const previewPr = env.HWB_PREVIEW_PR;
@@ -87,6 +100,9 @@ export function createExpoConfig(
     extra: {
       ...(baseConfig.extra ?? {}),
       backendUrl: resolveBackendUrl(env.EXPO_PUBLIC_BACKEND_URL),
+      supabaseUrl: env.EXPO_PUBLIC_SUPABASE_URL || '',
+      supabasePublishableKey: env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '',
+      supabaseOAuthProviders: env.EXPO_PUBLIC_SUPABASE_OAUTH_PROVIDERS || '',
       ...(previewPr ? {
         preview: {
           pr: previewPr,

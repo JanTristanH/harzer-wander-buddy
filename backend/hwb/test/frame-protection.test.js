@@ -7,6 +7,10 @@ const server = cds.test('serve', 'all', '--in-memory');
 
 test('framing protection covers static files, SPA fallback, CAP and errors', async () => {
   const requests = [
+    ['/legal/impressum', 'GET'],
+    ['/legal/datenschutz', 'GET'],
+    ['/legal/konto-loeschen', 'GET'],
+    ['/legal/content', 'GET'],
     // Public static files are served before authentication.
     ['/app/pbc/manifest.json', 'GET'],
     ['/app/frontendhwb/webapp/index.html', 'GET'],
@@ -30,7 +34,7 @@ test('framing protection covers static files, SPA fallback, CAP and errors', asy
     }
     // Release web assets are optional in a source-only checkout; error responses
     // must retain X-Frame-Options too (Express owns the CSP on error pages).
-    if (!path.startsWith('/app/rnweb/') && path !== '/does-not-exist.html') {
+    if (!path.startsWith('/app/rnweb/') && !path.startsWith('/app/frontendhwb/') && path !== '/does-not-exist.html') {
       assert.equal(response.status, 200, path);
     }
     await response.arrayBuffer();

@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -158,6 +158,7 @@ export default function AdminHomeScreen() {
   return (
     <AdminGuard>
       <AdminScreen style={styles.safeArea}>
+        <Link href={'/admin/moderation' as never} style={{ padding: 20 }}>Inhaltsmeldungen prüfen</Link>
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardDismissMode="on-drag"

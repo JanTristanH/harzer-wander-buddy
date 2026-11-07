@@ -1,3 +1,4 @@
+import { registerOfflineCache } from '@/lib/offline-cache-registry';
 import type { StampNote } from '@/lib/api';
 
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void> };
@@ -17,7 +18,8 @@ export class OfflineNoteQueue {
   syncing = false;
   private writes: Promise<unknown> = Promise.resolve();
   private listeners = new Set<() => void>();
-  constructor(private storage: Storage, private key: string) {}
+  constructor(private storage: Storage, private key: string) { registerOfflineCache(this); }
+  clear() { return this.serialize(() => this.persist([])); }
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   private notify() { this.listeners.forEach((listener) => listener()); }
   private serialize<T>(work: () => Promise<T>): Promise<T> {

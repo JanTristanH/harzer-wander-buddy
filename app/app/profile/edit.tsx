@@ -125,15 +125,6 @@ function ProfileEditContent() {
       return;
     }
 
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert(
-        'Zugriff auf Fotos benoetigt',
-        'Bitte erlaube den Zugriff auf deine Fotos, um ein Profilbild auszuwaehlen.'
-      );
-      return;
-    }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
       aspect: [1, 1],
