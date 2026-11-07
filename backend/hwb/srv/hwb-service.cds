@@ -20,6 +20,18 @@ service api @(requires: 'authenticated-user') {
         travelTime_ID       : UUID;
         tour_ID             : UUID;
         rank                : Integer;
+        // ID already exists as travelTime_ID; duplicating it here collides
+        // when CAP flattens structured types for SQL.
+        travelTime          : {
+            fromPoi         : UUID;
+            toPoi           : UUID;
+            positionString  : LargeString;
+            travelMode      : String(128);
+            durationSeconds : Integer64;
+            distanceMeters  : Integer64;
+            elevationGain   : Double;
+            elevationLoss   : Double;
+        };
     };
 
     type TourDetailResponse {
@@ -398,6 +410,21 @@ service api @(requires: 'authenticated-user') {
             where: 'createdBy = $user'
         }
     ])                                        as projection on db.StampNotes;
+
+    type NoteSyncResult {
+        conflict : Boolean;
+        current  : {
+            ID : UUID;
+            stamp_ID : UUID;
+            note : String(500);
+            createdBy : String;
+            createdAt : Timestamp;
+            modifiedAt : Timestamp;
+        };
+    }
+    @requires: 'authenticated-user'
+    action syncStampNote(stampId : UUID, note : String(500), expectedId : UUID,
+                         expectedModifiedAt : Timestamp, expectedNote : String(500)) returns NoteSyncResult;
 
     action   stampForGroup(sStampId : UUID, bStampForUser : Boolean, sGroupUserIds : String) returns String;
     action   getStampFriendVisits(sStampId : UUID, sGroupUserIds : String) returns String;

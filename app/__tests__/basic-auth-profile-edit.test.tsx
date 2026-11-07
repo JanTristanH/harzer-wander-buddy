@@ -6,7 +6,11 @@ import { fetchCurrentUserProfile, updateCurrentUserOnboardingCompleted } from '@
 import { AuthProvider, useAuth, useIdTokenClaims } from '@/lib/auth';
 
 jest.mock('expo-auth-session', () => ({}));
-jest.mock('expo-secure-store', () => ({}));
+jest.mock('expo-secure-store', () => ({
+  getItemAsync: jest.fn(async () => null),
+  setItemAsync: jest.fn(async () => {}),
+  deleteItemAsync: jest.fn(async () => {}),
+}));
 jest.mock('expo-web-browser', () => ({}));
 jest.mock('@/lib/config', () => ({ appConfig: { authMode: 'basic' } }));
 jest.mock('@/lib/connectivity', () => ({ useConnectivity: () => ({ isOffline: false }) }));

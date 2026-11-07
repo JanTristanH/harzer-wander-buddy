@@ -12,6 +12,7 @@ import {
   updateCurrentUserOnboardingCompleted,
   type CurrentUserProfileData,
 } from '@/lib/api';
+import { clearBasicAuthSession, loadBasicAuthSession, saveBasicAuthSession } from '@/lib/basic-auth-session';
 import { appConfig, getAuth0ClientIdForPlatform, getMissingConfig } from '@/lib/config';
 import { useConnectivity } from '@/lib/connectivity';
 import { clearPersistedQueryCache } from '@/lib/query-persistence';
@@ -570,11 +571,29 @@ function StaticWebsiteAuthProvider({ children }: React.PropsWithChildren) {
 
 function BasicAuthProvider({ children }: React.PropsWithChildren) {
   const { isOffline } = useConnectivity();
-  // Development credentials stay in memory and are cleared on reload/logout.
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfileData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(Platform.OS !== 'web');
   const [authError, setAuthError] = useState<string | null>(null);
+  const sessionRevision = useRef(0);
+  useEffect(() => {
+    let active = true;
+    async function restoreSession() {
+      try {
+        const session = await loadBasicAuthSession();
+        if (active && sessionRevision.current === 0 && session) {
+          setAccessToken(session.token);
+          setCurrentUserProfile(session.profile);
+        }
+      } catch {
+        if (active && sessionRevision.current === 0) setAuthError('Gespeicherte Anmeldung konnte nicht geladen werden. Bitte erneut anmelden.');
+      } finally {
+        if (active && sessionRevision.current === 0) setIsLoading(false);
+      }
+    }
+    void restoreSession();
+    return () => { active = false; };
+  }, []);
   const updateCurrentUserProfileState = useCallback((profile: CurrentUserProfileData | null) => {
     setCurrentUserProfile((currentProfile) =>
       profile && currentProfile?.id === profile.id && typeof profile.onboardingCompleted !== 'boolean'
@@ -584,32 +603,45 @@ function BasicAuthProvider({ children }: React.PropsWithChildren) {
   }, []);
   const preloadCurrentUserProfile = useCallback(async () => {
     if (!accessToken) return null;
+    const revision = sessionRevision.current;
     const profile = await fetchCurrentUserProfile(accessToken);
+    if (revision !== sessionRevision.current) return null;
+    await saveBasicAuthSession({ token: accessToken, profile });
+    if (revision !== sessionRevision.current) return null;
     setCurrentUserProfile(profile);
     return profile;
   }, [accessToken]);
   const logout = useCallback(async () => {
+    sessionRevision.current += 1;
+    setIsLoading(false);
     setAccessToken(null);
     setCurrentUserProfile(null);
     setAuthError(null);
     queryClient.clear();
+    await clearBasicAuthSession();
     await clearPersistedQueryCache();
   }, []);
   const login = useCallback(async (username = '', password = '') => {
+    const revision = ++sessionRevision.current;
     setIsLoading(true);
     setAuthError(null);
     try {
       const token = btoa(`${username}:${password}`);
       const profile = await fetchCurrentUserProfile(token);
+      if (revision !== sessionRevision.current) return;
       queryClient.clear();
       await clearPersistedQueryCache();
+      if (revision !== sessionRevision.current) return;
+      await saveBasicAuthSession({ token, profile });
+      if (revision !== sessionRevision.current) return;
       setCurrentUserProfile(profile);
       setAccessToken(token);
     } catch (error) {
+      if (revision !== sessionRevision.current) return;
       setAuthError(error instanceof Error && error.name === 'UnauthorizedError'
         ? 'Nutzername oder Passwort ist falsch.' : 'Anmeldung fehlgeschlagen. Bitte Backend und Zugangsdaten pruefen.');
     } finally {
-      setIsLoading(false);
+      if (revision === sessionRevision.current) setIsLoading(false);
     }
   }, []);
   const completeOnboarding = useCallback(async () => {
@@ -677,7 +709,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
   }, [configError]);
 
   useEffect(() => {
-    if (configError) {
+    if (configError || isOffline) {
       discoveryRef.current = null;
       discoveryPromiseRef.current = null;
       return;
@@ -686,7 +718,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
     void resolveDiscovery().catch((error) => {
       console.warn('Failed to preload Auth0 discovery document.', error);
     });
-  }, [configError, resolveDiscovery]);
+  }, [configError, isOffline, resolveDiscovery]);
 
   const applyCurrentUserProfileState = useCallback(
     (profile: CurrentUserProfileData | null, accessToken?: string | null) => {
@@ -783,7 +815,11 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
         } satisfies ResolveValidTokenResponseResult;
       }
 
-      if (!isOffline && !isTokenFresh(tokenResponse) && !tokenResponse.refreshToken) {
+      if (isOffline) {
+        return { tokenResponse, sessionMode: 'offline_grace' } satisfies ResolveValidTokenResponseResult;
+      }
+
+      if (!isTokenFresh(tokenResponse) && !tokenResponse.refreshToken) {
         logTokenResponseMetadata('expired cached token cannot refresh', tokenResponse);
         await clearTokenResponse();
         return {
@@ -840,19 +876,23 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
     [auth0ClientId, isOffline, resolveDiscovery]
   );
 
+  // Startup and outbox consumers share one refresh, including token rotation.
+  const resolveSession = useCallback(() => {
+    if (!refreshPromiseRef.current) {
+      refreshPromiseRef.current = resolveValidTokenResponse().finally(() => {
+        refreshPromiseRef.current = null;
+      });
+    }
+    return refreshPromiseRef.current;
+  }, [resolveValidTokenResponse]);
+
   const getValidAccessToken = useCallback(async () => {
     if (configError) {
       return null;
     }
 
     try {
-      if (!refreshPromiseRef.current) {
-        refreshPromiseRef.current = resolveValidTokenResponse().finally(() => {
-          refreshPromiseRef.current = null;
-        });
-      }
-
-      const resolved = await refreshPromiseRef.current;
+      const resolved = await resolveSession();
       if (resolved.tokenResponse) {
         setAuthState(toAuthState(resolved.tokenResponse));
         setSessionMode(resolved.sessionMode);
@@ -886,7 +926,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
 
       throw error;
     }
-  }, [configError, resolveValidTokenResponse]);
+  }, [configError, resolveSession]);
 
   useEffect(() => {
     let isMounted = true;
@@ -936,18 +976,16 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
           return;
         }
 
-        if (!isOffline && !isTokenFresh(cachedTokenResponse) && !cachedTokenResponse.refreshToken) {
-          logTokenResponseMetadata('startup found expired cached token without refresh token', cachedTokenResponse);
-          await clearTokenResponse();
-          applySessionFromToken(null, 'online');
-          return;
-        }
-
         logTokenResponseMetadata('startup restored cached token', cachedTokenResponse);
+        // Local restoration must not depend on discovery, refresh or profile requests.
+        applySessionFromToken(cachedTokenResponse, isOffline ? 'offline_grace' : 'online');
         if (isMounted) {
           setHasCompletedOnboarding(await loadInitialOnboardingState(cachedTokenResponse.accessToken));
+          const cachedProfile = queryClient.getQueryData<CurrentUserProfileData>(
+            getCurrentUserProfileQueryKey(cachedTokenResponse.accessToken)
+          );
+          if (isMounted && cachedProfile) applyCurrentUserProfileState(cachedProfile, cachedTokenResponse.accessToken);
         }
-        applySessionFromToken(cachedTokenResponse, isOffline ? 'offline_grace' : 'online');
       } catch (error) {
         const shouldInvalidateSession = isUnauthorizedError(error);
 
@@ -966,7 +1004,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
       }
 
       try {
-        const resolved = await resolveValidTokenResponse();
+        const resolved = await resolveSession();
         if (!resolved.tokenResponse) {
           applySessionFromToken(null, 'online');
           return;
@@ -1014,7 +1052,7 @@ function SsoAuthProvider({ children }: React.PropsWithChildren) {
     return () => {
       isMounted = false;
     };
-  }, [configError, isOffline, preloadCurrentUserProfileForToken, resolveValidTokenResponse]);
+  }, [applyCurrentUserProfileState, configError, isOffline, preloadCurrentUserProfileForToken, resolveSession]);
 
   useEffect(() => {
     if (Platform.OS === 'web' || typeof AppState.addEventListener !== 'function') {

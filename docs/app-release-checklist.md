@@ -117,3 +117,9 @@ Für jeden Test Datum, Plattform/Build und Ergebnis im PR ergänzen. Zwei Konten
 - [ ] **Produktions-Smoke-Test und Belege** erst nach echtem Deployment, nur mit eigens angelegten Testkonten. Öffentliche Texte, Export, Providerlöschung und Scheduler prüfen. Danach PR zur Prüfung freigeben und Veröffentlichung nach Repository-Gitflow durchführen.
 
 Store-Quellen: [Apple Guidelines](https://developer.apple.com/app-store/review/guidelines/), [Apple Kontolöschung](https://developer.apple.com/support/offering-account-deletion-in-your-app/), [Google Play Kontolöschung](https://support.google.com/googleplay/android-developer/answer/13327111), [Apple Privacy Details](https://developer.apple.com/app-store/app-privacy-details/), [Apple EU-Händlerstatus](https://developer.apple.com/help/app-store-connect/manage-compliance-information/manage-european-union-digital-services-act-trader-requirements).
+
+## Erneuter Integrationsabgleich
+
+Aktuelles develop `7513b1b` integriert. Datenschutz-/Moderations-APIs und native Offline-Besuchs-/Notiz-APIs bleiben erhalten. 373 App-Tests in 66 Suites und 54 Backend-Tests bestanden; TypeScript, gezieltes ESLint, PostgreSQL-Schemakompilierung und vollständiger Basic-Webexport erfolgreich. `check:legal-release` blockiert weiterhin erwartungsgemäß an Auth-Migration, Transferangaben, Scheduler-Verifikation, Provider-Löschkonfiguration und CORS-Allowlist.
+
+Lesende Prüfung des verbundenen Supabase-Zugangs: ein gesundes Projekt in eu-west-2, keine Entwicklungsbranches, Security Advisor ohne Befunde. Das beweist weder eine isolierte Staging-Umgebung noch SMTP, Migration/Restore oder die tatsächliche Providerlöschung. Kein Hosted-Schema, Konto, Vertrag oder Scheduler wurde verändert. #119 muss die technische Migration und die weiterhin offenen Abnahmen gesondert nachweisen.

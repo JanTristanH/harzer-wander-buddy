@@ -3,6 +3,7 @@ import { onlineManager } from '@tanstack/react-query';
 import React, { createContext, useContext, useMemo } from 'react';
 
 type ConnectivityContextValue = {
+  isReady: boolean;
   isOnline: boolean;
   isOffline: boolean;
 };
@@ -13,10 +14,12 @@ let hasConfiguredOnlineManager = false;
 
 function isStateOnline(state: NetInfoState | null | undefined) {
   if (!state) {
-    return true;
+    return false;
   }
 
-  return state.isConnected !== false && state.isInternetReachable !== false;
+  // A cold start has null connection fields. Do not start requests or discard
+  // cached credentials until a connection has actually been observed.
+  return state.isConnected === true && state.isInternetReachable === true;
 }
 
 export function configureQueryOnlineManager() {
@@ -25,6 +28,7 @@ export function configureQueryOnlineManager() {
   }
 
   onlineManager.setEventListener((setOnline) => {
+    setOnline(false);
     return NetInfo.addEventListener((state) => {
       setOnline(isStateOnline(state));
     });
@@ -44,6 +48,7 @@ export function ConnectivityProvider({ children }: React.PropsWithChildren) {
   const value = useMemo<ConnectivityContextValue>(() => {
     const isOnline = isStateOnline(netInfo);
     return {
+      isReady: netInfo.isConnected === false || (netInfo.isConnected === true && netInfo.isInternetReachable !== null),
       isOnline,
       isOffline: !isOnline,
     };
