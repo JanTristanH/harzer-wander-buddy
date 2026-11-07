@@ -58,6 +58,8 @@ node backend/hwb/util/generateSpecialStampFixtures.js
 
 Der Generator aktualisiert ausschließlich diese Entwicklungsdaten sowie die abgeleiteten regulären Themenzugehörigkeiten der App. Er greift nicht auf eine Datenbank zu. Wiederholung erzeugt byteidentische Ergebnisse. Die bestehenden regulären UUIDs, Standorte und Beschreibungen bleiben erhalten.
 
+Der öffentliche Website-Export überspringt explizite Sonderstempel-Identitäten vor der Prüfung von Anzeigenummer und Koordinaten. Sein öffentliches Schema bleibt auf die 222 regulären Stellen begrenzt; neue interne Katalogmetadaten werden nicht veröffentlicht. Auch ein Sonderstempel mit einer regulär aussehenden Anzeigenummer wird dort nicht mitgezählt.
+
 ## Filter und Marker
 
 Karte und Liste besitzen unabhängige Filter für reguläre/Sonderstempel, Themen und Besuchsstatus. Mehrfachzugehörigkeiten sind möglich. Der reguläre Zähler bleibt separat; die Liste nennt zusätzlich den Sonderstempelfortschritt. Noch nicht initialisierte Produktivdatenbanken erhalten reguläre Themenzugehörigkeiten in der App aus demselben geprüften Datensatz.
