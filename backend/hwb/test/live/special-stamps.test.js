@@ -1,5 +1,5 @@
 // Explicit live acceptance test, outside npm test's glob. Always uses its own in-memory DB.
-// The expected source counts describe 2026-11-07; a later source edit may change them.
+// Official notices change over time. Verify import invariants rather than a dated notice count.
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const { readFileSync } = require('node:fs');
@@ -32,23 +32,24 @@ test('live official import after initialization remains idempotent and retains p
     return JSON.parse(body.value);
   }
   const before = await action('syncOfficialNotices', true);
-  assert.equal(before.matched.length, 17);
-  assert.equal(before.unmatched.length, 11);
+  assert.ok(before.matched.length > 0, 'The live source must contain mapped regular notices');
+  const sourceEntryCount = before.matched.length + before.unmatched.length;
   const initialized = await action('initializeSpecialStamps', false);
   assert.equal(initialized.created, 151);
   assert.equal((await SELECT.from(StampNotices)).length, 1);
   const preview = await action('syncOfficialNotices', true);
-  assert.equal(preview.matched.length, 27);
+  assert.ok(preview.matched.length > before.matched.length, 'Initializing specials must resolve more source notices');
+  assert.equal(preview.matched.length + preview.unmatched.length, sourceEntryCount, 'Initialization must not lose source notices');
   assert.deepEqual(preview.unmatched.map(e => e.message), ['Brandberg']);
   assert.equal((await SELECT.from(StampNotices)).length, 1);
   const first = await action('syncOfficialNotices', false);
   assert.equal(first.retainedPrevious, true);
   const notices = await SELECT.from(StampNotices);
-  assert.equal(notices.length, 28);
+  assert.equal(notices.length, preview.matched.length + 1);
   assert.equal(notices.find(n => n.ID === legacyId).status, 'approved');
   const second = await action('syncOfficialNotices', false);
   assert.equal(second.retainedPrevious, true);
   assert.deepEqual((await SELECT.from(StampNotices)).map(n => n.ID).sort(), notices.map(n => n.ID).sort());
   assert.equal((await SELECT.one.from(StampNotices).where({ ID: legacyId })).status, 'approved');
-  console.log('LIVE_RESULT', JSON.stringify({ checkedAt: first.checkedAt, before: [17, 11], after: [27, 1], retainedPrevious: true, idempotent: true }));
+  console.log('LIVE_RESULT', JSON.stringify({ checkedAt: first.checkedAt, before: [before.matched.length, before.unmatched.length], after: [preview.matched.length, preview.unmatched.length], retainedPrevious: true, idempotent: true }));
 });
