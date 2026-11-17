@@ -1,3 +1,4 @@
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -256,9 +257,10 @@ export function StampPressStage({
   style,
   actorStyle,
 }: StampPressStageProps) {
+  const reduceMotion = useReduceMotion();
   const { buttonAnimatedStyle, isTouchActive, onPressIn, onPressOut, stampActorStyle } =
     useStampPressAnimation({
-      enabled,
+      enabled: enabled && !reduceMotion,
       pressDepth,
     });
 

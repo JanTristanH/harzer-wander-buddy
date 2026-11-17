@@ -1,0 +1,40 @@
+{
+  "checks": [
+    {
+      "guestViewport": [
+        320,
+        568
+      ],
+      "horizontalOverflow": false
+    },
+    {
+      "guestViewport": [
+        390,
+        844
+      ],
+      "horizontalOverflow": false
+    },
+    {
+      "guestViewport": [
+        1440,
+        900
+      ],
+      "horizontalOverflow": false
+    },
+    {
+      "clearableSearch": true
+    },
+    {
+      "groupSpaceKeyboard": true,
+      "discardBeforeConfirm": true,
+      "commitWithDone": true
+    },
+    {
+      "integratedBadgeSuccess": "7 \u2192 8, Bronze"
+    },
+    {
+      "sharedFriendSearchClearAndClose": true
+    }
+  ],
+  "pageErrors": []
+}

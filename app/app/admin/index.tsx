@@ -100,7 +100,7 @@ export default function AdminHomeScreen() {
     }
 
     if (isOffline || !canPerformWrites) {
-      Alert.alert('Offline', 'Admin-Jobs sind nur online verfuegbar.');
+      Alert.alert('Offline', 'Admin-Jobs sind nur online verfügbar.');
       return;
     }
 
@@ -110,7 +110,7 @@ export default function AdminHomeScreen() {
       await refreshMissingCount();
       Alert.alert(
         'Berechnung gestartet',
-        `${createdCount} TravelTimes wurden fuer die ${neighborCount} naechsten Nachbarn berechnet.`
+        `${createdCount} TravelTimes wurden für die ${neighborCount} naechsten Nachbarn berechnet.`
       );
     } catch (error) {
       if (await handleServiceError(error)) {
@@ -132,7 +132,7 @@ export default function AdminHomeScreen() {
     }
 
     if (isOffline || !canPerformWrites) {
-      Alert.alert('Offline', 'Admin-Jobs sind nur online verfuegbar.');
+      Alert.alert('Offline', 'Admin-Jobs sind nur online verfügbar.');
       return;
     }
 
@@ -171,7 +171,7 @@ export default function AdminHomeScreen() {
             </Pressable>
             <View style={styles.headerCopy}>
               <Text style={styles.title}>Admin</Text>
-              <Text style={styles.subtitle}>Stempelstellen, Parkplaetze und Backend-Jobs zentral verwalten.</Text>
+              <Text style={styles.subtitle}>Stempelstellen, Parkplätze und Backend-Jobs zentral verwalten.</Text>
             </View>
           </View>
 
@@ -191,8 +191,8 @@ export default function AdminHomeScreen() {
               onPress={() => router.push('/admin/parking' as never)}
               style={({ pressed }) => [styles.navCard, pressed && styles.pressed]}>
               <View style={styles.navCopy}>
-                <Text style={styles.navTitle}>Parkplaetze</Text>
-                <Text style={styles.navBody}>Parkplaetze anlegen, bearbeiten und mitsamt Routen loeschen.</Text>
+                <Text style={styles.navTitle}>Parkplätze</Text>
+                <Text style={styles.navBody}>Parkplätze anlegen, bearbeiten und mitsamt Routen loeschen.</Text>
               </View>
               <Feather color="#2e6b4b" name="chevron-right" size={18} />
             </Pressable>
@@ -262,7 +262,7 @@ export default function AdminHomeScreen() {
               {isAddingElevation ? (
                 <ActivityIndicator color="#2e6b4b" size="small" />
               ) : (
-                <Text style={styles.secondaryButtonLabel}>Hoehenmeter zu allen Routen hinzufuegen</Text>
+                <Text style={styles.secondaryButtonLabel}>Hoehenmeter zu allen Routen hinzufügen</Text>
               )}
             </Pressable>
           </View>

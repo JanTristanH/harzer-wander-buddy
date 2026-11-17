@@ -1,5 +1,7 @@
+import { Design } from '@/constants/theme';
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { Platform, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FloatingBarIcon } from '@/components/floating-bar-icon';
@@ -8,6 +10,8 @@ import { getTabBarBottomMargin } from '@/lib/tab-bar-layout';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const barWidth = Math.min(width - 32, 600);
   const tabBarBottomMargin = getTabBarBottomMargin(insets.bottom);
 
   return (
@@ -15,15 +19,18 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarActiveTintColor: '#2e6b4b',
-        tabBarInactiveTintColor: '#718071',
+        tabBarLabelPosition: 'below-icon',
+        tabBarActiveTintColor: Design.color.brand,
+        tabBarInactiveTintColor: Design.color.muted,
         tabBarStyle: {
-          backgroundColor: '#ffffff',
+          backgroundColor: Design.color.surface,
           borderTopWidth: 0,
           height: 72,
           paddingTop: 6,
           paddingBottom: 6,
-          marginHorizontal: 20,
+          ...(Platform.OS === 'web'
+            ? { left: 16, right: 16, maxWidth: 600, marginHorizontal: 'auto' as const }
+            : { width: barWidth, marginHorizontal: (width - barWidth) / 2 }),
           marginBottom: tabBarBottomMargin,
           borderRadius: 24,
           position: 'absolute',
@@ -41,9 +48,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Liste',
+          title: 'Stempel',
           tabBarIcon: ({ color, focused }) => (
-            <FloatingBarIcon color={color} focused={focused} name="index" size={28} />
+            <FloatingBarIcon color={color} focused={focused} name="index" size={24} />
           ),
         }}
       />
@@ -52,7 +59,7 @@ export default function TabLayout() {
         options={{
           title: 'Karte',
           tabBarIcon: ({ color, focused }) => (
-            <FloatingBarIcon color={color} focused={focused} name="map" size={28} />
+            <FloatingBarIcon color={color} focused={focused} name="map" size={24} />
           ),
         }}
       />
@@ -61,7 +68,7 @@ export default function TabLayout() {
         options={{
           title: 'Touren',
           tabBarIcon: ({ color, focused }) => (
-            <FloatingBarIcon color={color} focused={focused} name="tours" size={28} />
+            <FloatingBarIcon color={color} focused={focused} name="tours" size={24} />
           ),
         }}
       />
@@ -70,7 +77,7 @@ export default function TabLayout() {
         options={{
           title: 'Freunde',
           tabBarIcon: ({ color, focused }) => (
-            <FloatingBarIcon color={color} focused={focused} name="friends" size={28} />
+            <FloatingBarIcon color={color} focused={focused} name="friends" size={24} />
           ),
         }}
       />
@@ -79,7 +86,7 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color, focused }) => (
-            <FloatingBarIcon color={color} focused={focused} name="profile" size={28} />
+            <FloatingBarIcon color={color} focused={focused} name="profile" size={24} />
           ),
         }}
       />

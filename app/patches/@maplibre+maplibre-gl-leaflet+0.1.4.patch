@@ -1,0 +1,56 @@
+diff --git a/node_modules/@maplibre/maplibre-gl-leaflet/dist/leaflet-maplibre-gl.mjs b/node_modules/@maplibre/maplibre-gl-leaflet/dist/leaflet-maplibre-gl.mjs
+index e414df3..fbf2f35 100644
+--- a/node_modules/@maplibre/maplibre-gl-leaflet/dist/leaflet-maplibre-gl.mjs
++++ b/node_modules/@maplibre/maplibre-gl-leaflet/dist/leaflet-maplibre-gl.mjs
+@@ -133,6 +133,7 @@ var MaplibreGL = L.Layer.extend({
+ 		if (this.options.className) L.DomUtil.addClass(canvas, this.options.className);
+ 	},
+ 	_update: function(e) {
++		if (!this._map || !this._glMap) return;
+ 		if (!this._map) return;
+ 		this._offset = this._map.containerPointToLayerPoint([0, 0]);
+ 		if (this._zooming) return;
+@@ -165,6 +166,7 @@ var MaplibreGL = L.Layer.extend({
+ 		this._zooming = true;
+ 	},
+ 	_zoomEnd: function() {
++		if (!this._map || !this._glMap) return;
+ 		var scale = this._map.getZoomScale(this._map.getZoom());
+ 		L.DomUtil.setTransform(this._glMap._actualCanvas, null, scale);
+ 		this._zooming = false;
+@@ -172,6 +174,7 @@ var MaplibreGL = L.Layer.extend({
+ 	},
+ 	_transitionEnd: function(e) {
+ 		L.Util.requestAnimFrame(function() {
++			if (!this._map || !this._glMap) return;
+ 			var zoom = this._map.getZoom();
+ 			var center = this._map.getCenter();
+ 			var offset = this._map.latLngToContainerPoint(this._map.getBounds().getNorthWest());
+diff --git a/node_modules/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js b/node_modules/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js
+index 35b37f2..c673f3b 100644
+--- a/node_modules/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js
++++ b/node_modules/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js
+@@ -163,6 +163,7 @@
+ 			if (this.options.className) L.DomUtil.addClass(canvas, this.options.className);
+ 		},
+ 		_update: function(e) {
++			if (!this._map || !this._glMap) return;
+ 			if (!this._map) return;
+ 			this._offset = this._map.containerPointToLayerPoint([0, 0]);
+ 			if (this._zooming) return;
+@@ -195,6 +196,7 @@
+ 			this._zooming = true;
+ 		},
+ 		_zoomEnd: function() {
++			if (!this._map || !this._glMap) return;
+ 			var scale = this._map.getZoomScale(this._map.getZoom());
+ 			L.DomUtil.setTransform(this._glMap._actualCanvas, null, scale);
+ 			this._zooming = false;
+@@ -202,6 +204,7 @@
+ 		},
+ 		_transitionEnd: function(e) {
+ 			L.Util.requestAnimFrame(function() {
++				if (!this._map || !this._glMap) return;
+ 				var zoom = this._map.getZoom();
+ 				var center = this._map.getCenter();
+ 				var offset = this._map.latLngToContainerPoint(this._map.getBounds().getNorthWest());

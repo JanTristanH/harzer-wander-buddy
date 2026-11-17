@@ -15,10 +15,11 @@ export type { Camera, LatLng, Region };
 export type MapViewRef = MapView;
 type NativeMapViewProps = React.ComponentProps<typeof MapView> & {
   attributionPlacement?: 'bottom-right' | 'below-zoom';
+  scrollWheelZoomEnabled?: boolean;
 };
 
 const NativeMapView = React.forwardRef<MapView, NativeMapViewProps>(function NativeMapView(
-  { attributionPlacement: _attributionPlacement, ...props },
+  { attributionPlacement: _attributionPlacement, scrollWheelZoomEnabled: _scrollWheelZoomEnabled, ...props },
   ref
 ) {
   useEffect(() => {

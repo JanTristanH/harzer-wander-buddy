@@ -3,6 +3,7 @@ import React from 'react';
 import { FlatList, PanResponder, StyleSheet, View, type GestureResponderEvent, type PanResponderGestureState } from 'react-native';
 
 import type { Stampbox } from '@/lib/api';
+jest.mock('@/lib/badges', () => ({ useBadgeAlbum: () => ({data:undefined}) }));
 
 jest.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: jest.fn() }),
@@ -22,6 +23,8 @@ jest.mock('@tanstack/react-query', () => ({
 const mockUseAuth = jest.fn();
 const mockUseFilteredStampsOverviewQuery = jest.fn();
 const mockUseGuestFilteredStampsOverviewQuery = jest.fn();
+
+jest.mock('@/hooks/use-reduce-motion', () => ({ useReduceMotion: () => true }));
 
 jest.mock('@/lib/auth', () => ({
   useAuth: () => mockUseAuth(),
@@ -214,10 +217,10 @@ describe('StampsScreen', () => {
 
     expect(screen.getByText(/Rabenklippe/)).toBeOnTheScreen();
     expect(screen.getByText(/Brocken/)).toBeOnTheScreen();
-    expect(screen.getByText(/von 2 Stempelstellen/)).toBeOnTheScreen();
+    expect(screen.getByText('Harz entdecken')).toBeOnTheScreen();
   });
 
-  it('reflects the visited progress percentage', async () => {
+  it('does not present personal visit progress to guests', async () => {
     mockGuestData([
       createStamp({ ID: 'stamp-1', hasVisited: true }),
       createStamp({ ID: 'stamp-2', hasVisited: false }),
@@ -225,8 +228,8 @@ describe('StampsScreen', () => {
 
     await renderScreen();
 
-    // 1 of 2 stamps visited -> 50%.
-    expect(screen.getByText('50%')).toBeOnTheScreen();
+    expect(screen.queryByText('50%')).not.toBeOnTheScreen();
+    expect(screen.getByText('Harz entdecken')).toBeOnTheScreen();
   });
 
   it('uses the guest query and disables the authenticated query', async () => {

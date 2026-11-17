@@ -116,7 +116,7 @@ export function GroupStampStatus({ accessible = true, ...props }: GroupStampStat
             index={memberIndex}
             key={member.id}
             name={member.avatarName}
-            size={28}
+            size={36}
             testID={`group-member-avatar-${member.id}`}
             visited={member.visited}
           />
@@ -153,8 +153,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5e2df',
   },
   groupProgressLabel: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '700',
   },
   groupProgressLabelComplete: {

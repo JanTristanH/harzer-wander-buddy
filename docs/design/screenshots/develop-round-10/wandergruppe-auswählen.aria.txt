@@ -1,0 +1,6 @@
+- dialog "Wandergruppe auswählen":
+  - text: Wandergruppe auswählen Wähle Freunde für gemeinsame Fortschritte aus. Du bist automatisch dabei.
+  - button "Gruppenauswahl schließen": 
+  - checkbox "UI-Test Nora zur Wandergruppe hinzufügen": UN UI-Test Nora 0 Stempel · 0 %
+  - button "Wandergruppe leeren" [disabled]: Auswahl leeren
+  - button "Gruppenauswahl übernehmen": Fertig

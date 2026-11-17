@@ -1,3 +1,4 @@
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View, useWindowDimensions } from 'react-native';
 
@@ -47,6 +48,7 @@ type CompletionConfettiProps = {
 };
 
 export function useCompletionConfetti() {
+  const reduceMotion = useReduceMotion();
   const [isVisible, setIsVisible] = useState(false);
   const hasPlayedRef = useRef(false);
   const isMountedRef = useRef(true);
@@ -54,7 +56,7 @@ export function useCompletionConfetti() {
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
 
   const play = useCallback(() => {
-    if (hasPlayedRef.current) {
+    if (reduceMotion || hasPlayedRef.current) {
       return;
     }
 
@@ -76,7 +78,7 @@ export function useCompletionConfetti() {
         setIsVisible(false);
       }
     });
-  }, [progress]);
+  }, [progress, reduceMotion]);
 
   useEffect(() => {
     return () => {
@@ -90,8 +92,9 @@ export function useCompletionConfetti() {
 
 export function CompletionConfetti({ progress, visible }: CompletionConfettiProps) {
   const windowDimensions = useWindowDimensions();
+  const reduceMotion = useReduceMotion();
 
-  if (!visible) {
+  if (!visible || reduceMotion) {
     return null;
   }
 

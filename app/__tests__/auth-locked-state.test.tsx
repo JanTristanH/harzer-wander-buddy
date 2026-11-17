@@ -8,7 +8,7 @@ describe('Auth locked-state user interaction', () => {
     const onSignIn = jest.fn();
     render(<LockedGuestRows onSignIn={onSignIn} />);
 
-    fireEvent.press(screen.getByText('Anmelden'));
+    fireEvent.press(screen.getByRole('button', { name: 'Anmelden' }));
 
     expect(onSignIn).toHaveBeenCalledTimes(1);
   });
@@ -31,7 +31,7 @@ describe('Auth locked-state user interaction', () => {
     );
 
     expect(screen.getByText('Anmeldung erforderlich')).toBeTruthy();
-    fireEvent.press(screen.getByText('Anmelden'));
+    fireEvent.press(screen.getByRole('button', { name: 'Anmelden' }));
 
     expect(onSignIn).toHaveBeenCalledTimes(1);
   });

@@ -1,3 +1,5 @@
+import { fitMapBounds } from '@/lib/fit-map-bounds';
+import { Design } from '@/constants/theme';
 import type { LeafletEventHandlerFnMap, Map as LeafletMap } from 'leaflet';
 import L from 'leaflet';
 import '@maplibre/maplibre-gl-leaflet';
@@ -74,6 +76,8 @@ type MapViewProps = {
   toolbarEnabled?: boolean;
   showsCompass?: boolean;
   showsMyLocationButton?: boolean;
+  /** Embedded maps leave mouse-wheel scrolling to the surrounding page. */
+  scrollWheelZoomEnabled?: boolean;
 };
 
 type MarkerProps = {
@@ -193,27 +197,34 @@ const LEAFLET_RUNTIME_CSS = `
 .hwb-map-attribution {
   align-items: center;
   background: rgba(255, 255, 255, 0.92);
-  border: 2px solid #2f9bff;
+  border: 1px solid ${Design.color.border};
   border-radius: 999px;
   box-sizing: border-box;
   display: flex;
-  min-height: 42px;
+  min-height: 48px;
   overflow: hidden;
 }
 .hwb-map-attribution-toggle {
   align-items: center;
-  background: #171717;
+  background: ${Design.color.surface};
   border: 0;
   border-radius: 50%;
-  color: #fff;
+  color: ${Design.color.brand};
   cursor: pointer;
   display: inline-flex;
-  font: 700 25px/1 Arial, sans-serif;
-  height: 32px;
+  font: 700 20px/1 Arial, sans-serif;
+  height: 42px;
   justify-content: center;
   margin: 3px;
   padding: 0;
-  width: 32px;
+  width: 42px;
+}
+.hwb-map-attribution-toggle:focus-visible {
+  outline: 2px solid ${Design.color.brand};
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hwb-map-attribution-content { transition: none; }
 }
 .hwb-map-attribution-content {
   color: #333;
@@ -549,6 +560,7 @@ function MapEventBridge(props: {
   const moveStartAtRef = useRef<number | null>(null);
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
 
+
   useMapEvents({
     click(event) {
       onPress?.({
@@ -681,7 +693,7 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
 
       toggle.type = 'button';
       toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', 'Karten-Attribution anzeigen');
+      toggle.setAttribute('aria-label', 'Kartendaten und Lizenz anzeigen');
       toggle.textContent = 'i';
       content.innerHTML = styleId === 'raster' ? RASTER_MAP_ATTRIBUTION : OPEN_FREE_MAP_ATTRIBUTION;
       if (styleId === 'raster') {
@@ -697,7 +709,8 @@ function OpenFreeMapAttribution({ attributionPlacement, styleId }: Pick<MapViewP
       L.DomEvent.on(toggle, 'click', () => {
         const expanded = container.classList.toggle('is-expanded');
         toggle.setAttribute('aria-expanded', String(expanded));
-        toggle.setAttribute('aria-label', expanded ? 'Karten-Attribution ausblenden' : 'Karten-Attribution anzeigen');
+        content.hidden = !expanded;
+        toggle.setAttribute('aria-label', expanded ? 'Kartendaten und Lizenz ausblenden' : 'Kartendaten und Lizenz anzeigen');
       });
 
       return container;
@@ -723,6 +736,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
     onRegionChangeComplete,
     onUserLocationChange,
     showsUserLocation,
+    scrollWheelZoomEnabled = true,
     style,
   } = props;
   const [map, setMap] = useState<LeafletMap | null>(null);
@@ -732,6 +746,12 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
   const lastUserLocationRef = useRef<LatLng | null>(null);
   const onUserLocationChangeRef = useRef(onUserLocationChange);
   const perfDebugEnabled = isLocalhostMapPerfEnabled();
+
+  useEffect(() => {
+    if (!map) return;
+    if (scrollWheelZoomEnabled) map.scrollWheelZoom.enable();
+    else map.scrollWheelZoom.disable();
+  }, [map, scrollWheelZoomEnabled]);
 
   const effectiveRegion = initialRegion ?? DEFAULT_REGION;
   const centerTuple = useMemo(
@@ -757,15 +777,20 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
       return;
     }
 
+    let frameId: number;
     const resizeAndInvalidate = () => {
-      map.invalidateSize();
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => map.invalidateSize({ pan: false }));
     };
-
-    const frameId = requestAnimationFrame(resizeAndInvalidate);
+    // Fullscreen cards resize without a window resize; retain the same map.
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(resizeAndInvalidate);
+    observer?.observe(map.getContainer());
+    resizeAndInvalidate();
     window.addEventListener('resize', resizeAndInvalidate);
 
     return () => {
       cancelAnimationFrame(frameId);
+      observer?.disconnect();
       window.removeEventListener('resize', resizeAndInvalidate);
     };
   }, [map]);
@@ -818,7 +843,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
         const bounds = L.latLngBounds(coordinates.map((coordinate) => coordinateToTuple(coordinate)));
         const edgePadding = options?.edgePadding ?? {};
 
-        map.fitBounds(bounds, {
+        fitMapBounds(map, bounds, {
           animate: options?.animated ?? true,
           paddingBottomRight: [edgePadding.right ?? 0, edgePadding.bottom ?? 0],
           paddingTopLeft: [edgePadding.left ?? 0, edgePadding.top ?? 0],
@@ -926,6 +951,7 @@ const MapView = forwardRef<MapViewRef, MapViewProps>(function MapView(props, ref
         zoom={initialZoom}
         zoomAnimation
         zoomSnap={1}
+        scrollWheelZoom={scrollWheelZoomEnabled}
         zoomControl={false}>
         <MapInstanceBridge
           onMapReady={(nextMap) => {

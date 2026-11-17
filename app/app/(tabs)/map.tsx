@@ -1,3 +1,6 @@
+import { checkableKeyboardProps } from '@/lib/checkable-keyboard';
+import { Design } from '@/constants/theme';
+import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
 import { isStaticWebsite, openStaticStampArticle } from '@/lib/static-website';
@@ -133,7 +136,7 @@ const MIN_ZOOM_DELTA = 0.0018;
 const MAX_ZOOM_DELTA = 1.2;
 const CAMERA_MIN_ZOOM = 2;
 const CAMERA_MAX_ZOOM = 19;
-const MAP_EDGE_PADDING = { top: 140, right: 64, bottom: 260, left: 64 };
+const MAP_EDGE_PADDING = { top: 180, right: 80, bottom: 128, left: 48 };
 const MAP_TOP_CONTROLS_TOP = 12;
 const MAP_TOP_CONTROLS_HEIGHT = 90;
 const MAP_TOP_CONTROLS_CLEARANCE = 12;
@@ -253,11 +256,11 @@ function markerColors(kind: MarkerKind | StampMarkerVisualKind) {
 
   if (kind === 'visited-stamp') {
     return {
-      fill: '#2e6b4b',
+      fill: Design.color.brand,
       shadow: 'rgba(20,30,20,0.22)',
-      text: '#f5f3ee',
+      text: Design.color.canvas,
       badgeFill: '#deebe2',
-      badgeText: '#2e6b4b',
+      badgeText: Design.color.brand,
     };
   }
 
@@ -265,7 +268,7 @@ function markerColors(kind: MarkerKind | StampMarkerVisualKind) {
     return {
       fill: '#c1a093',
       shadow: 'rgba(20,30,20,0.18)',
-      text: '#f5f3ee',
+      text: Design.color.canvas,
       badgeFill: '#f0e7e0',
       badgeText: '#7d5f52',
     };
@@ -274,7 +277,7 @@ function markerColors(kind: MarkerKind | StampMarkerVisualKind) {
   return {
     fill: '#2f7dd7',
     shadow: 'rgba(24,57,99,0.18)',
-    text: '#f5f3ee',
+    text: Design.color.canvas,
     badgeFill: '#e3effc',
     badgeText: '#2f7dd7',
   };
@@ -632,7 +635,7 @@ export default function MapScreen() {
   const [remoteSearchResults, setRemoteSearchResults] = useState<PlaceSearchResult[]>([]);
   const [isRemoteSearchLoading, setIsRemoteSearchLoading] = useState(false);
   const [remoteSearchError, setRemoteSearchError] = useState<string | null>(null);
-  const { locationState, userLocation, handleUserLocationChange, locateMe } = useMapLocation();
+  const { locationState, handleUserLocationChange, locateMe } = useMapLocation();
   const [visitFilter, setVisitFilter] = useState<VisitFilter>('all');
   const [showStamps, setShowStamps] = useState(true);
   const [showParking, setShowParking] = useState(true);
@@ -1473,6 +1476,7 @@ export default function MapScreen() {
   const handleLocateMePress = useCallback(async () => {
     const coordinate = await locateMe();
     if (!coordinate) {
+      Alert.alert('Standort nicht verfügbar', 'Prüfe deine Standortfreigabe in den Systemeinstellungen. Du kannst die Karte auch ohne Standort nutzen.');
       return;
     }
 
@@ -1507,7 +1511,7 @@ export default function MapScreen() {
       setIsStamping(true);
       try {
         await offlineVisits.record(localStamp);
-        setStampSuccessMessage(!isOnline ? 'Besuch auf diesem Gerät gespeichert.' : 'Besuch gespeichert.');
+        setStampSuccessMessage('Besuch auf diesem Gerät gespeichert.');
         setIsStampSuccessToastVisible(true);
       } catch (error) {
         Alert.alert('Besuch nicht gespeichert', error instanceof Error ? error.message : 'Bitte erneut versuchen.');
@@ -1708,6 +1712,7 @@ export default function MapScreen() {
       });
 
       const createdStamping = await createStamping(accessToken, stampId);
+      if (createdStamping.ID && claims?.sub) publishStampingSuccess({ owner: claims.sub, visitIds: [createdStamping.ID] });
       const persistedVisitTimestamp =
         createdStamping.visitedAt || createdStamping.createdAt || nowIsoTimestamp;
       const persistedVisit: VisitStamping = {
@@ -1834,8 +1839,7 @@ export default function MapScreen() {
           queryFn: () => fetchStampDetail(accessToken, stampId, claims?.sub, groupUserIds),
         })
         .catch(() => undefined);
-      setStampSuccessMessage('Stempel erfolgreich gesetzt.');
-      setIsStampSuccessToastVisible(true);
+
     } catch (nextError) {
       rollbackOptimisticUpdates();
       if (isNetworkUnavailableError(nextError)) {
@@ -1863,7 +1867,6 @@ export default function MapScreen() {
     data?.stamps,
     groupUserIds,
     isAuthenticated,
-    isOnline,
     isStamping,
     logout,
     queryClient,
@@ -2251,8 +2254,10 @@ export default function MapScreen() {
 
                     setIsSearchFocused(true);
                   }}
-                  placeholder="Suche Stempel oder Parkplatz"
-                  placeholderTextColor="#7b8776"
+                  accessibilityLabel="Stempelstellen und Parkplätze suchen"
+                  returnKeyType="search"
+                  placeholder={isAuthenticated ? "Stempel oder Ort" : "Stempel oder Parkplatz suchen"}
+                  placeholderTextColor={Design.color.muted}
                   style={styles.searchInput}
                   value={searchQuery}
                 />
@@ -2263,8 +2268,11 @@ export default function MapScreen() {
                 remoteSearchResults.length > 0 ||
                 isRemoteSearchLoading ||
                 remoteSearchError ||
-                showOfflineSearchHint) ? (
+                showOfflineSearchHint || searchQuery.trim().length > 0) ? (
                 <View style={styles.searchResultsPopover}>
+                  {searchQuery.trim().length > 0 && localSearchResults.length === 0 && remoteSearchResults.length === 0 && !isRemoteSearchLoading && !remoteSearchError && !showOfflineSearchHint ? (
+                    <Text accessibilityLiveRegion="polite" style={styles.searchStatusText}>Keine Treffer. Versuche eine andere Nummer oder einen Ortsnamen.</Text>
+                  ) : null}
                   {localSearchResults.length > 0 ? <Text style={styles.searchSectionTitle}>Kartenpunkte</Text> : null}
                   {localSearchResults.map((item) => (
                     <Pressable
@@ -2309,11 +2317,11 @@ export default function MapScreen() {
           </View>
 
           <View style={styles.secondaryControlsRow} testID="map-secondary-controls-row">
-            <Pressable onPress={handleManualRefresh} style={({ pressed }) => [styles.quickRefreshButton, pressed && styles.pressed]}>
-              <Feather color="#1e2a1e" name="refresh-cw" size={14} />
+            <Pressable accessibilityRole="button" accessibilityLabel="Karte aktualisieren" onPress={handleManualRefresh} style={({ pressed }) => [styles.quickRefreshButton, pressed && styles.pressed]}>
+              <Feather color={Design.color.ink} name="refresh-cw" size={14} />
             </Pressable>
-            <Pressable onPress={() => setIsFilterOpen(true)} style={({ pressed }) => [styles.filterButton, pressed && styles.pressed]}>
-              <Feather color="#1e2a1e" name="sliders" size={14} />
+            <Pressable accessibilityRole="button" accessibilityLabel="Kartenfilter öffnen" accessibilityState={{ expanded: isFilterOpen }} onPress={() => setIsFilterOpen(true)} style={({ pressed }) => [styles.filterButton, pressed && styles.pressed]}>
+              <Feather color={Design.color.ink} name="sliders" size={14} />
               <Text style={styles.filterButtonLabel}>Filter</Text>
             </Pressable>
           </View>
@@ -2321,7 +2329,7 @@ export default function MapScreen() {
 
         {!isMapNorthUp ? (
           <View style={[styles.compassControl, { top: topOverlayContentOffset }]}>
-            <Pressable onPress={handleResetNorthPress} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Karte nach Norden ausrichten" onPress={handleResetNorthPress} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
               <Feather color="#2e3a2e" name="compass" size={18} />
             </Pressable>
           </View>
@@ -2329,7 +2337,8 @@ export default function MapScreen() {
 
         <View style={[styles.zoomControls, { bottom: zoomControlsBottomOffset }]}>
           <Pressable
-            accessibilityLabel="Orte mich"
+            accessibilityLabel="Standort freigeben und anzeigen"
+            accessibilityState={{ busy: locationState === 'loading', disabled: locationState === 'loading' }}
             accessibilityRole="button"
             disabled={locationState === 'loading'}
             onPress={handleLocateMePress}
@@ -2338,12 +2347,12 @@ export default function MapScreen() {
               locationState === 'loading' && styles.disabledControl,
               pressed && styles.pressed,
             ]}>
-            <Feather color={userLocation ? '#2e3a2e' : '#9ba59a'} name="crosshair" size={19} />
+            <Feather color={Design.color.brand} name="crosshair" size={19} />
           </Pressable>
-          <Pressable onPress={() => zoomBy(1)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Karte vergrößern" onPress={() => zoomBy(1)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
             <Text style={styles.zoomButtonLabel}>+</Text>
           </Pressable>
-          <Pressable onPress={() => zoomBy(-1)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Karte verkleinern" onPress={() => zoomBy(-1)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
             <Text style={styles.zoomButtonLabel}>−</Text>
           </Pressable>
         </View>
@@ -2413,7 +2422,7 @@ export default function MapScreen() {
             <Pressable
               onPress={() => void handleOpenExternalPlaceInGoogleMaps()}
               style={({ pressed }) => [styles.externalPlaceButton, pressed && styles.pressed]}>
-              <Text style={styles.externalPlaceButtonLabel}>In Google Maps oeffnen</Text>
+              <Text style={styles.externalPlaceButtonLabel}>In Google Maps öffnen</Text>
             </Pressable>
           </View>
         ) : null}
@@ -2433,8 +2442,7 @@ export default function MapScreen() {
           onClose={() => setIsGroupStampDialogVisible(false)}
           onSuccess={() => {
             setIsGroupStampDialogVisible(false);
-            setStampSuccessMessage('Gruppenstempel erfolgreich gesetzt.');
-            setIsStampSuccessToastVisible(true);
+
             void authenticatedMapQuery.refetch();
           }}
           stampId={selectedItem.stampId}
@@ -2443,20 +2451,24 @@ export default function MapScreen() {
         />
       ) : null}
 
-      <Modal animationType="fade" onRequestClose={() => setIsFilterOpen(false)} transparent visible={isFilterOpen}>
+      <Modal accessibilityLabel="Kartenfilter" animationType="fade" onRequestClose={() => setIsFilterOpen(false)} transparent visible={isFilterOpen}>
         <View style={styles.modalBackdrop}>
           <Pressable onPress={() => setIsFilterOpen(false)} style={StyleSheet.absoluteFill} />
           <View style={[styles.filterPopover, { top: topOverlayContentOffset, width: filterPopoverWidth }]}>
-            <Text style={styles.filterTitle}>Filter</Text>
+            <Text accessibilityRole="header" style={styles.filterTitle}>Kartenfilter</Text>
+
 
             <Text style={styles.filterSectionLabel}>Status</Text>
             <View style={styles.filterChipRow}>
-              {VISIT_FILTERS.map((filter) => {
+              {(isAuthenticated ? VISIT_FILTERS : VISIT_FILTERS.filter((filter) => filter.key === 'all')).map((filter) => {
                 const disabled = !showStamps;
                 const isActive = visitFilter === filter.key;
 
                 return (
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isActive, disabled }}
+                    aria-pressed={isActive}
                     disabled={disabled}
                     key={filter.key}
                     onPress={() => setVisitFilter(filter.key)}
@@ -2482,6 +2494,11 @@ export default function MapScreen() {
             <Text style={styles.filterSectionLabel}>Inhalt</Text>
             <View style={styles.toggleList}>
               <Pressable
+                accessibilityRole="switch"
+                accessibilityLabel="Stempelstellen anzeigen"
+                accessibilityState={{ checked: showStamps }}
+                aria-checked={showStamps}
+                {...checkableKeyboardProps(() => setShowStamps((current) => !current))}
                 onPress={() => setShowStamps((current) => !current)}
                 style={({ pressed }) => [styles.toggleRow, pressed && styles.pressed]}>
                 <Text style={styles.toggleLabel}>Stempel</Text>
@@ -2491,15 +2508,24 @@ export default function MapScreen() {
               </Pressable>
 
               <Pressable
+                accessibilityRole="switch"
+                accessibilityLabel="Parkplätze anzeigen"
+                accessibilityState={{ checked: showParking }}
+                aria-checked={showParking}
+                {...checkableKeyboardProps(() => setShowParking((current) => !current))}
                 onPress={() => setShowParking((current) => !current)}
                 style={({ pressed }) => [styles.toggleRow, pressed && styles.pressed]}>
-                <Text style={styles.toggleLabel}>Parkplaetze</Text>
+                <Text style={styles.toggleLabel}>Parkplätze</Text>
                 <View style={[styles.togglePill, showParking && styles.togglePillActive]}>
                   <View style={[styles.toggleThumb, showParking && styles.toggleThumbActive]} />
                 </View>
               </Pressable>
 
             </View>
+            <Text style={styles.toggleHint}>Nummer: Stempelstelle · P: Parkplatz</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Kartenfilter schließen" onPress={() => setIsFilterOpen(false)} style={styles.filterChip}>
+              <Text style={styles.filterChipLabel}>Fertig</Text>
+            </Pressable>
           </View>
         </View>
       </Modal>
@@ -2527,7 +2553,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   refreshBadgeText: {
-    color: '#2e6b4b',
+    color: Design.color.brand,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -2550,18 +2576,19 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   errorBannerTitle: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },
   errorBannerBody: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
   },
   topControls: {
+    maxWidth: 600,
     position: 'absolute',
     left: 16,
     right: 16,
@@ -2589,9 +2616,9 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     flexDirection: 'row',
     gap: 6,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     borderRadius: 16,
-    minHeight: 40,
+    minHeight: Design.touch,
     paddingHorizontal: 16,
     paddingVertical: 10,
     alignItems: 'center',
@@ -2603,10 +2630,10 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   quickRefreshButton: {
-    width: 44,
-    height: 40,
+    width: Design.touch,
+    height: Design.touch,
     flexShrink: 0,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -2617,8 +2644,9 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   searchBar: {
-    width: '100%',
-    backgroundColor: '#ffffff',
+    minHeight: Design.touch,
+    justifyContent: 'center',    width: '100%',
+    backgroundColor: Design.color.surface,
     borderRadius: 18,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -2630,9 +2658,9 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     width: '100%',
-    color: '#1e2a1e',
-    fontSize: 13,
-    lineHeight: 18,
+    color: Design.color.ink,
+    fontSize: 16,
+    lineHeight: 22,
     padding: 0,
   },
   searchResultsPopover: {
@@ -2640,7 +2668,7 @@ const styles = StyleSheet.create({
     top: 52,
     left: 0,
     right: 0,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     borderRadius: 18,
     paddingVertical: 6,
     shadowColor: '#141e14',
@@ -2666,18 +2694,18 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   searchResultTitle: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
   },
   searchResultMeta: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 11,
     lineHeight: 14,
   },
   searchStatusText: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 16,
     paddingHorizontal: 14,
@@ -2699,7 +2727,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   externalPlaceTitle: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '700',
@@ -2724,7 +2752,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   filterButtonLabel: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
@@ -2742,7 +2770,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#141e14',
@@ -2844,7 +2872,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     borderRadius: 22,
     paddingHorizontal: 14,
     paddingTop: 12,
@@ -2878,13 +2906,13 @@ const styles = StyleSheet.create({
     minWidth: 1,
   },
   detailTitle: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },
   detailDescription: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -2908,7 +2936,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   detailBadgeTextVisited: {
-    color: '#2e6b4b',
+    color: Design.color.brand,
   },
   detailBadgeTextOpen: {
     color: '#7d5f52',
@@ -2917,7 +2945,7 @@ const styles = StyleSheet.create({
     color: '#2f7dd7',
   },
   detailMeta: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -2927,7 +2955,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   detailAction: {
-    backgroundColor: '#2e6b4b',
+    backgroundColor: Design.color.brand,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 10,
@@ -2935,7 +2963,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   detailActionLabel: {
-    color: '#f5f3ee',
+    color: Design.color.canvas,
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '500',
@@ -2948,7 +2976,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     width: 300,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 16,
@@ -2960,13 +2988,13 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   filterTitle: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 16,
     lineHeight: 20,
     fontWeight: '700',
   },
   filterSectionLabel: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '600',
@@ -2979,13 +3007,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterChip: {
-    borderRadius: 999,
+    minHeight: Design.touch,
+    justifyContent: 'center',    borderRadius: 999,
     backgroundColor: '#f2f0ea',
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   filterChipActive: {
-    backgroundColor: '#2e6b4b',
+    backgroundColor: Design.color.brand,
   },
   filterChipDisabled: {
     opacity: 0.5,
@@ -2997,7 +3026,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   filterChipLabelActive: {
-    color: '#f5f3ee',
+    color: Design.color.canvas,
   },
   filterChipLabelDisabled: {
     color: '#8b957f',
@@ -3006,7 +3035,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   toggleRow: {
-    flexDirection: 'row',
+    minHeight: Design.touch,    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
@@ -3017,13 +3046,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   toggleLabel: {
-    color: '#1e2a1e',
+    color: Design.color.ink,
     fontSize: 14,
     lineHeight: 18,
     fontWeight: '600',
   },
   toggleHint: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 16,
   },
@@ -3036,13 +3065,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   togglePillActive: {
-    backgroundColor: '#2e6b4b',
+    backgroundColor: Design.color.brand,
   },
   toggleThumb: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
   },
   toggleThumbActive: {
     alignSelf: 'flex-end',

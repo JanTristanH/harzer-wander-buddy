@@ -11,14 +11,34 @@ export const AppColors = {
   primary: '#2e6b4b',
   text: '#1e2a1e',
   textSecondary: '#2e3a2e',
-  textMuted: '#6b7a6b',
+  textMuted: '#526351',
+  primaryStrong: '#24543c',
+  // Forest to warm olive: a visible hero gradient with readable light text.
+  progressGradient: ['#244e38', '#397653', '#74633e'],
+  border: '#d7dfd3',
+  warning: '#71592f',
+  onPrimary: '#ffffff',
+  subtle: '#edf2ec',
   shadow: '#141e14',
   actionSurface: '#eef4ef',
   discoverySurface: '#fffaf0',
 } as const;
 
 export const Spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
-export const Radii = { sm: 12, card: 18, discovery: 22, pill: 999 } as const;
+export const Radii = { small: 8, sm: 12, card: 16, discovery: 22, sheet: 24, pill: 999 } as const;
+export const Layout = { touchTarget: 48, contentWidth: 720 } as const;
+
+// Compatibility names for migrated screens; canonical values live above.
+export const Design = {
+  color: {
+    canvas: AppColors.background, surface: AppColors.surface, ink: AppColors.text,
+    muted: AppColors.textMuted, brand: AppColors.primary, brandDeep: AppColors.primaryStrong,
+    onBrand: AppColors.onPrimary, subtle: AppColors.subtle, border: AppColors.border, warning: AppColors.warning,
+  },
+  radius: { small: Radii.small, control: Radii.sm, card: Radii.card, sheet: Radii.sheet, pill: Radii.pill },
+  touch: Layout.touchTarget,
+  contentWidth: Layout.contentWidth,
+} as const;
 
 export const Colors = {
   light: {

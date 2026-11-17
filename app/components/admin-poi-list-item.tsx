@@ -42,7 +42,7 @@ export function AdminPoiListItem({
           {item.name?.trim() || item.badgeLabel}
         </Text>
         <Text numberOfLines={2} style={styles.cardDescription}>
-          {item.description?.trim() || 'Keine Beschreibung verfuegbar.'}
+          {item.description?.trim() || 'Keine Beschreibung verfügbar.'}
         </Text>
 
         <View style={styles.cardMetaRow}>

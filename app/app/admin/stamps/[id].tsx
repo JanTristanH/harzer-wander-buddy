@@ -514,14 +514,14 @@ export default function AdminStampEditorScreen() {
     }
 
     if (!canPerformWrites || isOffline) {
-      Alert.alert('Offline', 'Admin-Aenderungen sind nur online verfuegbar.');
+      Alert.alert('Offline', 'Admin-Änderungen sind nur online verfügbar.');
       return;
     }
 
     setIsSaving(true);
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Admin-Aenderungen sind nur online verfuegbar.');
+      requireOnlineForWrite(canPerformWrites, 'Admin-Änderungen sind nur online verfügbar.');
       const nextPayload = validateInputs();
       const baseInvalidate = [
         queryClient.invalidateQueries({ queryKey: queryKeys.stampsOverview(claims?.sub) }),
@@ -631,7 +631,7 @@ export default function AdminStampEditorScreen() {
 
   const locationSearchHint = useMemo(() => {
     if (locationSearchQuery.trim().length < REMOTE_SEARCH_MIN_LENGTH) {
-      return `Mindestens ${REMOTE_SEARCH_MIN_LENGTH} Zeichen fuer Ortssuche eingeben.`;
+      return `Mindestens ${REMOTE_SEARCH_MIN_LENGTH} Zeichen für Ortssuche eingeben.`;
     }
 
     if (isLocationSearchLoading) {
@@ -933,7 +933,7 @@ export default function AdminStampEditorScreen() {
                   <>
                     <Feather color="#f5f3ee" name="save" size={15} />
                     <Text style={styles.primaryButtonLabel}>
-                      {isCreateMode ? 'Stempelstelle anlegen' : 'Aenderungen speichern'}
+                      {isCreateMode ? 'Stempelstelle anlegen' : 'Änderungen speichern'}
                     </Text>
                   </>
                 )}

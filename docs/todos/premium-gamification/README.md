@@ -1,6 +1,6 @@
 # TODOs: Premium-Gefühl und Gamification
 
-Stand: 14. Oktober 2026. Status: alle fünf Aufgaben offen, noch keine UI umgesetzt.
+Stand: 14. Oktober 2026. Status: TODO 02 umgesetzt; die übrigen vier Aufgaben sind offen.
 
 Ziel ist ein hochwertiges, motivierendes Sammelerlebnis: nächstes Ziel erkennen,
 Stempel sammeln, Fortschritt erleben und die eigene Sammlung präsentieren.

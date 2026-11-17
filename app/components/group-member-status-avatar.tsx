@@ -47,7 +47,7 @@ export function GroupMemberStatusAvatar({
         <Feather
           color={visited ? '#f5f3ee' : '#7a6a4a'}
           name={visited ? 'check' : 'x'}
-          size={8}
+          size={12}
         />
       </View>
     </View>
@@ -58,14 +58,14 @@ const styles = StyleSheet.create({
   statusBadge: {
     alignItems: 'center',
     borderColor: '#ffffff',
-    borderRadius: 7,
+    borderRadius: 9,
     borderWidth: 1.5,
     bottom: -2,
-    height: 13,
+    height: 18,
     justifyContent: 'center',
     position: 'absolute',
     right: -2,
-    width: 13,
+    width: 18,
   },
   statusBadgeVisited: {
     backgroundColor: '#2e6b4b',

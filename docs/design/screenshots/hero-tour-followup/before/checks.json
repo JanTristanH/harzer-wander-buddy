@@ -1,0 +1,27 @@
+{
+  "checks": [
+    {
+      "state": "empty",
+      "hintVisible": true
+    },
+    {
+      "state": "selected",
+      "hintCount": 1
+    },
+    {
+      "state": "added",
+      "hintCount": 1
+    },
+    {
+      "state": "search-next",
+      "hintCount": 1,
+      "pins": [
+        "1 • Brocken – Gipfelblick",
+        null
+      ]
+    }
+  ],
+  "pageErrors": [
+    "Error"
+  ]
+}

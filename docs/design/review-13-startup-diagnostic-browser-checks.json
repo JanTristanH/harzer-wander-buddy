@@ -1,0 +1,11 @@
+{
+  "checks": [
+    {
+      "flow": "capture continuation",
+      "passed": false,
+      "errorType": "Error"
+    }
+  ],
+  "errors": [],
+  "sourceHead": "6ab457621ff6bec4776129fe34c3145ed87cbbde"
+}
