@@ -1,3 +1,4 @@
+import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useQueryClient } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
@@ -50,17 +51,22 @@ export function NativeOfflineVisitsProvider({ children }: React.PropsWithChildre
   const flush = useCallback(async () => {
     if (!queue || !ready || queue.syncing || !queue.entries.some((entry) => entry.status === 'pending') || queueOwner.current !== nativeUserId || !nativeUserId) return;
     const owner = nativeUserId;
+    const confirmedIds: string[] = [];
     try {
       await queue.flush(async (entry) => {
         if (live.current.userId !== owner) return false;
         const token = await live.current.auth.getValidAccessToken();
         if (!token || live.current.userId !== owner || !live.current.isOnline) return false;
         await syncOfflineStamping(token, owner, entry);
+        confirmedIds.push(entry.id);
         // Keep the overlay until server queries have had a chance to refetch.
         if (live.current.userId === owner) await queryClient.invalidateQueries();
         return true;
       }, () => live.current.isOnline && live.current.userId === owner && AppState.currentState !== 'background',
       (error) => error instanceof HttpStatusError && error.status >= 400 && error.status < 500 && ![408, 429].includes(error.status));
+      if (live.current.userId === owner && confirmedIds.length) {
+        publishStampingSuccess({ owner, visitIds: confirmedIds });
+      }
     } catch {
       if (live.current.userId === owner) setStorageError(STORE_ERROR);
     }

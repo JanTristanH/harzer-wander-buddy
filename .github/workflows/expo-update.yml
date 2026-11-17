@@ -3,9 +3,6 @@ name: Expo OTA Update
 on:
   push:
     branches: [main]
-    paths:
-      - "app/**"
-      - ".github/workflows/expo-update.yml"
   workflow_dispatch:
     inputs:
       platform:
@@ -25,7 +22,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+    with:
+      force-full: ${{ github.event_name == 'workflow_dispatch' }}
+
   update:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:

@@ -1,5 +1,6 @@
 import { StampNoticeBadge } from '@/components/stamp-notice-badge';
 import { StampNoticesSection } from '@/components/stamp-notices-section';
+import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { useOfflineNotes } from '@/lib/offline-notes';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
@@ -870,7 +871,7 @@ function StampDetailContent() {
       setIsStamping(true);
       try {
         await offlineVisits.record(localStamp);
-        setStampSuccessMessage(isOffline ? 'Besuch auf diesem Gerät gespeichert.' : 'Besuch gespeichert.');
+        setStampSuccessMessage('Besuch auf diesem Gerät gespeichert.');
         setIsStampSuccessToastVisible(true);
       } catch (error) {
         Alert.alert('Besuch nicht gespeichert', error instanceof Error ? error.message : 'Bitte erneut versuchen.');
@@ -1070,6 +1071,7 @@ function StampDetailContent() {
       });
 
       const createdStamping = await createStamping(accessToken, stampId);
+      if (createdStamping.ID && claims?.sub) publishStampingSuccess({ owner: claims.sub, visitIds: [createdStamping.ID] });
       const persistedVisitTimestamp =
         createdStamping.visitedAt || createdStamping.createdAt || nowIsoTimestamp;
       const persistedVisit: VisitStamping = {
@@ -1168,8 +1170,7 @@ function StampDetailContent() {
 
       await queryClient.invalidateQueries();
       queryClient.removeQueries({ type: 'inactive' });
-      setStampSuccessMessage('Stempel erfolgreich gesetzt.');
-      setIsStampSuccessToastVisible(true);
+
     } catch (nextError) {
       rollbackOptimisticUpdates();
       if (isNetworkUnavailableError(nextError)) {
@@ -2450,8 +2451,7 @@ function StampDetailContent() {
         onClose={() => setIsGroupStampDialogVisible(false)}
         onSuccess={() => {
           setIsGroupStampDialogVisible(false);
-          setStampSuccessMessage('Gruppenstempel erfolgreich gesetzt.');
-          setIsStampSuccessToastVisible(true);
+
           void refetch();
         }}
         stampId={stamp.ID}

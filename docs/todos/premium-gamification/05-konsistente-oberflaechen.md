@@ -1,6 +1,9 @@
 # TODO 05: Typografie, Flächen und Bewegung vereinheitlichen
 
-Status: offen · Priorität: P1 · Aufwand: S–M
+Status: in PR #118; Android-Abnahme offen · Priorität: P1 · Aufwand: S–M
+
+
+Abgleich 06.11.2026: #118 enthält gemeinsame Farben, Aktionsgrößen, Suchfelder und responsive Darstellung. Die dort dokumentierten Abnahmegrenzen bleiben gültig.
 
 ## Beschreibung und Hintergrund
 

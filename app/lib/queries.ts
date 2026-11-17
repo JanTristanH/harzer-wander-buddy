@@ -114,7 +114,7 @@ export type TourDetailData = {
 export async function fetchStampsOverviewData(
   accessToken: string,
   userId?: string,
-  stampboxFetchMode: StampboxFetchMode = 'default',
+  stampboxFetchMode: StampboxFetchMode = 'validToday',
   groupUserIds?: string[]
 ): Promise<StampsOverviewData> {
   const effectiveGroupUserIds = canonicalGroupUserIds(userId, groupUserIds);
@@ -406,7 +406,7 @@ function getCachedSelfProfileOverview(
   } satisfies ProfileOverviewData;
 }
 
-function useAuthorizedRequest() {
+export function useAuthorizedRequest() {
   const { getValidAccessToken, logout } = useAuth();
 
   return async function authorizedRequest<T>(request: (token: string) => Promise<T>) {
@@ -595,9 +595,6 @@ export function useProfileOverviewQuery() {
       getCachedSelfProfileOverview(queryClient, claims, matchingCurrentUserProfile),
     queryFn: () =>
       authorizedRequest((token) => {
-        const cachedStampsOverview = queryClient.getQueryData<StampsOverviewData>(
-          queryKeys.stampsOverview(claims?.sub)
-        );
         const prefetchedCurrentUser = matchingCurrentUserProfile
           ? {
               id: matchingCurrentUserProfile.id,
@@ -615,8 +612,7 @@ export function useProfileOverviewQuery() {
         return fetchProfileOverview(
           token,
           claims?.sub,
-          prefetchedCurrentUser,
-          cachedStampsOverview?.stamps
+          prefetchedCurrentUser
         );
       }),
   });
