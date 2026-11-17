@@ -70,7 +70,7 @@ export function BadgeProfilePreview({
           </Text>
         ) : null}
         {editable ? (
-          <View style={[s.pencil, { top: 96, bottom: undefined }]}>
+          <View style={[s.pencil, { bottom: 28 }]}>
             <Feather name="edit-2" size={13} color="#596a4d" />
           </View>
         ) : null}
@@ -119,12 +119,12 @@ export function BadgeProfilePreview({
               <View
                 style={[
                   s.circle,
-                  { width: artSize + 8, height: artSize + 8 },
+                  { width: artSize + 8, height: entry ? undefined : artSize + 8, borderWidth: entry ? 0 : 1 },
                   !entry && { borderStyle: 'dashed' },
                 ]}
               >
                 {entry ? (
-                  <BadgeArtwork entry={entry} size={artSize} />
+                  <BadgeArtwork entry={entry} size={artSize} outlined />
                 ) : (
                   <Feather name="plus" size={27} color="#7b8972" />
                 )}
@@ -188,7 +188,6 @@ const s = StyleSheet.create({
   slot: { flex: 1, minWidth: 0, alignItems: 'center', gap: 10 },
   circle: {
     width: 84,
-    height: 84,
     borderWidth: 1,
     borderColor: '#b7c3ac',
     borderRadius: 50,
