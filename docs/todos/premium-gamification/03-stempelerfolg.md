@@ -1,6 +1,8 @@
 # TODO 03: Erfolgreiches Stempeln als Fortschrittsmoment gestalten
 
-Status: offen · Priorität: P1 · Aufwand: S–M
+Status: in PR #65; native Teilabnahme, Restfälle offen · Priorität: P1 · Aufwand: S–M
+
+Abgleich: Gemeinsames serverbestätigtes Erfolgsmodell, Mehrfach-/Wiederholungsbesuche, Gruppenbeiträge und Abzeichenmoment sind in #65 ergänzt. Technischer Stand und Abnahmegrenzen: [Stempelerfolg im offenen PR #65](https://github.com/JanTristanH/harzer-wander-buddy/blob/4a413b391d07042b94c96642311b163f32a3f601/docs/stamping-success.md). Die folgenden Kriterien bleiben die Abnahmegrundlage.
 
 ## Beschreibung und Hintergrund
 
