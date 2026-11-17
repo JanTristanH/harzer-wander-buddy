@@ -113,3 +113,26 @@ Bezahlte Laufzeiten erfüllen. Spätere Bestandsänderungen erst zur Verlängeru
 Quellen: `app/xTODO.md`, `backend/hwb/README.md`; aktuelle Tourenansichten unter `app/app/tours/`; `group-selector.tsx`, `group-stamp-dialog.tsx`; Automatik in `hwb-service.js`, `routingManager.js`, API-Helfer in `app/lib/api.ts`; ältere Oberfläche: `HikingRouteDialog.fragment.xml`.
 
 Billing, geteilte Passrechte und Bezahlschranken sind noch umzusetzen.
+
+## Technischer Abgleich vom 7. November 2026
+
+Die Preis- und Gruppenregeln oben behalten ihren jeweiligen Entscheidungsstatus. Der ältere Codebefund vom 15. Oktober ist inzwischen teilweise überholt:
+
+- develop enthält native Offline-Besuche/-Notizen (#85), Mehrfachauswahl (#113) und GPX-Export (#86).
+- Tourenautomatik einschließlich Gruppenmodi und neuer Leseansicht ist in offenem PR #91 implementiert; native Abnahme und Integration fehlen. Billing und Premium-Berechtigungen fehlen weiterhin.
+- Album, Zielmodell/-filter und bestätigter Stempelerfolg liegen in #65, Themenhefte in #88. #118 integriert #65 mit der UX-Überarbeitung; gemeinsame Webflows sind geprüft. Die vollständige Startkarten-Ausgestaltung ist damit nicht automatisch erledigt. Noch nicht in develop integriert.
+- Defekte, Sperrungen und moderierte Meldungen liegen in #89. Der offizielle Import wurde isoliert live geprüft; offene Zuordnungen und native Abnahme bleiben sichtbar.
+- Persönlicher Datenexport/Kontolöschung liegen in #63, der Auth-Anbieterwechsel in #119; technische Implementierung ist keine Produktions- oder Vertragsabnahme.
+- Native Wanderkarten liegen als Draft #87 vor. Echter begrenzter Download und WebGL-Darstellung derselben lokalen Daten sind geprüft; Expo-Adapter, native file-Templates und Flugmodus bleiben offen.
+
+Diese Punkte ersetzen keine Preisentscheidung. 7,99 €/Jahr, 2,99 €/14 Tage, fünf eingeladene Freunde und drei Automatik-Proben sind weiterhin Vorschläge. Manuelle Touren, Stempel, Kartenbasis und soziale Kernfunktionen bleiben gemäß bestätigter Founder-Vorgabe kostenlos.
+
+### Umsetzungsvorbereitung für Premium (noch keine Billing-Implementierung)
+
+1. Zuerst die bestätigten kostenlosen Kernaktionen ausdrücklich erhalten: Stempel, manuelle Touren, Teilen, Karte und soziale Grundfunktionen. Premium ist eine serverseitige Funktionsberechtigung, keine Adminrolle.
+2. Als Einstieg ausschließlich die Automatikfunktion `calculateHikingRoute` aus #91 prüfen; vorhandene Touren auch nach Ablauf weiterhin lesen, manuell bearbeiten und teilen können. Gruppenmitgliedschaft allein ist keine Freigabe privater Stempeldaten.
+3. Produktneutrale Laufzeitberechtigung mit Inhaber, Funktionsschlüssel, Beginn, Ende, Widerruf und Anbieterbeleg vorsehen. Aktivierung, Ablauf und Erstattungen anhand Serverzeit und verifizierter Anbieterereignisse behandeln, nicht anhand Clientangaben. Zahlungseingang und Rechtevergabe müssen idempotent sein.
+4. Pass-Mitglieder benötigen ausdrückliche Einladung/Annahme und zeitlich begrenzte Gruppenrechte. Maximalgröße und konkrete Freigaberegeln sind noch nicht beschlossen; dafür keine erfundene Grenze ausrollen. Bei Ablauf bleiben Sammlung und gespeicherte Touren erhalten.
+5. Vor Kaufoberfläche/Storeprodukten exakte Preise, Aktivierungsregeln, Probeumfang, Gruppenregeln und Verkaufskanal entscheiden. Danach Staging-Vertragsprüfungen für Ablauf, Widerruf, Wiederherstellung, Gruppenwechsel, Offline-Zustände und Umgehungsversuche durchführen.
+
+Diese Reihenfolge ist der vorbereitete technische Umsetzungsplan, kein bereits aktives Abo, keine neue Bezahlgrenze und keine Zusage über die vorgeschlagenen Preise. Die produktive CAP-/Data-API-Isolation und Auth-Abnahme müssen zuvor belastbar geklärt sein; #119 enthält den bestätigten Rechtebefund und den schreibgeschützten Runtime-Prüfpfad.

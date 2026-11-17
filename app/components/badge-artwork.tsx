@@ -21,8 +21,8 @@ const frames: Record<string, { active: number; locked: number }> = {
     locked: require('@/assets/images/badges/gold-locked.png'),
   },
   king: {
-    active: require('@/assets/images/badges/king.png'),
-    locked: require('@/assets/images/badges/king-locked.png'),
+    active: require('@/assets/images/badges/king-raised-crown.png'),
+    locked: require('@/assets/images/badges/king-raised-crown-locked.png'),
   },
   backpack: {
     active: require('@/assets/images/badges/backpack.png'),
@@ -67,6 +67,7 @@ export function BadgeArtwork({
   image,
   initials,
   locked = false,
+  outlined = false,
 }: {
   entry?: BadgeEntry;
   frame?: string;
@@ -74,12 +75,28 @@ export function BadgeArtwork({
   image?: string;
   initials?: string;
   locked?: boolean;
+  outlined?: boolean;
 }) {
   const { accessToken } = useAuth();
   const frameId = entry?.frame || frame || '';
   const artwork = frames[frameId];
-  const centerSize = size * (['prince', 'goethe', 'witch', 'border'].includes(frameId) ? 0.7 : 0.57);
+  // Align the raised-crown asset by its circular ring, excluding the crown
+  // and transparent margins. The ring stays centred; only the crown protrudes.
+  const artworkStyle = frameId === 'king'
+    ? {
+        position: 'absolute' as const,
+        width: size * (1254 / 936),
+        height: size * (1254 / 936),
+        left: size * (-154 / 936),
+        top: size * (-272 / 936),
+      }
+    : StyleSheet.absoluteFill;
+  const centerSize = size * (frameId === 'king' ? 0.64 : ['prince', 'goethe', 'witch', 'border'].includes(frameId) ? 0.7 : 0.57);
+  // Reserve the crown's full overhang for every frame, so neighbouring rings
+  // share a baseline and callers cannot collide with content above the badge.
+  const crownSpace = Math.ceil(size * (272 / 936)) + 4;
   return (
+    <View style={{ width: size, paddingTop: crownSpace }}>
     <View
       accessible={false}
       style={{
@@ -87,8 +104,10 @@ export function BadgeArtwork({
         height: size,
         alignItems: 'center',
         justifyContent: 'center',
+        overflow: 'visible',
       }}
     >
+      {outlined ? <View style={{ position: 'absolute', width: size + 8, height: size + 8, left: -4, top: -4, borderWidth: 1, borderColor: '#b7c3ac', borderRadius: (size + 8) / 2 }} /> : null}
       <View
         style={[
           styles.center,
@@ -129,7 +148,7 @@ export function BadgeArtwork({
           pointerEvents="none"
           source={locked ? artwork.locked : artwork.active}
           contentFit="contain"
-          style={[StyleSheet.absoluteFill, { opacity: locked ? 0.65 : 1 }]}
+          style={[artworkStyle, { opacity: locked ? 0.65 : 1 }]}
         />
       ) : (
         <View
@@ -139,6 +158,7 @@ export function BadgeArtwork({
           ]}
         />
       )}
+    </View>
     </View>
   );
 }

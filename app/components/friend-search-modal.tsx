@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { FriendsList } from '@/components/friends-list';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClearableSearchInput } from '@/components/clearable-search-input';
 import { AppColors, Fonts } from '@/constants/theme';
 import { type useFriendSearch } from '@/lib/use-friend-search';
@@ -23,6 +23,7 @@ export function FriendSearchModal({
   search: ReturnType<typeof useFriendSearch>;
   hint?: string;
 }) {
+  const insets = useSafeAreaInsets();
   const {
     isSearchModalVisible,
     handleSearchModalShow,
@@ -43,77 +44,86 @@ export function FriendSearchModal({
       visible={isSearchModalVisible}
       onRequestClose={closeSearchModal}
     >
-      <KeyboardAvoidingView
-        style={styles.modalOverlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <View style={styles.modalOverlay}>
         <Pressable style={styles.modalBackdrop} onPress={closeSearchModal} />
-        <SafeAreaView style={styles.modalSafeArea} pointerEvents="box-none">
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Freunde finden</Text>
-              <Pressable
-                accessibilityLabel="Suche schliessen"
-                onPress={closeSearchModal}
-                style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]}
-              >
-                <Feather color={AppColors.text} name="x" size={16} />
-              </Pressable>
-            </View>
-
-            <View style={styles.searchInputShell}>
-              <View style={styles.searchInputIconWrap}>
-                <Feather color={AppColors.textMuted} name="search" size={14} />
+        <View
+          style={[
+            styles.modalSafeArea,
+            { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 },
+          ]}
+          pointerEvents="box-none"
+        >
+          <KeyboardAvoidingView
+            style={styles.modalKeyboardArea}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={insets.top + 16}
+            pointerEvents="box-none"
+          >
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Freunde finden</Text>
+                <Pressable
+                  accessibilityLabel="Suche schliessen"
+                  onPress={closeSearchModal}
+                  style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]}
+                >
+                  <Feather color={AppColors.text} name="x" size={16} />
+                </Pressable>
               </View>
-              <ClearableSearchInput
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoFocus
-                ref={searchInputRef}
-                onChangeText={setSearchQuery}
-                placeholder="Name oder Nutzername suchen"
-                placeholderTextColor={AppColors.textMuted}
-                style={styles.searchInput}
-                value={searchQuery}
-              />
-            </View>
 
-            <ScrollView
-              style={styles.searchResultsScroll}
-              contentContainerStyle={styles.searchResultsColumn}
-              keyboardShouldPersistTaps="handled"
-            >
-              {isSearchLoading ? (
-                <View style={styles.searchStatusWrap}>
-                  <ActivityIndicator color={AppColors.primary} size="small" />
+              <View style={styles.searchInputShell}>
+                <View style={styles.searchInputIconWrap}>
+                  <Feather color={AppColors.textMuted} name="search" size={14} />
                 </View>
-              ) : null}
+                <ClearableSearchInput
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  ref={searchInputRef}
+                  onChangeText={setSearchQuery}
+                  placeholder="Name oder Nutzername suchen"
+                  placeholderTextColor={AppColors.textMuted}
+                  style={styles.searchInput}
+                  value={searchQuery}
+                />
+              </View>
 
-              {!isSearchLoading && searchError ? (
-                <Text style={styles.searchStatusText}>{searchError}</Text>
-              ) : null}
+              <ScrollView
+                style={styles.searchResultsScroll}
+                contentContainerStyle={styles.searchResultsColumn}
+                keyboardShouldPersistTaps="handled"
+              >
+                {isSearchLoading ? (
+                  <View style={styles.searchStatusWrap}>
+                    <ActivityIndicator color={AppColors.primary} size="small" />
+                  </View>
+                ) : null}
 
-              {!isSearchLoading && !searchError && searchQuery.trim().length < 2 ? (
-                <Text style={styles.searchStatusText}>
-                  Gib mindestens zwei Zeichen ein, um nach Freunden zu suchen.
-                </Text>
-              ) : null}
+                {!isSearchLoading && searchError ? (
+                  <Text style={styles.searchStatusText}>{searchError}</Text>
+                ) : null}
 
-              {!isSearchLoading &&
-              !searchError &&
-              searchQuery.trim().length >= 2 &&
-              searchResults.length === 0 ? (
-                <Text style={styles.searchStatusText}>Keine passenden Nutzer gefunden.</Text>
-              ) : null}
+                {!isSearchLoading && !searchError && searchQuery.trim().length < 2 ? (
+                  <Text style={styles.searchStatusText}>
+                    Gib mindestens zwei Zeichen ein, um nach Freunden zu suchen.
+                  </Text>
+                ) : null}
 
-              {!isSearchLoading && !searchError && searchResults.length > 0 ? (
-                <FriendsList items={searchListItems} />
-              ) : null}
-            </ScrollView>
-            {hint ? <Text style={styles.searchStatusText}>{hint}</Text> : null}
-          </View>
-        </SafeAreaView>
-      </KeyboardAvoidingView>
+                {!isSearchLoading &&
+                !searchError &&
+                searchQuery.trim().length >= 2 &&
+                searchResults.length === 0 ? (
+                  <Text style={styles.searchStatusText}>Keine passenden Nutzer gefunden.</Text>
+                ) : null}
+
+                {!isSearchLoading && !searchError && searchResults.length > 0 ? (
+                  <FriendsList items={searchListItems} />
+                ) : null}
+              </ScrollView>
+              {hint ? <Text style={styles.searchStatusText}>{hint}</Text> : null}
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </View>
     </Modal>
   );
 }
@@ -123,7 +133,8 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-start',
   },
-  modalSafeArea: { flex: 1, paddingVertical: 16 },
+  modalSafeArea: { flex: 1 },
+  modalKeyboardArea: { flex: 1 },
   searchResultsScroll: { flexGrow: 0, flexShrink: 1 },
   modalBackdrop: {
     ...StyleSheet.absoluteFillObject,

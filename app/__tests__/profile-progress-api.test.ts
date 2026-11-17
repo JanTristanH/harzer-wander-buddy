@@ -13,7 +13,7 @@ test('profile counts and visit names load stamps with the same owner filter as t
     name: `Stamp ${i + 1}`,
     hasVisited: true,
   }));
-  global.fetch = jest.fn(async (input) => {
+  global.fetch = jest.fn(async (input: unknown) => {
     const url = new URL(String(input));
     let value: unknown[] = [];
     if (
