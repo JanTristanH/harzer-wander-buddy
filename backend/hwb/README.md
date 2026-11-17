@@ -29,6 +29,13 @@ and container startup remain unchanged.
 
 ## Running this project
 
+The `napi-build-utils` override keeps SQLite's prebuilt-binary installer compatible
+with Node versions exposing N-API 10 or later. Version 1 compares N-API versions as
+strings, fails to select a supported binary, and unnecessarily falls back to a
+source build (which can fail with `No module named 'distutils'` on modern Python).
+After pulling this fix, run `npm i`; if SQLite was previously installed with
+`--ignore-scripts`, also run `npm rebuild sqlite3`.
+
 - run `cds watch` to start the backend
 - the frontend is also served via the cds server
   - Maintained web entry: http://localhost:4004/app/rnweb

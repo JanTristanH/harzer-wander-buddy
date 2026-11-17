@@ -1,5 +1,8 @@
 # Harzer Wanderbuddy app
 
+Aktueller iOS-Simulator-Stand, Build-Befehl und offene Tests:
+[Übergabe zum iOS Simulator](../docs/ios-simulator-handoff.md).
+
 Die öffentliche Website baut dieselbe Expo-App mit statischem Datenprofil:
 [Buildprofil und Datenadapter](../docs/public-stamp-catalogue.md).
 
