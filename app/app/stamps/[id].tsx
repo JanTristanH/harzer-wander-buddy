@@ -617,6 +617,16 @@ function StampDetailContent() {
       return;
     }
 
+    if (
+      typeof detail.stamp.latitude !== 'number' ||
+      !Number.isFinite(detail.stamp.latitude) ||
+      typeof detail.stamp.longitude !== 'number' ||
+      !Number.isFinite(detail.stamp.longitude)
+    ) {
+      Alert.alert('Kartenansicht nicht möglich', 'Diese Stempelstelle hat keine Koordinaten.');
+      return;
+    }
+
     handleAttemptNavigateAway(() => {
       router.push({
         pathname: '/(tabs)/map',

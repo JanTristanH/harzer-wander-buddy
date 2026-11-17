@@ -16,7 +16,7 @@ Die Konflikte aus der inzwischen per Squash integrierten Abzeichenarbeit sind au
 
 - Vollständiger Expo-Webexport bestanden. Eine erneute saubere Installation der im Lockfile fixierten Pakete behob zuvor eine lokale Metro-Modulauflösungsstörung; keine Paketversion wurde verändert.
 
-Die native Abnahme wird separat dokumentiert. Frühhere Simulatorberichte gelten nicht automatisch als Nachweis dieses integrierten Standes.
+Die native Abnahme einschließlich der Root-Nachprüfung des Kartenfixes ist in [pr123-native-merge-ready.md](pr123-native-merge-ready.md) dokumentiert. Die geprüften Kernabläufe sind erfolgreich; die Grenzen lokaler Besuche und der bereits befüllten Katalogdatenbank bleiben ausdrücklich ausgewiesen. Frühere Simulatorberichte werden nicht als zusätzlicher Nachweis dieses integrierten Standes umgedeutet.
 
 ## Rollout
 
