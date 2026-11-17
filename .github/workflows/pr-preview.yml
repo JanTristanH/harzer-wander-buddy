@@ -71,9 +71,9 @@ jobs:
             let action = previewAction({ pr, eventName: context.eventName,
               action: context.payload.action, label: context.payload.label?.name,
               requestedAction: process.env.REQUESTED_ACTION });
-            // Explicit label/manual requests and cleanup remain independent of paths.
+            // Reopening restores a cleaned-up preview; explicit requests and cleanup also bypass paths.
             if (action === 'deploy' && context.eventName === 'pull_request' &&
-                ['opened', 'synchronize', 'reopened'].includes(context.payload.action)) {
+                ['opened', 'synchronize'].includes(context.payload.action)) {
               const { previewChangesRelevant } = require('./.github/ci/select-jobs.cjs');
               if (!await previewChangesRelevant({ github, context, pr })) action = 'skip';
             }
