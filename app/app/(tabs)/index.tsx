@@ -1,3 +1,5 @@
+import { StampCatalogFilters } from '@/components/stamp-catalog-filters';
+import { matchesStampType, regularStampCounts, stampThemes, matchesStampTheme, SPECIAL_STAMP_COLOR, type StampTypeFilter } from '@/lib/stamp-catalog';
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
@@ -46,8 +48,8 @@ type RemovalPlan = { stampId: string; visitIds: string[] }[];
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: 'all', label: 'Alle' },
-  { key: 'visited', label: 'Besucht' },
   { key: 'open', label: 'Unbesucht' },
+  { key: 'visited', label: 'Besucht' },
   { key: 'near', label: 'In der Nähe' },
   { key: 'relocated', label: 'Verlegt' },
 ];
@@ -190,6 +192,8 @@ export default function StampsScreen() {
   const isGroupActive = isAuthenticated && selectedFriendIds.length > 0;
   const stampRowHeight = isGroupActive ? GROUP_STAMP_ROW_HEIGHT : KNOWN_STAMP_ROW_HEIGHT;
   const [query, setQuery] = useState('');
+  const [stampType, setStampType] = useState<StampTypeFilter>('all');
+  const [stampTheme, setStampTheme] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   useEffect(() => {
     if (goalParams.badgeGoal) {
@@ -249,7 +253,7 @@ export default function StampsScreen() {
   // Preserve selection across searches; reset when the filter or group changes.
   useEffect(() => {
     cancelSelection();
-  }, [activeFilter, selectedFriendKey, cancelSelection]);
+  }, [activeFilter, selectedFriendKey, cancelSelection, stampType, stampTheme]);
 
   const beginSelection = useCallback((stampId?: string) => {
     if (!isAuthenticated || bulkBusyRef.current) return;
@@ -461,8 +465,7 @@ export default function StampsScreen() {
     [stamps, userLocation]
   );
 
-  const visitedCount = useMemo(() => stamps.filter((stamp) => stamp.hasVisited).length, [stamps]);
-  const totalCount = stamps.length;
+  const { visited: visitedCount, total: totalCount } = useMemo(() => regularStampCounts(stamps), [stamps]);
   const progressPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
   const hasCompletedAllStamps =
     visitedCount >= COMPLETION_STAMP_COUNT && totalCount >= COMPLETION_STAMP_COUNT;
@@ -478,6 +481,7 @@ export default function StampsScreen() {
   const filteredStamps = useMemo(
     () =>
       stampDistances.filter(({ stamp, distanceKm }) => {
+        if (!matchesStampType(stamp, stampType) || !matchesStampTheme(stamp, stampTheme)) return false;
         if (goalParams.badgeGoal) {
           if (!badgeGoal || stamp.hasVisited) return false;
           if (goalStampIds ? !goalStampIds.has(stamp.ID) : !/^\d+$/.test(stamp.number) || Number(stamp.number) < 1 || Number(stamp.number) > 222) return false;
@@ -509,9 +513,9 @@ export default function StampsScreen() {
 
         return true;
       }),
-    [activeFilter, normalizedQuery, stampDistances,goalParams.badgeGoal,badgeGoal,goalStampIds]
+    [activeFilter, normalizedQuery, stampDistances,goalParams.badgeGoal,badgeGoal,goalStampIds,stampType,stampTheme]
   );
-  const isVisitedEmptyState = activeFilter === 'visited' && visitedCount === 0;
+  const isVisitedEmptyState = activeFilter === 'visited' && filteredStamps.length === 0;
   const isNearEmptyState = activeFilter === 'near' && filteredStamps.length === 0;
   const emptyStateTitle = isVisitedEmptyState
     ? 'Noch keine Stempelstellen besucht'
@@ -927,8 +931,8 @@ export default function StampsScreen() {
         {FILTERS.map((filter) => {
           const isActive = activeFilter === filter.key;
           return (
-            <Pressable
-              key={filter.key}
+            <React.Fragment key={filter.key}><Pressable
+              accessibilityRole="button" accessibilityState={{ selected: isActive }}
               onPress={() => setActiveFilter(filter.key)}
               style={({ pressed }) => [
                 styles.filterPill,
@@ -939,9 +943,23 @@ export default function StampsScreen() {
                 {filter.label}
               </Text>
             </Pressable>
+            {filter.key === 'open' ? <Pressable accessibilityRole="button" accessibilityState={{ selected: stampType === 'special' }}
+              onPress={() => { setStampType(current => current === 'special' ? 'all' : 'special'); setStampTheme(''); }}
+              style={({ pressed }) => [styles.filterPill, styles.specialFilterPill, stampType === 'special' && styles.specialFilterPillActive, pressed && styles.filterPillPressed]}>
+              <Text style={[styles.filterPillLabel, styles.specialFilterLabel, stampType === 'special' && styles.filterPillLabelActive]}>Sonderstempel</Text>
+            </Pressable> : null}</React.Fragment>
           );
         })}
+        {(['regular'] as const).map(type => <Pressable key={type}
+          accessibilityRole="button" accessibilityState={{ selected: stampType === type }}
+          onPress={() => { setStampType(current => current === type ? 'all' : type); setStampTheme(''); }}
+          style={({ pressed }) => [styles.filterPill, stampType === type && styles.filterPillActive, pressed && styles.filterPillPressed]}>
+          <Text style={[styles.filterPillLabel, stampType === type && styles.filterPillLabelActive]}>Regulär</Text>
+        </Pressable>)}
       </ScrollView>
+      {stampType === 'special' ? <StampCatalogFilters themeOnly includeBadgeRelevant type={stampType} theme={stampTheme}
+        themes={[...new Set(stamps.filter(stamp => matchesStampType(stamp, 'special')).flatMap(stampThemes))].sort()} onTypeChange={setStampType}
+        onThemeChange={setStampTheme} /> : null}
 
       {activeFilter === 'near' && locationState !== 'granted' ? (
         <Text style={styles.filterHint}>
@@ -949,7 +967,7 @@ export default function StampsScreen() {
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router]);
+  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router,stamps,stampType,stampTheme]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {
@@ -1519,6 +1537,16 @@ const styles = StyleSheet.create({
   },
   filterPillActive: {
     backgroundColor: '#2e6b4b',
+  },
+  specialFilterPill: {
+    backgroundColor: '#f0e9f8',
+  },
+  specialFilterPillActive: {
+    backgroundColor: SPECIAL_STAMP_COLOR,
+  },
+  specialFilterLabel: {
+    color: SPECIAL_STAMP_COLOR,
+    fontWeight: '600',
   },
   filterPillPressed: {
     opacity: 0.85,

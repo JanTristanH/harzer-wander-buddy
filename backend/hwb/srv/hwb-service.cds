@@ -99,6 +99,20 @@ service api @(requires: 'authenticated-user') {
         provider         : String;
     };
 
+    @readonly
+    @requires: 'admin'
+    entity StampNotices as projection on db.StampNotices;
+
+    action reportStampNotice(stampId : UUID, kind : String, message : String) returns UUID;
+    @requires: 'admin'
+    action reviewStampNotice(noticeId : UUID, status : String) returns String;
+    // Preview and sync return JSON to include unmatched source entries.
+    @requires: 'admin'
+    action syncOfficialNotices(preview : Boolean) returns LargeString;
+
+    @requires: 'admin'
+    action initializeSpecialStamps(preview : Boolean) returns LargeString;
+
     type ImageCompressionResult {
         processed : Integer;
         compressed : Integer;
@@ -113,6 +127,60 @@ service api @(requires: 'authenticated-user') {
         quality : Integer;
         failedIds : many UUID;
     };
+
+    type ThemeStampInput {
+        stampId : UUID;
+        required : Boolean;
+    };
+    type ThemeStampStatus {
+        stampId : UUID;
+        number : String;
+        name : String;
+        stampType : String;
+        required : Boolean;
+        visited : Boolean;
+    };
+    type ThemeCatalogItem {
+        ID : UUID;
+        code : String;
+        edition : String;
+        name : String;
+        kind : String;
+        badgeId : String;
+        sourceUrl : String;
+        rulesNote : String;
+        expectedStampCount : Integer;
+        collectedCount : Integer;
+        requiredCount : Integer;
+        requiredCollected : Integer;
+        optionalCollected : Integer;
+        minimumOptionalCount : Integer;
+        regularVisitTarget : Integer;
+        regularVisited : Integer;
+        complete : Boolean;
+        stamps : many ThemeStampStatus;
+    };
+    @readonly
+    @restrict: [{ grant: 'READ', to: 'admin' }]
+    entity ThemeCollections as projection on db.ThemeCollections;
+    @readonly
+    @restrict: [{ grant: 'READ', to: 'admin' }]
+    entity ThemeStampLinks as projection on db.ThemeStampLinks;
+
+    function getThemeCatalog() returns many ThemeCatalogItem;
+    @requires: 'admin'
+    function getThemeMappingReport() returns String;
+
+    @requires: 'admin'
+    action saveThemeCollection(ID : UUID, revision : Integer, code : String, edition : String,
+        name : String, kind : String, badgeId : String, sourceUrl : String, reviewedAt : Date, rulesNote : String,
+        expectedStampCount : Integer, minimumOptionalCount : Integer, regularVisitTarget : Integer,
+        published : Boolean, entries : many ThemeStampInput) returns ThemeCollections;
+
+    @requires: 'admin'
+    action createSpecialStamp(catalogKey : String, number : String, name : String,
+        latitude : Double, longitude : Double, sourceUrl : String,
+        validFrom : Timestamp, validTo : Timestamp) returns Stampboxes;
 
     @requires: 'admin'
     action compressExistingImages(batchSize : Integer, afterId : UUID) returns ImageCompressionResult;
@@ -354,7 +422,7 @@ service api @(requires: 'authenticated-user') {
                     imageCaption,
                     description,
                     'stamp' as poiType   : String
-            }
+            } where latitude is not null and longitude is not null
         union all
             select from ParkingSpots {
                 key ID,
@@ -367,7 +435,7 @@ service api @(requires: 'authenticated-user') {
                     ''        as imageCaption : String(2048),
                     description,
                     'parking' as poiType : String
-            };
+            } where latitude is not null and longitude is not null;
 
 
     entity Stampings @(restrict: [
@@ -435,6 +503,8 @@ service api @(requires: 'authenticated-user') {
         select from db.Stampboxes as Stampboxes
         join db.Stampboxes as NeighborsBox
             on Stampboxes.ID != NeighborsBox.ID
+              and Stampboxes.latitude is not null and Stampboxes.longitude is not null
+              and NeighborsBox.latitude is not null and NeighborsBox.longitude is not null
         {
             key Stampboxes.ID,
             key NeighborsBox.ID     as NeighborsID,
@@ -474,6 +544,8 @@ service api @(requires: 'authenticated-user') {
         select from db.Stampboxes as Stampboxes
         join db.ParkingSpots as Neighbors
             on Stampboxes.ID != Neighbors.ID
+              and Stampboxes.latitude is not null and Stampboxes.longitude is not null
+              and Neighbors.latitude is not null and Neighbors.longitude is not null
         {
             key Stampboxes.ID,
             key Neighbors.ID as NeighborsID,
@@ -508,6 +580,8 @@ service api @(requires: 'authenticated-user') {
         select from db.ParkingSpots as Parking
         join db.Stampboxes as NeighborsBox
             on Parking.ID != NeighborsBox.ID
+              and Parking.latitude is not null and Parking.longitude is not null
+              and NeighborsBox.latitude is not null and NeighborsBox.longitude is not null
         {
             key Parking.ID,
             key NeighborsBox.ID     as NeighborsID,
@@ -544,6 +618,8 @@ service api @(requires: 'authenticated-user') {
         select from db.ParkingSpots as Parking
         join db.ParkingSpots as Neighbors
             on Parking.ID != Neighbors.ID
+              and Parking.latitude is not null and Parking.longitude is not null
+              and Neighbors.latitude is not null and Neighbors.longitude is not null
         {
             key Parking.ID,
             key Neighbors.ID as NeighborsID,
@@ -689,15 +765,25 @@ service api @(requires: 'authenticated-user') {
 
 }
 
+@impl: './public.js'
 service public @(requires: 'any') {
     @readonly
     entity Stampboxes as
         projection on db.Stampboxes {
             ID,
             number,
+            stampType,
+            catalogKey,
+            themeKeys,
+            sourceUrl,
+            sourceCheckedAt,
+            locationStatus,
+            availability,
+            identityStatus,
             orderBy,
             name,
             description,
+            activeNotices,
             heroImageUrl,
             image,
             imageCaption,
