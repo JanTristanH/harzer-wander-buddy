@@ -18,6 +18,17 @@ trap cleanup EXIT
 export PREVIEW_URL="http://127.0.0.1:$preview_port"
 for attempt in {1..24}; do
   if curl --fail --silent --max-time 2 "$PREVIEW_URL/app/rnweb/preview.json" >/dev/null; then
+    # A missing init.js used to leave sync unusable although normal reads passed.
+    docker exec "$container" node -e '
+      const assert = require("node:assert/strict");
+      const sqlite = require("sqlite3");
+      const db = new sqlite.Database("/tmp/hwb-preview.sqlite", sqlite.OPEN_READONLY);
+      db.get("SELECT ID FROM hwb_db_NoticeSyncState WHERE ID = ?", ["official"], (error, row) => {
+        db.close();
+        assert.ifError(error);
+        assert.equal(row?.ID, "official", "Official notice sync lock must be seeded");
+      });
+    '
     node scripts/smoke-pr-preview.cjs
     exit 0
   fi

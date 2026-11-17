@@ -103,6 +103,8 @@ service api @(requires: 'authenticated-user') {
     @requires: 'admin'
     entity StampNotices as projection on db.StampNotices;
 
+    type StampNoticeReportCooldown { until : Timestamp; };
+    function getStampNoticeReportCooldown(stampId : UUID) returns StampNoticeReportCooldown;
     action reportStampNotice(stampId : UUID, kind : String, message : String) returns UUID;
     @requires: 'admin'
     action reviewStampNotice(noticeId : UUID, status : String) returns String;

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchNoticeReports,
@@ -73,6 +73,13 @@ export function AdminNoticesPanel() {
         <Text style={styles.link}>
           {busy ? "Bitte warten …" : "Offizielle Quelle prüfen (Vorschau)"}
         </Text>
+      </Pressable>
+      <Pressable
+        accessibilityRole="link"
+        onPress={() => void Linking.openURL("https://www.harzer-wandernadel.de/defektmeldungen/")}
+        style={styles.button}
+      >
+        <Text style={styles.link}>Offizielle Webseite öffnen ↗</Text>
       </Pressable>
       {sync ? (
         <View style={styles.preview}>

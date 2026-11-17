@@ -143,6 +143,14 @@ test("moderation, privacy, authorization and official reconciliation", async () 
   });
   assert.equal(created.status, 200, JSON.stringify(created.body));
   const ID = created.body.value;
+  const cooldownPath = `api/getStampNoticeReportCooldown(stampId=${stampId})`;
+  const cooldown = await request(cooldownPath);
+  assert.equal(cooldown.status, 200);
+  assert.ok(Date.parse(cooldown.body.until) > Date.now() + 23 * 60 * 60 * 1000);
+  assert.equal((await request(cooldownPath, "admin")).body.until, null);
+  assert.equal((await request(`api/getStampNoticeReportCooldown(stampId=${secondId})`)).body.until, null);
+  const repeat = () => request("api/reportStampNotice", "alice", { stampId, kind: "defect", message: "Erneute Meldung nach Prüfung." });
+  assert.equal((await repeat()).status, 429);
   const readPublic = async () => {
     const res = await request(
       `public/Stampboxes(${stampId})?$select=ID,activeNotices`,
@@ -207,6 +215,10 @@ test("moderation, privacy, authorization and official reconciliation", async () 
     200,
   );
   assert.deepEqual(await readPublic(), []);
+  assert.equal((await repeat()).status, 429, "moderation does not remove the cooldown");
+  await UPDATE(db.entities("hwb.db").StampNotices).set({ createdAt: new Date(Date.now() - 86400001).toISOString() }).where({ ID });
+  assert.equal((await request(cooldownPath)).body.until, null);
+  assert.equal((await repeat()).status, 200, "reporting is allowed after 24 hours");
   let result = await request("api/syncOfficialNotices", "admin", {
     preview: true,
   });

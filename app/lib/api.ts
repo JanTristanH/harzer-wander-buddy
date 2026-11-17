@@ -4028,6 +4028,14 @@ export async function fetchOwnStampings(accessToken: string, stampId: string, cu
   }
 }
 
+export async function fetchStampNoticeReportCooldown(accessToken: string, stampId: string) {
+  const result = await fetchOData<{ until: string | null }>(
+    accessToken,
+    buildUrl(`getStampNoticeReportCooldown(stampId=${stampId})`),
+  );
+  return result.until;
+}
+
 export function reportStampNotice(accessToken: string, stampId: string, kind: StampNotice['kind'], message: string) {
   return mutateOData(accessToken, buildUrl('reportStampNotice'), {
     method: 'POST', body: JSON.stringify({ stampId, kind, message }),
