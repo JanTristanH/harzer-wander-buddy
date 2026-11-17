@@ -1,6 +1,6 @@
 # TODO 02: Profil in ein sichtbares Abzeichenalbum erweitern
 
-Status: in PR #65; native Abnahme offen · Priorität: P1 · Aufwand: M
+Status: in PR #65; native Teilabnahme, Restfälle offen · Priorität: P1 · Aufwand: M
 
 Abgleich 07.11.2026: Album und Profilbearbeitung sind in #65 umgesetzt und mit #118 im Web integriert geprüft. Native Profilbild-Gesten bleiben offen. Technische Implementierung ersetzt keinen physischen offiziellen Nachweis.
 
@@ -19,9 +19,9 @@ Rahmen werden am Avatar und an Abzeichenmotiven eingesetzt; Titel, Avatarrahmen
 und bis zu drei hervorgehobene Abzeichen sind unabhängig voneinander wählbar.
 
 Regeln, Datenmodell, Grafik-Prompts und Prüfung sind in
-[Abzeichenalbum](../../abzeichenalbum.md) dokumentiert. Screenshots der
+[Abzeichenalbum im offenen PR #65](https://github.com/JanTristanH/harzer-wander-buddy/blob/4a413b391d07042b94c96642311b163f32a3f601/docs/abzeichenalbum.md) dokumentiert. Screenshots der
 tatsächlichen lokalen UI liegen unter
-[Abzeichenalbum-Screenshots](../../screenshots/abzeichenalbum/).
+[Abzeichenalbum-Screenshots im offenen PR #65](https://github.com/JanTristanH/harzer-wander-buddy/tree/4a413b391d07042b94c96642311b163f32a3f601/docs/screenshots/abzeichenalbum).
 Die gemeinsame Backend-Berechnung steht für TODO 01 und 03 bereit; deren
 zusätzliche Zielkarte und Erfolgsanimation sind weiterhin eigene Aufgaben.
 
