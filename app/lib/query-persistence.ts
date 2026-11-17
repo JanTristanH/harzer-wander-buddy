@@ -1,3 +1,4 @@
+import { defaultShouldDehydrateQuery, type Query } from '@tanstack/react-query';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import { isStaticWebsite } from '@/lib/static-website';
@@ -13,6 +14,10 @@ export const queryPersister = createAsyncStoragePersister({
 
 export const queryPersistOptions = {
   persister: queryPersister,
+  dehydrateOptions: {
+    shouldDehydrateQuery: (query: Query) =>
+      query.queryKey[0] !== 'pendingNoticeCount' && defaultShouldDehydrateQuery(query),
+  },
   maxAge: QUERY_PERSISTENCE_MAX_AGE_MS,
   buster: isStaticWebsite
     ? `static-${process.env.EXPO_PUBLIC_STATIC_REVISION || 'preview'}`

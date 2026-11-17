@@ -142,6 +142,9 @@ test("moderation, privacy, authorization and official reconciliation", async () 
     message: "Der Zugang ist durch umgestürzte Bäume versperrt.",
   });
   assert.equal(created.status, 200, JSON.stringify(created.body));
+  const pendingCount = "api/StampNotices/$count?$filter=source eq 'community' and status eq 'pending'";
+  assert.equal((await request(pendingCount)).status, 403);
+  assert.deepEqual(await request(pendingCount, "admin"), { status: 200, body: 1 });
   const ID = created.body.value;
   const cooldownPath = `api/getStampNoticeReportCooldown(stampId=${stampId})`;
   const cooldown = await request(cooldownPath);
@@ -174,6 +177,7 @@ test("moderation, privacy, authorization and official reconciliation", async () 
     ).status,
     200,
   );
+  assert.deepEqual(await request(pendingCount, "admin"), { status: 200, body: 0 });
   const published = await readPublic();
   assert.equal(published.length, 1);
   assert.equal(published[0].source, "community");

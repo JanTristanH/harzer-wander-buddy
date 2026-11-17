@@ -6,6 +6,7 @@ import {
   type QueryClient,
   type QueryKey,
 } from '@tanstack/react-query';
+import { useConnectivity } from '@/lib/connectivity';
 import { Platform } from 'react-native';
 import { useOfflineVisitData } from '@/lib/offline-visit-overlay';
 
@@ -13,6 +14,7 @@ import {
   createTour,
   deleteTour,
   fetchAllPointsOfInterest,
+  fetchPendingNoticeCount,
   fetchParkingDetail,
   fetchPublicParkingDetail,
   fetchFriendsOverview,
@@ -425,6 +427,26 @@ export function useAuthorizedRequest() {
       throw error;
     }
   };
+}
+
+export function usePendingNoticeBadge(active: boolean) {
+  const claims = useIdTokenClaims<AuthClaims>();
+  const { accessToken, isAuthenticated, isOffline } = useAuth();
+  const { isOnline } = useConnectivity();
+  const authorizedRequest = useAuthorizedRequest();
+  const enabled = active && isAuthenticated && !isOffline && isOnline && Boolean(accessToken && claims?.sub);
+  const count = useQuery({
+    queryKey: ['pendingNoticeCount', claims?.sub],
+    queryFn: () => authorizedRequest(fetchPendingNoticeCount),
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+  if (!enabled || !count.isSuccess || count.data <= 0) return undefined;
+  return count.data === 1 ? '1 offene Meldung' : `${count.data} offene Meldungen`;
 }
 
 export function useServerInfoQuery(enabled: boolean) {

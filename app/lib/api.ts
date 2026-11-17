@@ -4090,6 +4090,12 @@ export function reportStampNotice(accessToken: string, stampId: string, kind: St
     method: 'POST', body: JSON.stringify({ stampId, kind, message }),
   });
 }
+export function fetchPendingNoticeCount(accessToken: string) {
+  return fetchOData<number>(accessToken, buildUrl('StampNotices/$count', {
+    filter: "source eq 'community' and status eq 'pending'",
+  }));
+}
+
 export async function fetchNoticeReports(accessToken: string) {
   const reports: StampNoticeReport[] = [];
   const pageSize = 250;
