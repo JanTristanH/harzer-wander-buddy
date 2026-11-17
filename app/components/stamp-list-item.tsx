@@ -11,7 +11,9 @@ import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 
 // Safari owns long presses unless text selection and its native callout are disabled.
-const webCardInteractionStyle: (ViewStyle & { userSelect: 'none'; WebkitUserSelect: string; WebkitTouchCallout: string }) | undefined = Platform.OS === 'web' ? {
+const webCardInteractionStyle: (ViewStyle & {
+  userSelect: 'none'; WebkitUserSelect: string; WebkitTouchCallout: string;
+}) | undefined = Platform.OS === 'web' ? {
   userSelect: 'none' as const, WebkitUserSelect: 'none', WebkitTouchCallout: 'none',
 } : undefined;
 const webCardInteractionProps = Platform.OS === 'web' ? {

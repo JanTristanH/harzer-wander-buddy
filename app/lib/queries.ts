@@ -793,6 +793,7 @@ export function useToursOverviewQuery(options?: {
 
   return useQuery<Tour[]>({
     ...REMOTE_VISIT_REFETCH_OPTIONS,
+    placeholderData: keepPreviousData,
     queryKey: queryKeys.toursOverview(claims?.sub, groupUserIds),
     enabled: Boolean(accessToken && isAuthenticated),
     queryFn: () =>
