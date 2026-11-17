@@ -1,3 +1,4 @@
+import { StampNoticeBadge } from '@/components/stamp-notice-badge';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -12,6 +13,7 @@ export function StampRow({ stamp }: { stamp: Stampbox }) {
         </View>
         <View style={styles.headerCopy}>
           <Text style={styles.title}>{stamp.name}</Text>
+          <StampNoticeBadge value={stamp.activeNotices} />
           <Text style={styles.meta}>
             {stamp.hasVisited ? 'Visited' : 'Open'} · Group {stamp.totalGroupStampings ?? 0}
           </Text>

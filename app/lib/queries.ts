@@ -6,6 +6,7 @@ import {
   type QueryClient,
   type QueryKey,
 } from '@tanstack/react-query';
+import { useConnectivity } from '@/lib/connectivity';
 import { Platform } from 'react-native';
 import { useOfflineVisitData } from '@/lib/offline-visit-overlay';
 
@@ -13,6 +14,7 @@ import {
   createTour,
   deleteTour,
   fetchAllPointsOfInterest,
+  fetchPendingNoticeCount,
   fetchParkingDetail,
   fetchPublicParkingDetail,
   fetchFriendsOverview,
@@ -55,6 +57,13 @@ type AuthClaims = {
   picture?: string;
 };
 
+const NOTICE_REFETCH_OPTIONS = {
+  staleTime: 5 * 60 * 1000,
+  refetchOnMount: true,
+  refetchOnWindowFocus: true,
+  refetchOnReconnect: true,
+  refetchInterval: 5 * 60 * 1000,
+} as const;
 const MAP_AND_LIST_QUERY_GC_TIME = Platform.OS === 'web' ? 30 * 60 * 1000 : undefined;
 const DETAIL_QUERY_GC_TIME = Platform.OS === 'web' ? 15 * 60 * 1000 : undefined;
 const ROUTE_QUERY_GC_TIME = Platform.OS === 'web' ? 10 * 60 * 1000 : undefined;
@@ -420,6 +429,26 @@ export function useAuthorizedRequest() {
   };
 }
 
+export function usePendingNoticeBadge(active: boolean) {
+  const claims = useIdTokenClaims<AuthClaims>();
+  const { accessToken, isAuthenticated, isOffline } = useAuth();
+  const { isOnline } = useConnectivity();
+  const authorizedRequest = useAuthorizedRequest();
+  const enabled = active && isAuthenticated && !isOffline && isOnline && Boolean(accessToken && claims?.sub);
+  const count = useQuery({
+    queryKey: ['pendingNoticeCount', claims?.sub],
+    queryFn: () => authorizedRequest(fetchPendingNoticeCount),
+    enabled,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    refetchOnWindowFocus: true,
+  });
+  if (!enabled || !count.isSuccess || count.data <= 0) return undefined;
+  return count.data === 1 ? '1 offene Meldung' : `${count.data} offene Meldungen`;
+}
+
 export function useServerInfoQuery(enabled: boolean) {
   const { accessToken, isAuthenticated } = useAuth();
   const authorizedRequest = useAuthorizedRequest();
@@ -439,6 +468,7 @@ export function useStampsOverviewQuery() {
   const authorizedRequest = useAuthorizedRequest();
 
   const query = useQuery<StampsOverviewData>({
+    ...NOTICE_REFETCH_OPTIONS,
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampsOverview(claims?.sub),
     enabled: Boolean(accessToken && isAuthenticated),
@@ -474,6 +504,7 @@ export function useFilteredStampsOverviewQuery(
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   const query = useQuery<StampsOverviewData>({
+    ...NOTICE_REFETCH_OPTIONS,
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampsOverviewByFilter(claims?.sub, filter, groupUserIds),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
@@ -496,6 +527,7 @@ export function useGuestFilteredStampsOverviewQuery(
   const stampboxFetchMode: StampboxFetchMode = filter;
 
   return useQuery<StampsOverviewData>({
+    ...NOTICE_REFETCH_OPTIONS,
     queryKey: queryKeys.stampsOverviewByFilter(undefined, filter),
     enabled: options?.enabled ?? true,
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
@@ -514,6 +546,7 @@ export function useMapDataQuery(options?: {
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   const query = useQuery<MapData>({
+    ...NOTICE_REFETCH_OPTIONS,
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.mapData(claims?.sub, groupUserIds),
     enabled: (options?.enabled ?? true) && Boolean(accessToken && isAuthenticated),
@@ -521,19 +554,11 @@ export function useMapDataQuery(options?: {
     placeholderData: () => getCachedMapData(queryClient, claims?.sub, groupUserIds),
     queryFn: () =>
       authorizedRequest((token) => {
-        const cachedStampsOverview = getReusableQueryData<StampsOverviewData>(
-          queryClient,
-          [
-            queryKeys.stampsOverviewByFilter(claims?.sub, 'validToday', groupUserIds),
-            queryKeys.stampsOverview(claims?.sub, groupUserIds),
-          ]
-        );
-
         return fetchMapData(
           token,
           claims?.sub,
-          cachedStampsOverview?.stamps,
-          cachedStampsOverview?.lastVisited,
+          undefined,
+          undefined,
           'validToday',
           groupUserIds
         );
@@ -549,19 +574,14 @@ export function useGuestMapDataQuery(options?: {
   const queryClient = useQueryClient();
 
   return useQuery<MapData>({
+    ...NOTICE_REFETCH_OPTIONS,
     queryKey: queryKeys.mapData(undefined),
     enabled: options?.enabled ?? true,
     gcTime: MAP_AND_LIST_QUERY_GC_TIME,
     placeholderData: () => getCachedMapData(queryClient, undefined),
     queryFn: () => {
-      const cachedStampsOverview =
-        queryClient.getQueryData<StampsOverviewData>(
-          queryKeys.stampsOverviewByFilter(undefined, 'validToday')
-        ) ??
-        queryClient.getQueryData<StampsOverviewData>(queryKeys.stampsOverview(undefined));
-
       return fetchPublicMapData(
-        cachedStampsOverview?.stamps,
+        undefined,
         'validToday'
       );
     },
@@ -635,6 +655,7 @@ export function useStampDetailQuery(
   const groupUserIds = canonicalGroupUserIds(claims?.sub, options?.groupUserIds);
 
   const query = useQuery<StampDetailData>({
+    ...NOTICE_REFETCH_OPTIONS,
     ...REMOTE_VISIT_REFETCH_OPTIONS,
     queryKey: queryKeys.stampDetail(claims?.sub, stampId, groupUserIds),
     enabled: Boolean(stampId && (isAuthenticated ? accessToken : true)),
