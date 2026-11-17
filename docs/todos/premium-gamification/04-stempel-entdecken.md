@@ -1,6 +1,9 @@
 # TODO 04: Stempelkarten als attraktive Entdeckungen gestalten
 
-Status: offen · Priorität: P2 · Aufwand: S–M
+Status: teilweise umgesetzt; Restabgleich mit #118 offen · Priorität: P2 · Aufwand: S–M
+
+
+Abgleich 06.11.2026: develop enthält Bilddarstellung für unbesuchte Orte. #118 verändert dieselben Zeilen und Sheets. Den Restumfang erst gegen den integrierten Stand bestimmen.
 
 ## Beschreibung und Hintergrund
 

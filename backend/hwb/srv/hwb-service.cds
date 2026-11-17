@@ -224,6 +224,15 @@ service api @(requires: 'authenticated-user') {
 
     function getCurrentUser()                                          returns Users;
 
+    @requires: 'authenticated-user'
+    function getBadgeAlbum(userId: String) returns String;
+
+    @requires: 'authenticated-user'
+    action getStampingFeedback(visitIds: many UUID) returns String;
+
+    @requires: 'authenticated-user'
+    action saveBadgeProfile(featured: many String, title: String, frame: String) returns String;
+
     function getCurrentUserID()                                        returns Users;
 
     function getVersion()                                              returns String;
@@ -416,6 +425,8 @@ service api @(requires: 'authenticated-user') {
                          expectedModifiedAt : Timestamp, expectedNote : String(500)) returns NoteSyncResult;
 
     action   stampForGroup(sStampId : UUID, bStampForUser : Boolean, sGroupUserIds : String) returns String;
+    @requires: 'authenticated-user'
+    action stampForGroupWithFeedback(sStampId : UUID, bStampForUser : Boolean, sGroupUserIds : String) returns String;
     action   getStampFriendVisits(sStampId : UUID, sGroupUserIds : String) returns String;
     action   getUsersProgress(sGroupUserIds : String) returns String;
 
