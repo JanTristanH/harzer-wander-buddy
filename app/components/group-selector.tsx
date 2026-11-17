@@ -120,6 +120,7 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
                         isSelected ? 'aus der Wandergruppe entfernen' : 'zur Wandergruppe hinzufügen'
                       }`}
                       {...checkableKeyboardProps(() => setDraftIds((ids) => ids.includes(member.id) ? ids.filter((id) => id !== member.id) : [...ids, member.id]))}
+                      accessible
                       accessibilityRole="checkbox"
                       aria-checked={isSelected}
                       accessibilityState={{ checked: isSelected }}
@@ -131,27 +132,29 @@ export function GroupSelector({ testID = 'group-selector-button' }: GroupSelecto
                         pressed && styles.pressed,
                       ]}
                       testID={`group-selector-friend-${member.id}`}>
-                      <FriendAvatar
-                        image={member.picture}
-                        name={member.name}
-                        index={index}
-                        radius={18}
-                        size={42}
-                      />
-                      <View style={styles.memberCopy}>
-                        <Text style={styles.memberName}>{member.name}</Text>
-                        <Text style={styles.memberMeta}>
-                          {member.visitedCount} Stempel · {member.completionPercent} %
-                        </Text>
-                      </View>
-                      <View
-                        style={[
-                          styles.checkbox,
-                          isSelected && styles.checkboxSelected,
-                        ]}>
-                        {isSelected ? (
-                          <Feather color={AppColors.surface} name="check" size={15} />
-                        ) : null}
+                      <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.memberContent}>
+                        <FriendAvatar
+                          image={member.picture}
+                          name={member.name}
+                          index={index}
+                          radius={18}
+                          size={42}
+                        />
+                        <View style={styles.memberCopy}>
+                          <Text style={styles.memberName}>{member.name}</Text>
+                          <Text style={styles.memberMeta}>
+                            {member.visitedCount} Stempel · {member.completionPercent} %
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.checkbox,
+                            isSelected && styles.checkboxSelected,
+                          ]}>
+                          {isSelected ? (
+                            <Feather color={AppColors.surface} name="check" size={15} />
+                          ) : null}
+                        </View>
                       </View>
                     </Pressable>
                   );
@@ -329,6 +332,12 @@ const styles = StyleSheet.create({
   memberRowSelected: {
     backgroundColor: '#EEF7F0',
     borderColor: '#9FC2A8',
+  },
+  memberContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
   },
   memberCopy: {
     flex: 1,

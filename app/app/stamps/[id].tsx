@@ -354,7 +354,7 @@ function StampDetailContent() {
   const stampId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { data: detail, error, isFetching, isPending, isPlaceholderData, refetch } =
     useStampDetailQuery(stampId, { groupUserIds });
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { isAdmin } = useAdminAccess();
   const [isStamping, setIsStamping] = useState(false);
@@ -1837,7 +1837,7 @@ function StampDetailContent() {
   const isPullRefreshing = isFetching && !isPending;
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
+    <SafeAreaView key={fontScale} edges={['top', 'bottom']} style={styles.safeArea}>
       <StampingSuccessToast
         message={stampSuccessMessage}
         onHide={() => setIsStampSuccessToastVisible(false)}
@@ -1896,11 +1896,11 @@ function StampDetailContent() {
                   ]}
                 />
               ) : null}
-              <Pressable onPress={handleBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
+              <Pressable accessibilityLabel="Zurück" accessibilityRole="button" onPress={handleBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
                 <Feather color={AppColors.text} name="arrow-left" size={18} />
               </Pressable>
 
-              <View style={styles.topRightActions}>
+              <View style={[styles.topRightActions, fontScale >= 1.5 && styles.topRightActionsLargeText]}>
                 <View style={[styles.statusPill, visited ? styles.statusPillVisited : styles.statusPillOpen]}>
                   <Feather
                     color={visited ? AppColors.primary : '#7a6a4a'}
@@ -1916,6 +1916,8 @@ function StampDetailContent() {
                   </Text>
                 </View>
                 <Pressable
+                  accessibilityLabel="Stempelstelle teilen"
+                  accessibilityRole="button"
                   onPress={handleShare}
                   style={({ pressed }) => [styles.shareHeaderButton, pressed && styles.topButtonPressed]}>
                   <Feather color="#3a4f84" name="share-2" size={14} />
@@ -2365,12 +2367,12 @@ function StampDetailContent() {
         ) : null}
       </View>
 
-      <View pointerEvents="box-none" style={[styles.bottomDock, { paddingBottom: Math.max(12, bottomInset) }]}>
+      <ScrollView style={{ flexGrow: 0, maxHeight: fontScale >= 1.5 ? '45%' : undefined }} contentContainerStyle={[styles.bottomDock, { paddingBottom: Math.max(12, bottomInset) }]} showsVerticalScrollIndicator={fontScale >= 1.5}>
         {isStampSuccessToastVisible ? (
           <Text accessible={false} style={styles.stampSavedHint}>{stampSuccessMessage}</Text>
         ) : null}
         <View style={styles.bottomActions}>
-          <View style={styles.secondaryButtonRow}>
+          <View style={[styles.secondaryButtonRow, fontScale >= 1.5 && { flexDirection: 'column' }]}>
             <Pressable
               accessibilityRole="button"
               onPress={handleStartNavigation}
@@ -2419,6 +2421,7 @@ function StampDetailContent() {
                   buttonAnimatedStyle,
                 ]}>
                 <Pressable
+                  accessibilityRole="button"
                   disabled={isStamping || (!isGuest && !canRecordVisit)}
                   onPress={handlePrimaryStampButtonPress}
                   onPressIn={onPressIn}
@@ -2444,7 +2447,7 @@ function StampDetailContent() {
             )}
           </StampPressStage>
         </View>
-      </View>
+      </ScrollView>
 
       <GroupStampDialog
         currentUserAlreadyStamped={visited}
@@ -2787,7 +2790,15 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: 'center',
   },
+  topRightActionsLargeText: {
+    left: 72,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
   shareHeaderButton: {
+    flexShrink: 1,
+    paddingVertical: 8,
     minHeight: 32,
     borderRadius: 10,
     backgroundColor: '#edf2fc',
@@ -2803,12 +2814,14 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   shareHeaderButtonLabel: {
+    flexShrink: 1,
     color: '#3a4f84',
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '700',
   },
   statusPill: {
+    flexShrink: 1,
+    paddingVertical: 8,
     minHeight: 40,
     borderRadius: 12,
     paddingHorizontal: 14,
@@ -2824,8 +2837,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0e9dd',
   },
   statusPillLabel: {
+    flexShrink: 1,
     fontSize: 12,
-    lineHeight: 16,
   },
   statusPillLabelVisited: {
     color: AppColors.primary,
@@ -2845,7 +2858,6 @@ const styles = StyleSheet.create({
   heroBadgeText: {
     color: AppColors.text,
     fontSize: 12,
-    lineHeight: 16,
   },
   heroCaptionWrap: {
     paddingHorizontal: 20,
@@ -2855,7 +2867,6 @@ const styles = StyleSheet.create({
   heroCaptionBody: {
     color: '#5a675a',
     fontSize: 13,
-    lineHeight: 18,
     textAlign: 'center',
   },
   heroCaptionParagraph: {
@@ -2882,19 +2893,16 @@ const styles = StyleSheet.create({
   title: {
     color: AppColors.text,
     fontSize: 24,
-    lineHeight: 30,
     fontWeight: '700',
   },
   description: {
     color: '#445244',
     fontSize: 14,
-    lineHeight: 22,
     marginTop: 8,
   },
   groupSummary: {
     color: '#445244',
     fontSize: 13,
-    lineHeight: 18,
   },
   groupMemberList: {
     gap: 7,
@@ -2909,12 +2917,10 @@ const styles = StyleSheet.create({
     flex: 1,
     color: AppColors.text,
     fontSize: 13,
-    lineHeight: 17,
   },
   groupMemberStatus: {
     color: AppColors.textMuted,
     fontSize: 12,
-    lineHeight: 16,
   },
   sectionAction: {
     borderRadius: 999,
@@ -2928,7 +2934,6 @@ const styles = StyleSheet.create({
   sectionActionLabel: {
     color: AppColors.primary,
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
   },
   rowItem: {
@@ -2962,7 +2967,6 @@ const styles = StyleSheet.create({
   },
   rowBadgeLabel: {
     fontSize: 12,
-    lineHeight: 16,
   },
   rowBadgeLabelStamp: {
     color: AppColors.primary,
@@ -2993,12 +2997,10 @@ const styles = StyleSheet.create({
   rowTitle: {
     color: '#111111',
     fontSize: 13,
-    lineHeight: 16,
   },
   rowMeta: {
     color: AppColors.textMuted,
     fontSize: 12,
-    lineHeight: 16,
   },
   simpleItem: {
     gap: 2,
@@ -3039,7 +3041,6 @@ const styles = StyleSheet.create({
   visitPickerLabel: {
     color: AppColors.text,
     fontSize: 13,
-    lineHeight: 16,
   },
   visitActionButton: {
     minHeight: 38,
@@ -3060,18 +3061,15 @@ const styles = StyleSheet.create({
   visitDeleteLabel: {
     color: '#6f5e40',
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
   },
   simpleItemTitle: {
     color: AppColors.textMuted,
     fontSize: 12,
-    lineHeight: 16,
   },
   emptySectionText: {
     color: AppColors.textMuted,
     fontSize: 12,
-    lineHeight: 16,
   },
   emptyNearbyStampsState: {
     alignItems: 'center',
@@ -3087,7 +3085,6 @@ const styles = StyleSheet.create({
   stampSavedHint: {
     color: AppColors.primary,
     fontSize: 14,
-    lineHeight: 20,
     fontWeight: '600',
     textAlign: 'center',
     paddingBottom: 8,
@@ -3128,9 +3125,9 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   secondaryButtonLabel: {
+    flexShrink: 1,
     color: AppColors.textSecondary,
     fontSize: 13,
-    lineHeight: 16,
     textAlign: 'center',
   },
   groupStampButton: {
@@ -3144,9 +3141,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   groupStampButtonLabel: {
+    flexShrink: 1,
     color: '#59483f',
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   primaryStampStage: {
@@ -3169,7 +3166,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   primaryButton: {
-    height: 48,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: AppColors.primary,
     alignItems: 'center',
@@ -3188,9 +3186,9 @@ const styles = StyleSheet.create({
     transform: [{ translateY: 2 }, { scale: 0.99 }],
   },
   primaryButtonLabel: {
+    flexShrink: 1,
     color: AppColors.background,
     fontSize: 13,
-    lineHeight: 16,
     textAlign: 'center',
   },
   carouselScreen: {
@@ -3228,7 +3226,6 @@ const styles = StyleSheet.create({
   webCarouselFallbackTitle: {
     color: AppColors.background,
     fontSize: 15,
-    lineHeight: 20,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -3246,7 +3243,6 @@ const styles = StyleSheet.create({
   webCarouselFallbackButtonLabel: {
     color: '#b4d6ff',
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   webCarouselNavRow: {
@@ -3274,7 +3270,6 @@ const styles = StyleSheet.create({
   webCarouselNavButtonLabel: {
     color: AppColors.background,
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   carouselTopBar: {
@@ -3298,7 +3293,6 @@ const styles = StyleSheet.create({
   carouselCounterLabel: {
     color: AppColors.background,
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
     backgroundColor: 'rgba(29, 38, 31, 0.88)',
     borderRadius: 10,
@@ -3317,7 +3311,6 @@ const styles = StyleSheet.create({
   carouselNearbyPillLabel: {
     color: '#2f7dd7',
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
   },
   carouselSlide: {
@@ -3351,21 +3344,18 @@ const styles = StyleSheet.create({
   carouselCaptionTitle: {
     color: AppColors.background,
     fontSize: 16,
-    lineHeight: 20,
     fontWeight: '600',
     textAlign: 'center',
   },
   carouselCaptionSubtitle: {
     color: '#ccd5cb',
     fontSize: 12,
-    lineHeight: 16,
     textAlign: 'center',
     marginBottom: 4,
   },
   carouselCaptionBody: {
     color: '#e6ede4',
     fontSize: 13,
-    lineHeight: 18,
   },
   carouselCaptionParagraph: {
     marginTop: 2,
@@ -3397,7 +3387,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     color: AppColors.text,
     fontSize: 18,
-    lineHeight: 24,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -3421,13 +3410,11 @@ const styles = StyleSheet.create({
   modalButtonPrimaryLabel: {
     color: AppColors.background,
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   modalButtonSecondaryLabel: {
     color: AppColors.textSecondary,
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   centered: {
@@ -3440,20 +3427,17 @@ const styles = StyleSheet.create({
   helperText: {
     color: '#496149',
     fontSize: 15,
-    lineHeight: 22,
     textAlign: 'center',
   },
   errorTitle: {
     color: '#3d2a15',
     fontSize: 22,
-    lineHeight: 28,
     fontWeight: '800',
     textAlign: 'center',
   },
   errorBody: {
     color: '#655d4a',
     fontSize: 15,
-    lineHeight: 22,
     textAlign: 'center',
   },
 });

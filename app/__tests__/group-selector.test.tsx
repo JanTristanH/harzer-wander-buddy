@@ -72,6 +72,8 @@ describe('GroupSelector', () => {
 
     fireEvent.press(screen.getByTestId('group-selector-button'));
 
+    expect(screen.getByRole('checkbox', { name: 'Anna aus der Wandergruppe entfernen', checked: true })).toBeTruthy();
+    expect(screen.getByRole('checkbox', { name: 'Berta zur Wandergruppe hinzufügen', checked: false })).toBeTruthy();
     expect(screen.getByText('Wandergruppe auswählen')).toBeTruthy();
     expect(screen.getByText(/Du bist automatisch dabei/)).toBeTruthy();
     expect(

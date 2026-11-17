@@ -55,6 +55,9 @@ function FriendFilterChip({
 }) {
   return (
     <Pressable
+      accessibilityRole="tab"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
       onPress={onPress}
       style={({ pressed }) => [
         styles.filterChip,

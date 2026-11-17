@@ -617,6 +617,8 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
               {data.subtitle ? <Text style={styles.headerMeta}>{data.subtitle}</Text> : null}
               {data.headerAction?.type === 'edit' ? (
                 <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={data.headerAction.label}
                   onPress={data.headerAction.onPress}
                   style={({ pressed }) => [styles.editButton, pressed && styles.pressed]}>
                   <Text style={styles.editButtonLabel}>{data.headerAction.label}</Text>

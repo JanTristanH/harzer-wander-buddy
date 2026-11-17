@@ -26,6 +26,7 @@ export function LockedGuestRows({
         <Text style={styles.lockedText}>{body}</Text>
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={ctaLabel}
           onPress={onSignIn}
           style={({ pressed }) => [styles.signInButton, pressed && styles.signInButtonPressed]}>
           <Text style={styles.signInButtonLabel}>{ctaLabel}</Text>
@@ -55,6 +56,7 @@ export function SignInRequiredScreen({
           <Text style={styles.screenBody}>{body}</Text>
           <Pressable
             accessibilityRole="button"
+          accessibilityLabel={ctaLabel}
             onPress={onSignIn}
             style={({ pressed }) => [styles.screenButton, pressed && styles.signInButtonPressed]}>
             <Feather color={AppColors.background} name="log-in" size={16} />

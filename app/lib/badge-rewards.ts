@@ -5,7 +5,7 @@ export const officialLinks = {
   outlets:
     'https://www.harzer-wandernadel.de/die-wandernadel/vertriebspartner/',
   themes: 'https://www.harzer-wandernadel.de/die-wandernadel/themenhefte/',
-};
+} as const;
 export function physicalReward(entry: import('./badge-types').BadgeEntry) {
   return {
     heading: entry.unlocked
