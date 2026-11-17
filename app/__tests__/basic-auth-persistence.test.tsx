@@ -131,3 +131,41 @@ test('keeps browser Basic credentials in memory only', async () => {
     Platform.OS = originalPlatform;
   }
 });
+
+test.each(['android', 'ios'] as const)('edited profile survives an offline %s restart', async (platform) => {
+  const originalPlatform = Platform.OS;
+  Platform.OS = platform;
+  try {
+    const first = await start();
+    await act(async () => { await first.result.current.login('test-user', 'test-password'); });
+    const edited = { ...profile, name: 'Edited name', picture: 'https://example.test/avatar.png' };
+    act(() => { first.result.current.setCurrentUserProfile(edited); });
+    await waitFor(() => {
+      const saved = JSON.parse(mockStorage.get('hwb-basic-auth-session')!);
+      expect(saved.profile).toEqual(edited);
+    });
+    first.unmount();
+    mockOffline = true;
+    const restarted = await start();
+    expect(restarted.result.current.currentUserProfile).toEqual(edited);
+    expect(restarted.result.current.hasCompletedOnboarding).toBe(true);
+    expect(fetchCurrentUserProfile).toHaveBeenCalledTimes(1);
+    restarted.unmount();
+  } finally {
+    Platform.OS = originalPlatform;
+  }
+});
+
+test('logout removes a profile edit queued for persistence', async () => {
+  const hook = await start();
+  await act(async () => { await hook.result.current.login('test-user', 'test-password'); });
+  await act(async () => {
+    hook.result.current.setCurrentUserProfile({ ...profile, name: 'Edited name' });
+  });
+  await act(async () => { await hook.result.current.logout(); });
+  expect(mockStorage.size).toBe(0);
+  hook.unmount();
+  const restarted = await start();
+  expect(restarted.result.current.isAuthenticated).toBe(false);
+  restarted.unmount();
+});
