@@ -187,5 +187,8 @@
       "start": "node util/startProduction.js"
     },
     "note": "Nur einen CAP-Server auf Port 4004 starten; vor dem Profilwechsel den laufenden Server beenden."
+  },
+  "overrides": {
+    "napi-build-utils": "^2.0.0"
   }
 }
