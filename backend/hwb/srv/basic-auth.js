@@ -2,7 +2,7 @@ const cds = require('@sap/cds');
 const { timingSafeEqual } = require('node:crypto');
 const { syncExternalUserIfNeeded } = require('./auth-utils');
 
-// Explicit development profile only; production continues to use Auth0.
+// Explicit development profile only; production uses Supabase Auth.
 module.exports = function createBasicAuth(options) {
   if (cds.env.profiles.includes('production')) {
     throw new Error('Local Basic authentication cannot be used in production');
@@ -19,6 +19,9 @@ module.exports = function createBasicAuth(options) {
     if (!account || !expected.length || password.length !== expected.length || !timingSafeEqual(password, expected)) {
       // JSON response avoids a browser-native Basic challenge over the app form.
       return res.status(401).json({ error: { code: '401', message: 'Unauthorized' } });
+    }
+    if (await require('./account-privacy').isAccountDeleted(id)) {
+      return res.status(401).json({ error: { code: '401', message: 'Dieses Konto wurde gelöscht.' } });
     }
     const roles = ['authenticated-user', ...(account.roles || [])];
     req.user = new cds.User({ id, roles, _roles: roles });

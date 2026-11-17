@@ -41,7 +41,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: app/package-lock.json
 
@@ -54,7 +54,7 @@ jobs:
         working-directory: app
 
       - name: Verify OTA runtime compatibility across releases
-        run: node --test scripts/fingerprint.test.cjs
+        run: node --test scripts/fingerprint.test.cjs scripts/check-ota-environment.test.cjs
         working-directory: app
 
   backend-tests:
@@ -68,7 +68,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: backend/hwb/package-lock.json
 
