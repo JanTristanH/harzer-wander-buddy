@@ -49,6 +49,13 @@ Live-Web-App und passende Android-APK pro PR-Commit auf GCP Cloud Run:
 
 [here](https://github.com/JanTristanH/harzer-wander-buddy/pkgs/container/hwb)
 
+Das Produktionsimage deployt das PostgreSQL-Schema standardmäßig vor dem
+Serverstart. `DEPLOY_ON_START=false` setzt einen erfolgreichen separaten
+Migrationsjob vor jedem Release voraus. Modell-Kompilation, Image-Inhalt und
+Messwerte: [Docker-/Performance-Dokumentation](docs/performance/backend-docker.md).
+App-Start, gemeinsame Abfragen und Offline-Caches:
+[App-Performance-Prüfung](docs/performance/app-startup-cache.md).
+
 ## Technical README
 
 [here](./backend/hwb/README.md)

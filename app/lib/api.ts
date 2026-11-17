@@ -2484,26 +2484,15 @@ export async function fetchTourPath(accessToken: string, tourId: string) {
     return [] as TourPathEntry[];
   }
 
-  const filters = [`tour_ID eq ${normalizedTourId}`];
-
-  for (const filter of filters) {
-    try {
-      const rows = await fetchCollection<TourPathRow>(accessToken, 'Tour2TravelTime', [
-        ['$filter', filter],
-        ['$expand', 'travelTime'],
-        ['$orderby', 'rank asc'],
-        ['$top', 600],
-      ]);
-
-      return rows
-        .map((row) => normalizeTourPathEntry(row))
-        .sort((left, right) => left.rank - right.rank);
-    } catch {
-      continue;
-    }
-  }
-
-  return [] as TourPathEntry[];
+  // A failed refresh must reject so React Query retains an existing offline path.
+  // Only a successful empty response represents a tour with no route segments.
+  const rows = await fetchCollection<TourPathRow>(accessToken, 'Tour2TravelTime', [
+    ['$filter', `tour_ID eq ${normalizedTourId}`],
+    ['$expand', 'travelTime'],
+    ['$orderby', 'rank asc'],
+    ['$top', 600],
+  ]);
+  return rows.map(row => normalizeTourPathEntry(row)).sort((left, right) => left.rank - right.rank);
 }
 
 export async function fetchTransientTourByIdListTravelTimes(
@@ -3237,9 +3226,12 @@ export async function fetchProfileOverview(
     name?: string;
     picture?: string;
   } | null,
-  prefetchedStamps?: Stampbox[]
+  prefetchedStamps?: Stampbox[],
+  prefetchedFriends?: FriendsOverviewData
 ) {
   const resolvedCurrentUserId = safeTrim(currentUserId || prefetchedCurrentUser?.id);
+  const matchingFriends = prefetchedFriends?.currentUserId === resolvedCurrentUserId
+    ? prefetchedFriends : undefined;
   const [currentUser, stamps, stampings, friendships] = await Promise.all([
     prefetchedCurrentUser?.id
       ? Promise.resolve({
@@ -3257,7 +3249,7 @@ export async function fetchProfileOverview(
           top: 250,
         })
       : Promise.resolve([] as Stamping[]),
-    fetchCollection<MyFriend>(accessToken, 'MyFriends', {
+    matchingFriends ? Promise.resolve([] as MyFriend[]) : fetchCollection<MyFriend>(accessToken, 'MyFriends', {
       select: ['ID', 'name', 'picture', 'status'],
     }),
   ]);
@@ -3290,7 +3282,7 @@ export async function fetchProfileOverview(
   const totalCount = stamps.length;
   const openCount = Math.max(0, totalCount - visitedCount);
   const completionPercent = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
-  const mappedFriends = await buildFriendProgress(accessToken, friends, totalCount);
+  const mappedFriends = matchingFriends?.friends ?? await buildFriendProgress(accessToken, friends, totalCount);
   const featuredFriend = mappedFriends[0]
     ? {
         id: mappedFriends[0].id,
@@ -3307,7 +3299,7 @@ export async function fetchProfileOverview(
     totalCount,
     openCount,
     completionPercent,
-    friendCount: friends.length,
+    friendCount: mappedFriends.length,
     collectorSinceYear: earliestVisit ? new Date(getVisitTimestamp(earliestVisit) || '').getFullYear() : null,
     latestVisits,
     stampings: timelineVisits,

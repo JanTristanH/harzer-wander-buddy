@@ -19,6 +19,25 @@ jobs:
       # Match Google's existing main trigger: no build args, no image push.
       - name: Build deployment image with defaults
         run: docker build --tag harzer-wander-buddy:ci .
+      - name: Check minimal runtime and native image processing
+        run: |
+          docker run --rm harzer-wander-buddy:ci node -e '
+            const assert = require("node:assert/strict");
+            const fs = require("node:fs");
+            assert.equal(process.getuid(), 65532);
+            for (const path of ["/bin/sh", "node_modules/@sap/cds-dk", "node_modules/sqlite3"]) {
+              assert.equal(fs.existsSync(path), false, path);
+            }
+            assert.ok(fs.existsSync("srv/csn.json"));
+            assert.ok(fs.existsSync("app/rnweb/index.html"));
+            require("sharp")({create: {width: 2, height: 2, channels: 3, background: "red"}})
+              .webp().toBuffer().then(buffer => assert.ok(buffer.length > 0))
+              .catch(error => { console.error(error); process.exitCode = 1; });
+          '
+      - name: Verify production startup with PostgreSQL
+        run: |
+          docker pull postgres:16-alpine
+          python3 backend/hwb/benchmark/startup.py harzer-wander-buddy:ci --runs 1
 
   release-tests:
     name: Release automation tests
