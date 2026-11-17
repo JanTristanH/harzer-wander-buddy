@@ -2375,6 +2375,7 @@ function StampDetailContent() {
           <View style={[styles.secondaryButtonRow, fontScale >= 1.5 && { flexDirection: 'column' }]}>
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Navigation starten"
               onPress={handleStartNavigation}
               style={({ pressed }) => [
                 styles.secondaryButton,
@@ -2387,6 +2388,7 @@ function StampDetailContent() {
             </Pressable>
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel="Auf Karte anzeigen"
               onPress={handleShowOnMap}
               style={({ pressed }) => [
                 styles.secondaryButton,
@@ -2422,6 +2424,7 @@ function StampDetailContent() {
                 ]}>
                 <Pressable
                   accessibilityRole="button"
+                  accessibilityLabel={isGuest ? 'Anmelden zum Stempeln' : isStamping ? 'Stemple...' : visited ? 'Erneut stempeln' : 'Besuch stempeln'}
                   disabled={isStamping || (!isGuest && !canRecordVisit)}
                   onPress={handlePrimaryStampButtonPress}
                   onPressIn={onPressIn}
@@ -2772,8 +2775,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(245, 243, 238, 0.08)',
   },
   topButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     backgroundColor: 'rgba(240,233,221,0.96)',
     alignItems: 'center',
@@ -2799,7 +2802,7 @@ const styles = StyleSheet.create({
   shareHeaderButton: {
     flexShrink: 1,
     paddingVertical: 8,
-    minHeight: 32,
+    minHeight: 48,
     borderRadius: 10,
     backgroundColor: '#edf2fc',
     alignItems: 'center',
