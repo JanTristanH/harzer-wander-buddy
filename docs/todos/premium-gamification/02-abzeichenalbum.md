@@ -19,9 +19,9 @@ Rahmen werden am Avatar und an Abzeichenmotiven eingesetzt; Titel, Avatarrahmen
 und bis zu drei hervorgehobene Abzeichen sind unabhängig voneinander wählbar.
 
 Regeln, Datenmodell, Grafik-Prompts und Prüfung sind in
-[Abzeichenalbum im offenen PR #65](https://github.com/JanTristanH/harzer-wander-buddy/blob/4a413b391d07042b94c96642311b163f32a3f601/docs/abzeichenalbum.md) dokumentiert. Screenshots der
+[Abzeichenalbum](../../abzeichenalbum.md) dokumentiert. Screenshots der
 tatsächlichen lokalen UI liegen unter
-[Abzeichenalbum-Screenshots im offenen PR #65](https://github.com/JanTristanH/harzer-wander-buddy/tree/4a413b391d07042b94c96642311b163f32a3f601/docs/screenshots/abzeichenalbum).
+[Abzeichenalbum-Screenshots](../../screenshots/abzeichenalbum/).
 Die gemeinsame Backend-Berechnung steht für TODO 01 und 03 bereit; deren
 zusätzliche Zielkarte und Erfolgsanimation sind weiterhin eigene Aufgaben.
 
