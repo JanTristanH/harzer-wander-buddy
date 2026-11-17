@@ -180,41 +180,40 @@ async function enrichClaimsWithUserInfo(accessToken, claims = {}) {
 }
 
 async function upsertExternalUser(claims = {}) {
-  if (!claims.sub) {
-    return false;
-  }
-
+  if (!claims.sub) return false;
   try {
     const db = await cds.connect.to("db");
-    const { ExternalUsers } = db.entities;
-    const [existingUser] = await db.read(ExternalUsers).where({ ID: claims.sub });
-
-    const entry = {
-      ID: claims.sub,
-      email: claims.email ?? existingUser?.email ?? null,
-      email_verified: claims.email_verified ?? existingUser?.email_verified ?? null,
-      family_name: claims.family_name ?? existingUser?.family_name ?? null,
-      given_name: claims.given_name ?? existingUser?.given_name ?? null,
-      name: existingUser?.name ?? claims.name ?? claims.nickname ?? existingUser?.nickname ?? claims.sub,
-      nickname: claims.nickname ?? existingUser?.nickname ?? null,
-      picture: existingUser?.picture ?? claims.picture ?? null,
-      sid: claims.sid ?? existingUser?.sid ?? null,
-      sub: claims.sub,
-      onboardingCompleted: existingUser?.onboardingCompleted ?? false,
-      updated_at_iso_string: claims.updated_at ?? existingUser?.updated_at_iso_string ?? null,
-    };
-
-    if (existingUser) {
-      await db.update(ExternalUsers).set(entry).where({ ID: claims.sub });
-      setCachedExternalUserClaims(claims.sub, pickProfileClaimsFromExternalUser(entry));
-      return true;
-    }
-
-    await db.create(ExternalUsers).entries(entry);
+    const entry = await db.tx(async tx => {
+      const { ExternalUsers } = db.entities;
+      // Serialize profile synchronisation with deletion of an existing account.
+      const existingUser = await tx.run(cds.ql.SELECT.one.from(ExternalUsers)
+        .where({ ID: claims.sub }).forUpdate());
+      const deleted = await tx.run(cds.ql.SELECT.one.from('hwb.db.AccountDeletions')
+        .where({ subjectHash: require('./account-privacy').subjectHash(claims.sub) }));
+      if (deleted) return null;
+      const entry = {
+        ID: claims.sub,
+        email: claims.email ?? existingUser?.email ?? null,
+        email_verified: claims.email_verified ?? existingUser?.email_verified ?? null,
+        family_name: claims.family_name ?? existingUser?.family_name ?? null,
+        given_name: claims.given_name ?? existingUser?.given_name ?? null,
+        name: existingUser?.name ?? claims.name ?? claims.nickname ?? claims.sub,
+        nickname: claims.nickname ?? existingUser?.nickname ?? null,
+        picture: existingUser?.contentRestricted ? null : existingUser?.picture ?? claims.picture ?? null,
+        sid: claims.sid ?? existingUser?.sid ?? null,
+        sub: claims.sub,
+        onboardingCompleted: existingUser?.onboardingCompleted ?? false,
+        updated_at_iso_string: claims.updated_at ?? existingUser?.updated_at_iso_string ?? null,
+      };
+      if (existingUser) await tx.update(ExternalUsers).set(entry).where({ ID: claims.sub });
+      else await tx.create(ExternalUsers).entries(entry);
+      return entry;
+    });
+    if (!entry) return false;
     setCachedExternalUserClaims(claims.sub, pickProfileClaimsFromExternalUser(entry));
     return true;
-  } catch (error) {
-    console.error("Error managing user in database:", error);
+  } catch {
+    console.error("External user synchronisation failed");
     return false;
   }
 }
@@ -235,7 +234,13 @@ async function syncExternalUserIfNeeded(claims = {}) {
   }
 }
 
+function clearExternalUserCaches(id) {
+  externalUserClaimsCache.delete(id);
+  externalUserSyncCache.delete(id);
+}
+
 module.exports = {
+  clearExternalUserCaches,
   Auth0User,
   buildCapUserFromClaims,
   enrichClaimsWithUserInfo,

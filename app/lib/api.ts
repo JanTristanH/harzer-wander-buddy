@@ -3998,6 +3998,48 @@ export async function fetchOwnStampings(accessToken: string, stampId: string, cu
   }
 }
 
+/** Only the authenticated subject is used server-side; never pass a target user ID. */
+export async function exportMyData(accessToken: string): Promise<string> {
+  const result = await mutateOData<{ value: string }>(accessToken, buildUrl('exportMyData'), {
+    method: 'POST', body: JSON.stringify({}),
+  });
+  return result.value;
+}
+export async function deleteMyAccount(accessToken: string): Promise<string> {
+  const result = await mutateOData<{ value: string }>(accessToken, buildUrl('deleteMyAccount'), {
+    method: 'POST', body: JSON.stringify({ confirmation: 'DELETE' }),
+  });
+  return result.value;
+}
+
+export async function reportUser(accessToken: string, targetUser: string, reason: string) {
+  return parseActionStringResult(await mutateOData(accessToken, buildUrl('reportUser'), {
+    method: 'POST', body: JSON.stringify({ targetUser, reason }),
+  }));
+}
+export async function blockUser(accessToken: string, targetUser: string) {
+  return parseActionStringResult(await mutateOData(accessToken, buildUrl('blockUser'), {
+    method: 'POST', body: JSON.stringify({ targetUser }),
+  }));
+}
+export async function unblockUser(accessToken: string, targetUser: string) {
+  return parseActionStringResult(await mutateOData(accessToken, buildUrl('unblockUser'), {
+    method: 'POST', body: JSON.stringify({ targetUser }),
+  }));
+}
+export async function fetchMyBlocks(accessToken: string) {
+  return fetchCollection<{ toUser: string }>(accessToken, 'MyBlocks');
+}
+export async function fetchContentReports(accessToken: string) {
+  return fetchCollection<{ ID: string; targetUser: string; reason: string; status: string }>(accessToken, 'ContentReports', { orderBy: ['createdAt desc'], top: 100 });
+}
+export async function moderateReportedUser(accessToken: string, reportId: string) {
+  return parseActionStringResult(await mutateOData(accessToken, buildUrl('moderateReportedUser'), {
+    method: 'POST', body: JSON.stringify({ reportId }),
+  }));
+
+}
+
 // Stable client IDs make a retried POST safe even if its first response was lost.
 // The existing CAP CREATE validates the stamp and records the authenticated owner.
 export async function syncOfflineStamping(

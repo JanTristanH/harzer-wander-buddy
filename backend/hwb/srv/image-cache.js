@@ -1,4 +1,12 @@
 const { Readable, Transform } = require('node:stream');
+const cds = require('@sap/cds');
+const serviceCaches = new Set();
+
+function invalidateImageCachesAfterCommit(req) {
+  req.on('succeeded', () => {
+    for (const cache of serviceCaches) cache.clear();
+  });
+}
 
 // Per-process LRU cache. Authorization still runs through CAP on every request.
 class ImageCache {
@@ -38,6 +46,7 @@ class ImageCache {
 
 function registerImageCache(service) {
   const cache = new ImageCache();
+  serviceCaches.add(cache);
   service.before(['CREATE', 'UPDATE', 'DELETE'], 'Attachments', req => {
     req.on('succeeded', () => cache.clear());
   });
@@ -50,7 +59,16 @@ function registerImageCache(service) {
       return saved.array ? [row] : row;
     };
     const saved = cache.get(key);
-    if (saved) return restore(saved);
+    if (saved) {
+      // Deletion/moderation can commit on another Cloud Run instance. Recheck
+      // existence using the authorized query before returning cached bytes.
+      const visible = await cds.tx(req).run({ SELECT: {
+        ...req.query.SELECT, columns: [{ ref: ['ID'] }],
+      } });
+      if (Array.isArray(visible) ? visible.length : visible) return restore(saved);
+      cache.delete(key);
+      return next();
+    }
     const generation = cache.generation;
     const result = await next();
     const row = Array.isArray(result) ? result[0] : result;
@@ -92,4 +110,4 @@ function registerImageCache(service) {
   return cache;
 }
 
-module.exports = { ImageCache, registerImageCache };
+module.exports = { ImageCache, registerImageCache, invalidateImageCachesAfterCommit };

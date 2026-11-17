@@ -15,7 +15,7 @@ const mockProfile = { id: 'test-user', name: 'Alex', picture: mockClaims.picture
 const mockAuth = { accessToken: 'token', isAuthenticated: true, canPerformWrites: true,
   currentUserProfile: mockProfile, completeOnboarding: mockComplete, setCurrentUserProfile: mockSetProfile, logout: jest.fn() };
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn() }), Redirect: () => null }));
+jest.mock('expo-router', () => ({ useRouter: () => ({ replace: mockReplace, push: jest.fn() }), Redirect: () => null, Link: ({ children }: { children: React.ReactNode }) => require('react').createElement(require('react-native').Text, null, children) }));
 jest.mock('expo-asset', () => ({ Asset: Object.assign(class Asset {}, { fromModule: () => ({ uri: 'asset:/avatar.png' }) }) }));
 jest.mock('expo-image-picker', () => ({ requestMediaLibraryPermissionsAsync: jest.fn(), launchImageLibraryAsync: jest.fn() }));
 jest.mock('expo-location', () => ({ getForegroundPermissionsAsync: jest.fn(), requestForegroundPermissionsAsync: jest.fn() }));

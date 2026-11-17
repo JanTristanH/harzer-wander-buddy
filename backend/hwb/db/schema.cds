@@ -29,6 +29,7 @@ entity ExternalUsers : cuid {
     sid                   : String(255);
     sub                   : String(255);
     onboardingCompleted   : Boolean default false;
+    contentRestricted     : Boolean default false;
     updated_at_iso_string : String(255);
     updated_at            : Timestamp   @cds.on.insert: $now;
 }
@@ -183,3 +184,23 @@ entity PendingFriendshipRequests : cuid {
 
 // Input start any poi -> gps guess & Max driving time
 // Check adjecent stamps -> could also be generic -> load eg 20 km radius/box -> salesman trump
+
+// Not exposed via OData. Durable deletion queue and protection against token replay.
+entity AccountDeletions {
+    key subjectHash : String(64);
+    pendingSubject  : String(255);
+    requestedAt     : Timestamp;
+    lastAttemptAt   : Timestamp;
+    completedAt     : Timestamp;
+}
+
+entity UserBlocks {
+    key fromUser : User;
+    key toUser   : User;
+    createdAt    : Timestamp;
+}
+entity ContentReports : cuid, managed {
+    targetUser : User;
+    reason     : String(2000);
+    status     : String(20) default 'open';
+}
