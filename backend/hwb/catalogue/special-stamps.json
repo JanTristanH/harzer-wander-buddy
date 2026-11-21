@@ -1,0 +1,3333 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-07",
+  "stamps": [
+    {
+      "catalogKey": "special-9900",
+      "number": "9900",
+      "name": "Grenzturm Rhoden",
+      "themeKeys": [
+        "grenzweg",
+        "huy-fallstein",
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9900 Sonderstempel „Grenzturm Rhoden“",
+      "latitude": 52.010726,
+      "longitude": 10.636819,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+          "name": "Grenzturm Rhoden",
+          "latitude": 52.010726,
+          "longitude": 10.636819
+        }
+      ],
+      "coordinateSourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "ID": "58178d03-809d-50fa-9e05-0c2fe4256de8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Grenzweg, Huy-Fallstein, dauerhafte Sonderstempel.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9900.webp",
+      "imageCaption": "📷 [Grenzturm Rhoden (Osterwieck).JPG](https://commons.wikimedia.org/wiki/File:Grenzturm_Rhoden_(Osterwieck).JPG) · AP Wikianer · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-jungborn",
+      "number": "9901",
+      "name": "Jungborn",
+      "themeKeys": [
+        "grenzweg",
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9901 Sonderstempel „Jungborn“",
+      "latitude": 51.88569444,
+      "longitude": 10.64627778,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "a827da71-9e06-5a1c-9679-01a4109e62ff",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Grenzweg, dauerhafte Sonderstempel.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-jungborn.webp",
+      "imageCaption": "📷 [Jungborn Stapelburg.JPG](https://commons.wikimedia.org/wiki/File:Jungborn_Stapelburg.JPG) · Thomas Binder · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-two-countries-oak",
+      "number": "9902",
+      "name": "Zweiländereiche",
+      "themeKeys": [
+        "grenzweg",
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9902 „Zweiländereiche“",
+      "latitude": 51.61686111,
+      "longitude": 10.63886111,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "9a7ffc41-d7cb-5feb-9eae-990a1e44ba66",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Grenzweg, dauerhafte Sonderstempel.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-two-countries-oak.webp",
+      "imageCaption": "📷 [Zweiländereiche.jpg](https://commons.wikimedia.org/wiki/File:Zweil%C3%A4ndereiche.jpg) · Thomas Binder · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-three-countries-stone",
+      "number": "9903",
+      "name": "Dreiländerstein",
+      "themeKeys": [
+        "grenzweg",
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9903 „Dreiländerstein“",
+      "latitude": 51.64152778,
+      "longitude": 10.70233333,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "a4e32900-e04b-5129-b5c4-87a2306b06f6",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Grenzweg, dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9905",
+      "number": "9905",
+      "name": "Glasmanufaktur Derenburg Hüttengarten",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9905 Glasmanufaktur Derenburg „Hüttengarten“",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "3fbda132-a49c-5b72-bfa0-6c789a57e05c",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9905.webp",
+      "imageCaption": "📷 [Derenburg Glasmanufaktur neuer Garten - panoramio.jpg](https://commons.wikimedia.org/wiki/File:Derenburg_Glasmanufaktur_neuer_Garten_-_panoramio.jpg) · Dirk Kobow · [CC BY 3.0](https://creativecommons.org/licenses/by/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9906",
+      "number": "9906",
+      "name": "Museum für Naturkunde in Magdeburg",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9906 Museum für Naturkunde in Magdeburg",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "6a9051c0-9e2e-5874-81c3-503ef9dba215",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9906.webp",
+      "imageCaption": "📷 [Kulturhistorisches-Museum-Magdeburg.JPG](https://commons.wikimedia.org/wiki/File:Kulturhistorisches-Museum-Magdeburg.JPG) · Eddy1988 · [CC0](https://creativecommons.org/publicdomain/zero/1.0/deed.en); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9908",
+      "number": "9908",
+      "name": "Kleiner Harz Wernigerode",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9908 „Kleiner Harz“ Wernigerode",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "f7d601c5-a4f7-5e05-83ba-62b78367a436",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9908.webp",
+      "imageCaption": "📷 [Bürgerpark Wernigerode, Miniaturenpark 01.jpg](https://commons.wikimedia.org/wiki/File:B%C3%BCrgerpark_Wernigerode,_Miniaturenpark_01.jpg) · Migebert · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9909",
+      "number": "9909",
+      "name": "Ahornpark Ilfeld",
+      "themeKeys": [
+        "jubilaeum-2026",
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9909 Ahornpark Ilfeld",
+      "latitude": 51.581782,
+      "longitude": 10.77365,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+          "name": "Ahornpark, Ilfeld",
+          "latitude": 51.581782,
+          "longitude": 10.77365
+        }
+      ],
+      "coordinateSourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "ID": "7a53697d-b296-532e-9b9a-1135e82e7401",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026, dauerhafte Sonderstempel.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9909.webp",
+      "imageCaption": "📷 [Ahornpark Ilfeld.jpg](https://commons.wikimedia.org/wiki/File:Ahornpark_Ilfeld.jpg) · Thomas Binder · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9910",
+      "number": "9910",
+      "name": "Baumwipfelpfad Harz in Bad Harzburg",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9910 Baumwipfelpfad Harz in Bad Harzburg",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "85a831d7-baf7-5f30-a8be-ba38aa9f80a8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9910.webp",
+      "imageCaption": "📷 [Aufgang-Baumwipfelpfad-Bad-Harzburg-2015.jpg](https://commons.wikimedia.org/wiki/File:Aufgang-Baumwipfelpfad-Bad-Harzburg-2015.jpg) · Tuxyso · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9915",
+      "number": "9915",
+      "name": "Seilhängebrücke Titan-RT",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9915 Seilhängebrücke „Titan-RT“",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "33c0098e-5897-5bca-9109-968ccd6b8447",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9915.webp",
+      "imageCaption": "📷 [Die Fußgänger-Seilhängebrücke nahe der Rappbodetalsperre. 2H1A0407WI.jpg](https://commons.wikimedia.org/wiki/File:Die_Fu%C3%9Fg%C3%A4nger-Seilh%C3%A4ngebr%C3%BCcke_nahe_der_Rappbodetalsperre._2H1A0407WI.jpg) · Kora27 · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9916",
+      "number": "9916",
+      "name": "Transall-Sonderstempel Luftfahrtmuseum Wernigerode",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9916 Transall-Sonderstempel Luftfahrtmuseum Wernigerode",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "b8404469-fdc5-5474-bd34-70cce24a3b9b",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9916.webp",
+      "imageCaption": "📷 [Hangar 1 im Luftfahrtmuseum Wernigerode.jpg](https://commons.wikimedia.org/wiki/File:Hangar_1_im_Luftfahrtmuseum_Wernigerode.jpg) · Luftfahrtmuseum Wernigerode · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9918",
+      "number": "9918",
+      "name": "Museum im Ritterhaus Osterode",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9918 Museum im Ritterhaus Osterode",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "e2025c0c-e6d0-5ffd-a7f3-7fa069cec0f0",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9919",
+      "number": "9919",
+      "name": "Waldlehrpfad Heimburg",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9919 Sonderstempel „Waldlehrpfad Heimburg“",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "287eaa6e-54b8-5cda-b8f9-b2164de0afe3",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9921",
+      "number": "9921",
+      "name": "Rodelhaus Braunlage",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9921 Rodelhaus Braunlage (dauerhafte Sonderstempelstelle)",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "e9398ff1-a551-5b82-8a93-431338a982e5",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9922",
+      "number": "9922",
+      "name": "Tourist Information Wernigerode",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9922 Tourist Information Wernigerode",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "a2fcce38-2e4c-511e-8a73-2a95614c94ba",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9923",
+      "number": "9923",
+      "name": "Märchenweg Wernigerode",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9923 Märchenweg Wernigerode",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "88ce7e83-0934-5e2f-bb5f-924708223707",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-hsb-harzer-schmalspurbahnen",
+      "number": "S",
+      "name": "HSB Harzer Schmalspurbahnen",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Sonderstempel HSB „Harzer Schmalspurbahnen“",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "mobile",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "a837d7c5-538c-5b01-9d95-29582ecb4117",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Mobiler Stempel im Zug, ohne festen Kartenstandort."
+    },
+    {
+      "catalogKey": "special-bergkoenigin-arbeitsgemeinschaft-ruebelandbahn",
+      "number": "S",
+      "name": "Bergkönigin Arbeitsgemeinschaft Rübelandbahn",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Sonderstempel „Bergkönigin“ Arbeitsgemeinschaft Rübelandbahn",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "mobile",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "48ec4431-0937-531a-903f-2339e154150f",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Mobiler Stempel im Zug, ohne festen Kartenstandort."
+    },
+    {
+      "catalogKey": "special-9924",
+      "number": "9924",
+      "name": "Pullmann City Harz",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9924 Pullmann City Harz",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "46153c1c-5629-5cc8-87d6-9b98df15ccd6",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9924.webp",
+      "imageCaption": "📷 [Hasselfelde Westerndorf.JPG](https://commons.wikimedia.org/wiki/File:Hasselfelde_Westerndorf.JPG) · Corradox · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9926",
+      "number": "9926",
+      "name": "Schausägewerk Ehrt",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9926 Schausägewerk Ehrt",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [
+        "Schausägewerk Ehrt"
+      ],
+      "ID": "ef97f554-a288-5639-907d-4a610e773deb",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9927",
+      "number": "9927",
+      "name": "Auerhuhngehege Lonau",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9927 Auerhuhngehege Lonau (dauerhafte Sonderstempelstelle)",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "e5dd2b26-f514-5667-95c6-ca2cf8d3956a",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9928",
+      "number": "9928",
+      "name": "Hasseröder Ferienpark",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9928 Hasseröder Ferienpark",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "22859bc2-cc7a-50b4-b352-d486509732f9",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9932",
+      "number": "9932",
+      "name": "Waldcafé Forellenteich",
+      "themeKeys": [
+        "jubilaeum-2026",
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9932 Waldcafé Forellenteich",
+      "latitude": 51.707734,
+      "longitude": 10.602088,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+          "name": "Waldcafé Forellenteich, Braunlage",
+          "latitude": 51.707734,
+          "longitude": 10.602088
+        }
+      ],
+      "coordinateSourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "ID": "a520fe31-f207-5581-84d3-8c36f60a6b79",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026, dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9935",
+      "number": "9935",
+      "name": "Park Hohenrode",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9935 Park Hohenrode",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "b2696e78-308b-5a21-a613-76054b6e23d3",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9935.webp",
+      "imageCaption": "📷 [Park Hohenrode 4.jpg](https://commons.wikimedia.org/wiki/File:Park_Hohenrode_4.jpg) · Vincent Eisfeld · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9939",
+      "number": "9939",
+      "name": "Bienenpfad Wieda",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9939 Bienenpfad Wieda",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "c3efd47c-1d5e-5b8b-81cc-72b0a7a3a609",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9941",
+      "number": "9941",
+      "name": "Borkenkäferpfad",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9941 Borkenkäferpfad (dauerhafte Sonderstempelstelle)",
+      "latitude": 51.85843333,
+      "longitude": 10.65948333,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "6deda889-a79b-5960-89c3-f42e11d30801",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9942",
+      "number": "9942",
+      "name": "WaldWandel am Brocken",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9942 WaldWandel am Brocken",
+      "latitude": 51.77241667,
+      "longitude": 10.64228333,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "c0713498-d9e0-5c5a-b391-5912471df8d9",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9943",
+      "number": "9943",
+      "name": "WaldWandelWeg",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9943 WaldWandelWeg",
+      "latitude": 51.8029,
+      "longitude": 10.55248333,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "99bf33de-bc80-5c3a-9e65-2f54678e454a",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9944",
+      "number": "9944",
+      "name": "Brockengarten",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9944 Brockengarten",
+      "latitude": 51.799502,
+      "longitude": 10.617851,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "defa48bd-0017-5934-92fe-e9c4eb2aae37",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9944.webp",
+      "imageCaption": "📷 [Versuchs- und Schaugarten Brocken.JPG](https://commons.wikimedia.org/wiki/File:Versuchs-_und_Schaugarten_Brocken.JPG) · Wusel007 · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9945",
+      "number": "9945",
+      "name": "Löwenzahn-Entdeckerpfad",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9945 Löwenzahn-Entdeckerpfad",
+      "latitude": 51.77128333,
+      "longitude": 10.7234,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "2ad37cb9-8d3b-55da-b031-70ab2cc30221",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9946",
+      "number": "9946",
+      "name": "HarzWaldHaus",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9946 HarzWaldHaus",
+      "latitude": 51.87201667,
+      "longitude": 10.561,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "82a882be-a2fb-59a8-b422-dd2fb11837b0",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-urwaldstieg",
+      "number": "S",
+      "name": "Urwaldstieg",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Urwaldstieg",
+      "latitude": 51.790341,
+      "longitude": 10.641064,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "b5585c07-7e45-5c8b-931e-9497dfba13b9",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9947",
+      "number": "9947",
+      "name": "Skywalk am Sonnenstein",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9947 Sonderstempelstelle Skywalk am Sonnenstein",
+      "latitude": 51.4974,
+      "longitude": 10.3848,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "d89e89b1-1f5d-5224-83e2-8f9ab6678b66",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9948",
+      "number": "9948",
+      "name": "BaumSchwebeBahn",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9948 BaumSchwebeBahn",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "e01258a4-00c0-50aa-9430-4598aaa90bc3",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9950",
+      "number": "9950",
+      "name": "Harzmuseum Wernigerode",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9950 Harzmuseum Wernigerode",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "ece1b5f7-2589-5b96-b24f-70f81ab367f4",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9950.webp",
+      "imageCaption": "📷 [Harzmuseum Wernigerode 2019.jpg](https://commons.wikimedia.org/wiki/File:Harzmuseum_Wernigerode_2019.jpg) · Hercynia · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-9951",
+      "number": "9951",
+      "name": "Rotes Sofa Benneckenstein",
+      "themeKeys": [
+        "jubilaeum-2026",
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9951 Rotes Sofa Benneckenstein",
+      "latitude": 51.665508,
+      "longitude": 10.70651,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+          "name": "Rotes Sofa, Benneckenstein",
+          "latitude": 51.665508,
+          "longitude": 10.70651
+        }
+      ],
+      "coordinateSourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "ID": "67b40c60-2a2f-517c-b07a-62d5eda03cc0",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026, dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9952",
+      "number": "9952",
+      "name": "United Kids Foundation",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9952 United Kids Foundation",
+      "latitude": 51.80396,
+      "longitude": 10.51154,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "7f56d562-fc86-5dd2-90f4-fd168e8a60f8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9953",
+      "number": "9953",
+      "name": "Holzkirche Elend",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9953 Holzkirche Elend",
+      "latitude": 51.74347222,
+      "longitude": 10.68469444,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "9a326f44-be70-579e-86ad-e4e6c94952be",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9954",
+      "number": "9954",
+      "name": "Startpunkt Harzer Hexenstieg in Osterode Eselstreiber Denkmal",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9954 Startpunkt Harzer Hexenstieg in Osterode „Eselstreiber Denkmal“",
+      "latitude": 51.7276915,
+      "longitude": 10.25265233,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "17c41cdd-884d-5479-83d8-1f3e02b5ddca",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9955",
+      "number": "9955",
+      "name": "10 Jahre Nationales Naturerbe in Blankenburg (Harz)",
+      "themeKeys": [
+        "jubilaeum-2026",
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9955 Sonderstempel 10 Jahre Nationales Naturerbe in Blankenburg (Harz)",
+      "latitude": 51.777426,
+      "longitude": 10.914927,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+          "name": "Nationales Naturerbe, Blankenburg",
+          "latitude": 51.777426,
+          "longitude": 10.914927
+        }
+      ],
+      "coordinateSourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "ID": "c83e825e-09bb-51fa-a78e-99c91eedd81d",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026, dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9956",
+      "number": "9956",
+      "name": "Wald für morgen",
+      "themeKeys": [
+        "jubilaeum-2026",
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9956 Sonderstempelstelle „Wald für morgen“",
+      "latitude": 51.89864,
+      "longitude": 10.447596,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+          "name": "„Wald für morgen“, Goslar",
+          "latitude": 51.89864,
+          "longitude": 10.447596
+        }
+      ],
+      "coordinateSourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "ID": "e4aca1e7-79a5-517d-96ff-0e12bc02483d",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026, dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9958",
+      "number": "9958",
+      "name": "Pastorenstein",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9958 Pastorenstein",
+      "latitude": 51.82441667,
+      "longitude": 10.96221667,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "3d5d8450-20a6-5ad2-9f73-181df5a472ec",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel."
+    },
+    {
+      "catalogKey": "special-9959",
+      "number": "9959",
+      "name": "HARZGERÖDER KUGELsPASS",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9959 HARZGERÖDER KUGELsPASS",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "4a0df631-5220-5c61-b05b-ff80f0024a8b",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-9960",
+      "number": "9960",
+      "name": "Matthias Schmidt Berg",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/sonderstempel/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "9960 Matthias Schmidt Berg",
+      "latitude": 51.704,
+      "longitude": 10.52426667,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "6bd0d3bb-6a70-5ea2-b366-58f58e19ff95",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-9960.webp",
+      "imageCaption": "📷 [Matthias-Schmidt-Berg.png](https://commons.wikimedia.org/wiki/File:Matthias-Schmidt-Berg.png) · Ogmios · [CC0](https://creativecommons.org/publicdomain/zero/1.0/deed.en); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-lutherweg-kalte-stelle-unterrissdorf",
+      "number": "S",
+      "name": "„Kalte Stelle“ Unterrißdorf",
+      "themeKeys": [
+        "lutherweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "„Kalte Stelle“ Unterrißdorf",
+      "latitude": 51.51741,
+      "longitude": 11.61293,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "fedd9e94-8032-584e-8318-b6370789e42d",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Lutherweg."
+    },
+    {
+      "catalogKey": "special-lutherweg-naturerlebnisstation-moellendorf-am-brandberg",
+      "number": "S",
+      "name": "Naturerlebnisstation Möllendorf „Am Brandberg“",
+      "themeKeys": [
+        "lutherweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Naturerlebnisstation Möllendorf „Am Brandberg“",
+      "latitude": 51.58723,
+      "longitude": 11.42797,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "d130de2d-67f1-5430-8024-898aa02fd92b",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Lutherweg."
+    },
+    {
+      "catalogKey": "special-lutherweg-schutzhuette-baumrode",
+      "number": "S",
+      "name": "Schutzhütte Baumrode",
+      "themeKeys": [
+        "lutherweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Schutzhütte Baumrode",
+      "latitude": 51.5767,
+      "longitude": 11.38214,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "9b752f7c-af9e-50fe-b99c-fcbb1698b6af",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Lutherweg."
+    },
+    {
+      "catalogKey": "special-lutherweg-naturerlebnisstation-wippra-am-kleebeck",
+      "number": "S",
+      "name": "Naturerlebnisstation Wippra „Am Kleebeck“",
+      "themeKeys": [
+        "lutherweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Naturerlebnisstation Wippra „Am Kleebeck“",
+      "latitude": 51.56015,
+      "longitude": 11.28365,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "76a79562-f4a3-5666-8c97-56cbf44dde14",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Lutherweg."
+    },
+    {
+      "catalogKey": "special-lutherweg-naturerlebnisstation-dankerode-am-heuweg",
+      "number": "S",
+      "name": "Naturerlebnisstation Dankerode „Am Heuweg“",
+      "themeKeys": [
+        "lutherweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Naturerlebnisstation Dankerode „Am Heuweg“",
+      "latitude": 51.57382,
+      "longitude": 11.15658,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "f1308619-7e76-5d52-ab54-e6144387f8c2",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Lutherweg."
+    },
+    {
+      "catalogKey": "special-lutherweg-feldflur-hayn",
+      "number": "S",
+      "name": "Feldflur Hayn",
+      "themeKeys": [
+        "lutherweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Feldflur Hayn",
+      "latitude": 51.57989,
+      "longitude": 11.0632,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "17b0e0f5-cd3f-59a5-b6d9-f136acae9e7a",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Lutherweg."
+    },
+    {
+      "catalogKey": "special-lutherweg-wolfsmuehle-rodishain",
+      "number": "S",
+      "name": "Wolfsmühle Rodishain",
+      "themeKeys": [
+        "lutherweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Wolfsmühle Rodishain",
+      "latitude": 51.53735,
+      "longitude": 10.9285,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "b5b536e8-74fc-5beb-b04b-2b07f6ec3de3",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Lutherweg."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-badenhaeuser-koenigsstein-oberhuette",
+      "number": "S",
+      "name": "Badenhäuser Königsstein, Oberhütte",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Badenhäuser Königsstein, Oberhütte",
+      "latitude": 51.7578,
+      "longitude": 10.1978,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "1f5ecf40-cd99-53d0-976a-aec76fe78b58",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-burgruine-lichtenstein-dorste",
+      "number": "S",
+      "name": "Burgruine Lichtenstein, Dorste",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Burgruine Lichtenstein, Dorste",
+      "latitude": 51.72116667,
+      "longitude": 10.17575,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "c43d264e-1021-5ae8-b682-bf096a9580bc",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-osteroder-feldherrenhuegel-osterode",
+      "number": "S",
+      "name": "Osteroder Feldherrenhügel, Osterode",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Osteroder Feldherrenhügel, Osterode",
+      "latitude": 51.70041667,
+      "longitude": 10.23188333,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "3713787a-2635-5a07-a441-c9ab989f7966",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-duenaer-roetzelkamm-duena",
+      "number": "S",
+      "name": "Dünaer Rötzelkamm, Düna",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Dünaer Rötzelkamm, Düna",
+      "latitude": 51.69698333,
+      "longitude": 10.26366667,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "f754ae68-af5d-575e-a797-8d10280e9243",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-westersteine-bartolfelde",
+      "number": "S",
+      "name": "Westersteine, Bartolfelde",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Westersteine, Bartolfelde",
+      "latitude": 51.6004,
+      "longitude": 10.444,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "e2463138-fbbb-5754-803a-4f68358eb3fe",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-wache-auf-dem-muehlberg-niedersachswerfen",
+      "number": "S",
+      "name": "Wache auf dem Mühlberg, Niedersachswerfen",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Wache auf dem Mühlberg, Niedersachswerfen",
+      "latitude": 51.55526667,
+      "longitude": 10.76088333,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "8c275bbe-588d-55b4-892c-6f089470b431",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-kelle-appenrode",
+      "number": "S",
+      "name": "Kelle, Appenrode",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kelle, Appenrode",
+      "latitude": 51.56713333,
+      "longitude": 10.71803333,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "9bb5c9ea-617c-543a-a156-2d3cf1bce0b0",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-salzaspring-nordhausen",
+      "number": "S",
+      "name": "Salzaspring, Nordhausen",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Salzaspring, Nordhausen",
+      "latitude": 51.53046667,
+      "longitude": 10.76166667,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "274aa915-9f47-5a75-a444-2eb4cc490bb8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-karstwanderweg-salzaspring-nordhausen.webp",
+      "imageCaption": "📷 [Salzaspring.jpg](https://commons.wikimedia.org/wiki/File:Salzaspring.jpg) · Freak-Line-Community · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-ankenberg-grossleinungen",
+      "number": "S",
+      "name": "Ankenberg, Großleinungen",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Ankenberg, Großleinungen",
+      "latitude": 51.49561667,
+      "longitude": 11.18476667,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "a34e7e68-0008-5789-a62e-625ec06a56d8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-poelsfeld",
+      "number": "S",
+      "name": "Pölsfeld",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Pölsfeld",
+      "latitude": 51.52548333,
+      "longitude": 11.35863333,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "04d2ee3c-cbed-5117-8e74-1fc3f256bdf0",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-schloss-quedlinburg",
+      "number": "S",
+      "name": "Schloss Quedlinburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Schloss Quedlinburg",
+      "latitude": 51.7858,
+      "longitude": 11.1375,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "10681a63-1a88-512e-80d3-13586fbd3193",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-burgruine-hausneindorf",
+      "number": "S",
+      "name": "Burgruine Hausneindorf",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Burgruine Hausneindorf",
+      "latitude": 51.83993,
+      "longitude": 11.27182,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "63bec84b-fd17-5c9f-856e-54f1efdace97",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-burgruine-hausneindorf.webp",
+      "imageCaption": "📷 [Burg Hausneindorf 11.jpg](https://commons.wikimedia.org/wiki/File:Burg_Hausneindorf_11.jpg) · Migebert · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-erichsburg",
+      "number": "S",
+      "name": "Erichsburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Erichsburg",
+      "latitude": 51.67172,
+      "longitude": 11.06138,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "a5589b80-653d-5604-8014-6f9a57232ad4",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-grosses-schloss-blankenburg",
+      "number": "S",
+      "name": "Großes Schloss Blankenburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Großes Schloss Blankenburg",
+      "latitude": 51.7867,
+      "longitude": 10.95407,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "4345b3f4-d7c6-5b40-877a-716e8e294cfd",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-guentersburg",
+      "number": "S",
+      "name": "Güntersburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Güntersburg",
+      "latitude": 51.636,
+      "longitude": 10.9723,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "1cb02e2c-f133-5cc6-ba7f-53f36dee3b1b",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-guentersburg.webp",
+      "imageCaption": "📷 [Güntersburg hochkant.jpg](https://commons.wikimedia.org/wiki/File:G%C3%BCntersburg_hochkant.jpg) · Sarkana from Spandau, Deutschland · [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-heinrichsburg",
+      "number": "S",
+      "name": "Heinrichsburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Heinrichsburg",
+      "latitude": 51.67643,
+      "longitude": 11.1345,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "c83f39db-024c-516c-8517-2b0d3b1c785b",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-huysburg",
+      "number": "S",
+      "name": "Huysburg",
+      "themeKeys": [
+        "geschichtsorte",
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Huysburg",
+      "latitude": 51.959,
+      "longitude": 11.001,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+          "name": "Huysburg",
+          "latitude": 51.959,
+          "longitude": 11.001
+        }
+      ],
+      "ID": "c7a4e92e-ba13-5cea-8213-d73bd5269b63",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser, Huy-Fallstein.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-huysburg.webp",
+      "imageCaption": "📷 [Huysburg 012.JPG](https://commons.wikimedia.org/wiki/File:Huysburg_012.JPG) · Wolkenkratzer · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-kleines-schloss-blankenburg",
+      "number": "S",
+      "name": "Kleines Schloss Blankenburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kleines Schloss Blankenburg",
+      "latitude": 51.78838,
+      "longitude": 10.96008,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "43a36172-29db-594d-a108-22269725ca9b",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-kleines-schloss-blankenburg.webp",
+      "imageCaption": "📷 [Blankenburg - Schloß mit Barockgarten.jpg](https://commons.wikimedia.org/wiki/File:Blankenburg_-_Schlo%C3%9F_mit_Barockgarten.jpg) · Franzfoto · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-koenigspfalz-bodfeld",
+      "number": "S",
+      "name": "Königspfalz Bodfeld",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Königspfalz Bodfeld",
+      "latitude": 51.7882,
+      "longitude": 10.8398,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "f2fea218-dd51-5db8-bd78-38d45e71b4f8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-koenigspfalz-derenburg",
+      "number": "S",
+      "name": "Königspfalz Derenburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Königspfalz Derenburg",
+      "latitude": 51.8741,
+      "longitude": 10.914,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "9ed3c106-7296-5e18-81d2-7aa825bceab6",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-roseburg",
+      "number": "S",
+      "name": "Roseburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Roseburg",
+      "latitude": 51.7271,
+      "longitude": 11.197,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "c1f38e16-3c4a-500c-80c2-a267a947a228",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-roseburg.webp",
+      "imageCaption": "📷 [Roseburg (Schloss) 011.jpg](https://commons.wikimedia.org/wiki/File:Roseburg_(Schloss)_011.jpg) · Wolkenkratzer · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-ruine-domburg-im-hakel-bei-heteborn",
+      "number": "S",
+      "name": "Ruine Domburg im Hakel bei Heteborn",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Ruine Domburg im Hakel bei Heteborn",
+      "latitude": 51.8767,
+      "longitude": 11.3169,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "cd393277-ea01-5183-a2b0-7dcb9f8b2c95",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-burg-schlanstedt",
+      "number": "S",
+      "name": "Burg Schlanstedt",
+      "themeKeys": [
+        "geschichtsorte",
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Burg Schlanstedt",
+      "latitude": 52.01044,
+      "longitude": 11.02971,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+          "name": "Burg Schlanstedt",
+          "latitude": 52.01044,
+          "longitude": 11.02971
+        }
+      ],
+      "ID": "7d4cde72-f516-5959-bdbb-f492a886036b",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser, Huy-Fallstein.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-burg-schlanstedt.webp",
+      "imageCaption": "📷 [Burg Schlanstedt.JPG](https://commons.wikimedia.org/wiki/File:Burg_Schlanstedt.JPG) · FrankBothe · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-schloss-ballenstedt",
+      "number": "S",
+      "name": "Schloss Ballenstedt",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Schloss Ballenstedt",
+      "latitude": 51.7181,
+      "longitude": 11.2199,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "af3287f1-66e3-53b0-97a6-313a823f5c32",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-schloss-ballenstedt.webp",
+      "imageCaption": "📷 [Schloss Ballenstedt Luftbild.jpg](https://commons.wikimedia.org/wiki/File:Schloss_Ballenstedt_Luftbild.jpg) · Gregor Rom · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-schloss-hessen",
+      "number": "S",
+      "name": "Schloss Hessen",
+      "themeKeys": [
+        "geschichtsorte",
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Schloss Hessen",
+      "latitude": 52.0187,
+      "longitude": 10.7818,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+          "name": "Schloss Hessen",
+          "latitude": 52.0187,
+          "longitude": 10.7818
+        }
+      ],
+      "ID": "3a469374-6175-5706-bf39-76dff5289e6f",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser, Huy-Fallstein.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-schloss-hessen.webp",
+      "imageCaption": "📷 [Schloss Hessen Frontansicht.jpg](https://commons.wikimedia.org/wiki/File:Schloss_Hessen_Frontansicht.jpg) · Axel Hindemith · [CC BY 3.0](https://creativecommons.org/licenses/by/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-schloss-wernigerode",
+      "number": "S",
+      "name": "Schloss Wernigerode",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Schloss Wernigerode",
+      "latitude": 51.8313,
+      "longitude": 10.7949,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [
+        "Aufgrund der Bauarbeiten am Schloss Wernigerode wurde der Stempelkasten vor das untere Schlosstor versetzt."
+      ],
+      "ID": "c3e9a7ab-7e29-5ed9-b55e-21f7f1fa5907",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-schloss-wernigerode.webp",
+      "imageCaption": "📷 [Schloss Wernigerode Luftbild 2.jpg](https://commons.wikimedia.org/wiki/File:Schloss_Wernigerode_Luftbild_2.jpg) · Gregor Rom · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-schloss-zu-harzgerode",
+      "number": "S",
+      "name": "Schloss zu Harzgerode",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Schloss zu Harzgerode",
+      "latitude": 51.64272,
+      "longitude": 11.14168,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "740b6c72-a046-53f3-bb3c-a7bb7404d743",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-schloss-zu-harzgerode.webp",
+      "imageCaption": "📷 [Schloss Harzgerode 2017.jpg](https://commons.wikimedia.org/wiki/File:Schloss_Harzgerode_2017.jpg) · Olaf Meister · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-selkenfelder-schanze",
+      "number": "S",
+      "name": "Selkenfelder Schanze",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Selkenfelder Schanze",
+      "latitude": 51.6507,
+      "longitude": 10.9267,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "30af62ce-0f79-5de0-8902-8b3489053d1e",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-selkenfelder-schanze.webp",
+      "imageCaption": "📷 [Selkenfelder Schanze, Befestigungswall.jpg](https://commons.wikimedia.org/wiki/File:Selkenfelder_Schanze,_Befestigungswall.jpg) · ThomasHarz · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-seweckenberge-warte-bei-quedlinburg",
+      "number": "S",
+      "name": "Seweckenberge (-warte) bei Quedlinburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Seweckenberge (-warte) bei Quedlinburg",
+      "latitude": 51.7699,
+      "longitude": 11.2072,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "b620f315-f306-5fd3-a8a6-7ec3f9ea4655",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-st-wiperti",
+      "number": "S",
+      "name": "St. Wiperti",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "St. Wiperti",
+      "latitude": 51.7852,
+      "longitude": 11.1298,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "e4c83981-8292-5ec3-80f7-d79176cf47f5",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-st-wiperti.webp",
+      "imageCaption": "📷 [Quedlinburg Wiperti Krypta.jpg](https://commons.wikimedia.org/wiki/File:Quedlinburg_Wiperti_Krypta.jpg) · Thomas Wozniak · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-stapelburg",
+      "number": "S",
+      "name": "Stapelburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Stapelburg",
+      "latitude": 51.9036,
+      "longitude": 10.6697,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "44d396f3-ffb7-57b9-b0d7-039d78443db8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-stapelburg.webp",
+      "imageCaption": "📷 [Burgruine Stapelburg.jpg](https://commons.wikimedia.org/wiki/File:Burgruine_Stapelburg.jpg) · Benutzer:Hejkal / Hejkal at German Wikipedia · [CC BY-SA 3.0 de](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-stecklenburg",
+      "number": "S",
+      "name": "Stecklenburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Stecklenburg",
+      "latitude": 51.7309,
+      "longitude": 11.0883,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "2ac3b287-ddb6-54c1-aa66-47b1d64de4e2",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-stecklenburg.webp",
+      "imageCaption": "📷 [Stecklenburg Ruine 2.jpg](https://commons.wikimedia.org/wiki/File:Stecklenburg_Ruine_2.jpg) · Gregor Rom · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-treseburg",
+      "number": "S",
+      "name": "Treseburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Treseburg",
+      "latitude": 51.7182,
+      "longitude": 10.9716,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "5aa73106-5be3-5eba-85e0-011b0eac23d3",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-westerburg",
+      "number": "S",
+      "name": "Westerburg",
+      "themeKeys": [
+        "geschichtsorte",
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Westerburg",
+      "latitude": 52.0153,
+      "longitude": 10.8664,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+          "name": "Wasserschloss Westerburg",
+          "latitude": 52.0153,
+          "longitude": 10.8664
+        }
+      ],
+      "ID": "c70136f6-a57e-566f-bc84-55728ab173ad",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser, Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-winzenburg",
+      "number": "S",
+      "name": "Winzenburg",
+      "themeKeys": [
+        "geschichtsorte"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Winzenburg",
+      "latitude": 51.7406,
+      "longitude": 11.0118,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "97db1866-6009-5d48-ba8f-aebcb29bb11e",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser."
+    },
+    {
+      "catalogKey": "special-geschichtsorte-wasserburg-zilly",
+      "number": "S",
+      "name": "Wasserburg Zilly",
+      "themeKeys": [
+        "geschichtsorte",
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Wasserburg Zilly",
+      "latitude": 51.9431,
+      "longitude": 10.8252,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "additionalSources": [
+        {
+          "url": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+          "name": "Wasserburg Zilly",
+          "latitude": 51.9431,
+          "longitude": 10.8252
+        }
+      ],
+      "ID": "b79da946-f293-5271-8434-aae780c2c1d5",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Harzer Geschichtsorte – Burgen und Schlösser, Huy-Fallstein.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-geschichtsorte-wasserburg-zilly.webp",
+      "imageCaption": "📷 [Wasserburg Zilly 020.JPG](https://commons.wikimedia.org/wiki/File:Wasserburg_Zilly_020.JPG) · Wolkenkratzer · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-schaefers-hof-osterwieck",
+      "number": "S",
+      "name": "Schäfers Hof Osterwieck",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Schäfers Hof Osterwieck",
+      "latitude": 51.970381,
+      "longitude": 10.71379,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "4422212a-b431-5493-bb3d-63dd97284276",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-bismarckturm-osterwieck",
+      "number": "S",
+      "name": "Bismarckturm Osterwieck",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Bismarckturm Osterwieck",
+      "latitude": 51.986859,
+      "longitude": 10.711622,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "7e3ccd6c-7e60-589b-8a65-4f5041a0656f",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-huy-fallstein-bismarckturm-osterwieck.webp",
+      "imageCaption": "📷 [Bismarckturm Osterwieck.jpg](https://commons.wikimedia.org/wiki/File:Bismarckturm_Osterwieck.jpg) · Benutzer:Hejkal · [CC BY-SA 3.0 de](https://creativecommons.org/licenses/by-sa/3.0/de/deed.en); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-stoetterlingenburg-luettgenrode",
+      "number": "S",
+      "name": "Stötterlingenburg Lüttgenrode",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Stötterlingenburg Lüttgenrode",
+      "latitude": 51.967669,
+      "longitude": 10.666592,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "bd39a920-5a95-5e63-a56b-56c2581f152a",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-huy-fallstein-stoetterlingenburg-luettgenrode.webp",
+      "imageCaption": "📷 [Stoetterlingenburg Turm.jpg](https://commons.wikimedia.org/wiki/File:Stoetterlingenburg_Turm.jpg) · Máel Milscothach · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-steinbruch-hoppenstedt",
+      "number": "S",
+      "name": "Steinbruch Hoppenstedt",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Steinbruch Hoppenstedt",
+      "latitude": 51.999244,
+      "longitude": 10.659301,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "f60365c6-c2cb-59bb-bfef-5cf9621337b3",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-deersheim",
+      "number": "S",
+      "name": "Deersheim",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Deersheim",
+      "latitude": 51.979573,
+      "longitude": 10.779755,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "3f7d671f-2239-5b6b-84eb-b74112d7ecaa",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-windpark-druiberg",
+      "number": "S",
+      "name": "Windpark Druiberg",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Windpark Druiberg",
+      "latitude": 51.984798,
+      "longitude": 10.848555,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "5af18553-fadd-5ed9-8457-e2eb204293f3",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-huy-fallstein-windpark-druiberg.webp",
+      "imageCaption": "📷 [Windpark Druiberg.JPG](https://commons.wikimedia.org/wiki/File:Windpark_Druiberg.JPG) · TeWeBs · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-heiketalwarte",
+      "number": "S",
+      "name": "Heiketalwarte",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Heiketalwarte",
+      "latitude": 51.957371,
+      "longitude": 10.883202,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "443f4921-a61f-5b27-b38e-b0800441f685",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-muehle-badersleben",
+      "number": "S",
+      "name": "Mühle Badersleben",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Mühle Badersleben",
+      "latitude": 51.979887,
+      "longitude": 10.894441,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "5cf34db8-ce5f-54c5-ba99-13ae868c76c6",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-linde-vogelsdorf",
+      "number": "S",
+      "name": "Linde Vogelsdorf",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Linde Vogelsdorf",
+      "latitude": 52.012116,
+      "longitude": 10.898834,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "93559a4c-1ebb-5b44-9800-81758df94843",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-heimatmuseum-dedeleben",
+      "number": "S",
+      "name": "Heimatmuseum Dedeleben",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Heimatmuseum Dedeleben",
+      "latitude": 52.033838,
+      "longitude": 10.891779,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "94ae885c-d9a1-55ab-8398-40849de78942",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-quelle-piepenpal-huy-neinstedt",
+      "number": "S",
+      "name": "Quelle Piepenpal Huy-Neinstedt",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Quelle Piepenpal Huy-Neinstedt",
+      "latitude": 51.964208,
+      "longitude": 10.914785,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "5e986d46-77d7-564c-9ab7-200610dd8703",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-blechbude-wilhelmshall",
+      "number": "S",
+      "name": "Blechbude Wilhelmshall",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Blechbude Wilhelmshall",
+      "latitude": 51.96092,
+      "longitude": 10.945868,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "1a334e7a-df9a-51a8-9975-9e151089dadc",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-daneilshoehle",
+      "number": "S",
+      "name": "Daneilshöhle",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Daneilshöhle",
+      "latitude": 51.962467,
+      "longitude": 10.987304,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "843cfdfe-84ab-593d-a947-3ba9817f1486",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-huy-fallstein-daneilshoehle.webp",
+      "imageCaption": "📷 [Daneils cave Daneilshohle Huy 2014-06.jpg](https://commons.wikimedia.org/wiki/File:Daneils_cave_Daneilshohle_Huy_2014-06.jpg) · Sipalius · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-huy-fallstein-gletschertoepfe",
+      "number": "S",
+      "name": "Gletschertöpfe",
+      "themeKeys": [
+        "huy-fallstein"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/huy-fallstein/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Gletschertöpfe",
+      "latitude": 51.957019,
+      "longitude": 10.913999,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "5da96706-2034-5d80-8f02-82881efb2668",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Huy-Fallstein."
+    },
+    {
+      "catalogKey": "special-talsperren-soesetalsperre-osterode",
+      "number": "S",
+      "name": "Sösetalsperre, Osterode",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Sösetalsperre, Osterode",
+      "latitude": 51.736269,
+      "longitude": 10.308452,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "ecf0e94e-b41d-53b2-b9bc-74bc367371f8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz."
+    },
+    {
+      "catalogKey": "special-talsperren-hochwasserschutzbecken-kalte-bode-koenigshuette",
+      "number": "S",
+      "name": "Hochwasserschutzbecken Kalte Bode, Königshütte",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Hochwasserschutzbecken Kalte Bode, Königshütte",
+      "latitude": 51.748573,
+      "longitude": 10.741279,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "793ef233-79f0-59c0-b641-e980063bded8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz."
+    },
+    {
+      "catalogKey": "special-talsperren-birnbaumteich-neudorf",
+      "number": "S",
+      "name": "Birnbaumteich, Neudorf",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Birnbaumteich, Neudorf",
+      "latitude": 51.614432,
+      "longitude": 11.089109,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "1ed7a501-ea21-5f00-bccf-9295031a5334",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-talsperren-birnbaumteich-neudorf.webp",
+      "imageCaption": "📷 [Birnbaumteich 2.JPG](https://commons.wikimedia.org/wiki/File:Birnbaumteich_2.JPG) · Thomas Guffler · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-talsperren-grosser-siebersteinsteich-ballenstedt",
+      "number": "S",
+      "name": "Großer Siebersteinsteich, Ballenstedt",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Großer Siebersteinsteich, Ballenstedt",
+      "latitude": 51.708703,
+      "longitude": 11.176335,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "7376ee48-f68f-5bf9-ac22-b32ddaf1a7ab",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz."
+    },
+    {
+      "catalogKey": "special-talsperren-speicher-wettelrode-wettelrode",
+      "number": "S",
+      "name": "Speicher Wettelrode, Wettelrode",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Speicher Wettelrode, Wettelrode",
+      "latitude": 51.520455,
+      "longitude": 11.262156,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "eb4d9396-02f5-5bc6-8360-037b0cc82585",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-talsperren-speicher-wettelrode-wettelrode.webp",
+      "imageCaption": "📷 [Kunstteich Wettelrode.jpg](https://commons.wikimedia.org/wiki/File:Kunstteich_Wettelrode.jpg) · Thomas Binder · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-talsperren-muehlenteich-guentersberge-guentersberge",
+      "number": "S",
+      "name": "Mühlenteich Güntersberge, Güntersberge",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Mühlenteich Güntersberge, Güntersberge",
+      "latitude": 51.641579,
+      "longitude": 10.975466,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "14a76d4b-9544-5603-b2c9-9eb69b833e32",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-talsperren-muehlenteich-guentersberge-guentersberge.webp",
+      "imageCaption": "📷 [Bergsee bei Güntersberge.jpg](https://commons.wikimedia.org/wiki/File:Bergsee_bei_G%C3%BCntersberge.jpg) · Olaf Meister · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-talsperren-talsperre-kelbra-kelbra",
+      "number": "S",
+      "name": "Talsperre Kelbra, Kelbra",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Talsperre Kelbra, Kelbra",
+      "latitude": 51.445667,
+      "longitude": 11.00525,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "171243ef-ab66-525d-b5dd-8bf3c8708ff8",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-talsperren-talsperre-kelbra-kelbra.webp",
+      "imageCaption": "📷 [Kelbra-Staudamm.jpg](https://commons.wikimedia.org/wiki/File:Kelbra-Staudamm.jpg) · ProfessorX · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-talsperren-fuerstenteich-silberhuette",
+      "number": "S",
+      "name": "Fürstenteich, Silberhütte",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Fürstenteich, Silberhütte",
+      "latitude": 51.626262,
+      "longitude": 11.094926,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "c30f088e-3296-5e40-bf2e-6f4a5014db08",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz."
+    },
+    {
+      "catalogKey": "special-talsperren-neuer-teich-gernrode",
+      "number": "S",
+      "name": "Neuer Teich, Gernrode",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Neuer Teich, Gernrode",
+      "latitude": 51.706378,
+      "longitude": 11.105038,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "51665af1-f7c9-52d5-ad98-058db696edba",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz."
+    },
+    {
+      "catalogKey": "special-talsperren-kunstteich-neudorf-neudorf",
+      "number": "S",
+      "name": "Kunstteich Neudorf, Neudorf",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kunstteich Neudorf, Neudorf",
+      "latitude": 51.60604,
+      "longitude": 11.126764,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "0d4fa0f5-3381-53a0-933c-715df663380d",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz."
+    },
+    {
+      "catalogKey": "special-talsperren-frankenteich-strassberg",
+      "number": "S",
+      "name": "Frankenteich, Straßberg",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Frankenteich, Straßberg",
+      "latitude": 51.599329,
+      "longitude": 11.025702,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "b6a98e74-00a2-555b-bad1-f5bb134fd830",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz."
+    },
+    {
+      "catalogKey": "special-talsperren-rappbodetalsperre-wendefurth",
+      "number": "S",
+      "name": "Rappbodetalsperre, Wendefurth",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Rappbodetalsperre, Wendefurth",
+      "latitude": 51.739151,
+      "longitude": 10.895695,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "64812a14-6bea-5175-982a-d4a4be468319",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz."
+    },
+    {
+      "catalogKey": "special-talsperren-kunstteich-ballenstedt-ballenstedt",
+      "number": "S",
+      "name": "Kunstteich Ballenstedt, Ballenstedt",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kunstteich Ballenstedt, Ballenstedt",
+      "latitude": 51.707173,
+      "longitude": 11.237663,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "e8df5de9-65c6-5823-847a-67014d8158d9",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-talsperren-kunstteich-ballenstedt-ballenstedt.webp",
+      "imageCaption": "📷 [Kunstteich - panoramio (1).jpg](https://commons.wikimedia.org/wiki/File:Kunstteich_-_panoramio_(1).jpg) · Alexander Reuss · [CC BY 3.0](https://creativecommons.org/licenses/by/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-talsperren-hochwasserrueckhaltebecken-wippra-wippra",
+      "number": "S",
+      "name": "Hochwasserrückhaltebecken Wippra, Wippra",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Hochwasserrückhaltebecken Wippra, Wippra",
+      "latitude": 51.568157,
+      "longitude": 11.25601,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "6a13e585-5dcc-5bc2-98de-785735e741b9",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz."
+    },
+    {
+      "catalogKey": "special-talsperren-heiliger-teich-haferfeld",
+      "number": "S",
+      "name": "Heiliger Teich, Haferfeld",
+      "themeKeys": [
+        "talsperren"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Heiliger Teich, Haferfeld",
+      "latitude": 51.710478,
+      "longitude": 11.143878,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "925635dd-28c5-5db7-9e74-87e34684c1fe",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Talsperren im Harz.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-talsperren-heiliger-teich-haferfeld.webp",
+      "imageCaption": "📷 [Blick über den Heiligen Teich.jpg](https://commons.wikimedia.org/wiki/File:Blick_%C3%BCber_den_Heiligen_Teich.jpg) · Olaf Meister · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-kaiser-otto-hoehenweg-butterkuppe-sangerhausen",
+      "number": "S",
+      "name": "Kaiser-Otto-Höhenweg „Butterkuppe“, Sangerhausen",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kaiser-Otto-Höhenweg „Butterkuppe“, Sangerhausen",
+      "latitude": 51.47632,
+      "longitude": 11.19491,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [
+        "Der Jubiläumstempel „Butterkuppe“ wurde versetzt und befindet sich in einer Schutzhütte auf dem Kaiser-Otto-Höhenweg in Richtung Wallhausen"
+      ],
+      "ID": "74ea3e3c-9b01-5bdb-b0ef-6cea863c26f3",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-vogelschutzgebiet-kelbra",
+      "number": "S",
+      "name": "Vogelschutzgebiet, Kelbra",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Vogelschutzgebiet, Kelbra",
+      "latitude": 51.424741,
+      "longitude": 10.979347,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "7b881742-8711-5707-b0f4-f5a794eb8b99",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-wuestung-hohenrode-grillenberg",
+      "number": "S",
+      "name": "Wüstung Hohenrode, Grillenberg",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Wüstung Hohenrode, Grillenberg",
+      "latitude": 51.543762,
+      "longitude": 11.299355,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "f56ebfad-6ffb-50d9-9a8c-d70862b5fcce",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-laengste-bank-harzungen",
+      "number": "S",
+      "name": "Längste Bank, Harzungen",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Längste Bank, Harzungen",
+      "latitude": 51.547478,
+      "longitude": 10.785325,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "ba2cbc23-3632-5e47-8809-359cfecadf44",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-zum-wanderschuh-friedrichsbrunn",
+      "number": "S",
+      "name": "Zum Wanderschuh, Friedrichsbrunn",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Zum Wanderschuh, Friedrichsbrunn",
+      "latitude": 51.659377,
+      "longitude": 11.067332,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "f4bde626-3b30-5674-aa06-098f913d2bdc",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-harzer-hoehenvieh-pfad-station-3-tanne",
+      "number": "S",
+      "name": "Harzer-Höhenvieh-Pfad „Station 3″, Tanne",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Harzer-Höhenvieh-Pfad „Station 3″, Tanne",
+      "latitude": 51.707948,
+      "longitude": 10.724637,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "0ed4b148-831c-5d8c-9c75-5cf40f32e850",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-adonisroeschen-boernecke",
+      "number": "S",
+      "name": "Adonisröschen, Börnecke",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Adonisröschen, Börnecke",
+      "latitude": 51.828597,
+      "longitude": 11.045181,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "1183e191-cf20-5c0c-b477-6e514056fa97",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-luisenblick-aschersleben",
+      "number": "S",
+      "name": "Luisenblick, Aschersleben",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Luisenblick, Aschersleben",
+      "latitude": 51.744978,
+      "longitude": 11.444844,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "d621cddc-0936-57c6-991c-34ff677d55f3",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-schaederpavillon-wolfshagen",
+      "number": "S",
+      "name": "Schäderpavillon, Wolfshagen",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Schäderpavillon, Wolfshagen",
+      "latitude": 51.900542,
+      "longitude": 10.315458,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [
+        "Schäderpavillon"
+      ],
+      "ID": "dca6c53b-7262-5cff-92b8-1d038f1cdbcc",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-pavillon-gallenberg-wildemann",
+      "number": "S",
+      "name": "Pavillon Gallenberg, Wildemann",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Pavillon Gallenberg, Wildemann",
+      "latitude": 51.824442,
+      "longitude": 10.272421,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "aacf1873-f5c2-562f-89eb-f38538cba6da",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-feenhoehe-osterode",
+      "number": "S",
+      "name": "Feenhöhe, Osterode",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Feenhöhe, Osterode",
+      "latitude": 51.724285,
+      "longitude": 10.315461,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "482ce4b0-14df-52f2-9cc4-028c8fcabdc1",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-seelenpfad-herzberg",
+      "number": "S",
+      "name": "Seelenpfad, Herzberg",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Seelenpfad, Herzberg",
+      "latitude": 51.671181,
+      "longitude": 10.340661,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "4479b1f2-e505-592b-b7a2-73c8b655c47d",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-koenigshuette-bad-lauterberg",
+      "number": "S",
+      "name": "Königshütte, Bad Lauterberg",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Königshütte, Bad Lauterberg",
+      "latitude": 51.62002,
+      "longitude": 10.460207,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "f17d999f-783e-579c-8bbc-3780bccb4831",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-jubilaeum-2026-koenigshuette-bad-lauterberg.webp",
+      "imageCaption": "📷 [Königshütte (Bad Lauterberg)-2019-msu-3854.jpg](https://commons.wikimedia.org/wiki/File:K%C3%B6nigsh%C3%BCtte_(Bad_Lauterberg)-2019-msu-3854.jpg) · Matthias Süßen · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-jubilaeum-2026-lonauer-wasserfall-herzberg",
+      "number": "S",
+      "name": "Lonauer Wasserfall, Herzberg",
+      "themeKeys": [
+        "jubilaeum-2026"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/jubilaeumsheft-2026/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Lonauer Wasserfall, Herzberg",
+      "latitude": 51.662442,
+      "longitude": 10.348385,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "690bb756-b5da-5344-9946-4fab5213aac5",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft 2026.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-jubilaeum-2026-lonauer-wasserfall-herzberg.webp",
+      "imageCaption": "📷 [Lonauer Wasserfall.jpg](https://commons.wikimedia.org/wiki/File:Lonauer_Wasserfall.jpg) · Thomas Binder · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-kloster-burchardi",
+      "number": "S",
+      "name": "Kloster Burchardi",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kloster Burchardi",
+      "latitude": 51.9000729,
+      "longitude": 11.04196,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "112ad9c8-5227-5715-8e10-23a2c77b2d89",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-dom-schatz-halberstadt",
+      "number": "S",
+      "name": "Dom/Schatz, Halberstadt",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Dom/Schatz, Halberstadt",
+      "latitude": 51.896306,
+      "longitude": 11.04886,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "d7d0033c-75a5-5989-b1ab-abd8ed66c3f4",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-klosterwanderweg-dom-schatz-halberstadt.webp",
+      "imageCaption": "📷 [Dom Halberstadt von Südosten.jpg](https://commons.wikimedia.org/wiki/File:Dom_Halberstadt_von_S%C3%BCdosten.jpg) · Barnos · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-stiftskirche-st-cyriakus-gernrode",
+      "number": "S",
+      "name": "Stiftskirche St. Cyriakus, Gernrode",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Stiftskirche St. Cyriakus, Gernrode",
+      "latitude": 51.7245,
+      "longitude": 11.1357,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "66152e41-655e-54fa-a1df-9dcfc60dce76",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-klosterwanderweg-stiftskirche-st-cyriakus-gernrode.webp",
+      "imageCaption": "📷 [20190419 Gernrode StCyriakus DSC07781 HDRfusion PtrQs.jpg](https://commons.wikimedia.org/wiki/File:20190419_Gernrode_StCyriakus_DSC07781_HDRfusion_PtrQs.jpg) · PtrQs · [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-kloster-auf-dem-muenzenberg-quedlinburg",
+      "number": "S",
+      "name": "Kloster auf dem Münzenberg, Quedlinburg",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kloster auf dem Münzenberg, Quedlinburg",
+      "latitude": 51.7869,
+      "longitude": 11.1334,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "0b24edbf-e7f1-5129-b8fa-e30fed9c21e6",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-kloster-wendhusen-thale",
+      "number": "S",
+      "name": "Kloster Wendhusen, Thale",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kloster Wendhusen, Thale",
+      "latitude": 51.75593,
+      "longitude": 11.04977,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "63fff8f2-3f27-51ed-a470-8fe109d91f78",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-klosterwanderweg-kloster-wendhusen-thale.webp",
+      "imageCaption": "📷 [Kloster Wendhusen2.JPG](https://commons.wikimedia.org/wiki/File:Kloster_Wendhusen2.JPG) · Chris06 · [CC0](https://creativecommons.org/publicdomain/zero/1.0/deed.en); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-dorfkirche-stecklenberg",
+      "number": "S",
+      "name": "Dorfkirche Stecklenberg",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Dorfkirche Stecklenberg",
+      "latitude": 51.732055,
+      "longitude": 11.086669,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "bdb42442-db5a-5455-8b8e-a7c1196f9656",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-bergkirche-st-bartholomaeus-blankenburg-harz",
+      "number": "S",
+      "name": "Bergkirche St. Bartholomäus, Blankenburg (Harz)",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Bergkirche St. Bartholomäus, Blankenburg (Harz)",
+      "latitude": 51.78766,
+      "longitude": 10.95439,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "6be40e1b-7a33-5d42-ad2f-9627d4c005e0",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-kloster-michaelstein-blankenburg-harz",
+      "number": "S",
+      "name": "Kloster Michaelstein, Blankenburg (Harz)",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kloster Michaelstein, Blankenburg (Harz)",
+      "latitude": 51.806409,
+      "longitude": 10.912717,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [
+        "Der Sonderstempel zum Klosterwanderweg am Kloster Michaelstein befindet sich an der Hauswand zwischen dem Waschhaus und der Musikscheune."
+      ],
+      "ID": "29b71038-ae3e-58e1-9b9c-5362f92a30b5",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-klosterwanderweg-kloster-michaelstein-blankenburg-harz.webp",
+      "imageCaption": "📷 [Kloster Michaelstein.jpg](https://commons.wikimedia.org/wiki/File:Kloster_Michaelstein.jpg) · Hejkal · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-kloster-himmelpforte-wernigerode",
+      "number": "S",
+      "name": "Kloster Himmelpforte, Wernigerode",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kloster Himmelpforte, Wernigerode",
+      "latitude": 51.83358,
+      "longitude": 10.74305,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "13085cad-8617-52ce-97f8-e820faeeb031",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-st-johanniskirche-wernigerode",
+      "number": "S",
+      "name": "St. Johanniskirche, Wernigerode",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "St. Johanniskirche, Wernigerode",
+      "latitude": 51.836663,
+      "longitude": 10.788879,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "bd33cda2-8112-5436-92e8-c49e11482246",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-st-laurentius-darlingerode",
+      "number": "S",
+      "name": "St. Laurentius, Darlingerode",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "St. Laurentius, Darlingerode",
+      "latitude": 51.845314,
+      "longitude": 10.729555,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "e645fa0c-6287-513e-81a3-f04bacf421b0",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-kloster-druebeck",
+      "number": "S",
+      "name": "Kloster Drübeck",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kloster Drübeck",
+      "latitude": 51.85556,
+      "longitude": 10.71558,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "1c515350-5a37-51e5-a4d5-d6393489e124",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-kloster-ilsenburg",
+      "number": "S",
+      "name": "Kloster Ilsenburg",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kloster Ilsenburg",
+      "latitude": 51.8595,
+      "longitude": 10.67824,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "daa46bb1-1548-59b2-a31d-1a274de60a24",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-klosterwanderweg-kloster-ilsenburg.webp",
+      "imageCaption": "📷 [IlsenburgKloster.jpg](https://commons.wikimedia.org/wiki/File:IlsenburgKloster.jpg) · Kassandro · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-kloster-woeltingerode-vienenburg",
+      "number": "S",
+      "name": "Kloster Wöltingerode, Vienenburg",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kloster Wöltingerode, Vienenburg",
+      "latitude": 51.95914,
+      "longitude": 10.53978,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "c57135ab-7873-5caa-b526-7dcd89827fe4",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-klosterwanderweg-kloster-woeltingerode-vienenburg.webp",
+      "imageCaption": "📷 [Kloster Wöltingerode.jpg](https://commons.wikimedia.org/wiki/File:Kloster_W%C3%B6ltingerode.jpg) · Cajus2006 · [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-stiftskirche-st-georg-grauhof",
+      "number": "S",
+      "name": "Stiftskirche St. Georg, Grauhof",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Stiftskirche St. Georg, Grauhof",
+      "latitude": 51.93775,
+      "longitude": 10.44764,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "dcd76cc6-3c89-5c08-a385-e8f37427d16e",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg."
+    },
+    {
+      "catalogKey": "special-klosterwanderweg-neuwerkkirche-goslar",
+      "number": "S",
+      "name": "Neuwerkkirche Goslar",
+      "themeKeys": [
+        "klosterwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/klosterwanderwerg/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Neuwerkkirche Goslar",
+      "latitude": 51.90938,
+      "longitude": 10.42558,
+      "locationStatus": "verified",
+      "availability": "active",
+      "noticeAliases": [],
+      "ID": "8b25c469-121c-52da-91df-b35ad122c4fe",
+      "identityStatus": "verified",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Klosterwanderweg.",
+      "heroImageUrl": "https://www.harzer-wander-buddy.de/assets/images/stampboxes/special/special-klosterwanderweg-neuwerkkirche-goslar.webp",
+      "imageCaption": "📷 [Neuwerkkirche (1).jpg](https://commons.wikimedia.org/wiki/File:Neuwerkkirche_(1).jpg) · Hühnerauge · [CC BY 2.0](https://creativecommons.org/licenses/by/2.0); verkleinert und als WebP gespeichert."
+    },
+    {
+      "catalogKey": "special-kartoffelhaus-wernigerode",
+      "number": "S",
+      "name": "Kartoffelhaus Wernigerode",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/defektmeldungen/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Kartoffelhaus Wernigerode",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "active",
+      "identityStatus": "verified",
+      "noticeAliases": [
+        "Kartoffelhaus Wernigerode"
+      ],
+      "ID": "b8eef7fa-c40b-5a92-bdfb-ff4306c09902",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt."
+    },
+    {
+      "catalogKey": "special-brandberg-unresolved",
+      "number": "S",
+      "name": "Brandberg",
+      "themeKeys": [
+        "sonderstempel"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/defektmeldungen/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Brandberg",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "unknown",
+      "identityStatus": "unverified",
+      "noticeAliases": [],
+      "ID": "ffacb8c2-a8eb-52d4-9e39-33ad834d6597",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: dauerhafte Sonderstempel. Der genaue Kartenstandort ist noch nicht bestätigt. Die genaue Stempelidentität ist noch ungeklärt."
+    },
+    {
+      "catalogKey": "special-quedlinburg-aholzwarte",
+      "number": "S",
+      "name": "Aholzwarte",
+      "themeKeys": [
+        "quedlinburg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/defektmeldungen/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Aholzwarte",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "withdrawn",
+      "identityStatus": "verified",
+      "noticeAliases": [
+        "Rund um Quedlinburg – Aholzwarte (entfällt vorläufig!)",
+        "Die Aholzwarte in Quedlinburg entfällt zukünftig für das Themenheft „Rund um Bad Suderode, Gernrode und die Welterbestadt Quedlinburg“"
+      ],
+      "ID": "6f819895-3450-5311-be23-7a334c78f38e",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Rund um Quedlinburg. Der genaue Kartenstandort ist noch nicht bestätigt. Laut offizieller Meldung entfallen."
+    },
+    {
+      "catalogKey": "special-jubilaeum-bueckeberg",
+      "number": "S",
+      "name": "Bückeberg",
+      "themeKeys": [
+        "jubilaeum"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/defektmeldungen/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Bückeberg",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "withdrawn",
+      "identityStatus": "verified",
+      "noticeAliases": [
+        "Jubiläumsheft – Bückeberg entfällt!"
+      ],
+      "ID": "f96f9cbd-a065-5757-bcdd-819444792a99",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Jubiläumsheft. Der genaue Kartenstandort ist noch nicht bestätigt. Laut offizieller Meldung entfallen."
+    },
+    {
+      "catalogKey": "special-karstwanderweg-papenberg",
+      "number": "S",
+      "name": "Papenberg",
+      "themeKeys": [
+        "karstwanderweg"
+      ],
+      "sourceUrl": "https://www.harzer-wandernadel.de/defektmeldungen/",
+      "sourceCheckedAt": "2026-11-07",
+      "sourceName": "Papenberg",
+      "latitude": null,
+      "longitude": null,
+      "locationStatus": "unverified",
+      "availability": "withdrawn",
+      "identityStatus": "verified",
+      "noticeAliases": [
+        "Karstwanderweg – Papenberg entfällt!"
+      ],
+      "ID": "12ed2a3e-c959-5288-9ec7-a8d665f8aacb",
+      "description": "Sonderstempel der Harzer Wandernadel. Zugehörigkeit: Karstwanderweg. Der genaue Kartenstandort ist noch nicht bestätigt. Laut offizieller Meldung entfallen."
+    }
+  ],
+  "regularMemberships": [
+    {
+      "number": 219,
+      "themeKey": "lutherweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceName": "Wippertalsperre"
+    },
+    {
+      "number": 215,
+      "themeKey": "lutherweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceName": "Josephshöhe Auerberg"
+    },
+    {
+      "number": 216,
+      "themeKey": "lutherweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/lutherweg/",
+      "sourceName": "Lutherbuche Stolberg"
+    },
+    {
+      "number": 130,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Iberger Albertturm, Bad Grund (HWN 130)"
+    },
+    {
+      "number": 129,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "WeltWald, Bad Grund (HWN 129)"
+    },
+    {
+      "number": 101,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Einhornhöhle, Scharzfeld (HWN 101)"
+    },
+    {
+      "number": 151,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Burgruine Scharzfeld (HWN 151)"
+    },
+    {
+      "number": 192,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Historischer Gipsbrennofen, Neuhof (HWN 192)"
+    },
+    {
+      "number": 166,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Sachsensteinhütte, Neuhof (HWN 166)"
+    },
+    {
+      "number": 167,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Hexentanzplatz, Ellrich (HWN 167)"
+    },
+    {
+      "number": 99,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Harzer Holzdampflok, Neustadt (HWN 99)"
+    },
+    {
+      "number": 198,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Glockensteine, Steigerthal (HWN 198)"
+    },
+    {
+      "number": 214,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Reesbergdoline an der Heimkehle (HWN 214)"
+    },
+    {
+      "number": 213,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Bauerngraben, Agnesdorf (HWN 213)"
+    },
+    {
+      "number": 212,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Queste, Questenberg (HWN 212)"
+    },
+    {
+      "number": 210,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Schöne Aussicht, Hainrode (HWN 210)"
+    },
+    {
+      "number": 222,
+      "themeKey": "karstwanderweg",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/karstwanderweg/",
+      "sourceName": "Bergbaulehrpfad, Wettelrode (HWN 222)"
+    },
+    {
+      "number": 200,
+      "themeKey": "geschichtsorte",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceName": "Burg Falkenstein (Stempelstelle 200)"
+    },
+    {
+      "number": 197,
+      "themeKey": "geschichtsorte",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceName": "Burgruine Anhalt (Stempelstelle 197)"
+    },
+    {
+      "number": 84,
+      "themeKey": "geschichtsorte",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceName": "Heimburg (Stempelstelle 84)"
+    },
+    {
+      "number": 187,
+      "themeKey": "geschichtsorte",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceName": "Lauenburg (Stempelstelle 187)"
+    },
+    {
+      "number": 201,
+      "themeKey": "geschichtsorte",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceName": "Konradsburg bei Ermsleben (Stempelstelle 201)"
+    },
+    {
+      "number": 80,
+      "themeKey": "geschichtsorte",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/harzer-geschichtsorte-burgen-und-schloesser/",
+      "sourceName": "Burg Regenstein (Stempelstelle 80)"
+    },
+    {
+      "number": 116,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Okertalsperre (HWN 116), Altenau"
+    },
+    {
+      "number": 115,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Odertalsperre (HWN 115), Bad Lauterberg"
+    },
+    {
+      "number": 217,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Oderteich (HWN 217), St. Andreasberg"
+    },
+    {
+      "number": 110,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Granetalsperre (HWN 110), Goslar"
+    },
+    {
+      "number": 1,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Eckertalsperre (HWN 1), Ilsenburg"
+    },
+    {
+      "number": 103,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Innerstetalsperre (HWN 103), Langelsheim"
+    },
+    {
+      "number": 53,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Vorsperre Hassel (HWN 53), Hasselfelde"
+    },
+    {
+      "number": 56,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Vorsperre Rappbode (HWN 56), Trautenstein"
+    },
+    {
+      "number": 42,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Talsperre Königshütte (HWN 42), Königshütte"
+    },
+    {
+      "number": 211,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Kiliansteich (HWN 211), Straßberg"
+    },
+    {
+      "number": 62,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Talsperre Wendefurth (HWN 62), Bodetal"
+    },
+    {
+      "number": 219,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Talsperre Wippra (HWN 219), Wippra"
+    },
+    {
+      "number": 36,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Zillierbachtalsperre (HWN 36 Peterstein), Wernigerode"
+    },
+    {
+      "number": 196,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Bremerteich (HWN 196), Gernrode"
+    },
+    {
+      "number": 190,
+      "themeKey": "talsperren",
+      "sourceUrl": "https://www.harzer-wandernadel.de/stempelstellen/talsperren-im-harz/",
+      "sourceName": "Bergrat-Müller-Teich (HWN 190), Friedrichsbrunn"
+    }
+  ]
+}

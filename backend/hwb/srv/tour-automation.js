@@ -24,12 +24,13 @@ function selectRoutes(routes, limit = 5) {
     .slice(0, limit);
 }
 
-function findRoutes(params, edges, stampings, groupUserIds, currentUserId) {
+function findRoutes(params, edges, stampings, groupUserIds, currentUserId, regularKeys) {
   const stampedBy = new Map();
   for (const stamping of stampings) {
-    if (!stampedBy.has(stamping.stamp_ID))
-      stampedBy.set(stamping.stamp_ID, new Set());
-    stampedBy.get(stamping.stamp_ID).add(stamping.createdBy);
+    const key = regularKeys.get(stamping.stamp_ID);
+    if (!key) continue;
+    if (!stampedBy.has(key)) stampedBy.set(key, new Set());
+    stampedBy.get(key).add(stamping.createdBy);
   }
   const isMatching = (id) =>
     params.groupMode === 'missing_all'
@@ -117,7 +118,8 @@ function findRoutes(params, edges, stampings, groupUserIds, currentUserId) {
       )
         continue;
       const nextStamps = new Set(stampIds);
-      if (edge.toPoiType === 'stamp') nextStamps.add(edge.toPoi);
+      const stampKey = edge.toPoiType === 'stamp' ? regularKeys.get(edge.toPoi) : undefined;
+      if (stampKey) nextStamps.add(stampKey);
       usedEdges.add(edge.ID);
       path.push(edge);
       visit(

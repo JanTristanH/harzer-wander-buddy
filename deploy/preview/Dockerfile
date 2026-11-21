@@ -21,6 +21,7 @@ RUN --mount=type=secret,id=proxy_ca \
 COPY --chown=node:node backend/hwb/srv ./srv
 COPY --chown=node:node backend/hwb/util/seedPreviewBadges.js ./util/seedPreviewBadges.js
 COPY --chown=node:node backend/hwb/db/schema.cds ./db/schema.cds
+COPY --chown=node:node backend/hwb/db/init.js ./db/init.js
 COPY --chown=node:node backend/hwb/db/doNotDeploy-data ./db/data
 # CSV import needs more heap than the inexpensive 1-GiB runtime allows.
 # Seed once during the image build; cold starts only copy the resulting database.

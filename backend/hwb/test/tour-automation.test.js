@@ -40,13 +40,18 @@ const visits = [
   { stamp_ID: 'a', createdBy: 'alice' }, // Repeat visits count once.
   { stamp_ID: 'b', createdBy: 'bob' },
 ];
+const stampKeysFor = (edges) => new Map(edges
+  .filter((edge) => edge.toPoiType === 'stamp')
+  .map((edge) => [edge.toPoi, edge.toPoi]));
+
 const calculate = (overrides = {}, edges = graph, stampings = visits) =>
   findRoutes(
     { ...params, ...overrides },
     edges,
     stampings,
     ['alice', 'bob'],
-    'alice'
+    'alice',
+    stampKeysFor(edges)
   ).results;
 
 test('group modes change the route ranking, not just displayed group statistics', () => {
@@ -192,11 +197,28 @@ test('dense graphs have a bounded search and explicitly report partial optimizat
     edges,
     [],
     ['alice'],
-    'alice'
+    'alice',
+    stampKeysFor(edges)
   );
   assert.equal(result.searchLimited, true);
   assert.equal(result.results.length, 5);
   assert.ok(
     result.results.every((route) => route.duration <= params.maxDuration)
   );
+});
+
+test('a special stop is traversable but only regular stamp identities satisfy the minimum', () => {
+  const edges = [
+    edge('1', 'p', 'special'),
+    edge('2', 'special', 'a'),
+    edge('3', 'a', 'p'),
+  ];
+  const regularKeys = new Map([['a', '1'], ['historical-a', '1']]);
+  const route = findRoutes(params, edges, [], ['alice'], 'alice', regularKeys).results[0];
+  assert.deepEqual(route.path.map(({ toPoi }) => toPoi), ['special', 'a', 'p']);
+  assert.equal(route.stampCount, 1);
+  assert.equal(route.matchingStampCount, 1);
+  assert.equal(findRoutes({ ...params, minStampCount: 2 }, edges, [], ['alice'], 'alice', regularKeys).results.length, 0);
+  const visits = [{ stamp_ID: 'historical-a', createdBy: 'alice' }];
+  assert.equal(findRoutes(params, edges, visits, ['alice'], 'alice', regularKeys).results.length, 0);
 });

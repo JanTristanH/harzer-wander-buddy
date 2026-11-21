@@ -1,3 +1,4 @@
+const { regularStampKeys, summarizeTourStamps } = require('./tour-stamp-counts');
 const cds = require('@sap/cds/lib')
 const {
   v4: uuidv4
@@ -33,6 +34,10 @@ module.exports = class api extends cds.ApplicationService {
   init() {
     require('./attachment-images')(this);
     require('./badge-service')(this);
+    require('./theme-collections')(this);
+
+    require('./stamp-notices').register(this);
+    require('./special-stamp-catalog').register(this);
 
     this.on('READ', `Stampboxes`, onStampboxesRead.bind(this))
 
@@ -313,15 +318,9 @@ function addGroupDetailsToTours(db, tours, groupUserIds, currentUserId) {
 
   return new Promise(async (resolve, reject) => {
     // Query stampings where createdBy is in the provided group.
-    const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: groupUserIds } });
-    const aUsers = await SELECT.from(db.ExternalUsers).where({ ID: { in: groupUserIds } });
-    const aStampingsByUser = getStampingByUsers(aStampings, aUsers);
-    const stampBoxes = await SELECT.from(db.Stampboxes).columns('ID');
-    const stampBoxIds = new Set(stampBoxes.map(stamp => stamp.ID));
-    const requestedUserStampings = currentUserId
-      ? await SELECT.from(db.Stampings).columns('stamp_ID').where({ createdBy: currentUserId })
-      : [];
-    const requestedUserStampIds = new Set(requestedUserStampings.map(stamping => stamping.stamp_ID));
+    const users = [...new Set([...groupUserIds, currentUserId].filter(Boolean))];
+    const aStampings = await SELECT.from(db.Stampings).where({ createdBy: { in: users } });
+    const stampBoxes = await SELECT.from(db.Stampboxes).columns('ID', 'number', 'stampType', 'catalogKey');
 
     const result = await Promise.all(
       tours?.map(tour => {
@@ -347,23 +346,17 @@ function addGroupDetailsToTours(db, tours, groupUserIds, currentUserId) {
                 toPois.push(firstTravelTime.fromPoi);
               }
             } else {
-              toPois = tour.path?.map(p => p.poi)
+              toPois = tour.path?.flatMap(p => p.poi ? [p.poi] : [p.fromPoi, p.toPoi]).filter(Boolean)
             }
             if (!toPois) {
               tour.AverageGroupStampings = 0;
+              tour.stampCount = 0;
               tour.newStampCountForUser = 0;
               resolve(tour);
               return;
             }
-            const nAverageGroupStampings = getTotalStampings(aStampingsByUser, toPois) / groupUserIds.length;
-            const uniqueTourStampIds = [...new Set(toPois.filter(poiId => stampBoxIds.has(poiId)))];
-            const newStampCountForUser = uniqueTourStampIds.filter(
-              stampId => !requestedUserStampIds.has(stampId)
-            ).length;
-
-            // Populate the custom fields:
-            tour.AverageGroupStampings = Math.round(nAverageGroupStampings * 100) / 100;
-            tour.newStampCountForUser = newStampCountForUser;
+            const summary = summarizeTourStamps(stampBoxes, toPois, aStampings, currentUserId, groupUserIds);
+            Object.assign(tour, summary);
 
             resolve(tour);
           } catch (error) {
@@ -374,31 +367,6 @@ function addGroupDetailsToTours(db, tours, groupUserIds, currentUserId) {
     );
     resolve(result);
   });
-}
-
-function getTotalStampings(stampings, toPois) {
-  let aStampCount = [];
-  for (let i = 0; i < toPois.length; i++) {
-    const poi = toPois[i];
-    const aStampings = stampings.filter(s => s.stamping.stamp_ID == poi);
-    aStampCount.push(aStampings.length);
-  }
-  return aStampCount.reduce((p, c) => p + c, 0);
-}
-
-function getStampingByUsers(stampings, users) {
-  let result = [];
-  for (let i = 0; i < stampings.length; i++) {
-    let stamping = stampings[i];
-    let user = users.find(u => u.ID == stamping.createdBy);
-    if (user) {
-      result.push({
-        user: user,
-        stamping: stamping
-      });
-    }
-  }
-  return result;
 }
 
 async function onStampboxesRead(req, next) {
@@ -463,9 +431,9 @@ function applyDefaultCurrentValidityFilter(req) {
 
   const nowIso = new Date().toISOString();
   const currentValidityFilter = [
-    { ref: ['validFrom'] }, '<=', { val: nowIso },
+    { xpr: [{ ref: ['validFrom'] }, 'is', { val: null }, 'or', { ref: ['validFrom'] }, '<=', { val: nowIso }] },
     'and',
-    { ref: ['validTo'] }, '>', { val: nowIso }
+    { xpr: [{ ref: ['validTo'] }, 'is', { val: null }, 'or', { ref: ['validTo'] }, '>', { val: nowIso }] }
   ];
 
   if (!select.where || select.where.length === 0) {
@@ -730,7 +698,6 @@ async function handleTourByPOIList(req, options = { persist: true }) {
     .from(Stampings)
     .columns('stamp_ID')
     .where({ createdBy: req.user.id });
-  const stampedStampBoxIds = new Set(aUserStampings.map(stamping => stamping.stamp_ID));
 
   // Loop through all POI pairs and create the list of required pairs
   for (let i = 0; i < aPois.length - 1; i++) {
@@ -841,17 +808,10 @@ async function handleTourByPOIList(req, options = { persist: true }) {
   }
 
   let distance = 0, duration = 0, stampCount = 0, newStampCountForUser = 0, idListTravelTimes = "", totalElevationGain = 0, totalElevationLoss = 0;
-  const countedStampIds = new Set();
-
-  function countStampIfNeeded(poiId) {
-    if (oStampBoxById[poiId] && !countedStampIds.has(poiId)) {
-      countedStampIds.add(poiId);
-      stampCount++;
-      if (!stampedStampBoxIds.has(poiId)) {
-        newStampCountForUser++;
-      }
-    }
-  }
+  const summary = summarizeTourStamps(aStampBoxes, aPois,
+    aUserStampings.map(visit => ({ ...visit, createdBy: req.user.id })), req.user.id);
+  stampCount = summary.stampCount;
+  newStampCountForUser = summary.newStampCountForUser;
 
   for (let i = 0; i < orderedTravelTimes.length; i++) {
     const oTravelTime = orderedTravelTimes[i];
@@ -866,10 +826,6 @@ async function handleTourByPOIList(req, options = { persist: true }) {
     }
     duration += durationSeconds;
 
-    if (i === 0) {
-      countStampIfNeeded(oTravelTime.fromPoi);
-    }
-    countStampIfNeeded(oTravelTime.toPoi);
   }
   idListTravelTimes = orderedTour2TravelTime.map(tt => tt.travelTime_ID).join(";");
 
@@ -977,16 +933,9 @@ async function getTourByIdListTravelTimes(req) {
   let aStampBoxes = await SELECT.from(Stampboxes);
   const currentUser = req.user.id; // Get the current user ID
   let aStampingForUser = await SELECT.from(Stampings).where({ createdBy: currentUser });
-  const stampedStampBoxIds = new Set(aStampingForUser.map(stamping => stamping.stamp_ID));
 
-  let oStampBoxById = {};
-  aStampBoxes.forEach(box => {
-    box.stampedByUser = stampedStampBoxIds.has(box.ID);
-    oStampBoxById[box.ID] = box;
-  });
 
   let distance = 0, duration = 0, stampCount = 0, newStampCountForUser = 0;
-  const countedStampIds = new Set();
   if (aTravelTimesWithPositionString.length == 0) {
     return {
       stampCount: 0,
@@ -998,17 +947,10 @@ async function getTourByIdListTravelTimes(req) {
     };
   }
 
-  function countStampIfNeeded(poiId) {
-    if (!oStampBoxById[poiId] || countedStampIds.has(poiId)) {
-      return;
-    }
-
-    countedStampIds.add(poiId);
-    stampCount++;
-    if (!stampedStampBoxIds.has(poiId)) {
-      newStampCountForUser++;
-    }
-  }
+  const summary = summarizeTourStamps(aStampBoxes,
+    aTravelTimesWithPositionString.flatMap(leg => [leg.fromPoi, leg.toPoi]), aStampingForUser, currentUser);
+  stampCount = summary.stampCount;
+  newStampCountForUser = summary.newStampCountForUser;
 
   for (let i = 0; i < aTravelTimesWithPositionString.length; i++) {
     const oTravelTime = aTravelTimesWithPositionString[i];
@@ -1019,10 +961,6 @@ async function getTourByIdListTravelTimes(req) {
     }
     duration += durationSeconds;
 
-    if (i == 0) {
-      countStampIfNeeded(oTravelTime.fromPoi);
-    }
-    countStampIfNeeded(oTravelTime.toPoi);
 
     oTravelTime.id = oTravelTime.ID;
     aTravelTimesWithPositionString[i] = oTravelTime;
@@ -1080,6 +1018,7 @@ async function calculateHikingRoute(req) {
   if (!typedTravelTimes) return req.reject(500, 'Unable to resolve travel time view.');
   // Load per request: changes to the graph and different users must never share stale results.
   const edges = await SELECT.from(typedTravelTimes);
+  const regularKeys = regularStampKeys(await SELECT.from(db.Stampboxes).columns('ID', 'number', 'stampType', 'catalogKey'));
   const stampings = await SELECT.from(db.Stampings).columns('stamp_ID', 'createdBy')
     .where({ createdBy: { in: groupUserIds } });
   const parking = await determineStartingParking.call(this, params);
@@ -1087,7 +1026,7 @@ async function calculateHikingRoute(req) {
   let searchLimited = false;
   for (const start of parking) {
     const result = tourAutomation.findRoutes({ ...params, startId: start.NeighborsID },
-      edges, stampings, groupUserIds, req.user.id);
+      edges, stampings, groupUserIds, req.user.id, regularKeys);
     candidates.push(...result.results);
     searchLimited ||= result.searchLimited;
   }
@@ -1139,7 +1078,7 @@ async function getRouteToStampFromPosition(req) {
 
   const targetLatitude = Number(targetPoi.latitude);
   const targetLongitude = Number(targetPoi.longitude);
-  if (!Number.isFinite(targetLatitude) || !Number.isFinite(targetLongitude)) {
+  if (targetPoi.latitude == null || targetPoi.longitude == null || !Number.isFinite(targetLatitude) || !Number.isFinite(targetLongitude)) {
     req.error(422, `Point of interest with ID ${targetPoiId} does not have coordinates.`);
     return null;
   }
@@ -2091,8 +2030,9 @@ async function getUsersProgress(req) {
 
   const allStampboxes = await SELECT
     .from(Stampboxes)
-    .columns('ID');
-  const totalCount = allStampboxes.length;
+    .columns('ID', 'number', 'stampType', 'catalogKey');
+  const regular = new Map(allStampboxes.filter(stamp => stamp.stampType !== 'special' && !/^(special-|hwn:special:)/.test(stamp.catalogKey || '') && /^\d+$/.test(stamp.number) && Number(stamp.number) >= 1 && Number(stamp.number) <= 222).map(stamp => [stamp.ID, String(Number(stamp.number))]));
+  const totalCount = new Set(regular.values()).size;
 
   const stampings = await SELECT
     .from(Stampings)
@@ -2104,7 +2044,7 @@ async function getUsersProgress(req) {
 
   for (const stamping of stampings) {
     const userId = stamping.createdBy;
-    const stampId = stamping.stamp_ID;
+    const stampId = regular.get(stamping.stamp_ID);
     if (!userId || !stampId) {
       continue;
     }

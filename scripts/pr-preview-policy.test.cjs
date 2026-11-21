@@ -1,3 +1,5 @@
+const fs = require('node:fs');
+const path = require('node:path');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { previewAction, updateBody, previewSection, publish } = require('./pr-preview-policy.cjs');
@@ -63,4 +65,9 @@ test('stale, closed or opted-out PRs cannot receive deployment links; manual run
   assert.equal(await publish({ ...input, manual: true }), false);
   assert.equal(await publish({ ...input, removed: true }), true);
   assert.equal(updates.length, 3);
+});
+
+test('preview image includes the database initializer for the official sync lock', () => {
+  const dockerfile = fs.readFileSync(path.join(__dirname, '../deploy/preview/Dockerfile'), 'utf8');
+  assert.match(dockerfile, /COPY --chown=node:node backend\/hwb\/db\/init\.js \.\/db\/init\.js/);
 });

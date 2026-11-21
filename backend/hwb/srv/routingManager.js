@@ -45,7 +45,8 @@ async function loadSubTree(ID) {
     });
 }
 
-async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStampsDoneByUser) {
+async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStampsDoneByUser, regularKeys = new Map()) {
+    const collected = new Set(aStampsDoneByUser.map(id => regularKeys.get(id)).filter(Boolean));
     // Create an adjacency list where each edge is directional
     const adjacencyList = new Map();
     aTravelTimes.forEach(edge => {
@@ -97,9 +98,9 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
                     calculationParamsInnerClone.pathLengthSinceCar++;
 
                     // Increment stamp count if poi is of type 'stamp'
-                    if (neighbor.toPoiType === 'stamp'
-                        && !path.map(p => p.poi).includes(neighbor.toPoi)
-                        && !aStampsDoneByUser.includes(neighbor.toPoi)) {
+                    if (regularKeys.has(neighbor.toPoi)
+                        && !path.some(p => regularKeys.get(p.poi) === regularKeys.get(neighbor.toPoi))
+                        && !collected.has(regularKeys.get(neighbor.toPoi))) {
                         newStampCount++;
                     }
 
@@ -137,7 +138,7 @@ async function calculateHikingRoutes(calculationParamsOuter, aTravelTimes, aStam
         });
 
     // Only return the top five distinct stamp sets.
-    sortedRoutes = filterUniquePaths(sortedRoutes)
+    sortedRoutes = filterUniquePaths(sortedRoutes, regularKeys)
         .slice(0, 5);
     sortedRoutes.forEach(r => r.path.shift());
     sortedRoutes = await addPositionStrings(sortedRoutes);
@@ -187,7 +188,7 @@ async function addPositionStrings(aRoutes) {
 }
 
 
-function filterUniquePaths(paths) {
+function filterUniquePaths(paths, regularKeys) {
     // Object to store unique sets of POIs
     const uniquePaths = [];
     const seenPOISets = new Set();
@@ -195,7 +196,7 @@ function filterUniquePaths(paths) {
     // Iterate through each path in the data
     paths.forEach(path => {
         // Create a set of POIs from the current path to ensure uniqueness and to ignore order
-        const poiSet = new Set(path.path.filter(poi => poi.toPoiType == "stamp").map(poi => poi.poi));
+        const poiSet = new Set(path.path.map(poi => regularKeys.get(poi.poi)).filter(Boolean));
 
         // Convert the set to a string to use as a unique key (since sets cannot be directly compared)
         const poiSetKey = Array.from(poiSet).sort().join(',');

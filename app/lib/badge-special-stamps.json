@@ -1,0 +1,26 @@
+{
+  "catalogKeys": [
+    "hwn:special:dreilaenderstein",
+    "hwn:special:jungborn",
+    "hwn:special:zweilaendereiche",
+    "special-jungborn",
+    "special-three-countries-stone",
+    "special-two-countries-oak"
+  ],
+  "legacyNumbers": [
+    "9901",
+    "9902",
+    "9903",
+    "dreilanderstein",
+    "jungborn",
+    "specialjungborn",
+    "specialthreecountriesstone",
+    "specialtwocountriesoak",
+    "sxdreilanderstein",
+    "sxjungborn",
+    "sxzweilaendereiche",
+    "sxzweilandereiche",
+    "zweilaendereiche",
+    "zweilandereiche"
+  ]
+}
