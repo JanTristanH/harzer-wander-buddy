@@ -116,9 +116,6 @@ beforeEach(() => {
 });
 test('selects and uploads a photo on the same screen as the name and badge controls', async () => {
   jest
-    .mocked(ImagePicker.requestMediaLibraryPermissionsAsync)
-    .mockResolvedValue({ granted: true } as any);
-  jest
     .mocked(ImagePicker.launchImageLibraryAsync)
     .mockResolvedValue({
       canceled: false,
@@ -199,17 +196,18 @@ test('reports a partial save instead of pretending both requests succeeded', asy
   expect(mockRouter.replace).not.toHaveBeenCalled();
 });
 
-test('denied photo permission keeps the current picture and never opens the library', async () => {
-  jest.mocked(ImagePicker.requestMediaLibraryPermissionsAsync).mockResolvedValue({ granted: false } as any);
+test('cancelling the system picker keeps the current picture without requesting library access', async () => {
+  jest.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValue({ canceled: true, assets: null });
   render(<Customize />);
+  await screen.findByText('Profilbild groß ansehen');
   fireEvent.press(screen.getByLabelText('Profilbild ändern'));
-  await screen.findByText('Bitte erlaube den Zugriff auf deine Fotos.');
-  expect(ImagePicker.launchImageLibraryAsync).not.toHaveBeenCalled();
+  await waitFor(() => expect(ImagePicker.launchImageLibraryAsync).toHaveBeenCalled());
+  expect(ImagePicker.requestMediaLibraryPermissionsAsync).not.toHaveBeenCalled();
+  expect(screen.getByText('Profilbild groß ansehen')).toBeTruthy();
   expect(uploadProfileImage).not.toHaveBeenCalled();
 });
 
 test('failed uploads keep the draft and allow retry without saving badges prematurely', async () => {
-  jest.mocked(ImagePicker.requestMediaLibraryPermissionsAsync).mockResolvedValue({ granted: true } as any);
   jest.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValue({ canceled: false, assets: [{ uri: 'file:/retry.jpg' }] } as any);
   jest.mocked(uploadProfileImage).mockRejectedValueOnce(new Error('Upload fehlgeschlagen')).mockResolvedValue({ url: '/retry.jpg' } as any);
   render(<Customize />);

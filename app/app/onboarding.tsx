@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { LegalLinks } from '@/components/legal-links';
 import { FriendsList } from '@/components/friends-list';
 import { FriendSearchModal } from '@/components/friend-search-modal';
 import { useFriendSearch } from '@/lib/use-friend-search';
@@ -134,8 +135,6 @@ export default function OnboardingScreen() {
     currentUserProfile,
     hasCompletedOnboarding,
     isAuthenticated,
-    login,
-    signup,
     completeOnboarding,
     isLoading,
     logout,
@@ -261,15 +260,6 @@ export default function OnboardingScreen() {
   const handlePickProfileImage = useCallback(async () => {
     if (!canPerformWrites) {
       Alert.alert('Offline', 'Profilbilder koennen nur online geaendert werden.');
-      return;
-    }
-
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permissionResult.granted) {
-      Alert.alert(
-        'Zugriff auf Fotos benoetigt',
-        'Bitte erlaube den Zugriff auf deine Fotos, um ein Profilbild auszuwaehlen.'
-      );
       return;
     }
 
@@ -520,8 +510,8 @@ export default function OnboardingScreen() {
                 <Text style={styles.cardTitle}>Deine Stempel bekommen ein Zuhause.</Text>
                 <Text style={styles.cardCopy}>Melde dich an, um deine Wandererfolge zu speichern.</Text>
                 <ActionButton disabled={!!configError || isLoading} label={isLoading ? 'Wird vorbereitet…' : 'Anmelden'}
-                  onPress={() => appConfig.authMode === 'basic' ? router.push('/login') : void login()} variant="primary" />
-                {appConfig.authMode !== 'basic' ? <ActionButton disabled={!!configError || isLoading} label="Konto erstellen" onPress={signup} /> : null}
+                  onPress={() => router.push('/login')} variant="primary" />
+                {appConfig.authMode !== 'basic' ? <ActionButton disabled={!!configError || isLoading} label="Konto erstellen" onPress={() => router.push('/login')} /> : null}
               </View> : null}
               {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
             </> : null}
@@ -532,7 +522,7 @@ export default function OnboardingScreen() {
                 editable={!busy && canPerformWrites} onChangeText={(value) => { setProfileName(value); setProfileSaveError(null); }}
                 onSubmitEditing={() => { if (profileName.trim()) void handleAdvance(); }} returnKeyType="next"
                 placeholder="Zum Beispiel Alex" placeholderTextColor="#8A968A" style={styles.nameInput} value={profileName} />
-              <Text style={styles.inputHint}>Ein Vorname oder Spitzname reicht.</Text>
+              <Text style={styles.inputHint}>Ein Vorname oder Spitzname reicht. Dein Profilname ist für andere angemeldete Nutzer auffindbar.</Text>
             </View> : null}
 
             {step === 2 ? <>
@@ -557,7 +547,7 @@ export default function OnboardingScreen() {
                 <Text style={styles.avatarLabel}>Kein Avatar</Text>
                 {selectedAvatar === 'none' || !effectiveProfilePicture ? <Feather name="check" size={18} color="#41664A" /> : null}
               </Pressable>
-              <Text style={styles.guidance}>Dein Avatar ist für deine Wanderbuddies sichtbar.</Text>
+              <Text style={styles.guidance}>Dein Avatar ist für andere angemeldete Nutzer auffindbar.</Text>
             </> : null}
 
             {step === 3 ? <View style={styles.inputCard}>
@@ -578,6 +568,7 @@ export default function OnboardingScreen() {
                 <Text style={styles.guidance}>Auch allein beginnt ein gutes Abenteuer. Freunde kannst du jederzeit später hinzufügen.</Text>}
             </View> : null}
             {profileSaveError && step > 0 ? <Text accessibilityRole="alert" style={styles.errorText}>{profileSaveError}</Text> : null}
+            <LegalLinks />
           </ScrollView>
           <View style={styles.flowDock}>
             <ActionButton disabled={primaryDisabled || busy || (step === 1 && !profileName.trim()) || locationPermission === 'checking'}

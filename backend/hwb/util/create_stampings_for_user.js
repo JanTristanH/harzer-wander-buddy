@@ -5,7 +5,8 @@ const WORKDIR = path.resolve(__dirname, '..');
 const STAMPBOXES = path.join(WORKDIR, 'db', 'doNotDeploy-data', 'hwb.db.Stampboxes.csv');
 const STAMPINGS = path.join(WORKDIR, 'db', 'doNotDeploy-data', 'hwb.db.Stampings.csv');
 
-const USER = 'auth0|69b5331c62387e627ead7b0d';
+const USER = process.env.HWB_INTERNAL_USER_ID;
+if (!USER) throw new Error('Set HWB_INTERNAL_USER_ID to the reviewed internal user ID');
 
 function readLines(file) {
   return fs.readFileSync(file, 'utf8').split(/\r?\n/).filter(Boolean);

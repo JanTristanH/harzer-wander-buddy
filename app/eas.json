@@ -18,9 +18,6 @@
     "preview": {
       "distribution": "internal",
       "environment": "preview",
-      "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://app.harzer-wander-buddy.de"
-      },
       "channel": "preview",
       "autoIncrement": true
     },

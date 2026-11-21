@@ -207,7 +207,7 @@ service api @(requires: 'authenticated-user') {
             to   : 'authenticated-user'
         },
         {
-            grant: 'WRITE',
+            grant: 'UPDATE',
             where: 'ID = $user'
         }
     ]
@@ -220,6 +220,20 @@ service api @(requires: 'authenticated-user') {
             false as isFriend : Boolean,
             '[]'  as roles    : String
         };
+
+    @requires: 'admin'
+    action moderateReportedUser(reportId : UUID) returns String;
+    action reportUser(targetUser : String, reason : String) returns String;
+    action blockUser(targetUser : String) returns String;
+    action unblockUser(targetUser : String) returns String;
+    @restrict: [{ grant: 'READ', where: 'fromUser = $user' }]
+    @readonly
+    entity MyBlocks as projection on db.UserBlocks;
+    @requires: 'admin'
+    entity ContentReports as projection on db.ContentReports;
+
+    action exportMyData() returns LargeString;
+    action deleteMyAccount(confirmation : String) returns String;
 
     function getCurrentUser()                                          returns Users;
 
@@ -278,7 +292,8 @@ service api @(requires: 'authenticated-user') {
     @restrict: [
         {
             grant: 'READ',
-            to   : 'authenticated-user'
+            to   : 'authenticated-user',
+            where: 'fromUser_ID = $user or toUser_ID = $user'
         },
         {
             grant: 'CREATE',
@@ -299,11 +314,7 @@ service api @(requires: 'authenticated-user') {
 
 
     @restrict: [
-        {grant: 'READ'},
-        {
-            grant: 'CREATE',
-            to   : 'authenticated-user'
-        },
+        {grant: 'READ', where: 'fromUser_ID = $user or toUser_ID = $user'},
         {
             grant: 'DELETE',
             where: 'fromUser_ID = $user'
@@ -313,6 +324,7 @@ service api @(requires: 'authenticated-user') {
 
     action   acceptPendingFriendshipRequest(FriendshipID : UUID)       returns String;
 
+    @restrict: [{ grant: 'READ', where: 'createdBy = $user' }]
     @readonly
     entity RouteCalculationRequest            as projection on db.RouteCalculationRequest;
 
