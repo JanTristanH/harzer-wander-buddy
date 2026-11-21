@@ -1,3 +1,4 @@
+jest.mock('@/lib/badges', () => ({ useBadgeAlbum: () => ({ data: undefined }) }));
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import React from 'react';
 import StampsScreen from '@/app/(tabs)/index';

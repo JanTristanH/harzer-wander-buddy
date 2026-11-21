@@ -7,10 +7,21 @@ on:
       - main
       - develop
   workflow_call:
+    inputs:
+      force-full:
+        type: boolean
+        default: true
   workflow_dispatch:
 
 jobs:
+  changes:
+    uses: ./.github/workflows/changes.yml
+    with:
+      force-full: ${{ inputs.force-full == true || github.event_name == 'workflow_dispatch' }}
+
   docker-build:
+    needs: changes
+    if: needs.changes.outputs.docker == 'true'
     name: Docker build
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -21,6 +32,8 @@ jobs:
         run: docker build --tag harzer-wander-buddy:ci .
 
   release-tests:
+    needs: changes
+    if: needs.changes.outputs.release == 'true'
     name: Release automation tests
     runs-on: ubuntu-latest
     steps:
@@ -31,6 +44,8 @@ jobs:
       - run: node --test scripts/*.test.cjs
 
   app-tests:
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     name: App Jest tests
     runs-on: ubuntu-latest
 
@@ -58,6 +73,8 @@ jobs:
         working-directory: app
 
   backend-tests:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     name: Backend CAP tests
     runs-on: ubuntu-latest
 
@@ -79,3 +96,24 @@ jobs:
       - name: Run backend tests
         run: npm test
         working-directory: backend/hwb
+
+  ci-result:
+    name: CI result
+    needs: [changes, docker-build, release-tests, app-tests, backend-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful selection and all selected jobs
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          node - <<'NODE'
+          const needs = JSON.parse(process.env.RESULTS);
+          if (needs.changes.result !== 'success') process.exit(1);
+          const keys = { 'docker-build': 'docker', 'release-tests': 'release', 'app-tests': 'app', 'backend-tests': 'backend' };
+          for (const [job, key] of Object.entries(keys)) {
+            if (!['true', 'false'].includes(needs.changes.outputs[key])) process.exit(1);
+            const expected = needs.changes.outputs[key] === 'true' ? 'success' : 'skipped';
+            if (needs[job].result !== expected) process.exit(1);
+          }
+          NODE

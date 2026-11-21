@@ -107,6 +107,17 @@ function BasicAuthProvider({ children }: React.PropsWithChildren) {
         : profile
     );
   }, []);
+  useEffect(() => {
+    if (!accessToken || !currentUserProfile) return;
+    const revision = sessionRevision.current;
+    // Editors update the in-memory profile directly. Keep the secure restart
+    // snapshot in sync; serialized session writes keep logout's deletion last.
+    void saveBasicAuthSession({ token: accessToken, profile: currentUserProfile }).catch(() => {
+      if (revision === sessionRevision.current) {
+        setAuthError('Profiländerungen konnten nicht auf diesem Gerät gespeichert werden.');
+      }
+    });
+  }, [accessToken, currentUserProfile]);
   const preloadCurrentUserProfile = useCallback(async () => {
     if (!accessToken) return null;
     const revision = sessionRevision.current;

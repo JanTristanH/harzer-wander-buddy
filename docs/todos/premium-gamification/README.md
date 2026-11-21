@@ -1,6 +1,6 @@
 # TODOs: Premium-Gefühl und Gamification
 
-Stand: 14. Oktober 2026. Status: alle fünf Aufgaben offen, noch keine UI umgesetzt.
+Stand: 7. November 2026. #65 enthält Album, Zielmodell/-filter und gemeinsamen serverbestätigten Stempelerfolg; #118 integriert dies mit den gemeinsamen Oberflächen. #65 zuerst integrieren. Der vollständige Startkarten-Flow aus TODO 01 und der Restabgleich der Entdeckerkarten bleiben offen. Native Abnahmen sind nicht durch die erfolgreichen Webprüfungen ersetzt. Die einzelnen Aufgaben unterscheiden Implementierung im PR, Integration und Abnahme.
 
 Ziel ist ein hochwertiges, motivierendes Sammelerlebnis: nächstes Ziel erkennen,
 Stempel sammeln, Fortschritt erleben und die eigene Sammlung präsentieren.
