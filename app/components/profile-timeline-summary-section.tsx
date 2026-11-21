@@ -43,7 +43,7 @@ export function ProfileTimelineSummarySection({
   thisWeekCount,
   thisMonthCount,
   onOpenAll,
-  sectionTitle = 'Timeline',
+  sectionTitle = 'Besuchsverlauf',
 }: ProfileTimelineSummarySectionProps) {
   return (
     <SectionCard title={sectionTitle} style={styles.section}>
@@ -60,7 +60,7 @@ export function ProfileTimelineSummarySection({
         <Pressable onPress={onOpenAll} style={({ pressed }) => [styles.openAllButton, pressed && styles.pressed]}>
           <View style={styles.openAllContent}>
             <Feather color={AppColors.primary} name="list" size={15} />
-            <Text style={styles.openAllLabel}>Vollständige Timeline</Text>
+            <Text style={styles.openAllLabel}>Alle Besuche</Text>
           </View>
         </Pressable>
       ) : null}

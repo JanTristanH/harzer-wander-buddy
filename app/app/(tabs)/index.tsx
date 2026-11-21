@@ -1,3 +1,4 @@
+import { AppColors, Design } from '@/constants/theme';
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
@@ -6,7 +7,6 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useReducedMotion } from 'react-native-reanimated';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Animated,
@@ -21,6 +21,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -33,6 +34,7 @@ import { StampSelectionCelebration, StampSelectionFill } from '@/components/stam
 import { StampingSuccessToast } from '@/components/stamping-success-toast';
 import { createStamping, deleteStamping, fetchOwnStampings, type Stampbox } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { useReduceMotion } from '@/hooks/use-reduce-motion';
 import { STAMP_SELECTION_FILL_MS } from '@/lib/stamp-selection-motion';
 import { triggerHaptic } from '@/lib/haptics-preferences';
 import { useHikingGroup } from '@/lib/hiking-group';
@@ -56,11 +58,11 @@ const NEARBY_DISTANCE_KM = 15;
 const LIST_TOP_PADDING = 20;
 const LIST_BOTTOM_PADDING = 220;
 // 116 px for two description lines, padding and selection border, plus 12 px spacing.
-const KNOWN_STAMP_ROW_HEIGHT = 128;
+const KNOWN_STAMP_ROW_HEIGHT = 136;
 const DEFAULT_INTRO_HEIGHT = 220;
 const DEFAULT_CONTROLS_HEIGHT = 124;
 const STAMP_LIST_START_INDEX = 2;
-const GROUP_STAMP_ROW_HEIGHT = 176;
+const GROUP_STAMP_ROW_HEIGHT = 208;
 const FAST_SCROLLER_HIDE_DELAY_MS = 850;
 const FAST_SCROLLER_THUMB_HEIGHT = 44;
 const FAST_SCROLLER_PREVIEW_HEIGHT = 48;
@@ -151,6 +153,11 @@ function isRelocatedStamp(validTo?: string) {
 
 export default function StampsScreen() {
   const router = useRouter();
+  const reduceMotion = useReduceMotion();
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
+  const visibleFilters = useMemo(() => isAuthenticated ? FILTERS : FILTERS.filter((filter) => filter.key !== 'visited' && filter.key !== 'open'), [isAuthenticated]);
+  const reducedMotion = reduceMotion;
   const goalParams = useLocalSearchParams<{badgeGoal?:string}>();
   const goalAlbum = useBadgeAlbum(undefined,Boolean(goalParams.badgeGoal));
   const badgeGoal = goalAlbum.data?.entries.find(entry => entry.id === goalParams.badgeGoal);
@@ -160,8 +167,6 @@ export default function StampsScreen() {
     const poolComplete = badgeGoal.id === 'witch' && badgeGoal.progress[0].current >= badgeGoal.progress[0].total;
     return new Set(badgeGoal.required.filter(stamp => !stamp.visited && (!poolComplete || stamp.mandatory)).map(stamp => stamp.id));
   },[badgeGoal]);
-  const reducedMotion = useReducedMotion();
-  const { accessToken, canPerformWrites, currentUserProfile, isAuthenticated, logout } = useAuth();
   const queryClient = useQueryClient();
   const offlineVisits = useOfflineVisits();
   const canRecordVisit = offlineVisits.isNative ? offlineVisits.canRecord : canPerformWrites || offlineVisits.canRecord;
@@ -188,7 +193,8 @@ export default function StampsScreen() {
   const { groupUserIds, selectedFriendIds, selectedMembers } = useHikingGroup();
   const selectedFriendKey = selectedFriendIds.join(',');
   const isGroupActive = isAuthenticated && selectedFriendIds.length > 0;
-  const stampRowHeight = isGroupActive ? GROUP_STAMP_ROW_HEIGHT : KNOWN_STAMP_ROW_HEIGHT;
+  const { fontScale } = useWindowDimensions();
+  const stampRowHeight = Math.ceil((isGroupActive ? GROUP_STAMP_ROW_HEIGHT : KNOWN_STAMP_ROW_HEIGHT) * Math.max(1, fontScale));
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
   useEffect(() => {
@@ -524,7 +530,7 @@ export default function StampsScreen() {
       ? locationState === 'granted'
         ? `Im Umkreis von ${NEARBY_DISTANCE_KM} km wurden keine Stempelstellen gefunden.`
         : `Aktiviere deinen Standort, dann suchen wir im Umkreis von ${NEARBY_DISTANCE_KM} km.`
-      : 'Probier eine andere Suche oder waehle einen anderen Filter.';
+      : 'Probier eine andere Suche oder wähle einen anderen Filter.';
   const emptyStateIllustration = isVisitedEmptyState ? emptyVisitedIllustration : emptySearchIllustration;
 
   const listItems = useMemo<ListEntry[]>(() => {
@@ -752,6 +758,16 @@ export default function StampsScreen() {
       };
     }
 
+    if (reduceMotion) {
+      progressFillAnimation.setValue(progressRatio);
+      visitedCountAnimation.setValue(visitedCount);
+      setAnimatedVisitedCount(visitedCount);
+      return () => {
+        isActive = false;
+        visitedCountAnimation.removeListener(listenerId);
+      };
+    }
+
     Animated.parallel([
       Animated.timing(progressFillAnimation, {
         toValue: progressRatio,
@@ -782,6 +798,7 @@ export default function StampsScreen() {
       visitedCountAnimation.removeListener(listenerId);
     };
   }, [
+    reduceMotion,
     celebrationCount,
     offlineVisits.entries.length,
     hasCompletedAllStamps,
@@ -843,7 +860,7 @@ export default function StampsScreen() {
           <Text style={styles.title}>Stempelstellen</Text>
           {isAuthenticated ? <GroupSelector testID="stamps-header-group-selector" /> : null}
         </View>
-        {renderSelectionButton()}
+        {!selectionMode ? renderSelectionButton() : null}
       </View>
 
       <View
@@ -858,12 +875,12 @@ export default function StampsScreen() {
         accessibilityRole="button"
         onPress={() => router.push((isAuthenticated ? '/profile/timeline/self' : '/login') as never)}
         style={({ pressed }) => [pressed && styles.progressCardPressed]}>
-        <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.progressCard}>
-          <Text style={styles.progressEyebrow}>Dein Fortschritt</Text>
+        <LinearGradient colors={AppColors.progressGradient} style={styles.progressCard}>
+          <Text style={styles.progressEyebrow}>{isAuthenticated ? 'Dein Fortschritt' : 'Dein digitaler Stempelpass'}</Text>
           <Text style={styles.progressTitle}>
-            {animatedVisitedCount} von {totalCount} Stempelstellen
+            {isAuthenticated ? `${animatedVisitedCount} von ${totalCount} Stempelstellen` : 'Harz entdecken'}
           </Text>
-          <View style={styles.progressRow}>
+          {isAuthenticated ? <View accessible accessibilityLabel={`${visitedCount} von ${totalCount} besucht`} style={styles.progressRow}>
             <View
               onLayout={(event) => {
                 const nextWidth = event.nativeEvent.layout.width;
@@ -875,9 +892,9 @@ export default function StampsScreen() {
               <Animated.View style={[styles.progressFill, { width: animatedProgressWidth }]} />
             </View>
             <Text style={styles.progressPercent}>{progressPercent}%</Text>
-          </View>
+          </View> : null}
           <Text style={styles.progressHint}>
-            {lastVisited
+            {!isAuthenticated ? 'Anmelden und Stempel sammeln →' : lastVisited
               ? `Letzter Besuch: Stempel ${lastVisited.stampNumber || '--'} • ${lastVisited.stampName} • ${formatVisitDate(lastVisited.visitedAt)}`
               : 'Noch keine besuchten Stempelstellen'}
           </Text>
@@ -898,6 +915,7 @@ export default function StampsScreen() {
     progressPercent,
     router,
     totalCount,
+    visitedCount,
   ]);
 
   const renderControls = useCallback(() => (
@@ -905,17 +923,22 @@ export default function StampsScreen() {
       {goalParams.badgeGoal ? <Pressable accessibilityRole="button" accessibilityLabel="Zielfilter entfernen" onPress={() => router.setParams({badgeGoal:''})} style={{padding:12,backgroundColor:'#e8eee5',borderRadius:14}}>
         <Text style={{color:'#2e6b4b',fontSize:15}}>{badgeGoal ? `Ziel: ${badgeGoal.name}` : goalAlbum.error ? 'Ziel konnte nicht geladen werden' : 'Ziel wird geladen …'} · Filter entfernen ×</Text>
       </Pressable> : null}
-      <View style={styles.searchShell}>
+      <View style={[styles.searchShell, isSearchFocused && styles.searchShellFocused]}>
         <View style={styles.searchIconWrap}>
           <Feather color="#6d7d6e" name="search" size={14} />
         </View>
         <ClearableSearchInput
+          accessibilityLabel="Stempelstellen nach Nummer oder Ort suchen"
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => setIsSearchFocused(false)}
+          returnKeyType="search"
           onChangeText={setQuery}
           placeholder="Suche nach Nummer oder Ort"
-          placeholderTextColor="#7b8776"
+          placeholderTextColor={Design.color.muted}
           style={styles.searchInput}
           value={query}
         />
+
       </View>
 
       <ScrollView
@@ -923,11 +946,14 @@ export default function StampsScreen() {
         contentContainerStyle={styles.filterRow}
         horizontal
         style={styles.filterScroll}
-        showsHorizontalScrollIndicator={false}>
-        {FILTERS.map((filter) => {
+        showsHorizontalScrollIndicator>
+        {visibleFilters.map((filter) => {
           const isActive = activeFilter === filter.key;
           return (
             <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              aria-pressed={isActive}
               key={filter.key}
               onPress={() => setActiveFilter(filter.key)}
               style={({ pressed }) => [
@@ -949,7 +975,7 @@ export default function StampsScreen() {
         </Text>
       ) : null}
     </View>
-  ), [activeFilter, locationState, query, goalParams.badgeGoal,badgeGoal,goalAlbum.error,router]);
+  ), [activeFilter, isSearchFocused, locationState, query, visibleFilters, goalParams.badgeGoal, badgeGoal, goalAlbum.error, router]);
 
   const renderListItem = useCallback(
     ({ item }: { item: ListEntry }) => {
@@ -988,12 +1014,13 @@ export default function StampsScreen() {
           <View style={styles.emptyStateWrap}>
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>{emptyStateTitle}</Text>
+              <Text style={styles.emptyCopy}>{emptyStateCopy}</Text>
               <Image
+                accessibilityLabel="" accessible={false}
                 contentFit="contain"
                 source={emptyStateIllustration}
                 style={styles.emptyIllustration}
               />
-              <Text style={styles.emptyCopy}>{emptyStateCopy}</Text>
             </View>
           </View>
         );
@@ -1086,7 +1113,7 @@ export default function StampsScreen() {
               </View>
               {renderSelectionButton(true)}
             </View>
-            <LinearGradient colors={['#3f8158', '#60926f', '#d2c18f']} style={styles.loadingProgressCard}>
+            <LinearGradient colors={AppColors.progressGradient} style={styles.loadingProgressCard}>
               <SkeletonBlock height={14} radius={7} width="34%" />
               <SkeletonBlock height={24} radius={12} tone="strong" width="64%" />
               <SkeletonBlock height={8} radius={999} tone="muted" width="100%" />
@@ -1102,7 +1129,7 @@ export default function StampsScreen() {
               <ClearableSearchInput
                 editable={false}
                 placeholder="Suche nach Nummer oder Ort"
-                placeholderTextColor="#7b8776"
+                placeholderTextColor={Design.color.muted}
                 style={styles.searchInput}
                 value=""
               />
@@ -1113,7 +1140,7 @@ export default function StampsScreen() {
               horizontal
               style={styles.filterScroll}
               showsHorizontalScrollIndicator={false}>
-              {FILTERS.map((filter) => (
+              {visibleFilters.map((filter) => (
                 <View
                   key={filter.key}
                   style={[
@@ -1159,7 +1186,7 @@ export default function StampsScreen() {
             </View>
           </View>
 
-          <Text style={styles.helperText}>Lade Stempelstellen aus dem OData-v4-Service...</Text>
+          <Text style={styles.helperText}>Stempelstellen werden geladen …</Text>
         </View>
       </SafeAreaView>
     );
@@ -1170,7 +1197,10 @@ export default function StampsScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
           <Text style={styles.errorTitle}>Stempelstellen konnten nicht geladen werden</Text>
-          <Text style={styles.errorBody}>{blockingError.message}</Text>
+          <Text accessibilityRole="alert" selectable style={styles.errorBody}>Prüfe deine Verbindung und versuche es noch einmal.</Text>
+          <Pressable accessibilityRole="button" onPress={() => void refetch()} style={[styles.filterPill, styles.filterPillActive]}>
+            <Text style={styles.filterPillLabelActive}>Erneut versuchen</Text>
+          </Pressable>
         </View>
       </SafeAreaView>
     );
@@ -1262,7 +1292,7 @@ export default function StampsScreen() {
             <RefreshControl
               onRefresh={handlePullToRefresh}
               refreshing={isPullRefreshing}
-              tintColor="#2e6b4b"
+              tintColor={Design.color.brand}
             />
           }
           scrollEventThrottle={16}
@@ -1299,7 +1329,7 @@ export default function StampsScreen() {
 const styles = StyleSheet.create({
   confirmOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.35)' },
   confirmCard: { width: '100%', maxWidth: 420, padding: 24, borderRadius: 22, backgroundColor: '#f5f3ee', gap: 20 },
-  headerTitleGroup: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  headerTitleGroup: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   headerSelectionButton: { minHeight: 40, minWidth: 86, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, borderWidth: 1, borderColor: '#d9e2d9', borderRadius: 999 },
   headerSelectionLabel: { color: '#5c745f', fontSize: 12, fontWeight: '600' },
   selectionToolbar: { padding: 12, gap: 6, justifyContent: 'center', borderRadius: 22, backgroundColor: '#e2eee6', zIndex: 20 },
@@ -1314,10 +1344,13 @@ const styles = StyleSheet.create({
   selectionDisabled: { opacity: 0.4 },
   safeArea: {
     flex: 1,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: Design.color.canvas,
   },
   listContainer: {
     flex: 1,
+    width: '100%',
+    maxWidth: Design.contentWidth,
+    alignSelf: 'center',
     overflow: 'hidden',
   },
   list: {
@@ -1383,13 +1416,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 12,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: Design.color.canvas,
   },
   controlsContent: {
     gap: 12,
   },
   stampRow: {
-    height: KNOWN_STAMP_ROW_HEIGHT,
     paddingHorizontal: 20,
     paddingBottom: 12,
   },
@@ -1399,18 +1431,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    color: '#1e2a1e',
-    fontSize: 24,
-    lineHeight: 30,
-    fontFamily: 'serif',
+    color: Design.color.ink,
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700',
   },
   totalLabel: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 12,
     lineHeight: 16,
   },
   progressCard: {
-    borderRadius: 22,
+    borderRadius: Design.radius.card,
     paddingHorizontal: 16,
     paddingVertical: 16,
     gap: 10,
@@ -1425,15 +1457,14 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.995 }],
   },
   progressEyebrow: {
-    color: '#f5f3ee',
+    color: Design.color.canvas,
     fontSize: 12,
     lineHeight: 16,
     letterSpacing: 1,
-    opacity: 0.9,
     textTransform: 'uppercase',
   },
   progressTitle: {
-    color: '#f5f3ee',
+    color: Design.color.canvas,
     fontSize: 22,
     lineHeight: 28,
     fontWeight: '700',
@@ -1453,18 +1484,17 @@ const styles = StyleSheet.create({
   progressFill: {
     height: 8,
     borderRadius: 999,
-    backgroundColor: '#f5f3ee',
+    backgroundColor: Design.color.canvas,
   },
   progressPercent: {
-    color: '#f5f3ee',
+    color: Design.color.canvas,
     fontSize: 12,
     lineHeight: 16,
   },
   progressHint: {
-    color: '#f5f3ee',
+    color: Design.color.canvas,
     fontSize: 12,
     lineHeight: 16,
-    opacity: 0.9,
   },
   refreshHint: {
     color: '#4d6d56',
@@ -1472,18 +1502,33 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   searchShell: {
+    minHeight: Design.touch,
+    borderWidth: 1,
+    borderColor: Design.color.border,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     borderRadius: 16,
     shadowColor: '#141e14',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 18,
     elevation: 3,
+  },
+  searchShellFocused: {
+    borderColor: Design.color.brand,
+    outlineColor: Design.color.brand,
+    outlineWidth: 2,
+    outlineStyle: 'solid',
+  },
+  clearSearch: {
+    minWidth: Design.touch,
+    minHeight: Design.touch,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchIconWrap: {
     width: 16,
@@ -1494,10 +1539,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   searchInput: {
+    outlineWidth: 0,
     flex: 1,
-    color: '#2e3a2e',
-    fontSize: 13,
-    lineHeight: 16,
+    color: Design.color.ink,
+    fontSize: 16,
+    lineHeight: 22,
     paddingVertical: 0,
   },
   filterRow: {
@@ -1507,29 +1553,31 @@ const styles = StyleSheet.create({
     paddingRight: 6,
   },
   filterScroll: {
-    height: 40,
+    minHeight: 52,
   },
   filterPill: {
-    height: 32,
+    minHeight: Design.touch,
+    paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: '#ffffff',
+    backgroundColor: Design.color.surface,
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   filterPillActive: {
-    backgroundColor: '#2e6b4b',
+    backgroundColor: Design.color.brand,
   },
   filterPillPressed: {
     opacity: 0.85,
   },
   filterPillLabel: {
-    color: '#2e3a2e',
-    fontSize: 12,
+    color: Design.color.ink,
+    fontWeight: '600',
+    fontSize: 14,
     lineHeight: 16,
   },
   filterPillLabelActive: {
-    color: '#f5f3ee',
+    color: Design.color.canvas,
   },
   filterHint: {
     color: '#7f6a43',
@@ -1580,14 +1628,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emptyCopy: {
-    color: '#6b7a6b',
+    color: Design.color.muted,
     fontSize: 14,
     lineHeight: 20,
     textAlign: 'center',
   },
   emptyIllustration: {
-    width: 120,
-    height: 120,
+    width: 80,
+    height: 80,
     alignSelf: 'center',
   },
   fastScrollerOverlay: {
@@ -1617,7 +1665,7 @@ const styles = StyleSheet.create({
     left: -4,
     width: 12,
     borderRadius: 999,
-    backgroundColor: '#2e6b4b',
+    backgroundColor: Design.color.brand,
   },
   fastScrollerTouchArea: {
     position: 'absolute',

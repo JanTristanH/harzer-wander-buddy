@@ -611,6 +611,7 @@ export function useProfileOverviewQuery() {
               }
             : null;
 
+        // Refresh visit flags with history; a cached list may predate a visit or removal.
         return fetchProfileOverview(
           token,
           claims?.sub,

@@ -20,7 +20,7 @@ import { FriendsList } from '@/components/friends-list';
 import { SkeletonBlock, SkeletonCircle } from '@/components/skeleton';
 import { FriendSearchModal } from '@/components/friend-search-modal';
 import { useFriendSearch } from '@/lib/use-friend-search';
-import { AppColors, Fonts } from '@/constants/theme';
+import { AppColors, Fonts, Layout } from '@/constants/theme';
 import { acceptPendingFriendshipRequest } from '@/lib/api';
 import { useAuth, useIdTokenClaims } from '@/lib/auth';
 import { useRequireSignInAction } from '@/lib/auth-actions';
@@ -55,6 +55,9 @@ function FriendFilterChip({
 }) {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
       onPress={onPress}
       style={({ pressed }) => [
         styles.filterChip,
@@ -150,7 +153,7 @@ export default function FriendsScreen() {
       <SignInRequiredScreen
         body="Melde dich an, um Freunde zu suchen, Anfragen zu senden und gemeinsamen Fortschritt zu sehen."
         onSignIn={() => router.push('/login' as never)}
-        title="Freunde sind mit Konto verfuegbar"
+        title="Freunde sind mit Konto verfügbar"
       />
     );
   }
@@ -302,8 +305,11 @@ export default function FriendsScreen() {
           ) : null}
         </ScrollView>
 
-        <Pressable
+        {!(activeFilter === 'friends' && data && data.friends.length === 0) ? (
+        <View pointerEvents="box-none" style={{ position: 'absolute', width: '100%', maxWidth: Layout.contentWidth, alignSelf: 'center', bottom: 0 }}>
+      <Pressable
           accessibilityLabel="Freunde suchen"
+                  accessibilityRole="button"
           disabled={!canPerformWrites}
           onPress={() => setIsSearchModalVisible(true)}
           style={({ pressed }) => [
@@ -314,6 +320,8 @@ export default function FriendsScreen() {
           ]}>
           <Feather color={AppColors.background} name="search" size={24} />
         </Pressable>
+        </View>
+      ) : null}
 
         <FriendSearchModal search={friendSearch} />
       </View>
@@ -331,13 +339,17 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.background,
   },
   content: {
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 160,
   },
   title: {
     color: AppColors.text,
-    fontFamily: Fonts.serif,
+    fontFamily: Fonts.sans,
+    fontWeight: '700',
     fontSize: 24,
     lineHeight: 30,
     marginBottom: 12,
@@ -348,6 +360,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   filterChip: {
+    minHeight: Layout.touchTarget,
+    justifyContent: 'center',
     backgroundColor: AppColors.surface,
     borderRadius: 999,
     paddingHorizontal: 12,

@@ -1,0 +1,31 @@
+{
+  "checks": [
+    {
+      "state": "empty",
+      "hintVisible": true
+    },
+    {
+      "state": "selected",
+      "hintCount": 0
+    },
+    {
+      "state": "added",
+      "hintCount": 0
+    },
+    {
+      "state": "search-next",
+      "hintCount": 0,
+      "pins": [
+        "1 • Brocken – Gipfelblick",
+        null
+      ]
+    },
+    {
+      "state": "last-point-removed-and-deselected",
+      "hintVisible": true
+    }
+  ],
+  "pageErrors": [
+    "Cannot read properties of undefined (reading '_leaflet_pos')"
+  ]
+}

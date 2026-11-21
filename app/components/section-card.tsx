@@ -1,5 +1,5 @@
 import type { PropsWithChildren, ReactNode } from 'react';
-import { StyleSheet, Text, View, type ViewProps } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions, type ViewProps } from 'react-native';
 
 import { AppColors, Radii, Spacing } from '@/constants/theme';
 
@@ -10,9 +10,10 @@ type SectionCardProps = PropsWithChildren<ViewProps & {
 
 /** Shared detail section; callers compose content and optional header actions. */
 export function SectionCard({ title, action, children, style, ...props }: SectionCardProps) {
+  const { fontScale } = useWindowDimensions();
   return (
     <View {...props} style={[styles.card, style]}>
-      <View style={styles.header}>
+      <View style={[styles.header, fontScale >= 1.5 && styles.headerLargeText]}>
         <Text style={styles.title}>{title}</Text>
         {action}
       </View>
@@ -40,7 +41,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 10,
   },
+  headerLargeText: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
   title: {
+    flexShrink: 1,
     color: AppColors.text,
     fontSize: 16,
     lineHeight: 20,

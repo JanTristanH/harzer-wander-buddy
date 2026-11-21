@@ -1,3 +1,4 @@
+import { AppColors, Fonts, Layout } from '@/constants/theme';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, usePreventRemove } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -67,10 +68,10 @@ const HARZ_REGION: Region = {
 };
 
 const MAP_EDGE_PADDING = {
-  top: 70,
+  top: 168,
   right: 70,
-  bottom: 70,
-  left: 70,
+  bottom: 64,
+  left: 48,
 };
 
 const MIN_ZOOM_DELTA = 0.008;
@@ -985,6 +986,7 @@ export default function TourDetailScreen() {
   const [isMapReady, setIsMapReady] = useState(false);
   const [routeRegion, setRouteRegion] = useState(HARZ_REGION);
   const [routeMapHeight, setRouteMapHeight] = useState(350);
+  const [mapTopBarHeight, setMapTopBarHeight] = useState(112);
   const [mapCenter, setMapCenter] = useState<Coordinate>({
     latitude: HARZ_REGION.latitude,
     longitude: HARZ_REGION.longitude,
@@ -1005,6 +1007,7 @@ export default function TourDetailScreen() {
   const [showPoiAddedFeedback, setShowPoiAddedFeedback] = useState(false);
 
   const mapRef = useRef<MapViewRef | null>(null);
+  const tourSearchInputRef = useRef<TextInput | null>(null);
   const hasAppliedAutoStartEditModeRef = useRef(false);
   const regionRef = useRef<Region>(HARZ_REGION);
   const activeSaveRequestIdRef = useRef(0);
@@ -1012,6 +1015,9 @@ export default function TourDetailScreen() {
   const latestDraftPoiIdsRef = useRef<string[]>([]);
   const poiAutosaveDebounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchBlurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didFitEmptyEditorRef = useRef(false);
+  const searchFitSignatureRef = useRef('');
+  useEffect(() => { didFitEmptyEditorRef.current = false; }, [tourId]);
   const isAutoSaveRunningRef = useRef(false);
   const wasEditModeRef = useRef(false);
   const renameDebounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1044,6 +1050,12 @@ export default function TourDetailScreen() {
   }, []);
 
   const closeMapFullscreen = useCallback(() => {
+    if (Platform.OS === 'web') {
+      tourSearchInputRef.current?.blur();
+      setIsSearchFocused(false);
+      setIsMapFullscreen(false);
+      return;
+    }
     fullscreenProgress.value = withTiming(
       0,
       {
@@ -1057,6 +1069,35 @@ export default function TourDetailScreen() {
       }
     );
   }, [fullscreenProgress]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !isMapFullscreen) return;
+    const focusFrame = requestAnimationFrame(() => tourSearchInputRef.current?.focus());
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMapFullscreen();
+      } else if (event.key === 'Tab') {
+        const card = document.querySelector('[data-testid="tour-map-card"]');
+        const controls = Array.from(card?.querySelectorAll<HTMLElement>('button, input, a[href], [tabindex="0"]') ?? [])
+          .filter((element) => !element.hasAttribute('disabled') && element.getClientRects().length > 0);
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [closeMapFullscreen, isMapFullscreen]);
 
   useEffect(() => {
     if (!tourId) {
@@ -1305,8 +1346,14 @@ export default function TourDetailScreen() {
   );
 
   const mapItemsForRendering = useMemo(() => {
-    return allMapItems;
-  }, [allMapItems]);
+    const search = normalizeSearchValue(poiSearchQuery.trim());
+    if (!isSearchFocused || !search) return allMapItems;
+
+    // Keep route context while making matching destinations individually visible.
+    return allMapItems.filter((item) =>
+      draftPoiStats.positionsById.has(item.ID.toLowerCase()) || rankSearchItem(item, search) !== null
+    );
+  }, [allMapItems, draftPoiStats.positionsById, isSearchFocused, poiSearchQuery]);
 
   const markerRenderStates = useMemo(
     () =>
@@ -1490,7 +1537,7 @@ export default function TourDetailScreen() {
     }
 
     if (!canPerformWrites) {
-      Alert.alert('Offline', 'Touren koennen nur online bearbeitet werden.');
+      Alert.alert('Offline', 'Touren können nur online bearbeitet werden.');
       return;
     }
 
@@ -1562,8 +1609,8 @@ export default function TourDetailScreen() {
     }
 
     Alert.alert(
-      'Ungespeicherte Aenderungen',
-      'Du hast ungespeicherte Aenderungen an der Tour. Ohne Speichern verwerfen?',
+      'Ungespeicherte Änderungen',
+      'Du hast ungespeicherte Änderungen an der Tour. Ohne Speichern verwerfen?',
       [
         {
           text: 'Weiter bearbeiten',
@@ -1616,7 +1663,7 @@ export default function TourDetailScreen() {
   }, [data?.tour?.ID, data?.tour?.name]);
   const handleStartWholeTour = useCallback(async () => {
     if (!mapsDirectionsUrl) {
-      Alert.alert('Route kann nicht gestartet werden', 'Bitte mindestens zwei Punkte zur Tour hinzufuegen.');
+      Alert.alert('Route kann nicht gestartet werden', 'Bitte mindestens zwei Punkte zur Tour hinzufügen.');
       return;
     }
 
@@ -1646,8 +1693,8 @@ export default function TourDetailScreen() {
     }
 
     Alert.alert(
-      'Ungespeicherte Aenderungen',
-      'Du hast ungespeicherte Aenderungen an der Tour. Ohne Speichern verwerfen?',
+      'Ungespeicherte Änderungen',
+      'Du hast ungespeicherte Änderungen an der Tour. Ohne Speichern verwerfen?',
       [
         {
           text: 'Weiter bearbeiten',
@@ -1810,9 +1857,9 @@ export default function TourDetailScreen() {
   }, [accessToken, isOffline, isSearchFocused, logout, mapCenter, normalizedSearchQuery, poiSearchQuery]);
 
   useEffect(() => {
-    if (!isMapReady || isEditMode) {
-      return;
-    }
+    if (!isMapReady) return;
+    // Fit an empty editor once; later point changes preserve the user's map position.
+    if (isEditMode && (draftPoiIds.length > 0 || didFitEmptyEditorRef.current)) return;
 
     const coordinatesToFit =
       routeCoordinates.length > 0 || stopCoordinates.length > 0
@@ -1839,11 +1886,32 @@ export default function TourDetailScreen() {
       return;
     }
 
+    if (isEditMode) didFitEmptyEditorRef.current = true;
     mapRef.current.fitToCoordinates(coordinatesToFit, {
       edgePadding: MAP_EDGE_PADDING,
       animated: true,
     });
-  }, [allMapItems, isEditMode, isMapReady, routeCoordinates, stopCoordinates]);
+  }, [allMapItems, draftPoiIds.length, isEditMode, isMapReady, routeCoordinates, stopCoordinates]);
+
+  useEffect(() => {
+    if (!isMapFullscreen || !isMapReady || !isSearchFocused || !poiSearchQuery.trim() || mapItemsForRendering.length < 2) {
+      searchFitSignatureRef.current = '';
+      return;
+    }
+    const coordinates = mapItemsForRendering.map(({ latitude, longitude }) => ({ latitude, longitude }));
+    const signature = `${poiSearchQuery}:${mapTopBarHeight}:${coordinates.map((point) => `${point.latitude},${point.longitude}`).join('|')}`;
+    if (searchFitSignatureRef.current === signature) return;
+
+    const timeout = setTimeout(() => {
+      if (!mapRef.current) return;
+      searchFitSignatureRef.current = signature;
+      mapRef.current.fitToCoordinates(coordinates, {
+        edgePadding: { top: insets.top + 10 + mapTopBarHeight + 56, right: 80, bottom: insets.bottom + 64, left: 48 },
+        animated: true,
+      });
+    }, 180);
+    return () => clearTimeout(timeout);
+  }, [insets.bottom, insets.top, isMapFullscreen, isMapReady, isSearchFocused, mapItemsForRendering, mapTopBarHeight, poiSearchQuery]);
 
   const handleZoomBy = useCallback((factor: number) => {
     const map = mapRef.current;
@@ -1957,7 +2025,7 @@ export default function TourDetailScreen() {
         if (options?.manual) {
           Alert.alert(
             'Zu wenige Punkte',
-            'Mindestens zwei Punkte benoetigt (Start und Ziel), bevor gespeichert werden kann.'
+            'Mindestens zwei Punkte benötigt (Start und Ziel), bevor gespeichert werden kann.'
           );
         }
         return false;
@@ -1983,10 +2051,10 @@ export default function TourDetailScreen() {
         setLastPersistedPoiIds(poiIds);
         if (draftChangedSinceRequest) {
           setSaveStatus('pending');
-          setStatusMessage('Aenderungen ausstehend...');
+          setStatusMessage('Änderungen ausstehend...');
         } else {
           setSaveStatus('saved');
-          setStatusMessage('Alle Aenderungen gespeichert');
+          setStatusMessage('Alle Änderungen gespeichert');
         }
         setLastSaveErrorCode(null);
         const refreshed = await refetch();
@@ -2048,7 +2116,7 @@ export default function TourDetailScreen() {
       if (isAutoSaveRunningRef.current) {
         queuedPoiIdsRef.current = nextPoiIds;
         setSaveStatus((current) => (current === 'saving' ? current : 'pending'));
-        setStatusMessage('Aenderungen ausstehend...');
+        setStatusMessage('Änderungen ausstehend...');
         return;
       }
 
@@ -2075,7 +2143,7 @@ export default function TourDetailScreen() {
 
           poiIdsToSave = queuedPoiIds;
           setSaveStatus('pending');
-          setStatusMessage('Aenderungen ausstehend...');
+          setStatusMessage('Änderungen ausstehend...');
         }
       } finally {
         isAutoSaveRunningRef.current = false;
@@ -2283,8 +2351,8 @@ export default function TourDetailScreen() {
       }
 
       Alert.alert(
-        'Keine Detailseite verfuegbar',
-        'Fuer diesen Punkt ist aktuell keine separate Detailseite vorhanden.'
+        'Keine Detailseite verfügbar',
+        'Für diesen Punkt ist aktuell keine separate Detailseite vorhanden.'
       );
     },
     [router]
@@ -2363,7 +2431,7 @@ export default function TourDetailScreen() {
     }
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Touren koennen nur online geloescht werden.');
+      requireOnlineForWrite(canPerformWrites, 'Touren können nur online geloescht werden.');
     } catch (nextError) {
       if (isNetworkUnavailableError(nextError)) {
         Alert.alert('Offline', nextError.message);
@@ -2453,7 +2521,7 @@ export default function TourDetailScreen() {
         setTourNameDraft(data.tour.name);
         return;
       }
-      Alert.alert('Name fehlt', 'Bitte gib einen Namen fuer die Tour ein.');
+      Alert.alert('Name fehlt', 'Bitte gib einen Namen für die Tour ein.');
       return;
     }
 
@@ -2587,7 +2655,7 @@ export default function TourDetailScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
           <Text style={styles.errorTitle}>Tour konnte nicht geladen werden</Text>
-          <Text style={styles.errorBody}>{error?.message || 'Keine Daten verfuegbar.'}</Text>
+          <Text style={styles.errorBody}>{error?.message || 'Keine Daten verfügbar.'}</Text>
         </View>
       </SafeAreaView>
     );
@@ -2595,12 +2663,18 @@ export default function TourDetailScreen() {
 
   const renderTourMap = (isFullscreen: boolean) => (
     <View
+      testID="tour-map-card"
+      role={Platform.OS === 'web' && isFullscreen ? 'dialog' : undefined}
+      aria-modal={Platform.OS === 'web' && isFullscreen ? true : undefined}
+      accessibilityLabel={isFullscreen ? 'Tourkarte' : undefined}
       onLayout={(event) => setRouteMapHeight(event.nativeEvent.layout.height)}
-      style={[styles.mapCard, isFullscreen && styles.mapCardFullscreen]}>
+      style={[styles.mapCard, isEditMode && draftPoiIds.length === 0 && styles.emptyMapCard, isFullscreen && styles.mapCardFullscreen,
+        Platform.OS === 'web' && isFullscreen && styles.mapCardWebFullscreen]}>
       <MapView
         attributionPlacement="bottom-right"
         ref={mapRef}
         initialRegion={routeRegion}
+        scrollWheelZoomEnabled={isFullscreen}
         onMapReady={() => setIsMapReady(true)}
         onPress={(event) => {
           if ('action' in event.nativeEvent && event.nativeEvent.action === 'marker-press') {
@@ -2713,11 +2787,18 @@ export default function TourDetailScreen() {
         ) : null}
       </MapView>
 
-      <View style={[styles.mapTopBar, isFullscreen && { top: insets.top + 10 }]}>
+      <View
+        onLayout={({ nativeEvent }) => {
+          const height = Math.ceil(nativeEvent.layout.height);
+          setMapTopBarHeight((current) => current === height ? current : height);
+        }}
+        style={[styles.mapTopBar, isFullscreen && { top: insets.top + 10 }]}>
         <View style={styles.mapTopControlsRow}>
           <View style={styles.mapSearchWrap}>
             <Feather color="#6d7d6e" name="search" size={14} />
             <ClearableSearchInput
+              ref={tourSearchInputRef}
+              autoFocus={isFullscreen}
               onBlur={() => {
                 if (searchBlurTimeoutRef.current) {
                   clearTimeout(searchBlurTimeoutRef.current);
@@ -2736,7 +2817,11 @@ export default function TourDetailScreen() {
                 }
 
                 setIsSearchFocused(true);
+                setSelectedMapItemId(null);
+                setSelectedExternalPlace(null);
+                if (!isFullscreen) openMapFullscreen();
               }}
+              accessibilityLabel="Tourpunkte suchen"
               placeholder="Punkte auf der Karte suchen"
               placeholderTextColor="#7b8776"
               style={styles.mapSearchInput}
@@ -2745,6 +2830,8 @@ export default function TourDetailScreen() {
           </View>
 
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={isFullscreen ? 'Tourkarte im Vollbild schließen' : 'Tourkarte im Vollbild öffnen'}
             onPress={isFullscreen ? closeMapFullscreen : openMapFullscreen}
             style={({ pressed }) => [styles.mapFullscreenButton, pressed && styles.pressed]}>
             <Feather color="#2e3a2e" name={isFullscreen ? 'minimize-2' : 'maximize-2'} size={16} />
@@ -2795,9 +2882,9 @@ export default function TourDetailScreen() {
             ) : null}
           </View>
         ) : null}
-        {isEditMode ? (
-          <Text style={styles.externalSearchHint}>
-            Externe Orte sind nicht als Tourpunkt speicherbar.
+        {isEditMode && (selectedExternalPlace || (!selectedMapItem && draftPoiIds.length === 0)) ? (
+          <Text testID="tour-map-instruction" style={styles.externalSearchHint}>
+            {selectedExternalPlace ? 'Externe Orte dienen zur Orientierung. Füge Stempel oder Parkplätze als Tourpunkte hinzu.' : 'Stempel auswählen und „Zur Tour hinzufügen“ antippen.'}
           </Text>
         ) : null}
       </View>
@@ -2819,11 +2906,11 @@ export default function TourDetailScreen() {
         </View>
       ) : null}
 
-      <View style={[styles.mapZoomControls, isFullscreen && { top: insets.top + 72 }]}>
-        <Pressable onPress={() => handleZoomBy(0.65)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
+      <View style={[styles.mapZoomControls, { top: (isFullscreen ? insets.top + 10 : 12) + mapTopBarHeight + 12 }]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Tourkarte vergrößern" onPress={() => handleZoomBy(0.65)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
           <Text style={styles.zoomButtonLabel}>+</Text>
         </Pressable>
-        <Pressable onPress={() => handleZoomBy(1.55)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Tourkarte verkleinern" onPress={() => handleZoomBy(1.55)} style={({ pressed }) => [styles.zoomButton, pressed && styles.pressed]}>
           <Text style={styles.zoomButtonLabel}>−</Text>
         </Pressable>
       </View>
@@ -2937,7 +3024,7 @@ export default function TourDetailScreen() {
           <Pressable
             onPress={() => void openExternalPlaceInGoogleMaps()}
             style={({ pressed }) => [styles.addButton, styles.mapBottomActionButton, pressed && styles.pressed]}>
-            <Text style={styles.addButtonLabel}>In Google Maps oeffnen</Text>
+            <Text style={styles.addButtonLabel}>In Google Maps öffnen</Text>
           </Pressable>
         </View>
       ) : null}
@@ -2966,12 +3053,16 @@ export default function TourDetailScreen() {
         visible={isSaveSuccessToastVisible}
       />
       <ScrollView
+        scrollEnabled={Platform.OS !== 'web' || !isMapFullscreen}
+        style={Platform.OS === 'web' && isMapFullscreen ? { zIndex: 1000 } : undefined}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[styles.scrollContent, { paddingBottom: footerReservedHeight }]}
         showsVerticalScrollIndicator={false}>
         <View style={styles.headerWrap}>
           <View style={styles.headerTopRow}>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Zurück zu den Touren"
               onPress={handleBackPress}
               style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}>
               <Feather color="#1e2a1e" name="arrow-left" size={16} />
@@ -3011,6 +3102,7 @@ export default function TourDetailScreen() {
                 onBlur={() => void handleSubmitRename({ silent: true })}
                 onChangeText={handleTourNameChange}
                 onSubmitEditing={() => void handleSubmitRename()}
+                accessibilityLabel="Tourname"
                 placeholder="Tourname"
                 placeholderTextColor="#7b8776"
                 returnKeyType="done"
@@ -3032,6 +3124,9 @@ export default function TourDetailScreen() {
             <GroupSelector />
           </View>
 
+          {draftPoiIds.length < 2 ? <Text style={styles.cardLine}>{draftPoiIds.length === 0
+            ? 'Deine Tour beginnt mit einem Stempel. Wähle auf der Karte deinen Startpunkt.'
+            : 'Startpunkt gewählt. Füge ein weiteres Ziel hinzu. Distanz, Dauer und Höhenprofil werden ab zwei Punkten berechnet.'}</Text> : <>
           <View style={styles.tourMetricsLineWrap}>
             <View style={styles.metricLineRow}>
               <Text style={styles.cardLine}>Distanz: </Text>
@@ -3116,6 +3211,7 @@ export default function TourDetailScreen() {
               </Text>
             </View>
           ) : null}
+          </>}
         </View>
 
         {blockingErrorCode === 403 ? (
@@ -3127,7 +3223,7 @@ export default function TourDetailScreen() {
         {blockingErrorCode === 404 ? (
           <View style={styles.warningBanner}>
             <Text style={styles.warningTitle}>Tour nicht mehr vorhanden</Text>
-            <Text style={styles.warningBody}>Die Tour wurde entfernt oder ist nicht mehr verfuegbar.</Text>
+            <Text style={styles.warningBody}>Die Tour wurde entfernt oder ist nicht mehr verfügbar.</Text>
           </View>
         ) : null}
         {lastSaveErrorCode === 422 ? (
@@ -3143,16 +3239,18 @@ export default function TourDetailScreen() {
           <View style={styles.warningBanner}>
             <Text style={styles.warningTitle}>Speichern fehlgeschlagen</Text>
             <Text style={styles.warningBody}>
-              {statusMessage || 'Die Tour konnte nicht gespeichert werden. Bitte spaeter erneut versuchen.'}
+              {statusMessage || 'Die Tour konnte nicht gespeichert werden. Bitte später erneut versuchen.'}
             </Text>
           </View>
         ) : null}
 
-        {isMapFullscreen ? null : showDeferredTourSections ? (
+        {isMapFullscreen && Platform.OS !== 'web' ? null : showDeferredTourSections ? (
           <View style={styles.loadingMapCard}>
             <SkeletonBlock height={236} radius={18} width="100%" />
           </View>
-        ) : renderTourMap(false)}
+        ) : <View style={Platform.OS === 'web' && isMapFullscreen ? { height: isEditMode && draftPoiIds.length === 0 ? 460 : 390, zIndex: 1000 } : undefined}>
+          {renderTourMap(Platform.OS === 'web' && isMapFullscreen)}
+        </View>}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Aktuelle Reihenfolge</Text>
@@ -3174,7 +3272,13 @@ export default function TourDetailScreen() {
               </View>
             </>
           ) : draftPoiIds.length === 0 ? (
-            <Text style={styles.cardLine}>Noch keine Punkte in der Tour.</Text>
+            <View style={styles.emptyTour}>
+              <Text style={styles.cardLine}>Füge deinen ersten Stempel hinzu. Danach kannst du weitere Ziele wählen und ihre Reihenfolge ändern.</Text>
+              {isEditMode ? <Pressable accessibilityRole="button" onPress={openMapFullscreen} style={styles.addFirstPoint}>
+                <Feather name="plus" size={20} color={AppColors.onPrimary} />
+                <Text style={styles.addFirstPointLabel}>Ersten Stempel wählen</Text>
+              </Pressable> : null}
+            </View>
           ) : (
             draftPoiIds.map((poiId, index) => {
               const item = mapItemById.get(poiId.toLowerCase());
@@ -3411,8 +3515,9 @@ export default function TourDetailScreen() {
         </View>
       </Modal>
 
-      <Modal
+      {Platform.OS !== 'web' ? <Modal
         animationType="none"
+        accessibilityLabel="Tourkarte"
         visible={isMapFullscreen}
         onRequestClose={closeMapFullscreen}>
         <View style={styles.mapFullscreenSafeArea}>
@@ -3420,7 +3525,7 @@ export default function TourDetailScreen() {
             {renderTourMap(true)}
           </Animated.View>
         </View>
-      </Modal>
+      </Modal> : null}
     </SafeAreaView>
   );
 }
@@ -3430,7 +3535,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f3ee',
   },
+  emptyTour: { gap: 12 },
+  addFirstPoint: { minHeight: Layout.touchTarget, backgroundColor: AppColors.primary, borderRadius: 12, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  addFirstPointLabel: { color: AppColors.onPrimary, fontSize: 15, fontWeight: '700' },
   scrollContent: {
+    width: '100%', maxWidth: Layout.contentWidth, alignSelf: 'center',
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 40,
@@ -3518,7 +3627,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   backButton: {
-    minHeight: 32,
+    minWidth: Layout.touchTarget,
+    minHeight: Layout.touchTarget,
     borderRadius: 10,
     backgroundColor: '#ffffff',
     paddingHorizontal: 10,
@@ -3678,7 +3788,7 @@ const styles = StyleSheet.create({
     color: '#2e3a2e',
     fontSize: 23,
     lineHeight: 30,
-    fontFamily: 'serif',
+    fontFamily: Fonts.sans,
     paddingVertical: 0,
   },
   titleInputDisabled: {
@@ -3688,7 +3798,7 @@ const styles = StyleSheet.create({
     color: '#1e2a1e',
     fontSize: 24,
     lineHeight: 30,
-    fontFamily: 'serif',
+    fontFamily: Fonts.sans,
   },
   subtitle: {
     color: '#445244',
@@ -3789,6 +3899,7 @@ const styles = StyleSheet.create({
   },
   routeLegendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   routeLegendLabel: { color: '#263526', fontSize: 12, fontWeight: '600' },
+  emptyMapCard: { height: 460 },
   mapCard: {
     height: 390,
     borderRadius: 22,
@@ -3807,6 +3918,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     shadowRadius: 0,
     elevation: 0,
+  },
+  mapCardWebFullscreen: {
+    // Keep the map and focused input mounted while switching viewport size.
+    position: 'fixed' as 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    height: '100%',
+    marginBottom: 0,
+    zIndex: 1000,
   },
   mapFullscreenSafeArea: {
     flex: 1,
@@ -3843,8 +3965,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   mapFullscreenButton: {
-    width: 42,
-    height: 42,
+    width: Layout.touchTarget,
+    height: Layout.touchTarget,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -3896,9 +4018,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   searchResultMeta: {
-    color: '#6b7a6b',
-    fontSize: 11,
-    lineHeight: 14,
+    color: AppColors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
   },
   searchStatusText: {
     color: '#6b7a6b',
@@ -3908,11 +4030,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   externalSearchHint: {
+    backgroundColor: AppColors.surface,
+    borderRadius: 8,
+    padding: 8,
     marginTop: 6,
     marginLeft: 4,
-    color: '#6b7a6b',
-    fontSize: 11,
-    lineHeight: 14,
+    color: AppColors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
   },
   mapZoomControls: {
     position: 'absolute',
@@ -3921,8 +4046,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   zoomButton: {
-    width: 40,
-    height: 40,
+    width: Layout.touchTarget,
+    height: Layout.touchTarget,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

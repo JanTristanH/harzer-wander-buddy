@@ -349,14 +349,14 @@ export default function AdminParkingEditorScreen() {
     }
 
     if (!canPerformWrites || isOffline) {
-      Alert.alert('Offline', 'Admin-Aenderungen sind nur online verfuegbar.');
+      Alert.alert('Offline', 'Admin-Änderungen sind nur online verfügbar.');
       return;
     }
 
     setIsSaving(true);
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Admin-Aenderungen sind nur online verfuegbar.');
+      requireOnlineForWrite(canPerformWrites, 'Admin-Änderungen sind nur online verfügbar.');
       const nextPayload = validateInputs();
 
       if (isCreateMode) {
@@ -416,7 +416,7 @@ export default function AdminParkingEditorScreen() {
 
       if (nextError instanceof HttpStatusError) {
         if (nextError.status === 403) {
-          Alert.alert('Keine Berechtigung', 'Nur Admins duerfen Parkplaetze bearbeiten.');
+          Alert.alert('Keine Berechtigung', 'Nur Admins duerfen Parkplätze bearbeiten.');
           return;
         }
 
@@ -452,7 +452,7 @@ export default function AdminParkingEditorScreen() {
     }
 
     if (!canPerformWrites || isOffline) {
-      Alert.alert('Offline', 'Admin-Aenderungen sind nur online verfuegbar.');
+      Alert.alert('Offline', 'Admin-Änderungen sind nur online verfügbar.');
       return;
     }
 
@@ -488,7 +488,7 @@ export default function AdminParkingEditorScreen() {
                 }
 
                 if (nextError instanceof HttpStatusError && nextError.status === 403) {
-                  Alert.alert('Keine Berechtigung', 'Nur Admins duerfen Parkplaetze loeschen.');
+                  Alert.alert('Keine Berechtigung', 'Nur Admins duerfen Parkplätze loeschen.');
                   return;
                 }
 
@@ -517,7 +517,7 @@ export default function AdminParkingEditorScreen() {
 
   const locationSearchHint = useMemo(() => {
     if (locationSearchQuery.trim().length < REMOTE_SEARCH_MIN_LENGTH) {
-      return `Mindestens ${REMOTE_SEARCH_MIN_LENGTH} Zeichen fuer Ortssuche eingeben.`;
+      return `Mindestens ${REMOTE_SEARCH_MIN_LENGTH} Zeichen für Ortssuche eingeben.`;
     }
 
     if (isLocationSearchLoading) {
@@ -758,7 +758,7 @@ export default function AdminParkingEditorScreen() {
                   <>
                     <Feather color="#f5f3ee" name="save" size={15} />
                     <Text style={styles.primaryButtonLabel}>
-                      {isCreateMode ? 'Parkplatz anlegen' : 'Aenderungen speichern'}
+                      {isCreateMode ? 'Parkplatz anlegen' : 'Änderungen speichern'}
                     </Text>
                   </>
                 )}

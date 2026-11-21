@@ -1,0 +1,75 @@
+{
+  "checks": [
+    {
+      "flow": "guest-list",
+      "width": 320,
+      "overflow": false
+    },
+    {
+      "flow": "guest-list",
+      "width": 390,
+      "overflow": false
+    },
+    {
+      "flow": "guest-list",
+      "width": 768,
+      "overflow": false
+    },
+    {
+      "flow": "guest-list",
+      "width": 1440,
+      "overflow": false
+    },
+    {
+      "flow": "empty hint visible",
+      "passed": true
+    },
+    {
+      "flow": "hint hidden selected and added stamp",
+      "passed": true
+    },
+    {
+      "flow": "close fullscreen, scroll sequence, refocus and individually type next target",
+      "passed": true,
+      "sameMapAndInput": true,
+      "query": "Froschfelsen"
+    },
+    {
+      "flow": "40 Tab and Shift+Tab steps remain in fullscreen map",
+      "passed": true
+    },
+    {
+      "flow": "fullscreen viewport and Leaflet bounds",
+      "width": 320,
+      "height": 568,
+      "passed": true
+    },
+    {
+      "flow": "fullscreen viewport and Leaflet bounds",
+      "width": 390,
+      "height": 844,
+      "passed": true
+    },
+    {
+      "flow": "fullscreen viewport and Leaflet bounds",
+      "width": 768,
+      "height": 1024,
+      "passed": true
+    },
+    {
+      "flow": "fullscreen viewport and Leaflet bounds",
+      "width": 1440,
+      "height": 900,
+      "passed": true
+    },
+    {
+      "flow": "remove last route stamp then deselect restores hint",
+      "passed": true
+    },
+    {
+      "flow": "Escape closes fullscreen after keyboard navigation",
+      "passed": true
+    }
+  ],
+  "pageErrors": []
+}

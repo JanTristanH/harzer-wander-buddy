@@ -3,6 +3,8 @@ import React from 'react';
 
 import { MapSelectionSheet } from '@/components/map-selection-sheet';
 
+jest.mock('@/hooks/use-reduce-motion', () => ({ useReduceMotion: () => true }));
+
 jest.mock('@/lib/auth', () => ({
   useAuth: () => ({ accessToken: null }),
 }));
@@ -76,7 +78,7 @@ describe('MapSelectionSheet user interaction', () => {
       />
     );
 
-    fireEvent.press(screen.getByText('Details oeffnen'));
+    fireEvent.press(screen.getByRole('button', { name: 'Details öffnen' }));
 
     expect(onDetailsPress).toHaveBeenCalled();
   });

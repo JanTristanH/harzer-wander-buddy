@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { AppColors, Fonts } from '@/constants/theme';
+import { AppColors, Fonts, Layout } from '@/constants/theme';
 import { useAuth } from '@/lib/auth';
 import { buildAuthenticatedImageSource } from '@/lib/images';
 
@@ -101,6 +101,7 @@ function FriendsListRow({
       </Pressable>
       {item.actionLabel && item.onActionPress ? (
         <Pressable
+          accessibilityRole="button"
           disabled={item.actionDisabled}
           onPress={item.onActionPress}
           style={({ pressed }) => [
@@ -186,6 +187,10 @@ const styles = StyleSheet.create({
     lineHeight: 16,
   },
   inlineActionButton: {
+    minHeight: Layout.touchTarget,
+    minWidth: Layout.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: AppColors.primary,
     borderRadius: 12,
     paddingHorizontal: 10,

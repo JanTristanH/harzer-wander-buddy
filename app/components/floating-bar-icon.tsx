@@ -1,4 +1,4 @@
-import { FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
 type FloatingBarIconName = 'index' | 'map' | 'tours' | 'friends' | 'profile';
 
@@ -12,8 +12,8 @@ const ICONS: Record<FloatingBarIconName, { active: keyof typeof Ionicons.glyphMa
     inactive: 'map-outline',
   },
   tours: {
-    active: 'navigate',
-    inactive: 'navigate-outline',
+    active: 'trail-sign',
+    inactive: 'trail-sign-outline',
   },
   friends: {
     active: 'people',
@@ -36,18 +36,6 @@ export function FloatingBarIcon({
   color: string;
   size?: number;
 }) {
-  if (name === 'tours') {
-    return (
-      <FontAwesome5
-        color={color}
-        name="route"
-        size={size}
-        solid
-        style={!focused ? { opacity: 0.72 } : undefined}
-      />
-    );
-  }
-
   const iconName = focused ? ICONS[name].active : ICONS[name].inactive;
 
   return <Ionicons color={color} name={iconName} size={size} />;

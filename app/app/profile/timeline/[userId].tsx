@@ -423,20 +423,20 @@ export default function ProfileTimelineScreen() {
     return (
       <ProfileErrorState
         body="Keine Benutzer-ID uebergeben."
-        title="Timeline konnte nicht geladen werden"
+        title="Besuche konnten nicht geladen werden"
       />
     );
   }
 
   if (isPending && !activeData) {
-    return <ProfileLoadingState label="Timeline wird geladen..." />;
+    return <ProfileLoadingState label="Besuche werden geladen…" />;
   }
 
   if (!activeData) {
     return (
       <ProfileErrorState
-        body={activeError?.message || 'Keine Daten verfuegbar.'}
-        title="Timeline konnte nicht geladen werden"
+        body={activeError?.message || 'Keine Daten verfügbar.'}
+        title="Besuche konnten nicht geladen werden"
       />
     );
   }
@@ -500,7 +500,7 @@ export default function ProfileTimelineScreen() {
                 <Feather color="#1e2a1e" name="arrow-left" size={16} />
               </Pressable>
               <View style={styles.headerBody}>
-                <Text style={styles.title}>Timeline</Text>
+                <Text style={styles.title}>Besuchsverlauf</Text>
                 <Text style={styles.subtitle}>{profileName} • Alle Besuche</Text>
               </View>
             </View>
@@ -588,7 +588,7 @@ export default function ProfileTimelineScreen() {
             ))
           ) : (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>Noch keine Besuche in der Timeline.</Text>
+              <Text style={styles.emptyText}>Noch keine Besuche gespeichert.</Text>
             </View>
           )}
         </ScrollView>

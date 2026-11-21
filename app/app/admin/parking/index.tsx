@@ -61,8 +61,8 @@ export default function AdminParkingListScreen() {
               <Feather color="#1e2a1e" name="arrow-left" size={16} />
             </Pressable>
             <View style={styles.headerCopy}>
-              <Text style={styles.title}>Admin: Parkplaetze</Text>
-              <Text style={styles.subtitle}>Neue Parkplaetze anlegen und bestehende pflegen.</Text>
+              <Text style={styles.title}>Admin: Parkplätze</Text>
+              <Text style={styles.subtitle}>Neue Parkplätze anlegen und bestehende pflegen.</Text>
             </View>
           </View>
 
@@ -135,10 +135,10 @@ export default function AdminParkingListScreen() {
                   </View>
                 ) : (
                   <View style={styles.emptyCard}>
-                    <Text style={styles.emptyTitle}>Keine Parkplaetze gefunden</Text>
+                    <Text style={styles.emptyTitle}>Keine Parkplätze gefunden</Text>
                     <Text style={styles.emptyBody}>
                       {normalizedQuery
-                        ? `Keine Treffer fuer "${query.trim()}".`
+                        ? `Keine Treffer für "${query.trim()}".`
                         : 'Lege den ersten Parkplatz an.'}
                     </Text>
                   </View>

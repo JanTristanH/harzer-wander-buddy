@@ -354,7 +354,7 @@ function StampDetailContent() {
   const stampId = Array.isArray(params.id) ? params.id[0] : params.id;
   const { data: detail, error, isFetching, isPending, isPlaceholderData, refetch } =
     useStampDetailQuery(stampId, { groupUserIds });
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { isAdmin } = useAdminAccess();
   const [isStamping, setIsStamping] = useState(false);
@@ -406,7 +406,7 @@ function StampDetailContent() {
   }, [isOffline, refetch]);
   const heroImageUri = detail?.stamp.heroImageUrl?.trim() || detail?.stamp.image?.trim() || '';
   const [heroImageSize, setHeroImageSize] = useState<{ uri: string; width: number; height: number } | null>(null);
-  const heroHeight = getStampHeroHeight(windowWidth, windowHeight,
+  const heroHeight = !heroImageUri ? 144 : getStampHeroHeight(windowWidth, windowHeight,
     heroImageSize?.uri === heroImageUri ? heroImageSize : undefined);
   const stretchyHeader = useStretchyHeader(heroHeight, handleRefresh, isFetching && !isPending);
   const promptSignIn = useCallback(
@@ -906,7 +906,7 @@ function StampDetailContent() {
     setIsStamping(true);
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Stempeln ist nur online verfuegbar.');
+      requireOnlineForWrite(canPerformWrites, 'Stempeln ist nur online verfügbar.');
 
       await Promise.all([
         queryClient.cancelQueries({ queryKey: mapDataKey }),
@@ -1205,7 +1205,7 @@ function StampDetailContent() {
     }
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Besuche koennen nur online geloescht werden.');
+      requireOnlineForWrite(canPerformWrites, 'Besuche können nur online geloescht werden.');
       setBusyVisitId(stampingId);
       await deleteStamping(accessToken, stampingId);
       removeVisitFromCaches(stampingId);
@@ -1232,7 +1232,7 @@ function StampDetailContent() {
 
   function confirmDeleteVisit(stampingId: string) {
     if (!canPerformWrites) {
-      Alert.alert('Offline', 'Besuche koennen nur online geloescht werden.');
+      Alert.alert('Offline', 'Besuche können nur online geloescht werden.');
       return;
     }
 
@@ -1258,7 +1258,7 @@ function StampDetailContent() {
     }
 
     try {
-      requireOnlineForWrite(canPerformWrites, 'Besuche koennen nur online bearbeitet werden.');
+      requireOnlineForWrite(canPerformWrites, 'Besuche können nur online bearbeitet werden.');
       setBusyVisitId(stampingId);
       setVisitDrafts((current) => ({
         ...current,
@@ -1289,7 +1289,7 @@ function StampDetailContent() {
 
   function handleToggleVisitEditing() {
     if (!canPerformWrites && !isEditingVisits) {
-      Alert.alert('Offline', 'Besuche koennen nur online bearbeitet werden.');
+      Alert.alert('Offline', 'Besuche können nur online bearbeitet werden.');
       return;
     }
 
@@ -1681,8 +1681,8 @@ function StampDetailContent() {
 
   const showLeaveDialog = useCallback((onDiscard: () => void, onSave: () => void) => {
     Alert.alert(
-      'Aenderungen speichern?',
-      'Du hast ungespeicherte Aenderungen. Moechtest du speichern oder verwerfen?',
+      'Änderungen speichern?',
+      'Du hast ungespeicherte Änderungen. Moechtest du speichern oder verwerfen?',
       [
         { text: 'Abbrechen', style: 'cancel' },
         { text: 'Verwerfen', style: 'destructive', onPress: onDiscard },
@@ -1837,7 +1837,7 @@ function StampDetailContent() {
   const isPullRefreshing = isFetching && !isPending;
 
   return (
-    <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
+    <SafeAreaView key={fontScale} edges={['top', 'bottom']} style={styles.safeArea}>
       <StampingSuccessToast
         message={stampSuccessMessage}
         onHide={() => setIsStampSuccessToastVisible(false)}
@@ -1850,7 +1850,7 @@ function StampDetailContent() {
           ref={stretchyHeader.scrollRef}
           alwaysBounceVertical
           bounces
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: 232 + bottomInset }]}
+          contentContainerStyle={styles.scrollContent}
           onScroll={stretchyHeader.onScroll}
           scrollEventThrottle={16}
           overScrollMode="never"
@@ -1896,11 +1896,11 @@ function StampDetailContent() {
                   ]}
                 />
               ) : null}
-              <Pressable onPress={handleBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
+              <Pressable accessibilityLabel="Zurück" accessibilityRole="button" onPress={handleBack} style={({ pressed }) => [styles.topButton, pressed && styles.topButtonPressed]}>
                 <Feather color={AppColors.text} name="arrow-left" size={18} />
               </Pressable>
 
-              <View style={styles.topRightActions}>
+              <View style={[styles.topRightActions, fontScale >= 1.5 && styles.topRightActionsLargeText]}>
                 <View style={[styles.statusPill, visited ? styles.statusPillVisited : styles.statusPillOpen]}>
                   <Feather
                     color={visited ? AppColors.primary : '#7a6a4a'}
@@ -1916,6 +1916,8 @@ function StampDetailContent() {
                   </Text>
                 </View>
                 <Pressable
+                  accessibilityLabel="Stempelstelle teilen"
+                  accessibilityRole="button"
                   onPress={handleShare}
                   style={({ pressed }) => [styles.shareHeaderButton, pressed && styles.topButtonPressed]}>
                   <Feather color="#3a4f84" name="share-2" size={14} />
@@ -2365,10 +2367,15 @@ function StampDetailContent() {
         ) : null}
       </View>
 
-      <View pointerEvents="box-none" style={[styles.bottomDock, { bottom: 18 + bottomInset }]}>
+      <ScrollView style={{ flexGrow: 0, maxHeight: fontScale >= 1.5 ? '45%' : undefined }} contentContainerStyle={[styles.bottomDock, { paddingBottom: Math.max(12, bottomInset) }]} showsVerticalScrollIndicator={fontScale >= 1.5}>
+        {isStampSuccessToastVisible ? (
+          <Text accessible={false} style={styles.stampSavedHint}>{stampSuccessMessage}</Text>
+        ) : null}
         <View style={styles.bottomActions}>
-          <View style={styles.secondaryButtonRow}>
+          <View style={[styles.secondaryButtonRow, fontScale >= 1.5 && { flexDirection: 'column' }]}>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Navigation starten"
               onPress={handleStartNavigation}
               style={({ pressed }) => [
                 styles.secondaryButton,
@@ -2380,6 +2387,8 @@ function StampDetailContent() {
               <Text style={styles.secondaryButtonLabel}>Navigation starten</Text>
             </Pressable>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Auf Karte anzeigen"
               onPress={handleShowOnMap}
               style={({ pressed }) => [
                 styles.secondaryButton,
@@ -2414,6 +2423,8 @@ function StampDetailContent() {
                   buttonAnimatedStyle,
                 ]}>
                 <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={isGuest ? 'Anmelden zum Stempeln' : isStamping ? 'Stemple...' : visited ? 'Erneut stempeln' : 'Besuch stempeln'}
                   disabled={isStamping || (!isGuest && !canRecordVisit)}
                   onPress={handlePrimaryStampButtonPress}
                   onPressIn={onPressIn}
@@ -2439,7 +2450,7 @@ function StampDetailContent() {
             )}
           </StampPressStage>
         </View>
-      </View>
+      </ScrollView>
 
       <GroupStampDialog
         currentUserAlreadyStamped={visited}
@@ -2707,7 +2718,10 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.background,
   },
   scrollContent: {
-    paddingBottom: 180,
+    paddingBottom: 24,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
   },
   scrollViewport: {
     flex: 1,
@@ -2732,6 +2746,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 18,
     paddingTop: 16,
+  },
+  heroWithoutImage: {
+    height: 144,
   },
   hero: {
     height: 240,
@@ -2758,8 +2775,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(245, 243, 238, 0.08)',
   },
   topButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     backgroundColor: 'rgba(240,233,221,0.96)',
     alignItems: 'center',
@@ -2776,8 +2793,16 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: 'center',
   },
+  topRightActionsLargeText: {
+    left: 72,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
   shareHeaderButton: {
-    minHeight: 32,
+    flexShrink: 1,
+    paddingVertical: 8,
+    minHeight: 48,
     borderRadius: 10,
     backgroundColor: '#edf2fc',
     alignItems: 'center',
@@ -2792,12 +2817,14 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   shareHeaderButtonLabel: {
+    flexShrink: 1,
     color: '#3a4f84',
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '700',
   },
   statusPill: {
+    flexShrink: 1,
+    paddingVertical: 8,
     minHeight: 40,
     borderRadius: 12,
     paddingHorizontal: 14,
@@ -2813,14 +2840,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0e9dd',
   },
   statusPillLabel: {
+    flexShrink: 1,
     fontSize: 12,
-    lineHeight: 16,
   },
   statusPillLabelVisited: {
     color: AppColors.primary,
   },
   statusPillLabelOpen: {
-    color: '#7a6a4a',
+    color: '#71592f',
   },
   heroBadge: {
     position: 'absolute',
@@ -2834,7 +2861,6 @@ const styles = StyleSheet.create({
   heroBadgeText: {
     color: AppColors.text,
     fontSize: 12,
-    lineHeight: 16,
   },
   heroCaptionWrap: {
     paddingHorizontal: 20,
@@ -2844,7 +2870,6 @@ const styles = StyleSheet.create({
   heroCaptionBody: {
     color: '#5a675a',
     fontSize: 13,
-    lineHeight: 18,
     textAlign: 'center',
   },
   heroCaptionParagraph: {
@@ -2871,19 +2896,16 @@ const styles = StyleSheet.create({
   title: {
     color: AppColors.text,
     fontSize: 24,
-    lineHeight: 30,
-    fontFamily: 'serif',
+    fontWeight: '700',
   },
   description: {
     color: '#445244',
     fontSize: 14,
-    lineHeight: 22,
     marginTop: 8,
   },
   groupSummary: {
     color: '#445244',
     fontSize: 13,
-    lineHeight: 18,
   },
   groupMemberList: {
     gap: 7,
@@ -2898,12 +2920,10 @@ const styles = StyleSheet.create({
     flex: 1,
     color: AppColors.text,
     fontSize: 13,
-    lineHeight: 17,
   },
   groupMemberStatus: {
     color: AppColors.textMuted,
     fontSize: 12,
-    lineHeight: 16,
   },
   sectionAction: {
     borderRadius: 999,
@@ -2917,7 +2937,6 @@ const styles = StyleSheet.create({
   sectionActionLabel: {
     color: AppColors.primary,
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
   },
   rowItem: {
@@ -2951,7 +2970,6 @@ const styles = StyleSheet.create({
   },
   rowBadgeLabel: {
     fontSize: 12,
-    lineHeight: 16,
   },
   rowBadgeLabelStamp: {
     color: AppColors.primary,
@@ -2982,12 +3000,10 @@ const styles = StyleSheet.create({
   rowTitle: {
     color: '#111111',
     fontSize: 13,
-    lineHeight: 16,
   },
   rowMeta: {
     color: AppColors.textMuted,
     fontSize: 12,
-    lineHeight: 16,
   },
   simpleItem: {
     gap: 2,
@@ -3028,7 +3044,6 @@ const styles = StyleSheet.create({
   visitPickerLabel: {
     color: AppColors.text,
     fontSize: 13,
-    lineHeight: 16,
   },
   visitActionButton: {
     minHeight: 38,
@@ -3049,18 +3064,15 @@ const styles = StyleSheet.create({
   visitDeleteLabel: {
     color: '#6f5e40',
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
   },
   simpleItemTitle: {
     color: AppColors.textMuted,
     fontSize: 12,
-    lineHeight: 16,
   },
   emptySectionText: {
     color: AppColors.textMuted,
     fontSize: 12,
-    lineHeight: 16,
   },
   emptyNearbyStampsState: {
     alignItems: 'center',
@@ -3073,11 +3085,19 @@ const styles = StyleSheet.create({
   emptyNearbyStampsText: {
     textAlign: 'center',
   },
+  stampSavedHint: {
+    color: AppColors.primary,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingBottom: 8,
+  },
   bottomDock: {
-    position: 'absolute',
-    left: 18,
-    right: 18,
-    bottom: 18,
+    paddingHorizontal: 18,
+    paddingTop: 12,
+    backgroundColor: '#f5f3ee',
+    borderTopWidth: 1,
+    borderColor: '#d7dfd3',
     overflow: 'visible',
   },
   bottomActions: {
@@ -3089,7 +3109,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   secondaryButton: {
-    height: 45,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#e9e2d6',
     alignItems: 'center',
@@ -3107,9 +3128,9 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   secondaryButtonLabel: {
+    flexShrink: 1,
     color: AppColors.textSecondary,
     fontSize: 13,
-    lineHeight: 16,
     textAlign: 'center',
   },
   groupStampButton: {
@@ -3123,9 +3144,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   groupStampButtonLabel: {
+    flexShrink: 1,
     color: '#59483f',
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   primaryStampStage: {
@@ -3148,7 +3169,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   primaryButton: {
-    height: 48,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: AppColors.primary,
     alignItems: 'center',
@@ -3167,9 +3189,9 @@ const styles = StyleSheet.create({
     transform: [{ translateY: 2 }, { scale: 0.99 }],
   },
   primaryButtonLabel: {
+    flexShrink: 1,
     color: AppColors.background,
     fontSize: 13,
-    lineHeight: 16,
     textAlign: 'center',
   },
   carouselScreen: {
@@ -3207,7 +3229,6 @@ const styles = StyleSheet.create({
   webCarouselFallbackTitle: {
     color: AppColors.background,
     fontSize: 15,
-    lineHeight: 20,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -3225,7 +3246,6 @@ const styles = StyleSheet.create({
   webCarouselFallbackButtonLabel: {
     color: '#b4d6ff',
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   webCarouselNavRow: {
@@ -3253,7 +3273,6 @@ const styles = StyleSheet.create({
   webCarouselNavButtonLabel: {
     color: AppColors.background,
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   carouselTopBar: {
@@ -3277,7 +3296,6 @@ const styles = StyleSheet.create({
   carouselCounterLabel: {
     color: AppColors.background,
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
     backgroundColor: 'rgba(29, 38, 31, 0.88)',
     borderRadius: 10,
@@ -3296,7 +3314,6 @@ const styles = StyleSheet.create({
   carouselNearbyPillLabel: {
     color: '#2f7dd7',
     fontSize: 12,
-    lineHeight: 16,
     fontWeight: '600',
   },
   carouselSlide: {
@@ -3330,21 +3347,18 @@ const styles = StyleSheet.create({
   carouselCaptionTitle: {
     color: AppColors.background,
     fontSize: 16,
-    lineHeight: 20,
     fontWeight: '600',
     textAlign: 'center',
   },
   carouselCaptionSubtitle: {
     color: '#ccd5cb',
     fontSize: 12,
-    lineHeight: 16,
     textAlign: 'center',
     marginBottom: 4,
   },
   carouselCaptionBody: {
     color: '#e6ede4',
     fontSize: 13,
-    lineHeight: 18,
   },
   carouselCaptionParagraph: {
     marginTop: 2,
@@ -3376,7 +3390,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     color: AppColors.text,
     fontSize: 18,
-    lineHeight: 24,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -3400,13 +3413,11 @@ const styles = StyleSheet.create({
   modalButtonPrimaryLabel: {
     color: AppColors.background,
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   modalButtonSecondaryLabel: {
     color: AppColors.textSecondary,
     fontSize: 13,
-    lineHeight: 16,
     fontWeight: '600',
   },
   centered: {
@@ -3419,20 +3430,17 @@ const styles = StyleSheet.create({
   helperText: {
     color: '#496149',
     fontSize: 15,
-    lineHeight: 22,
     textAlign: 'center',
   },
   errorTitle: {
     color: '#3d2a15',
     fontSize: 22,
-    lineHeight: 28,
     fontWeight: '800',
     textAlign: 'center',
   },
   errorBody: {
     color: '#655d4a',
     fontSize: 15,
-    lineHeight: 22,
     textAlign: 'center',
   },
 });

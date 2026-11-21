@@ -13,7 +13,7 @@ import {
 import { FriendsList } from '@/components/friends-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClearableSearchInput } from '@/components/clearable-search-input';
-import { AppColors, Fonts } from '@/constants/theme';
+import { AppColors, Fonts, Layout } from '@/constants/theme';
 import { type useFriendSearch } from '@/lib/use-friend-search';
 
 export function FriendSearchModal({
@@ -38,6 +38,7 @@ export function FriendSearchModal({
   } = search;
   return (
     <Modal
+      accessibilityLabel="Freunde finden"
       animationType="fade"
       onShow={handleSearchModalShow}
       transparent
@@ -64,6 +65,7 @@ export function FriendSearchModal({
                 <Text style={styles.modalTitle}>Freunde finden</Text>
                 <Pressable
                   accessibilityLabel="Suche schliessen"
+                  accessibilityRole="button"
                   onPress={closeSearchModal}
                   style={({ pressed }) => [styles.modalCloseButton, pressed && styles.pressed]}
                 >
@@ -170,9 +172,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#F0E9DD',
     borderRadius: 8,
-    height: 28,
+    minHeight: Layout.touchTarget,
     justifyContent: 'center',
-    width: 28,
+    width: Layout.touchTarget,
   },
   searchInputShell: {
     alignItems: 'center',
@@ -181,7 +183,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginBottom: 12,
-    minHeight: 46,
+    minHeight: Layout.touchTarget,
     paddingHorizontal: 12,
     paddingVertical: 11,
   },
@@ -195,8 +197,8 @@ const styles = StyleSheet.create({
     color: AppColors.text,
     flex: 1,
     fontFamily: Fonts.sans,
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 14,
+    lineHeight: 20,
     padding: 0,
   },
   searchResultsColumn: {

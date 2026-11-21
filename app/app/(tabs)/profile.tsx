@@ -245,7 +245,7 @@ export default function ProfileScreen() {
       <SignInRequiredScreen
         body="Melde dich an, um deinen Fortschritt, deine Besuche und deine Freunde zu sehen."
         onSignIn={() => router.push('/login' as never)}
-        title="Profil ist mit Konto verfuegbar"
+        title="Profil ist mit Konto verfügbar"
       />
     );
   }
@@ -257,7 +257,7 @@ export default function ProfileScreen() {
   if (blockingError || !viewModel) {
     return (
       <ProfileErrorState
-        body={blockingError?.message || 'Keine Daten verfuegbar.'}
+        body={blockingError?.message || 'Keine Daten verfügbar.'}
         title="Profil konnte nicht geladen werden"
       />
     );
