@@ -80,6 +80,6 @@ test('mixed special/regular tour previews, saves, list reads and planning agree 
   assert.equal(planned.results.length, 1);
   assert.equal(planned.results[0].stampCount, 2);
   assert.equal(planned.results[0].newStampCountForUser, 1);
-  assert.ok(planned.results[0].path.some(stop => stop.poi === s1));
+  assert.ok(planned.results[0].path.some(link => link.travelTime?.toPoi === s1));
   assert.equal((await request(`calculateHikingRoute(${query.replace('minStampCount=1', 'minStampCount=2')})`)).results.length, 0);
 });
