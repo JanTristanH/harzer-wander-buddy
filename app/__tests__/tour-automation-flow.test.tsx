@@ -37,6 +37,21 @@ jest.mock("@/lib/hiking-group", () => ({
 }));
 jest.mock("@/components/group-selector", () => ({ GroupSelector: () => null }));
 jest.mock("@/lib/queries", () => ({
+  useStampsOverviewQuery: () => ({
+    data: {
+      stamps: [{
+        ID: "stamp",
+        number: "17",
+        hasVisited: false,
+        activeNotices: JSON.stringify([{
+          ID: "notice",
+          kind: "closure",
+          message: "Der Weg ist gesperrt.",
+          source: "official",
+        }]),
+      }],
+    },
+  }),
   usePointsOfInterestQuery: () => ({
     data: [
       {
@@ -45,6 +60,14 @@ jest.mock("@/lib/queries", () => ({
         poiType: "parking",
         latitude: 51.8,
         longitude: 10.6,
+      },
+      {
+        ID: "stamp",
+        name: "Am Brocken",
+        poiType: "stamp",
+        stampNumber: "17",
+        latitude: 51.81,
+        longitude: 10.61,
       },
     ],
   }),
@@ -101,7 +124,7 @@ function result(id: string) {
         travelTime: {
           ID: id,
           fromPoi: "p",
-          toPoi: "p",
+          toPoi: "stamp",
           durationSeconds: 2400,
           distanceMeters: 1200,
           elevationGain: 30,
@@ -260,4 +283,7 @@ test("stations open their existing detail page directly from the sheet", async (
     screen.getByRole("button", { name: "Start: Parkplatz am Wald öffnen" }),
   );
   expect(useRouter().push).toHaveBeenLastCalledWith("/parking/p");
+  expect(screen.getByLabelText("1 aktuelle Sperrungen oder Hinweise")).toBeTruthy();
+  fireEvent.press(screen.getByRole("button", { name: "Ziel: Am Brocken öffnen" }));
+  expect(useRouter().push).toHaveBeenLastCalledWith("/stamps/stamp");
 });

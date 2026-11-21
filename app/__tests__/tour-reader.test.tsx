@@ -45,6 +45,7 @@ jest.mock("@/lib/hiking-group", () => ({
   useHikingGroup: () => ({ groupUserIds: ["alice"] }),
 }));
 jest.mock("@/lib/queries", () => ({
+  useStampsOverviewQuery: () => ({ data: { stamps: [] } }),
   usePointsOfInterestQuery: () => ({ data: [] }),
   useTourDetailQuery: () => ({
     data: {
