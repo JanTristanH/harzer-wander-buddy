@@ -143,6 +143,7 @@ export type ProfileViewModel = {
   emptyStampText: string;
   emptyStampIllustration?: React.ComponentProps<typeof Image>['source'];
   footerButtons?: {
+    badge?: string;
     key: string;
     label: string;
     onPress: () => void;
@@ -1048,9 +1049,12 @@ export function ProfileView({ data }: { data: ProfileViewModel }) {
             {data.footerButtons.map((button) => (
               <Pressable
                 key={button.key}
+                accessibilityRole="button"
+                accessibilityLabel={[button.label, button.badge].filter(Boolean).join(', ')}
                 onPress={button.onPress}
                 style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}>
                 <Text style={styles.logoutLabel}>{button.label}</Text>
+                {button.badge ? <Text style={styles.noticeBadge}>{button.badge}</Text> : null}
               </Pressable>
             ))}
           </View>
@@ -1678,7 +1682,20 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     fontWeight: '600',
   },
+  noticeBadge: {
+    color: '#fff',
+    backgroundColor: '#784319',
+    fontSize: 13,
+    fontWeight: '700',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
   logoutButton: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     backgroundColor: '#f0e9dd',
     borderRadius: 12,
     minHeight: 44,

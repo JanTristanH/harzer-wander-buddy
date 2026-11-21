@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Linking,
   Pressable,
@@ -8,7 +8,11 @@ import {
   View,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { reportStampNotice, type StampNotice } from "@/lib/api";
+import {
+  fetchStampNoticeReportCooldown,
+  reportStampNotice,
+  type StampNotice,
+} from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useConnectivity } from "@/lib/connectivity";
 import { noticeKindLabels, parseActiveNotices } from "@/lib/stamp-notices";
@@ -29,20 +33,70 @@ export function StampNoticesSection({
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [cooldown, setCooldown] = useState<{
+    token: string;
+    stampId: string;
+    until: number;
+  } | null>(null);
+  const [checkedFor, setCheckedFor] = useState<string | null>(null);
+  const identity = `${accessToken}:${stampId}`;
+  const cooldownUntil =
+    cooldown?.token === accessToken && cooldown.stampId === stampId
+      ? cooldown.until
+      : 0;
+  const reportHidden = Boolean(accessToken) &&
+    (checkedFor !== identity || cooldownUntil > Date.now());
+  useEffect(() => {
+    let cancelled = false;
+    setOpen(false);
+    setStatus("");
+    if (accessToken && !isOffline) {
+      fetchStampNoticeReportCooldown(accessToken, stampId)
+        .then((until) => {
+          if (!cancelled) {
+            setCooldown({ token: accessToken, stampId, until: until ? Date.parse(until) : 0 });
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setCheckedFor(identity);
+        });
+    } else {
+      setCheckedFor(identity);
+    }
+    return () => { cancelled = true; };
+  }, [accessToken, stampId, isOffline, identity]);
+  useEffect(() => {
+    if (cooldownUntil <= Date.now()) return;
+    const timer = setTimeout(() => setCooldown(null), cooldownUntil - Date.now());
+    return () => clearTimeout(timer);
+  }, [cooldownUntil]);
   async function submit() {
-    if (!accessToken || isOffline || busy) return;
+    if (!accessToken || isOffline || busy || reportHidden) return;
     setBusy(true);
     setStatus("");
     try {
       await reportStampNotice(accessToken, stampId, kind, message.trim());
+      setCooldown({
+        token: accessToken,
+        stampId,
+        until: Date.now() + 24 * 60 * 60 * 1000,
+      });
       setMessage("");
       setOpen(false);
       setStatus(
         "Danke! Deine Meldung wird geprüft und erst nach Freigabe veröffentlicht.",
       );
     } catch {
+      const until = await fetchStampNoticeReportCooldown(accessToken, stampId).catch(() => null);
+      if (until) {
+        setCooldown({ token: accessToken, stampId, until: Date.parse(until) });
+        setOpen(false);
+      }
       setStatus(
-        "Die Meldung konnte nicht gesendet werden. Bitte erneut versuchen.",
+        until
+          ? "Du kannst diese Stempelstelle nach 24 Stunden wieder melden."
+          : "Die Meldung konnte nicht gesendet werden. Bitte erneut versuchen.",
       );
     } finally {
       setBusy(false);
@@ -97,7 +151,7 @@ export function StampNoticesSection({
           {status}
         </Text>
       ) : null}
-      {!open ? (
+      {reportHidden ? null : !open ? (
         <Pressable
           accessibilityRole="button"
           disabled={isOffline}
@@ -135,9 +189,10 @@ export function StampNoticesSection({
             multiline
             maxLength={2000}
             placeholder="Was ist passiert? Seit wann? Welcher Zugang ist betroffen?"
+            placeholderTextColor="#a5aaa2"
             value={message}
             onChangeText={setMessage}
-            style={styles.input}
+            style={[styles.input, !message && styles.placeholder]}
           />
           <Text style={styles.meta}>
             {message.trim().length}/2000 Zeichen · mindestens 10
@@ -189,6 +244,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2e6b4b",
   },
+  placeholder: { fontStyle: "italic" },
   input: {
     minHeight: 100,
     borderWidth: 1,

@@ -27,6 +27,16 @@ async function attachActiveNotices(result) {
       notices.filter((n) => n.stamp_ID === row.ID),
     );
 }
+const REPORT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+async function reportCooldown(stampId, userId) {
+  const { StampNotices } = cds.entities("hwb.db");
+  const latest = await SELECT.one.from(StampNotices)
+    .columns("createdAt")
+    .where({ stamp_ID: stampId, createdBy: userId, source: "community" })
+    .orderBy("createdAt desc");
+  const until = latest ? Date.parse(latest.createdAt) + REPORT_COOLDOWN_MS : 0;
+  return until > Date.now() ? new Date(until).toISOString() : null;
+}
 function register(service) {
   service.after("READ", "Stampboxes", attachActiveNotices);
   service.after(
@@ -39,6 +49,9 @@ function register(service) {
       );
     },
   );
+  service.on("getStampNoticeReportCooldown", async (req) => ({
+    until: await reportCooldown(req.data.stampId, req.user.id),
+  }));
   service.on("reportStampNotice", async (req) => {
     const { stampId, kind } = req.data;
     const message =
@@ -53,8 +66,14 @@ function register(service) {
         "Bitte eine Kategorie und eine Beschreibung mit 10 bis 2000 Zeichen angeben.",
       );
     const { Stampboxes, StampNotices } = cds.entities("hwb.db");
-    if (!(await SELECT.one.from(Stampboxes).where({ ID: stampId })))
+    // Serialize reports for the same stamp so concurrent requests cannot bypass the cooldown.
+    if (!(await SELECT.one.from(Stampboxes).where({ ID: stampId }).forUpdate()))
       return req.reject(404, "Stempelstelle nicht gefunden.");
+    if (await reportCooldown(stampId, req.user.id))
+      return req.reject(
+        429,
+        "Du kannst diese Stempelstelle nach 24 Stunden wieder melden.",
+      );
     const pending = await SELECT.from(StampNotices).where({
       createdBy: req.user.id,
       status: "pending",
