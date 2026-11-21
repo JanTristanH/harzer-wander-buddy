@@ -7,6 +7,10 @@ const server = cds.test('serve', 'all', '--in-memory');
 
 test('framing protection covers static files, SPA fallback, CAP and errors', async () => {
   const requests = [
+    ['/legal/impressum', 'GET'],
+    ['/legal/datenschutz', 'GET'],
+    ['/legal/konto-loeschen', 'GET'],
+    ['/legal/content', 'GET'],
     // Public static files are served before authentication.
     ['/app/pbc/manifest.json', 'GET'],
     ['/app/frontendhwb/webapp/index.html', 'GET'],

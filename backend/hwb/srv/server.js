@@ -27,6 +27,7 @@ if (isLocalSso) {
 const config = {
   authRequired: false,
   auth0Logout: true,
+  session: { absoluteDuration: 86400 },
   secret: process.env.SECRET,
   baseURL: process.env.BASE_URL,
   clientID: process.env.CLIENT_ID,
@@ -51,7 +52,6 @@ const mobileCorsOrigins = (process.env.MOBILE_CORS_ORIGINS || "")
   .filter(Boolean);
 
 function isAllowedLocalDevOrigin(origin) {
-  return true;
   if (typeof origin !== "string") {
     return false;
   }
@@ -63,9 +63,9 @@ const mobileCors = cors({
   origin(origin, callback) {
     if (
       !origin ||
-      mobileCorsOrigins.length === 0 ||
+      (mobileCorsOrigins.length === 0 && !cds.env.profiles.includes('production')) ||
       mobileCorsOrigins.includes(origin) ||
-      isAllowedLocalDevOrigin(origin)
+      (!cds.env.profiles.includes('production') && isAllowedLocalDevOrigin(origin))
     ) {
       callback(null, true);
       return;
@@ -162,8 +162,12 @@ async function bearerAuth(req, res, next) {
     const { payload } = await jwtVerify(token, jwks, {
       issuer,
       audience,
+      maxTokenAge: '24h',
     });
 
+    if (await require('./account-privacy').isAccountDeleted(payload.sub)) {
+      return sendODataError(res, 401, "Dieses Konto wurde gelöscht.");
+    }
     const enrichedPayload = await enrichClaimsWithUserInfo(token, payload);
 
     req.auth0TokenPayload = enrichedPayload;
@@ -209,12 +213,13 @@ function sanitizeEntityName(rawName) {
 
 async function requireExportAuth(req, res, next) {
   await bearerAuth(req, res, async () => {
-    if (req.user || req.oidc?.isAuthenticated()) {
+    const user = req.user || buildCapUserFromClaims(req.oidc?.user);
+    if (user?.is('admin')) {
       next();
       return;
     }
 
-    sendODataError(res, 401, "Unauthorized");
+    sendODataError(res, req.user || req.oidc?.isAuthenticated() ? 403 : 401, "Administrator access required");
   });
 }
 
@@ -292,6 +297,7 @@ cds.on("bootstrap", (app) => {
     next();
   });
 
+  require('./legal-content').registerLegalRoutes(app, mobileCors);
   // ✅ Serve manifest.json publicly before authentication middleware
   app.use("/app/pbc", express.static(__dirname + "/../app/pbc"));
 
@@ -332,4 +338,5 @@ cds.on("bootstrap", (app) => {
   });
 });
 
+cds.on('served', () => require('./account-privacy').startAccountDeletionWorker());
 module.exports = cds.server;

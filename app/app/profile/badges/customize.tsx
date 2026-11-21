@@ -45,11 +45,6 @@ function Customize() {
   async function pickImage() {
     try {
       requireOnlineForWrite(canPerformWrites);
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        setMessage('Bitte erlaube den Zugriff auf deine Fotos.');
-        return;
-      }
       const result = await ImagePicker.launchImageLibraryAsync({
         allowsEditing: Platform.OS !== 'web',
         aspect: [1, 1],
