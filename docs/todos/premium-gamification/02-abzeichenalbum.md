@@ -1,6 +1,8 @@
 # TODO 02: Profil in ein sichtbares Abzeichenalbum erweitern
 
-Status: umgesetzt · Priorität: P1 · Aufwand: M
+Status: in PR #65; native Teilabnahme, Restfälle offen · Priorität: P1 · Aufwand: M
+
+Abgleich 07.11.2026: Album und Profilbearbeitung sind in #65 umgesetzt und mit #118 im Web integriert geprüft. Native Profilbild-Gesten bleiben offen. Technische Implementierung ersetzt keinen physischen offiziellen Nachweis.
 
 ## Bestätigte Entscheidungen und Umsetzung
 
@@ -8,7 +10,7 @@ Die Nutzerentscheidung vom 14. Oktober 2026 legt Grenzweg auf 20 reguläre
 Pflichtstellen plus drei Sonderstempel fest; das digitale Abzeichen wird bei
 erfüllten Voraussetzungen freigeschaltet. Wanderprinzessin/Wanderprinz ist
 digital für alle Altersgruppen verfügbar, mit sichtbarem Hinweis auf die
-offizielle Kinder-Auszeichnung.
+aktuell offiziell für Jung und Alt angebotene Auszeichnung.
 
 Bronze, Silber und Gold verleihen realistische Metallrahmen. König, Kaiser,
 Steiger und Prinzessin/Prinz verleihen eigene Rahmen und auswählbare Titel.

@@ -49,18 +49,17 @@ export function BadgeProfileSection({
                   <View
                     style={{
                       position: 'relative',
-                      borderWidth: 1,
+                      borderWidth: entry ? 0 : 1,
                       borderStyle: entry ? 'solid' : 'dashed',
                       borderColor: '#b7c3ac',
                       borderRadius: 100,
                       padding: 4,
                       width: size + 8,
-                      height: size + 8,
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    {entry ? <BadgeArtwork entry={entry} size={size} /> : null}
+                    {entry ? <BadgeArtwork entry={entry} size={size} outlined /> : null}
                   </View>
                   <Text
                     style={[

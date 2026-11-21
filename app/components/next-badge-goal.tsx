@@ -1,14 +1,26 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { Pressable, View, Text } from 'react-native';
+import { useRouter } from 'expo-router';
 import { BadgeArtwork } from './badge-artwork';
 import { BadgeProgress, badgeStyles as s } from './badge-ui';
 import type { BadgeAlbum } from '@/lib/badge-types';
 export function NextBadgeGoal({ album }: { album: BadgeAlbum }) {
+  const router = useRouter();
   const entry = album.entries.find((e) => !e.unlocked);
   return (
-    <View
-      accessibilityLabel="Dein nächstes Ziel"
-      style={[s.card, { backgroundColor: '#e9ebdf', gap: 14 }]}
+    <Pressable
+      accessibilityRole={entry ? 'button' : undefined}
+      accessibilityLabel={
+        entry ? `Dein nächstes Ziel: ${entry.name}, Details anzeigen` : 'Alle Ziele erreicht'
+      }
+      disabled={!entry}
+      onPress={() => {
+        if (entry) router.push(`/profile/badges/${entry.id}` as never);
+      }}
+      style={({ pressed }) => [
+        s.card,
+        { backgroundColor: '#e9ebdf', gap: 14, opacity: pressed ? 0.88 : 1 },
+      ]}
     >
       <Text
         style={{
@@ -36,6 +48,6 @@ export function NextBadgeGoal({ album }: { album: BadgeAlbum }) {
           Alle 12 digitalen Abzeichen sind freigeschaltet.
         </Text>
       )}
-    </View>
+    </Pressable>
   );
 }
