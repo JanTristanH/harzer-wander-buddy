@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -10,6 +10,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { scheduleOnRN } from "react-native-worklets";
 import type { HikingRouteResult, PointOfInterest } from "@/lib/api";
+import { StampNoticeBadge } from "@/components/stamp-notice-badge";
+import { useStampsOverviewQuery } from "@/lib/queries";
 import { TourRouteMap, PlannerButton } from "@/components/tour-planner-ui";
 import {
   formatTourDistance,
@@ -110,6 +112,11 @@ export function TourExperience({
     transform: [{ translateY: y.get() }],
   }));
   const stops = routeStops(route, points);
+  const { data: stampsOverview } = useStampsOverviewQuery();
+  const stampsById = useMemo(
+    () => new Map(stampsOverview?.stamps.map((stamp) => [stamp.ID, stamp])),
+    [stampsOverview],
+  );
   return (
     <View
       testID="tour-map-sheet"
@@ -117,7 +124,7 @@ export function TourExperience({
       style={{ flex: 1, overflow: "hidden" }}
     >
       <View style={StyleSheet.absoluteFill}>
-        <TourRouteMap key={route.id} route={route} points={points} fullHeight />
+        <TourRouteMap key={route.id} route={route} points={points} stampsById={stampsById} fullHeight />
       </View>
       <Animated.View
         testID="tour-bottom-sheet"
@@ -284,6 +291,7 @@ export function TourExperience({
                 <Text style={{ fontSize: 14, color: "#1e2a1e" }}>
                   {point.name}
                 </Text>
+                <StampNoticeBadge value={stampsById.get(point.ID)?.activeNotices} />
                 <Text style={{ fontSize: 11, color: "#596553", marginTop: 4 }}>
                   {i === 0
                     ? "Start"

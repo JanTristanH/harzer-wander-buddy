@@ -1,7 +1,9 @@
 import { useRouter } from "expo-router";
 import { AccessibilityInfo } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import type { HikingRouteResult, PointOfInterest } from "@/lib/api";
+import { StampNoticeBadge } from "@/components/stamp-notice-badge";
+import { useStampsOverviewQuery } from "@/lib/queries";
 import { TourRouteMap } from "@/components/tour-planner-ui";
 import {
   formatTourDistance,
@@ -95,6 +97,11 @@ export function TourExperience({
     return () => observer.disconnect();
   }, []);
   const stops = routeStops(route, points);
+  const { data: stampsOverview } = useStampsOverviewQuery();
+  const stampsById = useMemo(
+    () => new Map(stampsOverview?.stamps.map((stamp) => [stamp.ID, stamp])),
+    [stampsOverview],
+  );
   const expanded = sheet > middle + 30;
   const compact = sheet < middle - 30;
   useEffect(() => {
@@ -130,7 +137,7 @@ export function TourExperience({
       }}
     >
       <div style={{ position: "absolute", inset: 0 }}>
-        <TourRouteMap key={route.id} route={route} points={points} fullHeight />
+        <TourRouteMap key={route.id} route={route} points={points} stampsById={stampsById} fullHeight />
       </div>
       <section
         aria-label="Tour und Stationen"
@@ -407,6 +414,7 @@ export function TourExperience({
                   </span>
                   <span style={{ fontSize: 14, lineHeight: 1.4 }}>
                     {point.name}
+                    <StampNoticeBadge value={stampsById.get(point.ID)?.activeNotices} />
                     <small
                       style={{
                         display: "block",

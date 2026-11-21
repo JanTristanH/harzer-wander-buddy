@@ -17,7 +17,9 @@ import MapView, {
   type MapViewRef,
 } from '@/components/maps/map-primitives';
 import { buildRouteDirectionArrows, buildTourRouteSegments, TOUR_ROUTE_STYLES } from '@/lib/tour-route';
-import type { HikingRouteResult, PointOfInterest } from '@/lib/api';
+import type { HikingRouteResult, PointOfInterest, Stampbox } from '@/lib/api';
+import { isSpecialStamp, SPECIAL_STAMP_COLOR } from '@/lib/stamp-catalog';
+import { parseActiveNotices } from '@/lib/stamp-notices';
 import {
   routeStops,
 } from '@/lib/tour-automation';
@@ -177,12 +179,14 @@ export function TourThumbnail({
 export function TourRouteMap({
   route,
   points,
+  stampsById,
   animate = true,
   compact = false,
   fullHeight = false,
 }: {
   route: HikingRouteResult;
   points: PointOfInterest[];
+  stampsById: ReadonlyMap<string, Stampbox>;
   animate?: boolean;
   compact?: boolean;
   fullHeight?: boolean;
@@ -322,24 +326,32 @@ export function TourRouteMap({
             (point) =>
               point.latitude !== undefined && point.longitude !== undefined
           )
-          .map((point, index) => (
-            <Marker
-              key={point.ID}
-              pinColor="#2e6b4b"
-              coordinate={{
-                latitude: point.latitude!,
-                longitude: point.longitude!,
-              }}
-              accessibilityLabel={point.name}>
-              <View style={ui.marker}>
-                <Text style={ui.markerText}>
-                  {point.poiType === 'parking'
-                    ? 'P'
-                    : point.stampNumber || index}
-                </Text>
-              </View>
-            </Marker>
-          ))}
+          .map((point, index) => {
+            const stamp = stampsById.get(point.ID);
+            const hasNotice = parseActiveNotices(stamp?.activeNotices).length > 0;
+            let color = '#647466';
+            if (point.poiType === 'parking') color = '#2f7dd7';
+            else if (stamp && isSpecialStamp(stamp)) color = SPECIAL_STAMP_COLOR;
+            else if (stamp?.hasVisited === true) color = '#2e6b4b';
+            else if (stamp?.hasVisited === false) color = '#b9574d';
+            return (
+              <Marker
+                key={point.ID}
+                pinColor={color}
+                noticeBadge={hasNotice}
+                coordinate={{
+                  latitude: point.latitude!,
+                  longitude: point.longitude!,
+                }}
+                accessibilityLabel={hasNotice ? `${point.name}. Aktuelle Sperrung oder Meldung` : point.name}>
+                <View style={[ui.marker, { backgroundColor: color }]}>
+                  <Text style={ui.markerText}>
+                    {point.poiType === 'parking' ? 'P' : point.stampNumber || index}
+                  </Text>
+                </View>
+              </Marker>
+            );
+          })}
       </MapView>
       {segments.length > 0 && <View pointerEvents="none" style={{position:'absolute',top:12,left:12,backgroundColor:'#ffffff',borderRadius:12,paddingHorizontal:10,paddingVertical:7,gap:4}}>
         {(['walk','drive'] as const).filter(mode => segments.some(segment => segment.mode === mode)).map(mode => <View key={mode} style={{flexDirection:'row',alignItems:'center',gap:6}}>
@@ -422,7 +434,6 @@ export const ui = StyleSheet.create({
     borderRadius: 15,
     borderWidth: 2,
     borderColor: '#fff',
-    backgroundColor: '#2e6b4b',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 5,
