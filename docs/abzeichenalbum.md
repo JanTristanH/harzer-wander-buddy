@@ -41,6 +41,8 @@ im Detail explizit als nicht verfügbar gezeigt und zählen nicht als besucht.
 
 ## Daten und Korrekturen
 
+Der [Sonderstempelkatalog](special-stamps.md) ergänzt die realen Grenzweg-Pflichtstellen mit den bestehenden stabilen Schlüsseln. Besuche anderer Sonderstempel erhöhen den regulären Fortschritt nicht; Initialisierung und Themenfilter verwenden denselben Katalog.
+
 `backend/hwb/srv/badge-catalog.js` ist die zentrale Regelquelle für API und UI.
 Der Server berücksichtigt die vollständige Besuchshistorie und zählt jede
 reguläre Nummer 1–222 einmal, auch bei Wiederholungen oder umgezogenen Stellen.
@@ -161,6 +163,10 @@ und Entzug bei Besuchskorrekturen ab. Listen-Tests prüfen Zielauswahl und Reset
 Der Browser-Smoke-Test prüft die echte Anmeldung, Auswahl, Speicherung und
 erneute Anmeldung. Physische native Geräte sind zusätzlich vor einer Veröffentlichung
 zu prüfen; der Web-Smoke-Test ersetzt keinen iOS-/Android-Gerätetest.
+
+## Erweiterung um Themenhefte
+
+Der auf diesem Badge-PR aufbauende Folge-PR ergänzt [Themenhefte, Sonderstempel und Admin-Endpunkte](theme-booklets-special-stamps.md). Er verwendet denselben Regelprüfer und übernimmt die bestätigte Grenzweg-Regel ausdrücklich als Ausgabe „Badge-Katalog PR 65 – 20+3“. Abweichende neuere Quellen und unvollständige zusätzliche Heftlisten werden als redaktionelle Entwürfe geführt; sie ändern bestehende Freischaltungen nicht stillschweigend.
 
 ## Prüfung der PR-Aktualisierung
 

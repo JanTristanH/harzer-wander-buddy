@@ -1,3 +1,5 @@
+import { StampNoticeBadge } from '@/components/stamp-notice-badge';
+import { parseActiveNotices } from '@/lib/stamp-notices';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation, usePreventRemove } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -105,6 +107,7 @@ type Coordinate = {
 type TourMapMarkerKind = 'visited-stamp' | 'open-stamp' | 'parking' | 'poi';
 
 type TourMapItem = {
+  activeNotices?: string;
   ID: string;
   name: string;
   typeLabel: string;
@@ -1245,6 +1248,7 @@ export default function TourDetailScreen() {
         latitude: coordinate.latitude,
         longitude: coordinate.longitude,
         description: cleanText(stamp.description),
+        activeNotices: stamp.activeNotices,
         imageUrl: cleanText(stamp.heroImageUrl || stamp.image),
       });
     }
@@ -2639,11 +2643,12 @@ export default function TourDetailScreen() {
             accessibilityState={{ selected: normalizedSelectedMapItemId === state.id.toLowerCase() }}
             anchor={{ x: 0.5, y: 1 }}
             coordinate={state.coordinate}
+            noticeBadge={parseActiveNotices(state.item.activeNotices).length > 0}
             image={state.baseImage}
             {...(Platform.OS === 'web' ? {
               selected: normalizedSelectedMapItemId === state.id.toLowerCase(),
             } : {})}
-            accessibilityLabel={`${state.item.markerLabel} • ${state.item.name}`}
+            accessibilityLabel={`${state.item.markerLabel} • ${state.item.name}${parseActiveNotices(state.item.activeNotices).length ? ". Aktuelle Sperrung oder Meldung" : ""}`}
             key={state.baseKey}
             onPress={() => focusMapItemOnMap(state.item)}
             tracksViewChanges={false}
@@ -2767,6 +2772,7 @@ export default function TourDetailScreen() {
                   <Text numberOfLines={1} style={styles.searchResultTitle}>
                     {stampNumber ? `#${stampNumber} · ${item.name}` : item.name}
                   </Text>
+                  <StampNoticeBadge value={item.activeNotices} />
                   <Text numberOfLines={1} style={styles.searchResultMeta}>
                     {`${stampNumber ? `Stempel ${stampNumber} • ` : ''}${item.typeLabel} • ${formatDistanceKm(item.distanceKm)}`}
                   </Text>
@@ -2846,6 +2852,7 @@ export default function TourDetailScreen() {
                 <Text numberOfLines={1} style={styles.mapBottomTitle}>
                   {`${selectedStampNumber ? `#${selectedStampNumber} · ` : ''}${selectedMapItem.name}`}
                 </Text>
+                <StampNoticeBadge value={selectedMapItem.activeNotices} />
                 <Text numberOfLines={1} style={styles.mapBottomMeta}>
                   {`${selectedRouteOrderLabel ? `Besuch ${selectedRouteOrderLabel} • ` : ''}${selectedStampNumber ? `Stempel ${selectedStampNumber} • ` : ''}${selectedMapItem.typeLabel}`}
                 </Text>
@@ -3219,6 +3226,7 @@ export default function TourDetailScreen() {
                       <Text style={styles.pathTitle}>
                         {`${formatAlphabeticOrder(index + 1)}. ${stampNumber ? `#${stampNumber} · ` : ''}${title}`}
                       </Text>
+                      <StampNoticeBadge value={item?.activeNotices} />
                       <Text style={styles.pathMeta}>
                         {stampNumber
                           ? `Stempel ${stampNumber} • ${item?.typeLabel || 'Unbekannt'}`

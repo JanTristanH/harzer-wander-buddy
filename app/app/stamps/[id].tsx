@@ -1,4 +1,7 @@
 import { publishStampingSuccess } from '@/lib/stamping-feedback';
+import { StampCatalogInfo } from '@/components/stamp-catalog-info';
+import { StampNoticeBadge } from '@/components/stamp-notice-badge';
+import { StampNoticesSection } from '@/components/stamp-notices-section';
 import { useOfflineNotes } from '@/lib/offline-notes';
 import { useOfflineVisits } from '@/lib/offline-visits';
 import { Feather } from '@expo/vector-icons';
@@ -611,6 +614,16 @@ function StampDetailContent() {
 
   function handleShowOnMap() {
     if (!detail?.stamp.ID) {
+      return;
+    }
+
+    if (
+      typeof detail.stamp.latitude !== 'number' ||
+      !Number.isFinite(detail.stamp.latitude) ||
+      typeof detail.stamp.longitude !== 'number' ||
+      !Number.isFinite(detail.stamp.longitude)
+    ) {
+      Alert.alert('Kartenansicht nicht möglich', 'Diese Stempelstelle hat keine Koordinaten.');
       return;
     }
 
@@ -1959,6 +1972,8 @@ function StampDetailContent() {
 
             <View style={styles.body}>
               <Text style={styles.title}>{stamp.name}</Text>
+              <StampCatalogInfo stamp={stamp} />
+              <StampNoticesSection key={stamp.ID} stampId={stamp.ID} value={stamp.activeNotices} />
               {stamp.description?.trim() ? (
                 <Text style={styles.description}>{stamp.description.trim()}</Text>
               ) : showDeferredSkeletons ? (
@@ -2308,6 +2323,7 @@ function StampDetailContent() {
                         <Text style={styles.rowTitle}>
                           {neighbor.number || '--'} {'\u2022'} {neighbor.name}
                         </Text>
+                        <StampNoticeBadge value={neighbor.activeNotices} />
                         <Text style={styles.rowMeta}>
                           {formatDistance(neighbor.distanceKm)}
                           {neighbor.durationMinutes ? ` • ${formatDuration(neighbor.durationMinutes)}` : ''}

@@ -40,6 +40,16 @@ class PublicCatalogueTest(unittest.TestCase):
         stamp = next(s for s in self.export(self.rows)["stamps"] if s["id"] == self.rows[0]["ID"])
         self.assertEqual(stamp["description"], self.rows[0]["description"])
 
+    def test_special_identities_are_excluded_before_coordinates_or_display_numbers_are_read(self):
+        # Even a special stamp with a regular-looking display number must not
+        # duplicate HWN 12 or require coordinates for the regular website.
+        for number in ["S", "9901", "12"]:
+            special = dict(self.rows[0], ID="special-test", stampType="special",
+                           catalogKey="special-test", number=number, latitude="", longitude="")
+            stamps = self.export(self.rows + [special])["stamps"]
+            self.assertEqual(len(stamps), 222)
+            self.assertNotIn("special-test", {stamp["id"] for stamp in stamps})
+
     def test_expired_and_future_rows_do_not_replace_current_stamp(self):
         for start, end in [("1970-01-01T00:00:00Z", "2026-10-20T00:00:00Z"),
                            ("2026-10-21T00:00:00Z", "2037-01-01T00:00:00Z")]:

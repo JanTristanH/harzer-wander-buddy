@@ -1,3 +1,4 @@
+import { useIsFocused } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Alert, Platform } from 'react-native';
@@ -19,7 +20,7 @@ import {
 } from '@/lib/haptics-preferences';
 import { OFFLINE_REFRESH_MESSAGE } from '@/lib/offline-write';
 import { buildTimelinePreview } from '@/lib/profile-timeline';
-import { useProfileOverviewQuery } from '@/lib/queries';
+import { usePendingNoticeBadge, useProfileOverviewQuery } from '@/lib/queries';
 
 type StampFilter = 'visited' | 'missing' | 'all';
 type ProfileClaims = {
@@ -33,8 +34,10 @@ const emptyVisitedIllustration = require('@/assets/images/buddy/emptyNotebook.pn
 export default function ProfileScreen() {
   const router = useRouter();
   const { currentUserProfile, isAuthenticated, isOffline, logoutEverywhere, resetApp } = useAuth();
-  const { isAdmin } = useAdminAccess();
+  const { isAdmin, isResolved } = useAdminAccess();
   const claims = useIdTokenClaims<ProfileClaims & { sub?: string }>();
+  const focused = useIsFocused();
+  const pendingNoticeBadge = usePendingNoticeBadge(isAdmin && isResolved && focused);
   const matchingCurrentUserProfile =
     claims?.sub && currentUserProfile?.id === claims.sub ? currentUserProfile : null;
   const [activeStampFilter, setActiveStampFilter] = useState<StampFilter>('visited');
@@ -175,11 +178,13 @@ export default function ProfileScreen() {
       refreshHint: isFetching && !isPending ? 'Aktualisiere Daten im Hintergrund...' : undefined,
       showDeferredSkeletons: isPlaceholderData,
       footerButtons: [
+        { key: 'theme-booklets', label: 'Themenhefte & Themenwege', onPress: () => router.push('/theme-booklets' as never) },
         ...(isAdmin
           ? [
               {
                 key: 'admin',
                 label: 'Admin',
+                badge: pendingNoticeBadge,
                 onPress: () => {
                   router.push('/admin' as never);
                 },
@@ -227,6 +232,7 @@ export default function ProfileScreen() {
     data,
     isFetching,
     isAdmin,
+    pendingNoticeBadge,
     isOffline,
     isPending,
     isPlaceholderData,

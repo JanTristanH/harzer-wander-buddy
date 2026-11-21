@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const cds = require('@sap/cds/lib');
-const { calculateHikingRoutes, addPositionStrings } = require('../srv/routingManager');
+const { calculateHikingRoutes: calculateRoutes, addPositionStrings } = require('../srv/routingManager');
 
 function edge(fromPoi, toPoi, options = {}) {
   return {
@@ -15,6 +15,12 @@ function edge(fromPoi, toPoi, options = {}) {
     name: toPoi,
     ...options,
   };
+}
+
+// These graph fixtures model regular stamps unless a test supplies an explicit map.
+function calculateHikingRoutes(options, edges, done, keys = new Map(edges
+  .filter(edge => edge.toPoiType === 'stamp').map(edge => [edge.toPoi, edge.toPoi]))) {
+  return calculateRoutes(options, edges, done, keys);
 }
 
 function params(overrides = {}) {
@@ -139,6 +145,18 @@ test('empty graphs return no routes without querying geometry', async t => {
   const query = mockPositions(t, []);
   assert.deepEqual(await calculateHikingRoutes(params(), [], []), []);
   assert.equal(query.mock.callCount(), 0);
+});
+
+test('special stops remain traversable but do not satisfy stamp minimums or change regular route ranking', async t => {
+  const edges = [edge('p0', 'special'), edge('special', 's1'), edge('s1', 'p0')];
+  mockPositions(t, edges);
+  const keys = new Map([['s1', '1']]);
+  const routes = await calculateHikingRoutes(params(), edges, [], keys);
+  assert.equal(routes.length, 1);
+  assert.equal(routes[0].stampCount, 1);
+  assert.ok(routes[0].path.some(stop => stop.poi === 'special'));
+  assert.equal((await calculateHikingRoutes(params({ minStampCount: 2 }), edges, [], keys)).length, 0);
+  assert.equal((await calculateHikingRoutes(params({ minStampCount: 0 }), edges, ['s1'], keys))[0].stampCount, 0);
 });
 
 test('can drive again after returning to the car and includes drive time in limits', async t => {
