@@ -14,6 +14,17 @@
       },
       "bundleIdentifier": "de.kuestenbit.harzer-wander-buddy",
       "infoPlist": {
+        "UIApplicationSceneManifest": {
+          "UIApplicationSupportsMultipleScenes": false,
+          "UISceneConfigurations": {
+            "UIWindowSceneSessionRoleApplication": [
+              {
+                "UISceneConfigurationName": "Default Configuration",
+                "UISceneDelegateClassName": "$(PRODUCT_MODULE_NAME).SceneDelegate"
+              }
+            ]
+          }
+        },
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocationWhenInUseUsageDescription": "Harzer Wanderbuddy verwendet deinen Standort fuer Karte, Entfernungen und nahe Parkplaetze.",
         "NSPhotoLibraryUsageDescription": "Harzer Wanderbuddy benoetigt Zugriff auf deine Fotos, damit du ein Profilbild auswaehlen kannst.",
@@ -45,6 +56,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "./plugins/with-ios-scene-lifecycle",
       "expo-router",
       [
         "expo-location",
