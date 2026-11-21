@@ -3,6 +3,40 @@ import { appConfig } from '@/lib/config';
 import { assertLiveBackend, isStaticWebsite, loadStaticCatalogue, staticStampboxes } from '@/lib/static-website';
 import { prepareProfileImageForUpload, type UploadableImage } from '@/lib/image-upload';
 import buildODataQuery, { type QueryOptions } from 'odata-query';
+import type { BadgeAlbum, BadgeSelection } from '@/lib/badge-types';
+import type { StampingFeedback } from '@/lib/stamping-feedback';
+
+export async function fetchStampingFeedback(token: string, visitIds: string[]): Promise<StampingFeedback> {
+  const payload = await mutateOData<unknown>(token, buildUrl('getStampingFeedback'), {
+    method: 'POST', body: JSON.stringify({ visitIds }),
+  });
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Der Fortschritt konnte nicht geladen werden.');
+  const feedback = JSON.parse(raw) as StampingFeedback;
+  if (!Array.isArray(feedback.visitIds) || !Array.isArray(feedback.newBadges) ||
+      !Array.isArray(feedback.places) || !Number.isInteger(feedback.visitCount) ||
+      !Number.isInteger(feedback.beforeCount) || !Number.isInteger(feedback.afterCount)) {
+    throw new Error('Der Fortschritt konnte nicht bestätigt werden.');
+  }
+  return feedback;
+}
+
+export async function fetchBadgeAlbum(token: string, userId?: string): Promise<BadgeAlbum> {
+  const parameters = userId ? `userId='${escapeODataString(userId)}'` : 'userId=null';
+  const payload = await fetchOData<unknown>(token, buildUrl(`getBadgeAlbum(${parameters})`));
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Das Abzeichenalbum konnte nicht geladen werden.');
+  return JSON.parse(raw) as BadgeAlbum;
+}
+
+export async function saveBadgeProfile(token: string, selection: BadgeSelection): Promise<BadgeAlbum> {
+  const payload = await mutateOData<unknown>(token, buildUrl('saveBadgeProfile'), {
+    method: 'POST', body: JSON.stringify(selection),
+  });
+  const raw = parseActionStringResult(payload);
+  if (!raw) throw new Error('Die Auswahl konnte nicht gespeichert werden.');
+  return JSON.parse(raw) as BadgeAlbum;
+}
 
 export type StampedUser = {
   ID: string;
@@ -2079,6 +2113,18 @@ export async function fetchStampboxes(
   return sortStampboxes(rows);
 }
 
+/** Load only the fixed requirement locations for a badge, never the entire catalog. */
+export async function fetchBadgeStampboxes(accessToken: string, stampIds: readonly string[]): Promise<Stampbox[]> {
+  const ids = [...new Set(stampIds.map(id => id.trim()).filter(Boolean))];
+  if (!ids.length) return [];
+  return sortStampboxes(await fetchCollection<Stampbox>(accessToken, 'Stampboxes', {
+    select: ['ID', 'number', 'name', 'description', 'heroImageUrl', 'image', 'imageCaption', 'hasVisited'],
+    filter: ids.map(id => buildStringEqualsFilter('ID', id)).join(' or '),
+    orderBy: 'orderBy asc',
+    top: ids.length,
+  }));
+}
+
 export async function fetchMapData(
   accessToken: string,
   currentUserId?: string,
@@ -3239,16 +3285,14 @@ export async function fetchProfileOverview(
   } | null,
   prefetchedStamps?: Stampbox[]
 ) {
-  const resolvedCurrentUserId = safeTrim(currentUserId || prefetchedCurrentUser?.id);
-  const [currentUser, stamps, stampings, friendships] = await Promise.all([
-    prefetchedCurrentUser?.id
-      ? Promise.resolve({
-          ID: prefetchedCurrentUser.id,
-          name: prefetchedCurrentUser.name,
-          picture: prefetchedCurrentUser.picture,
-        } satisfies User)
-      : fetchCurrentUserRecord(accessToken),
-    prefetchedStamps ? Promise.resolve(prefetchedStamps) : fetchStampboxes(accessToken),
+  const currentUser = prefetchedCurrentUser?.id
+    ? { ID: prefetchedCurrentUser.id, name: prefetchedCurrentUser.name, picture: prefetchedCurrentUser.picture } satisfies User
+    : await fetchCurrentUserRecord(accessToken);
+  const resolvedCurrentUserId = safeTrim(currentUserId || currentUser.ID);
+  const [stamps, stampings, friendships] = await Promise.all([
+    prefetchedStamps
+      ? Promise.resolve(prefetchedStamps)
+      : fetchStampboxes(accessToken, 'validToday', resolvedCurrentUserId ? [resolvedCurrentUserId] : undefined),
     resolvedCurrentUserId
       ? fetchCollection<Stamping>(accessToken, 'Stampings', {
           select: ['ID', 'visitedAt', 'createdAt', 'createdBy', 'stamp_ID'],
@@ -3916,14 +3960,15 @@ export async function stampForGroup(
     stampId: string;
     friendIds: string[];
     includeCurrentUser: boolean;
-  }
+  },
+  withFeedback = false
 ) {
   const stampId = safeTrim(payload.stampId);
   if (!stampId) {
     throw new Error('Stamp ID is required');
   }
 
-  return mutateOData<unknown>(accessToken, buildUrl('stampForGroup'), {
+  return mutateOData<unknown>(accessToken, buildUrl(withFeedback ? 'stampForGroupWithFeedback' : 'stampForGroup'), {
     method: 'POST',
     body: JSON.stringify({
       sStampId: stampId,
@@ -3931,6 +3976,10 @@ export async function stampForGroup(
       sGroupUserIds: normalizeIdList(payload.friendIds).join(','),
     }),
   });
+}
+
+export function stampForGroupWithFeedback(token: string, payload: Parameters<typeof stampForGroup>[1]) {
+  return stampForGroup(token, payload, true);
 }
 
 export async function removeFriendship(accessToken: string, friendshipId: string) {

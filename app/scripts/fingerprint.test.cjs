@@ -13,7 +13,10 @@ test('release versions preserve the runtime while native configuration changes i
   for (const name of ['app.json', 'app.config.ts', 'package.json', 'fingerprint.config.js']) {
     fs.copyFileSync(path.join(appRoot, name), path.join(root, name));
   }
-  fs.cpSync(path.join(appRoot, 'assets'), path.join(root, 'assets'), { recursive: true });
+  // Expo config resolves local plugins from the fixture project as well.
+  for (const name of ['assets', 'plugins']) {
+    fs.cpSync(path.join(appRoot, name), path.join(root, name), { recursive: true });
+  }
   fs.symlinkSync(path.join(appRoot, 'node_modules'), path.join(root, 'node_modules'), 'dir');
   const write = (name, data) => fs.writeFileSync(path.join(root, name), JSON.stringify(data));
   const config = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));

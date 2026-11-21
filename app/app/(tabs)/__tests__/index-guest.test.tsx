@@ -3,6 +3,7 @@ import React from 'react';
 import { FlatList, PanResponder, StyleSheet, View, type GestureResponderEvent, type PanResponderGestureState } from 'react-native';
 
 import type { Stampbox } from '@/lib/api';
+jest.mock('@/lib/badges', () => ({ useBadgeAlbum: () => ({data:undefined}) }));
 
 jest.mock('@tanstack/react-query', () => ({
   useQueryClient: () => ({ invalidateQueries: jest.fn() }),

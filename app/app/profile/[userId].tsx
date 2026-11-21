@@ -137,6 +137,7 @@ export default function FriendProfileScreen() {
       mode: 'user',
       footerButtons: [{ key: 'report-block', label: 'Melden oder blockieren', onPress: () => router.push(`/community-safety?userId=${encodeURIComponent(userId)}` as never) }],
       name: data.name,
+      badgeUserId: data.userId,
       subtitle: `${subtitleBase} • ${subtitleSuffix}`,
       headerAction: {
         type: 'back',

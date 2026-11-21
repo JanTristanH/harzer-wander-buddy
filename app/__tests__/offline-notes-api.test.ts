@@ -27,7 +27,7 @@ it.each([401, 403, 404, 429, 500])('keeps failed transfers retryable: HTTP %s', 
 });
 it('aborts a stalled request so later reconnect attempts can run', async () => {
   jest.useFakeTimers();
-  global.fetch = jest.fn((_url, init) => new Promise((_resolve, reject) => {
+  global.fetch = jest.fn((_url: unknown, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
     init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
   }));
   const promise = syncStampNote('token', 'stamp', 'neu', base);
